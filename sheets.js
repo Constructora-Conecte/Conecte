@@ -163,24 +163,27 @@ async function sheetsFindAll(rangeName, field, value) {
 
 // ── AUTH (usuarios desde Sheets) ─────────────────────────
 async function authLogin(correo, password) {
-  // 1. Lee la tabla USERS_SYSTEM
   const users = await sheetsRead('USERS_SYSTEM'); 
   
-  // 2. Busca al usuario por correo
   const user = users.find(u =>
     u.CORREO_CREADOR?.toLowerCase() === correo.toLowerCase()
   );
+  
   if (!user) return null;
-  // 3. Verifica la contraseña en la misma fila
-  // Asegúrate de que la columna en tu Excel se llame exactamente CONTRASEÑA
-  if (user.CONTRASEÑA === password) {
+
+  // Comparamos la contraseña en la columna CONTRASEÑA
+  // Usamos == para evitar problemas si el número se lee como texto
+  if (user.CONTRASEÑA == password) {
+    // Si el login es exitoso, devolvemos el usuario
     return user; 
   }
-  // Fallback opcional: por si quieres que el nombre siga funcionando como clave
+
+  // Fallback: usar el nombre como contraseña
   if (user.NOMBRE_CREADOR && password === user.NOMBRE_CREADOR) {
     return user;
   }
-  return null; // Si no coincide nada
+
+  return null;
 }
 
 // Exportar
