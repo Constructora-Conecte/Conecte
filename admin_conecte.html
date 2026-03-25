@@ -1,656 +1,184 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Conecte | Sistema de Gestión</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        black: '#0a0a0a',
-                        red: { 600: '#dc2626', 700: '#b91c1c' },
-                        dark: '#171717',
-                        darker: '#262626'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { background-color: #0a0a0a; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .hidden-view { display: none !important; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #171717; }
-        ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
-        input, select, textarea { background-color: #262626 !important; color: white !important; border: 1px solid #404040 !important; }
-        input:focus, select:focus, textarea:focus { border-color: #dc2626 !important; outline: none !important; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conecte — Admin</title>
+<link rel="icon" href="Imagenes/Logo.png" type="image/png">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body class="h-screen w-full overflow-hidden flex">
+<body>
 
-    <div id="login-view" class="w-full h-full flex items-center justify-center bg-black absolute z-50">
-        <div class="bg-dark p-8 rounded-lg shadow-2xl w-96 border border-darker">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-white"><span class="text-red-600">Admin</span> Conecte</h1>
-                <p class="text-gray-400 mt-2">Inicia sesión en tu cuenta</p>
-            </div>
-            
-            <div id="google-auth-section" class="mb-4 text-center">
-                <p class="text-xs text-gray-400 mb-2">Paso 1: Conectar API</p>
-                <button onclick="handleAuthClick()" class="w-full bg-white text-black py-2 rounded font-semibold hover:bg-gray-200 transition">
-                    <i class="fab fa-google mr-2"></i> Autorizar Google Sheets
-                </button>
-            </div>
-
-            <form id="login-form" class="space-y-4 hidden-view" onsubmit="handleCustomLogin(event)">
-                <p class="text-xs text-gray-400 mb-2 text-center">Paso 2: Credenciales del Sistema</p>
-                <div>
-                    <label class="block text-sm mb-1">Correo Electrónico</label>
-                    <input type="email" id="login-email" required class="w-full p-2 rounded">
-                </div>
-                <div>
-                    <label class="block text-sm mb-1">Contraseña</label>
-                    <input type="password" id="login-password" required class="w-full p-2 rounded">
-                </div>
-                <div id="login-error" class="text-red-600 text-sm hidden-view text-center">Credenciales incorrectas o usuario inactivo.</div>
-                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded transition flex justify-center items-center">
-                    <span id="login-text">Ingresar</span>
-                    <i id="login-spinner" class="fas fa-spinner fa-spin hidden-view ml-2"></i>
-                </button>
-            </form>
+<!-- ───────────────────────────────────────
+  LOGIN
+─────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-left">
+      <div class="ll-logo">
+        <img src="Imagenes/Logo.png" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="ll-logo-letter" style="display:none">C</span>
+      </div>
+      <div class="ll-brand">
+        <h1>CONECTE</h1>
+        <p>Sistema Administrativo</p>
+      </div>
+      <div class="ll-sep"></div>
+      <p class="ll-desc">Gestión integral de proyectos, cotizaciones y operaciones</p>
+    </div>
+    <div class="login-right">
+      <h2>Bienvenido</h2>
+      <p>Ingresa con tu correo y contraseña asignada</p>
+      <div id="login-err" class="login-err"></div>
+      <form id="login-form" autocomplete="off">
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="login-email" placeholder="tu@correo.com" autocomplete="username" required>
         </div>
-    </div>
-
-    <div id="app-view" class="w-full h-full flex hidden-view">
-        
-        <aside class="w-64 bg-dark border-r border-darker flex flex-col">
-            <div class="p-6 border-b border-darker">
-                <h2 class="text-2xl font-bold"><span class="text-red-600">Admin</span></h2>
-            </div>
-            <nav id="sidebar-menu" class="flex-1 p-4 space-y-2 overflow-y-auto">
-                </nav>
-            <div class="p-4 border-t border-darker flex items-center gap-3">
-                <div id="user-avatar" class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center font-bold"></div>
-                <div>
-                    <p id="user-name-display" class="text-sm font-semibold truncate w-32"></p>
-                    <p id="user-role-display" class="text-xs text-gray-400"></p>
-                </div>
-                <button onclick="logout()" class="ml-auto text-gray-400 hover:text-red-600"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-        </aside>
-
-        <main class="flex-1 flex flex-col bg-black h-full">
-            <header class="h-16 border-b border-darker flex items-center justify-between px-6 bg-dark">
-                <h2 id="current-view-title" class="text-xl font-semibold">Dashboard</h2>
-                
-                <div class="relative">
-                    <button id="btn-notifications" class="text-gray-300 hover:text-white relative" onclick="toggleNotifications()">
-                        <i class="fas fa-bell text-xl"></i>
-                        <span id="notif-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden-view">0</span>
-                    </button>
-                    <div id="notif-dropdown" class="absolute right-0 mt-2 w-80 bg-dark border border-darker rounded shadow-xl hidden-view z-50">
-                        <div class="p-3 border-b border-darker text-sm font-bold flex justify-between">
-                            Notificaciones
-                            <button onclick="marcarNotificacionesLeidas()" class="text-red-600 text-xs hover:underline">Marcar leídas</button>
-                        </div>
-                        <div id="notif-list" class="max-h-64 overflow-y-auto">
-                            </div>
-                    </div>
-                </div>
-            </header>
-
-            <div class="flex-1 overflow-auto p-6 relative">
-                
-                <div id="view-dashboard" class="app-section hidden-view">
-                    <h3 class="text-2xl font-bold mb-4">Bienvenido al panel</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-dark p-6 rounded border border-darker">
-                            <h4 class="text-gray-400">Total Cotizaciones</h4>
-                            <p class="text-3xl font-bold text-red-600 mt-2" id="dash-cotizaciones-count">0</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-cotizaciones" class="app-section hidden-view">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-2xl font-bold">Gestión de Cotizaciones</h3>
-                        <button onclick="openCotizacionModal()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-bold"><i class="fas fa-plus mr-2"></i> Nueva Cotización</button>
-                    </div>
-
-                    <div class="bg-dark border border-darker rounded overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-darker border-b border-gray-700">
-                                    <th class="p-3">ID</th>
-                                    <th class="p-3">Fecha</th>
-                                    <th class="p-3">Responsable</th>
-                                    <th class="p-3">Total</th>
-                                    <th class="p-3 text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cotizaciones-table-body">
-                                <tr><td colspan="5" class="p-4 text-center text-gray-400">Cargando cotizaciones...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="view-tareas" class="app-section hidden-view">
-                    <h3 class="text-2xl font-bold mb-6">Asignación de Tareas</h3>
-                    <div class="bg-dark p-6 rounded border border-darker max-w-2xl">
-                        <form id="form-tarea" onsubmit="asignarTarea(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-sm mb-1">Usuario Administrativo</label>
-                                <select id="tarea-usuario" required class="w-full p-2 rounded">
-                                    <option value="">Seleccione un usuario...</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm mb-1">Descripción de la Tarea</label>
-                                <textarea id="tarea-desc" required rows="3" class="w-full p-2 rounded"></textarea>
-                            </div>
-                            <button type="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-bold w-full">Asignar Tarea</button>
-                        </form>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <div id="modal-cotizacion" class="fixed inset-0 bg-black bg-opacity-80 hidden-view z-50 flex justify-center items-start pt-10 overflow-y-auto">
-        <div class="bg-dark border border-darker w-full max-w-4xl rounded-lg shadow-2xl p-6 mb-10">
-            <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
-                <h3 class="text-xl font-bold">Nueva Cotización</h3>
-                <button onclick="closeCotizacionModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label class="block text-sm text-gray-400">ID Cotización</label>
-                    <input type="text" id="cot-id" readonly class="w-full p-2 rounded bg-darker cursor-not-allowed">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400">Proyecto / Cliente</label>
-                    <input type="text" id="cot-proyecto" class="w-full p-2 rounded" required>
-                </div>
-            </div>
-
-            <div class="bg-darker p-4 rounded mb-6 border border-gray-700">
-                <h4 class="font-bold mb-2 text-sm text-red-500">Agregar Concepto</h4>
-                <div class="flex gap-2 relative">
-                    <input type="text" id="search-articulo" placeholder="Buscar por ID o Nombre..." class="flex-1 p-2 rounded" oninput="buscarArticulo(this.value)">
-                    <button type="button" onclick="agregarArticuloManual()" class="bg-gray-700 hover:bg-gray-600 px-4 rounded"><i class="fas fa-plus"></i></button>
-                    <div id="autocomplete-results" class="absolute top-10 left-0 w-full bg-dark border border-gray-600 rounded shadow-lg hidden-view z-10 max-h-48 overflow-y-auto"></div>
-                </div>
-            </div>
-
-            <table class="w-full text-left border-collapse mb-6 text-sm">
-                <thead>
-                    <tr class="border-b border-gray-700">
-                        <th class="pb-2">ID</th>
-                        <th class="pb-2 w-1/3">Concepto</th>
-                        <th class="pb-2">Cant.</th>
-                        <th class="pb-2">Precio U.</th>
-                        <th class="pb-2">Imp.(%)</th>
-                        <th class="pb-2 text-right">Subtotal</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="conceptos-body">
-                    </tbody>
-            </table>
-
-            <div class="flex justify-end mb-6">
-                <div class="w-64 bg-darker p-4 rounded border border-gray-700">
-                    <div class="flex justify-between mb-2 text-sm"><span class="text-gray-400">Subtotal:</span> <span id="cot-subtotal">$0.00</span></div>
-                    <div class="flex justify-between mb-2 text-sm"><span class="text-gray-400">Impuestos:</span> <span id="cot-impuestos">$0.00</span></div>
-                    <div class="flex justify-between font-bold text-lg border-t border-gray-600 pt-2"><span class="text-red-500">Total:</span> <span id="cot-total">$0.00</span></div>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-3 border-t border-gray-700 pt-4">
-                <button type="button" onclick="closeCotizacionModal()" class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Cancelar</button>
-                <button type="button" onclick="generarPDF()" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-white"><i class="fas fa-file-pdf mr-2"></i> PDF</button>
-                <button type="button" onclick="guardarCotizacion()" class="px-4 py-2 bg-red-600 rounded hover:bg-red-700 font-bold"><i class="fas fa-save mr-2"></i> Guardar</button>
-            </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" required>
         </div>
+        <button type="submit" class="btn-primary" id="login-btn">Ingresar</button>
+      </form>
+      <div class="login-hint">
+        <b>Roles disponibles:</b> Patrón · Administrativo · Operativo<br>
+        Contacta al administrador del sistema si no tienes acceso.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────────────────────────────────
+  APP SHELL
+─────────────────────────────────────── -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo">
+        <img src="Imagenes/Logo.png" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="sb-logo-ltr" style="display:none">C</span>
+      </div>
+      <span class="sb-title">CONECTE</span>
+      <button class="sb-toggle" onclick="toggleSidebar()" data-tip="Colapsar">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
     </div>
 
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">U</div>
+      <div class="sb-user-info">
+        <div class="sb-uname" id="sb-uname">Usuario</div>
+        <span class="sb-role" id="sb-role-badge">—</span>
+      </div>
+    </div>
 
-    <script>
-        // --- CONFIGURACIÓN GOOGLE SHEETS ---
-        // ⚠️ REEMPLAZA ESTO CON EL ID DE TU SPREADSHEET (Lo encuentras en la URL de tu Google Sheet)
-        const SPREADSHEET_ID = '1taQb37TOM78dRVNLsc0lPWcdnrJK09cVPSnXXqimNHQ'; 
-        
-        const API_KEY = 'AIzaSyA2mDnl0kGWBdltS488u_5ZaXPWJFS18Ww';
-        const CLIENT_ID = '413269286189-g75s5kq24g1c96en6pb4uvc9059062u7.apps.googleusercontent.com';
-        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
-        
-        let tokenClient;
-        let accessToken = null;
+    <div class="sb-nav" id="sb-nav">
+      <!-- Built dynamically by buildNav() -->
+    </div>
 
-        // --- ESTADO DE LA APLICACIÓN ---
-        let appData = {
-            articulos: [],
-            cotizaciones: [],
-            estatus: [],
-            usuarios: []
-        };
-        let conceptosCotizacionActual = [];
+    <div class="sb-bottom">
+      <button class="btn-logout" onclick="handleLogout()">
+        <span class="nav-ico">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </span>
+        <span class="nav-lbl">Cerrar sesión</span>
+      </button>
+    </div>
+  </nav>
 
-        // --- INICIALIZACIÓN GOOGLE IDENTITY ---
-        window.onload = function () {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        accessToken = tokenResponse.access_token;
-                        document.getElementById('google-auth-section').classList.add('hidden-view');
-                        document.getElementById('login-form').classList.remove('hidden-view');
-                        // Cargar datos ocultamente antes del login
-                        cargarUsuarios(); 
-                    }
-                },
-            });
+  <!-- MAIN AREA -->
+  <div class="main">
 
-            // Si hay sesión activa, saltar login
-            if(sessionStorage.getItem('user_id')) {
-                // Requiere token de todas formas para operaciones, en prod se maneja refresh token
-                // Para este script, forzaremos Auth primero si no hay token.
-                document.getElementById('login-view').classList.remove('hidden-view');
-            }
-        };
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <span class="topbar-title" id="topbar-title">Panel</span>
+      <div class="topbar-actions">
+        <!-- Search global (futuro) -->
+        <button class="tbar-btn" onclick="toggleNotifPanel()" data-tip="Notificaciones">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="notif-count" id="notif-badge" style="display:none">0</span>
+        </button>
+      </div>
+    </header>
 
-        function handleAuthClick() {
-            tokenClient.requestAccessToken();
-        }
+    <!-- CONTENT -->
+    <main class="content" id="main-content">
 
-        // --- FUNCIONES API (FETCH) ---
-        async function fetchSheetData(range) {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${API_KEY}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Error fetching ${range}`);
-            const data = await response.json();
-            return data.values || [];
-        }
+      <!-- DASHBOARD -->
+      <div class="view" id="view-dashboard"></div>
 
-        async function appendSheetData(range, values) {
-            if (!accessToken) { alert("Requiere autorización de Google."); return; }
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ values: [values] })
-            });
-            return await response.json();
-        }
+      <!-- COTIZACIONES -->
+      <div class="view" id="view-cotizaciones"></div>
 
-        // --- LÓGICA DE LOGIN ---
-        async function cargarUsuarios() {
-            try {
-                // Columnas: 0:ID, 1:NOMBRE, 2:CORREO, 3:AREA, 4:ESTADO ... 13:CONTRASEÑA
-                const data = await fetchSheetData('USERS_SYSTEM!A:N');
-                appData.usuarios = data.slice(1); // Saltar headers
-            } catch (e) {
-                console.error("Error cargando usuarios:", e);
-            }
-        }
+      <!-- FACTURAS -->
+      <div class="view" id="view-facturas"></div>
 
-        async function handleCustomLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            const btnText = document.getElementById('login-text');
-            const spinner = document.getElementById('login-spinner');
-            const errorMsg = document.getElementById('login-error');
+      <!-- OC CLIENTES -->
+      <div class="view" id="view-oc-clientes"></div>
 
-            btnText.innerText = "Validando..."; spinner.classList.remove('hidden-view'); errorMsg.classList.add('hidden-view');
+      <!-- ORDENES TRABAJO -->
+      <div class="view" id="view-ordenes"></div>
 
-            if(appData.usuarios.length === 0) await cargarUsuarios();
+      <!-- TICKETS -->
+      <div class="view" id="view-tickets"></div>
 
-            // Buscar usuario
-            const userRow = appData.usuarios.find(row => row[2] === email && row[13] === pass);
+      <!-- INVENTARIO -->
+      <div class="view" id="view-inventario"></div>
 
-            if (userRow && userRow[4] === 'Activo') {
-                // Login Exitoso
-                sessionStorage.setItem('user_id', userRow[0]);
-                sessionStorage.setItem('user_name', userRow[1]);
-                sessionStorage.setItem('user_role', userRow[3]);
-                sessionStorage.setItem('user_foto', userRow[12] || '');
-                
-                iniciarAplicacion();
-            } else {
-                errorMsg.classList.remove('hidden-view');
-            }
+      <!-- NOMINA -->
+      <div class="view" id="view-nomina"></div>
 
-            btnText.innerText = "Ingresar"; spinner.classList.add('hidden-view');
-        }
+      <!-- EMPLEADOS -->
+      <div class="view" id="view-empleados"></div>
 
-        function logout() {
-            sessionStorage.clear();
-            location.reload();
-        }
+      <!-- VEHICULOS -->
+      <div class="view" id="view-vehiculos"></div>
 
-        // --- INICIAR APLICACIÓN ---
-        async function iniciarAplicacion() {
-            document.getElementById('login-view').classList.add('hidden-view');
-            document.getElementById('app-view').classList.remove('hidden-view');
+      <!-- TAREAS -->
+      <div class="view" id="view-tareas"></div>
 
-            const nombre = sessionStorage.getItem('user_name');
-            const rol = sessionStorage.getItem('user_role');
-            const inicial = nombre.charAt(0).toUpperCase();
+      <!-- CONTRASEÑAS -->
+      <div class="view" id="view-contrasenas"></div>
 
-            document.getElementById('user-name-display').innerText = nombre;
-            document.getElementById('user-role-display').innerText = rol;
-            document.getElementById('user-avatar').innerText = inicial;
+      <!-- AIRES -->
+      <div class="view" id="view-aires"></div>
 
-            generarMenu(rol);
-            await cargarDatosMaestros();
-            cambiarVista('dashboard');
-            
-            // Simular notificaciones (Polling cada 30s)
-            chequearNotificaciones();
-            setInterval(chequearNotificaciones, 30000);
-        }
+    </main>
+  </div><!-- /main -->
 
-        function generarMenu(rol) {
-            const menu = document.getElementById('sidebar-menu');
-            menu.innerHTML = '';
-            
-            const opciones = [
-                { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard', roles: ['Patron', 'Administrativo', 'Operativo'] },
-                { id: 'cotizaciones', icon: 'fa-file-invoice-dollar', label: 'Cotizaciones', roles: ['Patron', 'Administrativo'] },
-                { id: 'tareas', icon: 'fa-tasks', label: 'Asignar Tareas', roles: ['Patron'] }
-                // Puedes agregar más: Facturas, Ordenes, etc.
-            ];
+  <!-- NOTIF PANEL -->
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-panel-header">
+      <h3>Notificaciones</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Marcar leídas</button>
+        <button class="btn-close" onclick="toggleNotifPanel()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="notif-list" id="notif-list">
+      <div class="empty-state"><p>Sin notificaciones</p></div>
+    </div>
+  </div>
 
-            opciones.forEach(opt => {
-                if (opt.roles.includes(rol)) {
-                    menu.innerHTML += `
-                        <button onclick="cambiarVista('${opt.id}')" class="w-full text-left px-4 py-3 rounded hover:bg-darker hover:text-red-500 transition flex items-center gap-3">
-                            <i class="fas ${opt.icon} w-5"></i> ${opt.label}
-                        </button>
-                    `;
-                }
-            });
-        }
+</div><!-- /app -->
 
-        function cambiarVista(vistaId) {
-            document.querySelectorAll('.app-section').forEach(el => el.classList.add('hidden-view'));
-            const view = document.getElementById(`view-${vistaId}`);
-            if(view) {
-                view.classList.remove('hidden-view');
-                document.getElementById('current-view-title').innerText = vistaId.charAt(0).toUpperCase() + vistaId.slice(1);
-            }
+<!-- MODAL (se llena dinámicamente) -->
+<div class="modal-overlay hidden" id="modal-overlay" onclick="handleModalClick(event)"></div>
 
-            if(vistaId === 'cotizaciones') renderizarTablaCotizaciones();
-            if(vistaId === 'tareas') cargarSelectAdministrativos();
-        }
+<!-- TOASTS -->
+<div id="toast-container"></div>
 
-        async function cargarDatosMaestros() {
-            try {
-                // Cargar Artículos
-                const arts = await fetchSheetData('ARTICULOS!A:F');
-                appData.articulos = arts.slice(1).map(r => ({
-                    id: r[0], nombre: r[1], precio: parseFloat(r[2]), impuesto: parseFloat(r[3]), desc: r[4], unidad: r[5]
-                }));
-
-                // Cargar Cotizaciones
-                const cots = await fetchSheetData('INICIO!A:F');
-                if(cots.length > 1) appData.cotizaciones = cots.slice(1);
-                
-                document.getElementById('dash-cotizaciones-count').innerText = appData.cotizaciones.length;
-
-            } catch(e) { console.error("Error cargando datos:", e); }
-        }
-
-        // --- MÓDULO: COTIZACIONES ---
-        function renderizarTablaCotizaciones() {
-            const tbody = document.getElementById('cotizaciones-table-body');
-            tbody.innerHTML = '';
-            
-            if(appData.cotizaciones.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No hay cotizaciones registradas.</td></tr>';
-                return;
-            }
-
-            appData.cotizaciones.forEach(cot => {
-                // Estructura Sheet INICIO: 0:ID, 1:Proyecto, 2:Responsable, 3:Total, 4:Fecha
-                tbody.innerHTML += `
-                    <tr class="border-b border-gray-800 hover:bg-darker transition">
-                        <td class="p-3 text-red-500 font-bold">${cot[0]}</td>
-                        <td class="p-3">${cot[4] || '-'}</td>
-                        <td class="p-3">${cot[2] || '-'}</td>
-                        <td class="p-3">$${parseFloat(cot[3]).toFixed(2)}</td>
-                        <td class="p-3 text-center">
-                            <button class="text-gray-400 hover:text-white mr-2" title="Editar"><i class="fas fa-edit"></i></button>
-                            <button class="text-gray-400 hover:text-blue-500" title="Ver Historial Estatus"><i class="fas fa-history"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function openCotizacionModal() {
-            document.getElementById('modal-cotizacion').classList.remove('hidden-view');
-            document.getElementById('cot-id').value = 'COT-' + new Date().getTime();
-            document.getElementById('cot-proyecto').value = '';
-            conceptosCotizacionActual = [];
-            renderizarConceptos();
-        }
-
-        function closeCotizacionModal() {
-            document.getElementById('modal-cotizacion').classList.add('hidden-view');
-        }
-
-        // Autocompletado de artículos
-        function buscarArticulo(query) {
-            const resultsDiv = document.getElementById('autocomplete-results');
-            if(query.length < 2) { resultsDiv.classList.add('hidden-view'); return; }
-            
-            const filtrados = appData.articulos.filter(a => 
-                a.id.toLowerCase().includes(query.toLowerCase()) || 
-                a.nombre.toLowerCase().includes(query.toLowerCase())
-            );
-
-            if(filtrados.length > 0) {
-                resultsDiv.innerHTML = filtrados.map(a => `
-                    <div class="p-2 hover:bg-gray-700 cursor-pointer border-b border-gray-600" onclick="seleccionarArticulo('${a.id}')">
-                        <div class="font-bold text-red-400">${a.id} - ${a.nombre}</div>
-                        <div class="text-xs text-gray-400">Precio: $${a.precio} | Impuesto: ${a.impuesto}%</div>
-                    </div>
-                `).join('');
-                resultsDiv.classList.remove('hidden-view');
-            } else {
-                resultsDiv.classList.add('hidden-view');
-            }
-        }
-
-        function seleccionarArticulo(id) {
-            const art = appData.articulos.find(a => a.id === id);
-            if(art) {
-                conceptosCotizacionActual.push({ ...art, cantidad: 1 });
-                renderizarConceptos();
-            }
-            document.getElementById('search-articulo').value = '';
-            document.getElementById('autocomplete-results').classList.add('hidden-view');
-        }
-
-        function actualizarCantidad(index, val) {
-            conceptosCotizacionActual[index].cantidad = parseFloat(val) || 1;
-            renderizarConceptos();
-        }
-
-        function eliminarConcepto(index) {
-            conceptosCotizacionActual.splice(index, 1);
-            renderizarConceptos();
-        }
-
-        function renderizarConceptos() {
-            const tbody = document.getElementById('conceptos-body');
-            tbody.innerHTML = '';
-            
-            let subtotal = 0;
-            let totalImpuestos = 0;
-
-            conceptosCotizacionActual.forEach((c, idx) => {
-                const sub = c.precio * c.cantidad;
-                const imp = sub * (c.impuesto / 100);
-                subtotal += sub;
-                totalImpuestos += imp;
-
-                tbody.innerHTML += `
-                    <tr class="border-b border-gray-800">
-                        <td class="py-2 text-xs text-gray-400">${c.id}</td>
-                        <td class="py-2 font-semibold">${c.nombre}</td>
-                        <td class="py-2"><input type="number" min="1" value="${c.cantidad}" onchange="actualizarCantidad(${idx}, this.value)" class="w-16 p-1 text-center bg-dark rounded border border-gray-600"></td>
-                        <td class="py-2">$${c.precio.toFixed(2)}</td>
-                        <td class="py-2">${c.impuesto}%</td>
-                        <td class="py-2 text-right text-red-400 font-bold">$${sub.toFixed(2)}</td>
-                        <td class="py-2 text-right"><button onclick="eliminarConcepto(${idx})" class="text-gray-500 hover:text-red-500"><i class="fas fa-trash"></i></button></td>
-                    </tr>
-                `;
-            });
-
-            const total = subtotal + totalImpuestos;
-            
-            document.getElementById('cot-subtotal').innerText = `$${subtotal.toFixed(2)}`;
-            document.getElementById('cot-impuestos').innerText = `$${totalImpuestos.toFixed(2)}`;
-            document.getElementById('cot-total').innerText = `$${total.toFixed(2)}`;
-        }
-
-        async function guardarCotizacion() {
-            if(conceptosCotizacionActual.length === 0) return alert("Agrega al menos un concepto.");
-            
-            const id = document.getElementById('cot-id').value;
-            const proyecto = document.getElementById('cot-proyecto').value;
-            const responsable = sessionStorage.getItem('user_name');
-            const total = document.getElementById('cot-total').innerText.replace('$','');
-            const fecha = new Date().toLocaleDateString();
-
-            try {
-                // Guardar en Sheet INICIO
-                await appendSheetData('INICIO!A:E', [id, proyecto, responsable, total, fecha]);
-                
-                // Generar ESTATUS inicial
-                const estatusId = 'EST-' + Math.floor(Math.random()*10000);
-                await appendSheetData('ESTATUS!A:G', [estatusId, id, total, fecha, 'Creada', responsable, proyecto]);
-
-                alert("Cotización guardada exitosamente.");
-                closeCotizacionModal();
-                await cargarDatosMaestros(); // Recargar
-                renderizarTablaCotizaciones();
-            } catch(e) {
-                console.error(e);
-                alert("Error guardando. Asegúrate de haber Autorizado la API.");
-            }
-        }
-
-        // --- PDF GENERACIÓN ---
-        function generarPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const id = document.getElementById('cot-id').value;
-            const proyecto = document.getElementById('cot-proyecto').value;
-
-            // Header
-            doc.setFillColor(220, 38, 38); // Rojo
-            doc.rect(0, 0, 210, 30, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(22);
-            doc.text("COTIZACIÓN", 15, 20);
-            
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(10);
-            doc.text(`ID: ${id}`, 15, 40);
-            doc.text(`Proyecto: ${proyecto}`, 15, 45);
-            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 15, 50);
-
-            // Tabla
-            const bodyData = conceptosCotizacionActual.map(c => [
-                c.id, c.nombre, c.cantidad, `$${c.precio.toFixed(2)}`, `${c.impuesto}%`, `$${(c.precio * c.cantidad).toFixed(2)}`
-            ]);
-
-            doc.autoTable({
-                startY: 60,
-                head: [['ID', 'Concepto', 'Cant.', 'Precio U.', 'Imp.', 'Subtotal']],
-                body: bodyData,
-                headStyles: { fillColor: [22, 22, 22], textColor: [255, 255, 255] },
-                alternateRowStyles: { fillColor: [240, 240, 240] }
-            });
-
-            // Totales
-            const finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFontSize(12);
-            doc.text(`Total: ${document.getElementById('cot-total').innerText}`, 150, finalY);
-
-            doc.save(`${id}.pdf`);
-        }
-
-        // --- NOTIFICACIONES (Módulo) ---
-        function cargarSelectAdministrativos() {
-            const select = document.getElementById('tarea-usuario');
-            select.innerHTML = '<option value="">Seleccione un usuario...</option>';
-            appData.usuarios.forEach(u => {
-                if(u[3] === 'Administrativo') {
-                    select.innerHTML += `<option value="${u[2]}">${u[1]}</option>`; // Value = Correo
-                }
-            });
-        }
-
-        async function asignarTarea(e) {
-            e.preventDefault();
-            const emailDestino = document.getElementById('tarea-usuario').value;
-            const desc = document.getElementById('tarea-desc').value;
-
-            // En un sistema real se guardaría en una hoja de "NOTIFICACIONES".
-            // Aquí lo simularemos guardando en sessionStorage temporalmente o alertando.
-            alert(`Tarea asignada a ${emailDestino} con éxito.\n(Simulación completada)`);
-            e.target.reset();
-        }
-
-        let notificacionesLeidas = false;
-        function chequearNotificaciones() {
-            // Lógica simulada: Si es Administrativo, recibe una notificación random de prueba.
-            const rol = sessionStorage.getItem('user_role');
-            if(rol === 'Administrativo' && !notificacionesLeidas) {
-                document.getElementById('notif-badge').classList.remove('hidden-view');
-                document.getElementById('notif-badge').innerText = '1';
-                document.getElementById('notif-list').innerHTML = `
-                    <div class="p-3 border-b border-gray-700 hover:bg-gray-800 cursor-pointer">
-                        <p class="text-sm font-bold text-red-500">Nueva Tarea Asignada</p>
-                        <p class="text-xs text-gray-400">El Patrón te ha asignado revisar la cotización COT-12345</p>
-                    </div>
-                `;
-            }
-        }
-
-        function toggleNotifications() {
-            document.getElementById('notif-dropdown').classList.toggle('hidden-view');
-        }
-
-        function marcarNotificacionesLeidas() {
-            notificacionesLeidas = true;
-            document.getElementById('notif-badge').classList.add('hidden-view');
-            document.getElementById('notif-list').innerHTML = '<div class="p-3 text-center text-xs text-gray-500">No hay notificaciones nuevas.</div>';
-        }
-
-    </script>
+<script src="sheets.js"></script>
+<script src="app.js"></script>
+<script>
+function handleModalClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+</script>
 </body>
 </html>
