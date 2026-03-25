@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conecte — Panel de Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1e3a8a;
+    --navy-dark: #162d6e;
+    --navy-deeper: #0f1f4d;
+    --navy-light: #2d52b8;
+    --orange: #f97316;
+    --orange-light: #fed7aa;
+    --orange-deep: #c2410c;
+    --gray-bg: #f3f4f6;
+    --gray-100: #e5e7eb;
+    --gray-200: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --gray-800: #1f2937;
+    --white: #ffffff;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --yellow: #ca8a04;
+    --yellow-light: #fef9c3;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --sidebar-width: 240px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--gray-bg);
+    color: var(--gray-800);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--navy-deeper);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    z-index: 100;
+    overflow: hidden;
+  }
+
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .logo-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--orange);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-icon svg { width: 18px; height: 18px; }
+
+  .logo-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .nav-section {
+    padding: 20px 12px 8px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.55);
+    font-size: 13.5px;
+    font-weight: 400;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+    text-decoration: none;
+    position: relative;
+  }
+
+  .nav-item:hover { color: #fff; background: rgba(255,255,255,0.07); }
+
+  .nav-item.active {
+    color: #fff;
+    background: rgba(249,115,22,0.15);
+  }
+
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 4px; bottom: 4px;
+    width: 3px;
+    background: var(--orange);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--orange);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-family: var(--mono);
+  }
+
+  .sidebar-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 4px 12px;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--navy-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .user-name { font-size: 12.5px; color: rgba(255,255,255,0.7); font-weight: 500; }
+  .user-role { font-size: 11px; color: rgba(255,255,255,0.35); }
+
+  /* ─── MAIN ─── */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ─── TOPBAR ─── */
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 0 28px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+
+  .topbar-date {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-left: 4px;
+    font-family: var(--mono);
+  }
+
+  .search-wrap {
+    margin-left: auto;
+    position: relative;
+    width: 300px;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0 12px 0 36px;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--gray-800);
+    background: var(--gray-bg);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .search-input:focus {
+    border-color: var(--navy);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.08);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 11px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    pointer-events: none;
+  }
+
+  .search-shortcut {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--gray-400);
+    font-family: var(--mono);
+    background: var(--gray-100);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .search-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    overflow: hidden;
+    z-index: 200;
+  }
+
+  .search-dropdown.visible { display: block; }
+
+  .search-section-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    padding: 10px 14px 4px;
+    font-weight: 500;
+  }
+
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .search-result:hover { background: var(--gray-bg); }
+
+  .search-result-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+
+  .search-result-title { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+  .search-result-sub { font-size: 11px; color: var(--gray-400); }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 36px; height: 36px;
+    border: none;
+    background: var(--gray-bg);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gray-600);
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .icon-btn:hover { background: var(--gray-100); }
+
+  .notif-dot {
+    position: absolute;
+    top: 7px; right: 7px;
+    width: 7px; height: 7px;
+    background: var(--orange);
+    border-radius: 50%;
+    border: 1.5px solid #fff;
+  }
+
+  /* ─── CONTENT ─── */
+  .content {
+    padding: 24px 28px 40px;
+    flex: 1;
+  }
+
+  /* ─── SECTION HEADER ─── */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--gray-200);
+  }
+
+  /* ─── ALERT BANNER ─── */
+  .alert-banner {
+    background: linear-gradient(135deg, var(--orange-deep), var(--orange));
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    color: #fff;
+  }
+
+  .alert-icon-wrap {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .alert-text { flex: 1; }
+  .alert-headline { font-size: 13px; font-weight: 600; }
+  .alert-body { font-size: 12px; opacity: 0.85; margin-top: 1px; }
+
+  .alert-actions { display: flex; gap: 8px; }
+
+  .alert-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .alert-btn-primary { background: #fff; color: var(--orange-deep); }
+  .alert-btn-primary:hover { background: rgba(255,255,255,0.9); }
+  .alert-btn-ghost { background: rgba(255,255,255,0.15); color: #fff; }
+  .alert-btn-ghost:hover { background: rgba(255,255,255,0.25); }
+
+  /* ─── KPI GRID ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border: 1px solid var(--gray-100);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .kpi-card.blue::after { background: var(--navy); }
+  .kpi-card.orange::after { background: var(--orange); }
+  .kpi-card.green::after { background: var(--green); }
+  .kpi-card.yellow::after { background: var(--yellow); }
+
+  .kpi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .kpi-label {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .kpi-icon {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .kpi-icon.blue { background: rgba(30,58,138,0.08); color: var(--navy); }
+  .kpi-icon.orange { background: rgba(249,115,22,0.1); color: var(--orange); }
+  .kpi-icon.green { background: var(--green-light); color: var(--green); }
+  .kpi-icon.yellow { background: var(--yellow-light); color: var(--yellow); }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--gray-800);
+    line-height: 1;
+    font-family: var(--mono);
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+
+  .kpi-change {
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .kpi-change.up { color: var(--green); }
+  .kpi-change.down { color: var(--red); }
+  .kpi-change.neutral { color: var(--gray-400); }
+
+  /* ─── TWO COLUMNS ─── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 10px;
+    border: 1px solid var(--gray-100);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .card-title-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  .card-action {
+    font-size: 12px;
+    color: var(--navy);
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+
+  .card-action:hover { background: rgba(30,58,138,0.07); }
+
+  .card-body { padding: 0; }
+
+  /* ─── OT TABLE ─── */
+  .ot-table { width: 100%; border-collapse: collapse; }
+
+  .ot-table thead tr {
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .ot-table th {
+    padding: 9px 16px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--gray-400);
+    text-align: left;
+  }
+
+  .ot-table td {
+    padding: 11px 16px;
+    font-size: 13px;
+    color: var(--gray-800);
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .ot-table tr:last-child td { border-bottom: none; }
+  .ot-table tbody tr:hover { background: var(--gray-bg); }
+
+  .folio {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--navy);
+    background: rgba(30,58,138,0.07);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .status-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status-badge.authorized { background: var(--yellow-light); color: var(--yellow); }
+  .status-badge.in-process { background: rgba(30,58,138,0.1); color: var(--navy); }
+  .status-badge.finished { background: var(--green-light); color: var(--green); }
+
+  .location-tag {
+    font-size: 11.5px;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .responsible-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .resp-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  /* ─── HVAC WIDGET ─── */
+  .hvac-unit {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .hvac-unit:last-child { border-bottom: none; }
+
+  .hvac-unit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .hvac-unit-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+
+  .hvac-unit-ts {
+    font-size: 10.5px;
+    color: var(--gray-400);
+    font-family: var(--mono);
+  }
+
+  .param-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .param-block { }
+
+  .param-label {
+    font-size: 10px;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  .param-values {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .param-before {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--gray-400);
+    text-decoration: line-through;
+  }
+
+  .param-after {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .param-unit {
+    font-size: 10px;
+    color: var(--gray-400);
+  }
+
+  .param-delta {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+
+  .param-delta.good { background: var(--green-light); color: var(--green); }
+  .param-delta.warn { background: var(--red-light); color: var(--red); }
+
+  /* ─── FINANCIAL CARD ─── */
+  .finance-summary {
+    padding: 16px 18px;
+  }
+
+  .finance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .finance-row:last-child { border-bottom: none; }
+
+  .finance-label {
+    font-size: 13px;
+    color: var(--gray-600);
+  }
+
+  .finance-amount {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .finance-amount.pending { color: var(--yellow); }
+  .finance-amount.received { color: var(--green); }
+  .finance-amount.factoring { color: var(--navy); }
+
+  .progress-bar-wrap {
+    margin-top: 14px;
+  }
+
+  .progress-label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .progress-label { font-size: 11px; color: var(--gray-400); }
+  .progress-pct { font-size: 11px; font-weight: 600; color: var(--gray-600); }
+
+  .progress-bar {
+    height: 7px;
+    background: var(--gray-100);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.orange { background: var(--orange); }
+  .progress-fill.navy { background: var(--navy); }
+
+  /* ─── INVENTORY ALERTS ─── */
+  .stock-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .stock-item:last-child { border-bottom: none; }
+
+  .stock-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--red-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--red);
+  }
+
+  .stock-icon.warn { background: var(--yellow-light); color: var(--yellow); }
+
+  .stock-info { flex: 1; }
+  .stock-name { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+  .stock-meta { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
+  .stock-qty {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .stock-qty.critical { color: var(--red); }
+  .stock-qty.warn { color: var(--yellow); }
+  .stock-min { font-size: 10px; color: var(--gray-400); text-align: right; }
+
+  /* ─── HR CARD ─── */
+  .vacation-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .vacation-item:last-child { border-bottom: none; }
+
+  .vac-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .vac-info { flex: 1; }
+  .vac-name { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+  .vac-period { font-size: 11px; color: var(--gray-400); font-family: var(--mono); }
+
+  .vac-actions { display: flex; gap: 5px; }
+
+  .vac-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .vac-btn-approve { background: var(--green-light); color: var(--green); }
+  .vac-btn-approve:hover { background: #bbf7d0; }
+  .vac-btn-reject { background: var(--red-light); color: var(--red); }
+  .vac-btn-reject:hover { background: #fecaca; }
+
+  /* ─── STATUS DISTRIBUTION ─── */
+  .status-donut-wrap {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .donut-svg { flex-shrink: 0; }
+
+  .donut-legend { flex: 1; }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+  }
+
+  .legend-left { display: flex; align-items: center; gap: 7px; }
+
+  .legend-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-name { font-size: 12.5px; color: var(--gray-600); }
+  .legend-val { font-size: 12.5px; font-weight: 600; color: var(--gray-800); font-family: var(--mono); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 10px; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .two-col { grid-template-columns: 1fr; }
+    .three-col { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    :root { --sidebar-width: 0px; }
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .three-col { grid-template-columns: 1fr; }
+    .search-wrap { width: 180px; }
+    .content { padding: 16px 16px 40px; }
+    .topbar { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 2L3 7v6l7 5 7-5V7L10 2z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M10 7v6M7 8.5l3 1.5 3-1.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">Conecte</div>
+        <div class="logo-sub">Industrial &amp; HVAC</div>
+      </div>
+    </div>
+  </div>
+
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Operaciones</div>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M6 8h8M6 12h5"/></svg>
+        Panel Principal
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4"/><path d="M15 3l2 2-6 6-3 1 1-3 6-6z"/></svg>
+        Órdenes de Trabajo
+        <span class="nav-badge">12</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10a7 7 0 1014 0A7 7 0 003 10zm7 0v-3m0 3l2 2"/></svg>
+        Reportes HVAC
+      </a>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-label">Logística</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12l-1 8H5L4 4zM4 4H2M7 16a1 1 0 100 2 1 1 0 000-2zm7 0a1 1 0 100 2 1 1 0 000-2z"/></svg>
+        Inventario
+        <span class="nav-badge">3</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="14" height="10" rx="1.5"/><path d="M7 6V4.5A1.5 1.5 0 018.5 3h3A1.5 1.5 0 0113 4.5V6M8 11h4"/></svg>
+        Solicitudes de Materiales
+      </a>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-label">Finanzas</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2v16M6 5h6a2 2 0 010 4H8a2 2 0 000 4h7"/></svg>
+        Cotizaciones
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h14v12H3zM7 8h6M7 12h4"/></svg>
+        Facturas CONE
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h14M3 10h14M3 13h7"/><circle cx="14.5" cy="13" r="2.5"/><path d="M14.5 11v1m0 2v1"/></svg>
+        E-Factor
+      </a>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos Humanos</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="6" r="3"/><path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6"/></svg>
+        Personal
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="14" height="13" rx="1.5"/><path d="M7 2v3M13 2v3M3 9h14"/></svg>
+        Asistencia
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 15V7l6-4 6 4v8M8 15V11h4v4"/></svg>
+        Vacaciones
+        <span class="nav-badge">4</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar">RA</div>
+      <div>
+        <div class="user-name">Roberto Álvarez</div>
+        <div class="user-role">Administrador</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+  <!-- ─── TOPBAR ─── -->
+  <header class="topbar">
+    <div>
+      <span class="topbar-title">Panel de Control</span>
+      <span class="topbar-date">25 Jun 2025</span>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3"/></svg>
+      </span>
+      <input class="search-input" id="searchInput" type="text" placeholder="Buscar OT, técnico, folio..." autocomplete="off">
+      <span class="search-shortcut">⌘K</span>
+      <div class="search-dropdown" id="searchDropdown">
+        <div class="search-section-label">Órdenes de Trabajo</div>
+        <div class="search-result">
+          <div class="search-result-icon" style="background:rgba(30,58,138,0.1);color:var(--navy);font-size:11px;font-family:var(--mono);font-weight:600;">OT</div>
+          <div>
+            <div class="search-result-title">OT-2025-047</div>
+            <div class="search-result-sub">Planta Norte · En Proceso · Carlos Medina</div>
+          </div>
+        </div>
+        <div class="search-result">
+          <div class="search-result-icon" style="background:rgba(30,58,138,0.1);color:var(--navy);font-size:11px;font-family:var(--mono);font-weight:600;">OT</div>
+          <div>
+            <div class="search-result-title">OT-2025-051</div>
+            <div class="search-result-sub">Almacén B · Autorizada · Luis Herrera</div>
+          </div>
+        </div>
+        <div class="search-section-label">Personal</div>
+        <div class="search-result">
+          <div class="search-result-icon" style="background:rgba(30,58,138,0.08);color:var(--navy);font-size:11px;font-weight:600;">CM</div>
+          <div>
+            <div class="search-result-title">Carlos Medina</div>
+            <div class="search-result-sub">Técnico HVAC · Activo hoy</div>
+          </div>
+        </div>
+        <div class="search-result">
+          <div class="search-result-icon" style="background:rgba(30,58,138,0.08);color:var(--navy);font-size:11px;font-weight:600;">LH</div>
+          <div>
+            <div class="search-result-title">Luis Herrera</div>
+            <div class="search-result-sub">Técnico Mantenimiento · Vacaciones pendientes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="icon-btn">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a6 6 0 00-6 6c0 4-2 5-2 5h16s-2-1-2-5a6 6 0 00-6-6zM9 18a1.5 1.5 0 003 0"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <button class="icon-btn">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="6" r="3"/><path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── CONTENT ─── -->
+  <div class="content">
+
+    <!-- ALERT BANNER -->
+    <div class="alert-banner">
+      <div class="alert-icon-wrap">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2"><path d="M10 3l7.5 13H2.5L10 3z"/><path d="M10 8v4M10 14.5v.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="alert-text">
+        <div class="alert-headline">3 alertas activas requieren atención inmediata</div>
+        <div class="alert-body">Stock crítico en Refrigerante R-410A · OT-2025-039 vencida hace 2 días · 2 solicitudes de vacaciones sin responder</div>
+      </div>
+      <div class="alert-actions">
+        <button class="alert-btn alert-btn-primary">Ver alertas</button>
+        <button class="alert-btn alert-btn-ghost">Ignorar</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="section-header">
+      <span class="section-title">Resumen Operativo</span>
+      <span class="section-line"></span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-header">
+          <span class="kpi-label">OTs Activas</span>
+          <div class="kpi-icon blue">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4"/><path d="M15 3l2 2-6 6-3 1 1-3 6-6z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">12</div>
+        <div class="kpi-change up">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2l4-5z"/></svg>
+          +3 vs semana pasada
+        </div>
+      </div>
+
+      <div class="kpi-card orange">
+        <div class="kpi-header">
+          <span class="kpi-label">En Proceso</span>
+          <div class="kpi-icon orange">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2.5"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">7</div>
+        <div class="kpi-change neutral">— igual al promedio</div>
+      </div>
+
+      <div class="kpi-card green">
+        <div class="kpi-header">
+          <span class="kpi-label">Finalizadas (mes)</span>
+          <div class="kpi-icon green">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10l4 4 8-8"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">34</div>
+        <div class="kpi-change up">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2l4-5z"/></svg>
+          +8 vs mes anterior
+        </div>
+      </div>
+
+      <div class="kpi-card yellow">
+        <div class="kpi-header">
+          <span class="kpi-label">Cobranza Pend.</span>
+          <div class="kpi-icon yellow">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2v16M6 5h6a2 2 0 010 4H8a2 2 0 000 4h7"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">$284k</div>
+        <div class="kpi-change down">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 10L2 5h8l-4 5z"/></svg>
+          5 facturas vencidas
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICE PULSE + DONUT -->
+    <div class="section-header">
+      <span class="section-title">Service Pulse</span>
+      <span class="section-line"></span>
+    </div>
+
+    <div class="two-col" style="margin-bottom:24px;">
+      <!-- OT TABLE -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <span class="card-title-dot"></span>
+            Órdenes de Trabajo Activas
+          </span>
+          <a class="card-action" href="#">Ver todas →</a>
+        </div>
+        <div class="card-body">
+          <table class="ot-table">
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Descripción</th>
+                <th>Responsable</th>
+                <th>Estatus</th>
+                <th>Ubicación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="folio">OT-047</span></td>
+                <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Mantenimiento preventivo A/C sala servidores</td>
+                <td>
+                  <div class="responsible-chip">
+                    <div class="resp-avatar">CM</div>
+                    C. Medina
+                  </div>
+                </td>
+                <td><span class="status-badge in-process">En Proceso</span></td>
+                <td><span class="location-tag">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 00-4 4c0 4 4 8 4 8s4-4 4-8a4 4 0 00-4-4z"/><circle cx="8" cy="6" r="1.2"/></svg>
+                  Planta Norte
+                </span></td>
+              </tr>
+              <tr>
+                <td><span class="folio">OT-051</span></td>
+                <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Revisión compresor unidad 3</td>
+                <td>
+                  <div class="responsible-chip">
+                    <div class="resp-avatar">LH</div>
+                    L. Herrera
+                  </div>
+                </td>
+                <td><span class="status-badge authorized">Autorizada</span></td>
+                <td><span class="location-tag">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 00-4 4c0 4 4 8 4 8s4-4 4-8a4 4 0 00-4-4z"/><circle cx="8" cy="6" r="1.2"/></svg>
+                  Almacén B
+                </span></td>
+              </tr>
+              <tr>
+                <td><span class="folio">OT-039</span></td>
+                <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Carga de gas refrigerante unidad exterior</td>
+                <td>
+                  <div class="responsible-chip">
+                    <div class="resp-avatar" style="background:var(--orange);">JR</div>
+                    J. Ramírez
+                  </div>
+                </td>
+                <td><span class="status-badge" style="background:var(--red-light);color:var(--red);">Vencida</span></td>
+                <td><span class="location-tag">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 00-4 4c0 4 4 8 4 8s4-4 4-8a4 4 0 00-4-4z"/><circle cx="8" cy="6" r="1.2"/></svg>
+                  Oficinas Corp.
+                </span></td>
+              </tr>
+              <tr>
+                <td><span class="folio">OT-055</span></td>
+                <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Balanceo sistema de ductos piso 2</td>
+                <td>
+                  <div class="responsible-chip">
+                    <div class="resp-avatar" style="background:#7c3aed;">AR</div>
+                    A. Ríos
+                  </div>
+                </td>
+                <td><span class="status-badge in-process">En Proceso</span></td>
+                <td><span class="location-tag">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 00-4 4c0 4 4 8 4 8s4-4 4-8a4 4 0 00-4-4z"/><circle cx="8" cy="6" r="1.2"/></svg>
+                  Torre Ejecutiva
+                </span></td>
+              </tr>
+              <tr>
+                <td><span class="folio">OT-058</span></td>
+                <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Instalación termostato inteligente</td>
+                <td>
+                  <div class="responsible-chip">
+                    <div class="resp-avatar" style="background:var(--green);">PG</div>
+                    P. García
+                  </div>
+                </td>
+                <td><span class="status-badge finished">Terminada</span></td>
+                <td><span class="location-tag">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 00-4 4c0 4 4 8 4 8s4-4 4-8a4 4 0 00-4-4z"/><circle cx="8" cy="6" r="1.2"/></svg>
+                  Planta Sur
+                </span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STATUS DONUT -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Distribución de Estatus</span>
+          <span style="font-size:11px;color:var(--gray-400);font-family:var(--mono);">34 OTs mes</span>
+        </div>
+        <div class="status-donut-wrap">
+          <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#e5e7eb" stroke-width="14"/>
+            <!-- Terminadas: 58% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#16a34a" stroke-width="14"
+              stroke-dasharray="145.7 105.3" stroke-dashoffset="0"
+              transform="rotate(-90 55 55)"/>
+            <!-- En Proceso: 28% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#1e3a8a" stroke-width="14"
+              stroke-dasharray="70.4 180.6" stroke-dashoffset="-145.7"
+              transform="rotate(-90 55 55)"/>
+            <!-- Autorizada: 10% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#ca8a04" stroke-width="14"
+              stroke-dasharray="25.1 226" stroke-dashoffset="-216.1"
+              transform="rotate(-90 55 55)"/>
+            <!-- Vencidas: 4% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#dc2626" stroke-width="14"
+              stroke-dasharray="10.1 241" stroke-dashoffset="-241.2"
+              transform="rotate(-90 55 55)"/>
+            <text x="55" y="51" text-anchor="middle" font-size="18" font-weight="600" fill="#1f2937" font-family="DM Mono, monospace">34</text>
+            <text x="55" y="64" text-anchor="middle" font-size="9" fill="#9ca3af" font-family="DM Sans, sans-serif">total</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item">
+              <div class="legend-left">
+                <div class="legend-dot" style="background:var(--green);"></div>
+                <span class="legend-name">Terminadas</span>
+              </div>
+              <span class="legend-val">20</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-left">
+                <div class="legend-dot" style="background:var(--navy);"></div>
+                <span class="legend-name">En Proceso</span>
+              </div>
+              <span class="legend-val">7</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-left">
+                <div class="legend-dot" style="background:var(--yellow);"></div>
+                <span class="legend-name">Autorizadas</span>
+              </div>
+              <span class="legend-val">5</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-left">
+                <div class="legend-dot" style="background:var(--red);"></div>
+                <span class="legend-name">Vencidas</span>
+              </div>
+              <span class="legend-val">2</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:0 18px 16px;">
+          <div class="progress-bar-wrap">
+            <div class="progress-label-row">
+              <span class="progress-label">Eficiencia de cierre</span>
+              <span class="progress-pct">82%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill green" style="width:82%;"></div>
+            </div>
+            <div class="progress-label-row" style="margin-top:8px;">
+              <span class="progress-label">Técnicos en campo hoy</span>
+              <span class="progress-pct">5 / 7</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill navy" style="width:71%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HVAC + FINANCE + ALERTS -->
+    <div class="section-header">
+      <span class="section-title">HVAC · Finanzas · Alertas</span>
+      <span class="section-line"></span>
+    </div>
+
+    <div class="three-col">
+
+      <!-- HVAC HEALTH -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M3 10a7 7 0 1014 0A7 7 0 003 10zm7 0v-3m0 3l2 2"/></svg>
+            HVAC Health
+          </span>
+          <a class="card-action" href="#">Historial</a>
+        </div>
+        <div class="card-body">
+
+          <div class="hvac-unit">
+            <div class="hvac-unit-header">
+              <span class="hvac-unit-name">Unidad #3 — Planta Norte</span>
+              <span class="hvac-unit-ts">Hoy 09:41</span>
+            </div>
+            <div class="param-row">
+              <div class="param-block">
+                <div class="param-label">Amperaje</div>
+                <div class="param-values">
+                  <span class="param-before">14.2</span>
+                  <span class="param-after">11.8</span>
+                  <span class="param-unit">A</span>
+                  <span class="param-delta good">-17%</span>
+                </div>
+              </div>
+              <div class="param-block">
+                <div class="param-label">Presión Alta</div>
+                <div class="param-values">
+                  <span class="param-before">320</span>
+                  <span class="param-after">285</span>
+                  <span class="param-unit">PSI</span>
+                  <span class="param-delta good">-11%</span>
+                </div>
+              </div>
+            </div>
+            <div class="param-row" style="margin-top:8px;">
+              <div class="param-block">
+                <div class="param-label">Presión Baja</div>
+                <div class="param-values">
+                  <span class="param-before">58</span>
+                  <span class="param-after">72</span>
+                  <span class="param-unit">PSI</span>
+                  <span class="param-delta good">+24%</span>
+                </div>
+              </div>
+              <div class="param-block">
+                <div class="param-label">Estado</div>
+                <div class="param-values">
+                  <span class="status-badge finished" style="margin-top:2px;">Óptimo</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hvac-unit">
+            <div class="hvac-unit-header">
+              <span class="hvac-unit-name">Unidad #7 — Torre Ejecutiva</span>
+              <span class="hvac-unit-ts">Ayer 15:22</span>
+            </div>
+            <div class="param-row">
+              <div class="param-block">
+                <div class="param-label">Amperaje</div>
+                <div class="param-values">
+                  <span class="param-before">18.1</span>
+                  <span class="param-after">19.4</span>
+                  <span class="param-unit">A</span>
+                  <span class="param-delta warn">+7%</span>
+                </div>
+              </div>
+              <div class="param-block">
+                <div class="param-label">Presión Alta</div>
+                <div class="param-values">
+                  <span class="param-before">295</span>
+                  <span class="param-after">330</span>
+                  <span class="param-unit">PSI</span>
+                  <span class="param-delta warn">+12%</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:8px;">
+              <span class="status-badge authorized">Requiere seguimiento</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FINANCIAL OVERVIEW -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--navy)" stroke-width="1.5"><path d="M3 4h14v12H3zM7 8h6M7 12h4"/></svg>
+            Resumen Financiero
+          </span>
+          <a class="card-action" href="#">Facturas →</a>
+        </div>
+        <div class="finance-summary">
+          <div class="finance-row">
+            <span class="finance-label">Facturas pendientes</span>
+            <span class="finance-amount pending">$284,500</span>
+          </div>
+          <div class="finance-row">
+            <span class="finance-label">Cobrado (transferencia)</span>
+            <span class="finance-amount received">$512,000</span>
+          </div>
+          <div class="finance-row">
+            <span class="finance-label">E-Factor (factoraje)</span>
+            <span class="finance-amount factoring">$198,200</span>
+          </div>
+          <div class="finance-row">
+            <span class="finance-label">Cotizaciones enviadas</span>
+            <span class="finance-amount" style="color:var(--gray-600);">$840,000</span>
+          </div>
+
+          <div class="progress-bar-wrap" style="margin-top:16px;">
+            <div class="progress-label-row">
+              <span class="progress-label">Cobrado vs pendiente</span>
+              <span class="progress-pct">64%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill green" style="width:64%;"></div>
+            </div>
+            <div class="progress-label-row" style="margin-top:8px;">
+              <span class="progress-label">E-Factor activado</span>
+              <span class="progress-pct">41%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill navy" style="width:41%;"></div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;padding:10px 12px;background:var(--yellow-light);border-radius:8px;display:flex;align-items:center;gap:8px;">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--yellow)" stroke-width="2"><path d="M10 3l7.5 13H2.5L10 3z"/><path d="M10 8v4M10 14v.5" stroke-linecap="round"/></svg>
+            <span style="font-size:12px;color:var(--yellow);font-weight:500;">5 facturas vencidas · CONE-2025-018..022</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRITICAL ALERTS: STOCK + VACATIONS -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <!-- INVENTORY ALERTS -->
+        <div class="card" style="flex:1;">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--red)" stroke-width="1.5"><path d="M4 4h12l-1 8H5L4 4z"/><path d="M7 16a1 1 0 100 2 1 1 0 000-2zm7 0a1 1 0 100 2 1 1 0 000-2z"/></svg>
+              Stock Crítico
+            </span>
+            <a class="card-action" href="#">Inventario →</a>
+          </div>
+          <div class="card-body">
+            <div class="stock-item">
+              <div class="stock-icon">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3l7 4v6l-7 4-7-4V7l7-4z"/></svg>
+              </div>
+              <div class="stock-info">
+                <div class="stock-name">Refrigerante R-410A</div>
+                <div class="stock-meta">Mín. 10 kg · Almacén principal</div>
+              </div>
+              <div>
+                <div class="stock-qty critical">3 kg</div>
+                <div class="stock-min">⚠ crítico</div>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-icon warn">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="14" height="10" rx="1.5"/><path d="M7 6V4.5A1.5 1.5 0 018.5 3h3A1.5 1.5 0 0113 4.5V6"/></svg>
+              </div>
+              <div class="stock-info">
+                <div class="stock-name">Filtros HEPA 12"</div>
+                <div class="stock-meta">Mín. 8 pzas · Bodega Sur</div>
+              </div>
+              <div>
+                <div class="stock-qty warn">6 pzas</div>
+                <div class="stock-min">⚠ bajo</div>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-icon warn">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M7 6l-4 4 4 4M13 6l4 4-4 4"/></svg>
+              </div>
+              <div class="stock-info">
+                <div class="stock-name">Cable THW 10 AWG</div>
+                <div class="stock-meta">Mín. 50 m · Almacén eléctrico</div>
+              </div>
+              <div>
+                <div class="stock-qty warn">30 m</div>
+                <div class="stock-min">⚠ bajo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VACATION REQUESTS -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--navy)" stroke-width="1.5"><rect x="3" y="4" width="14" height="13" rx="1.5"/><path d="M7 2v3M13 2v3M3 9h14"/></svg>
+              Vacaciones Pendientes
+            </span>
+            <span class="nav-badge" style="background:var(--navy);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;">4</span>
+          </div>
+          <div class="card-body">
+            <div class="vacation-item">
+              <div class="vac-avatar">CM</div>
+              <div class="vac-info">
+                <div class="vac-name">Carlos Medina</div>
+                <div class="vac-period">Jul 14 – Jul 21</div>
+              </div>
+              <div class="vac-actions">
+                <button class="vac-btn vac-btn-approve">✓</button>
+                <button class="vac-btn vac-btn-reject">✕</button>
+              </div>
+            </div>
+            <div class="vacation-item">
+              <div class="vac-avatar" style="background:var(--orange);">LH</div>
+              <div class="vac-info">
+                <div class="vac-name">Luis Herrera</div>
+                <div class="vac-period">Jul 28 – Ago 04</div>
+              </div>
+              <div class="vac-actions">
+                <button class="vac-btn vac-btn-approve">✓</button>
+                <button class="vac-btn vac-btn-reject">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const searchDropdown = document.getElementById('searchDropdown');
+
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.length > 0 || true) {
+      searchDropdown.classList.add('visible');
+    }
+  });
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    searchDropdown.classList.toggle('visible', q.length > 0);
+    const results = searchDropdown.querySelectorAll('.search-result');
+    results.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      r.style.display = text.includes(q) ? 'flex' : 'none';
+    });
+    const sections = searchDropdown.querySelectorAll('.search-section-label');
+    sections.forEach(s => {
+      let next = s.nextElementSibling;
+      let hasVisible = false;
+      while (next && !next.classList.contains('search-section-label')) {
+        if (next.style.display !== 'none') hasVisible = true;
+        next = next.nextElementSibling;
+      }
+      s.style.display = hasVisible ? 'block' : 'none';
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrap')) {
+      searchDropdown.classList.remove('visible');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      searchInput.focus();
+      searchDropdown.classList.add('visible');
+    }
+    if (e.key === 'Escape') {
+      searchDropdown.classList.remove('visible');
+      searchInput.blur();
+    }
+  });
+
+  document.querySelectorAll('.vac-btn-approve').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const item = this.closest('.vacation-item');
+      item.style.transition = 'opacity 0.3s';
+      item.style.opacity = '0';
+      setTimeout(() => item.remove(), 300);
+    });
+  });
+
+  document.querySelectorAll('.vac-btn-reject').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const item = this.closest('.vacation-item');
+      item.style.transition = 'background 0.2s';
+      item.style.background = '#fee2e2';
+      setTimeout(() => {
+        item.style.transition = 'opacity 0.3s';
+        item.style.opacity = '0';
+        setTimeout(() => item.remove(), 300);
+      }, 400);
+    });
+  });
+
+  document.querySelector('.alert-btn-ghost').addEventListener('click', function() {
+    const banner = this.closest('.alert-banner');
+    banner.style.transition = 'opacity 0.3s, max-height 0.4s, margin 0.3s';
+    banner.style.opacity = '0';
+    banner.style.maxHeight = '0';
+    banner.style.overflow = 'hidden';
+    banner.style.marginBottom = '0';
+    banner.style.padding = '0';
+  });
+</script>
+</body>
+</html>
