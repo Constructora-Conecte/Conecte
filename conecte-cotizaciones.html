@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conecte — Cotizaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --navy:        #1e3a8a;
+  --navy-dark:   #0f1f4d;
+  --navy-mid:    #162d6e;
+  --navy-light:  #2d52b8;
+  --navy-pale:   rgba(30,58,138,0.08);
+  --orange:      #f97316;
+  --orange-pale: rgba(249,115,22,0.10);
+  --orange-deep: #c2410c;
+  --white:       #ffffff;
+  --bg:          #f3f4f6;
+  --bg-2:        #e9eaec;
+  --gray-100:    #f3f4f6;
+  --gray-200:    #e5e7eb;
+  --gray-300:    #d1d5db;
+  --gray-400:    #9ca3af;
+  --gray-500:    #6b7280;
+  --gray-700:    #374151;
+  --gray-800:    #1f2937;
+  --green:       #16a34a;
+  --green-pale:  #dcfce7;
+  --yellow:      #ca8a04;
+  --yellow-pale: #fef9c3;
+  --red:         #dc2626;
+  --red-pale:    #fee2e2;
+  --blue-pale:   #dbeafe;
+  --blue-text:   #1d4ed8;
+  --sidebar-w:   220px;
+  --topbar-h:    58px;
+  --font:        'DM Sans', sans-serif;
+  --display:     'Syne', sans-serif;
+  --mono:        'DM Mono', monospace;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.14);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--gray-800);
+  min-height: 100vh;
+  display: flex;
+  font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy-dark);
+  height: 100vh;
+  position: fixed;
+  top: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(249,115,22,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sb-logo {
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-logo-icon {
+  width: 30px; height: 30px;
+  background: var(--orange);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.sb-logo-icon svg { width: 16px; height: 16px; }
+
+.sb-logo-name {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.sb-logo-sub {
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.sb-section { padding: 16px 10px 4px; }
+
+.sb-label {
+  font-size: 9.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  padding: 0 6px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  color: rgba(255,255,255,0.48);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+  margin-bottom: 1px;
+  position: relative;
+}
+
+.sb-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+
+.sb-item.active {
+  background: rgba(249,115,22,0.14);
+  color: #fff;
+}
+
+.sb-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 5px; bottom: 5px;
+  width: 3px;
+  background: var(--orange);
+  border-radius: 0 2px 2px 0;
+}
+
+.sb-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.sb-badge {
+  margin-left: auto;
+  background: var(--orange);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-family: var(--mono);
+}
+
+.sb-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 2px 10px;
+}
+
+.sb-footer {
+  margin-top: auto;
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.sb-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sb-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--navy-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+
+.sb-user-name { font-size: 12px; color: rgba(255,255,255,0.65); font-weight: 500; }
+.sb-user-role { font-size: 10.5px; color: rgba(255,255,255,0.3); }
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  color: rgba(255,255,255,0.3);
+  font-size: 11px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font);
+  transition: all 0.15s;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.logout-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6); }
+.logout-btn svg { width: 12px; height: 12px; }
+
+/* ═══════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.crumb-parent { color: var(--gray-400); }
+.crumb-sep { color: var(--gray-300); }
+.crumb-current { color: var(--gray-800); font-weight: 600; }
+
+.topbar-search {
+  margin-left: auto;
+  position: relative;
+  width: 260px;
+}
+
+.topbar-search input {
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 0 12px 0 32px;
+  font-family: var(--font);
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--gray-800);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.topbar-search input:focus {
+  border-color: var(--navy);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(30,58,138,0.07);
+}
+
+.topbar-search svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  pointer-events: none;
+  width: 14px; height: 14px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 34px; height: 34px;
+  border: none;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-500);
+  transition: background 0.15s;
+}
+
+.icon-btn:hover { background: var(--gray-200); }
+.icon-btn svg { width: 15px; height: 15px; }
+
+/* ── CONTENT ── */
+.content {
+  padding: 22px 24px 40px;
+  flex: 1;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-800);
+  letter-spacing: -0.4px;
+}
+
+.page-sub {
+  font-size: 12.5px;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn svg { width: 14px; height: 14px; }
+
+.btn-primary {
+  background: var(--navy);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--navy-light); box-shadow: 0 4px 12px rgba(30,58,138,0.3); }
+
+.btn-orange {
+  background: var(--orange);
+  color: #fff;
+}
+.btn-orange:hover { background: var(--orange-deep); box-shadow: 0 4px 12px rgba(249,115,22,0.3); }
+
+.btn-ghost {
+  background: var(--white);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
+}
+.btn-ghost:hover { background: var(--bg); border-color: var(--gray-300); }
+
+.btn-danger {
+  background: var(--red-pale);
+  color: var(--red);
+}
+.btn-danger:hover { background: #fecaca; }
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+  background: var(--white);
+  color: var(--gray-500);
+  border-color: var(--gray-200);
+}
+
+.filter-chip:hover { border-color: var(--navy); color: var(--navy); }
+
+.filter-chip.active {
+  background: var(--navy-pale);
+  color: var(--navy);
+  border-color: rgba(30,58,138,0.25);
+  font-weight: 600;
+}
+
+.filter-chip .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.filter-sep { flex: 1; }
+
+.sort-select {
+  height: 32px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  font-family: var(--font);
+  font-size: 12.5px;
+  color: var(--gray-600);
+  background: var(--white);
+  outline: none;
+  cursor: pointer;
+}
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.stat-card.c-navy::after   { background: var(--navy); }
+.stat-card.c-orange::after { background: var(--orange); }
+.stat-card.c-green::after  { background: var(--green); }
+.stat-card.c-yellow::after { background: var(--yellow); }
+
+.stat-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--gray-500);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--gray-800);
+  letter-spacing: -0.5px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-delta {
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+/* ── TABLE CARD ── */
+.table-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table-card-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.table-count {
+  font-size: 11.5px;
+  color: var(--gray-400);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: var(--mono);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead tr {
+  border-bottom: 1px solid var(--gray-100);
+}
+
+th {
+  padding: 9px 14px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--gray-400);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+th:hover { color: var(--gray-700); }
+
+th.sorted { color: var(--navy); }
+th .sort-icon { margin-left: 3px; opacity: 0.5; font-size: 9px; }
+th.sorted .sort-icon { opacity: 1; }
+
+td {
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+
+/* ── TABLE CELLS ── */
+.folio-badge {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--navy);
+  background: var(--navy-pale);
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.client-cell { max-width: 180px; }
+.client-name { font-weight: 500; color: var(--gray-800); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.client-rfc  { font-size: 10.5px; color: var(--gray-400); font-family: var(--mono); }
+
+.amount-cell {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-800);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.amount-sub {
+  font-size: 10.5px;
+  color: var(--gray-400);
+  font-weight: 400;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-pill::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.st-enviado     { background: var(--blue-pale);   color: var(--blue-text); }
+.st-aceptado    { background: var(--green-pale);   color: var(--green); }
+.st-rechazado   { background: var(--red-pale);     color: var(--red); }
+.st-pendiente   { background: var(--yellow-pale);  color: var(--yellow); }
+.st-seguimiento { background: rgba(30,58,138,0.08); color: var(--navy); }
+
+.date-cell {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+/* ── ROW ACTIONS ── */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+tr:hover .row-actions { opacity: 1; }
+
+.action-icon {
+  width: 28px; height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-400);
+  transition: all 0.15s;
+}
+
+.action-icon:hover.edit   { background: var(--navy-pale); color: var(--navy); }
+.action-icon:hover.view   { background: var(--green-pale); color: var(--green); }
+.action-icon:hover.del    { background: var(--red-pale); color: var(--red); }
+.action-icon:hover.pdf    { background: var(--orange-pale); color: var(--orange); }
+.action-icon svg { width: 13px; height: 13px; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  padding: 48px;
+  text-align: center;
+}
+.empty-icon {
+  width: 48px; height: 48px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+  color: var(--gray-300);
+}
+.empty-icon svg { width: 22px; height: 22px; }
+.empty-title { font-weight: 600; color: var(--gray-600); font-size: 14px; margin-bottom: 4px; }
+.empty-sub { font-size: 12.5px; color: var(--gray-400); }
+
+/* ── LOADING ── */
+.loading-row td {
+  padding: 32px;
+  text-align: center;
+  color: var(--gray-400);
+  font-size: 13px;
+}
+
+.pulse-dots {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.pulse-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--navy);
+  opacity: 0.3;
+  animation: pulseDot 1.2s ease-in-out infinite;
+}
+.pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+.pulse-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.1); }
+}
+
+/* ── PAGINATION ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--gray-100);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page-info {
+  font-size: 12px;
+  color: var(--gray-400);
+  font-family: var(--mono);
+}
+
+.page-btns { display: flex; gap: 4px; }
+
+.page-btn {
+  width: 30px; height: 30px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-600);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+
+.page-btn:hover { border-color: var(--navy); color: var(--navy); }
+.page-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════
+   DELETE CONFIRM MODAL
+═══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,31,77,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  width: 380px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--red-pale);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+
+.modal-icon svg { width: 20px; height: 20px; color: var(--red); }
+.modal-title { font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--gray-800); margin-bottom: 6px; }
+.modal-body  { font-size: 13px; color: var(--gray-500); line-height: 1.6; margin-bottom: 22px; }
+.modal-body strong { color: var(--gray-800); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+.toast-wrap {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+  animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  min-width: 240px;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toast.success { background: var(--green-pale); color: var(--green); border: 1px solid rgba(22,163,74,0.2); }
+.toast.error   { background: var(--red-pale);   color: var(--red);   border: 1px solid rgba(220,38,38,0.2); }
+.toast.info    { background: var(--blue-pale);   color: var(--blue-text); border: 1px solid rgba(29,78,216,0.15); }
+.toast svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .stats-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (max-width: 860px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .stats-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .topbar-search { width: 160px; }
+  .content { padding: 16px 14px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">
+      <svg viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.8">
+        <path d="M10 2L3 7v6l7 5 7-5V7L10 2z" stroke-linejoin="round"/>
+        <path d="M10 7v5M7.5 9l2.5 1.5 2.5-1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="sb-logo-name">Conecte</div>
+      <div class="sb-logo-sub">Portal Admin</div>
+    </div>
+  </div>
+
+  <nav>
+    <div class="sb-section">
+      <div class="sb-label">Operaciones</div>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+        Panel
+      </a>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 2.5H4a1.5 1.5 0 00-1.5 1.5v9A1.5 1.5 0 004 14.5h8a1.5 1.5 0 001.5-1.5V8M10.5 2l2.5 2.5L8 9l-2 .5L6.5 7l4-5z"/></svg>
+        Órdenes de Trabajo
+        <span class="sb-badge">12</span>
+      </a>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 5.5v3l1.5 1.5"/></svg>
+        Reportes HVAC
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-label">Finanzas</div>
+      <a class="sb-item active" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><path d="M5.5 7h5M5.5 9.5h3"/></svg>
+        Cotizaciones
+      </a>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><path d="M5.5 6h5M5.5 8.5h5M5.5 11h3"/></svg>
+        Facturas CONE
+      </a>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M5 4h4.5a2 2 0 010 4H6a2 2 0 000 4H11"/></svg>
+        E-Factor
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-label">Logística</div>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h10l-1 7H4L3 3zM3 3H1.5M6 13a.75.75 0 100 1.5.75.75 0 000-1.5zm5 0a.75.75 0 100 1.5.75.75 0 000-1.5z"/></svg>
+        Inventario
+        <span class="sb-badge">3</span>
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-label">Recursos Humanos</div>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>
+        Personal
+      </a>
+      <a class="sb-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5.5 1.5v2M10.5 1.5v2M2 7h12"/></svg>
+        Vacaciones
+        <span class="sb-badge">4</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sidebarAvatar">--</div>
+      <div>
+        <div class="sb-user-name" id="sidebarName">Cargando...</div>
+        <div class="sb-user-role" id="sidebarRole">—</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.5 5.5l3 2.5-3 2.5M6.5 8H13.5M6.5 2.5h-4a1 1 0 00-1 1v9a1 1 0 001 1h4"/></svg>
+      Cerrar sesión
+    </button>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-crumb">
+      <span class="crumb-parent">Finanzas</span>
+      <span class="crumb-sep">/</span>
+      <span class="crumb-current">Cotizaciones</span>
+    </div>
+
+    <div class="topbar-search">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5"/></svg>
+      <input type="text" id="searchBar" placeholder="Buscar folio, cliente, RFC…" oninput="onSearch(this.value)">
+    </div>
+
+    <div class="topbar-right">
+      <button class="icon-btn" title="Recargar datos" onclick="loadCotizaciones()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8A5.5 5.5 0 112 8M13.5 8V5M13.5 8H10.5"/></svg>
+      </button>
+      <button class="btn btn-orange" onclick="openNewCotizacion()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+        Nueva Cotización
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card c-navy">
+        <div class="stat-label">Total Cotizaciones</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-delta">Este mes</div>
+      </div>
+      <div class="stat-card c-green">
+        <div class="stat-label">Aceptadas</div>
+        <div class="stat-value" id="statAceptadas">—</div>
+        <div class="stat-delta">—</div>
+      </div>
+      <div class="stat-card c-yellow">
+        <div class="stat-label">Pendientes</div>
+        <div class="stat-value" id="statPendientes">—</div>
+        <div class="stat-delta">—</div>
+      </div>
+      <div class="stat-card c-orange">
+        <div class="stat-label">Monto Total</div>
+        <div class="stat-value" id="statMonto">—</div>
+        <div class="stat-delta">Suma de todas</div>
+      </div>
+    </div>
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Cotizaciones</div>
+        <div class="page-sub">Gestión de cotizaciones emitidas por Conecte</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="exportCSV()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M2.5 12v1a.5.5 0 00.5.5h10a.5.5 0 00.5-.5v-1"/></svg>
+          Exportar CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <button class="filter-chip active" data-filter="all"     onclick="setFilter('all',this)">Todas</button>
+      <button class="filter-chip"        data-filter="Enviado"     onclick="setFilter('Enviado',this)"><span class="dot"></span>Enviado</button>
+      <button class="filter-chip"        data-filter="Aceptado"    onclick="setFilter('Aceptado',this)"><span class="dot"></span>Aceptado</button>
+      <button class="filter-chip"        data-filter="Pendiente"   onclick="setFilter('Pendiente',this)"><span class="dot"></span>Pendiente</button>
+      <button class="filter-chip"        data-filter="Rechazado"   onclick="setFilter('Rechazado',this)"><span class="dot"></span>Rechazado</button>
+      <button class="filter-chip"        data-filter="Seguimiento" onclick="setFilter('Seguimiento',this)"><span class="dot"></span>Seguimiento</button>
+      <span class="filter-sep"></span>
+      <select class="sort-select" onchange="setSort(this.value)">
+        <option value="fecha-desc">Fecha ↓ (más reciente)</option>
+        <option value="fecha-asc">Fecha ↑ (más antigua)</option>
+        <option value="monto-desc">Monto ↓</option>
+        <option value="monto-asc">Monto ↑</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <span style="font-size:13px;font-weight:600;color:var(--gray-800);">Listado de Cotizaciones</span>
+        <span class="table-count" id="tableCount">0 registros</span>
+        <span style="flex:1;"></span>
+        <span style="font-size:11px;color:var(--gray-400);" id="lastUpdated"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table id="cotTable">
+          <thead>
+            <tr>
+              <th onclick="sortBy('folio')">Folio <span class="sort-icon">↕</span></th>
+              <th onclick="sortBy('fecha')">Fecha <span class="sort-icon">↕</span></th>
+              <th>Cliente</th>
+              <th>Descripción</th>
+              <th onclick="sortBy('total')" style="text-align:right;">Total <span class="sort-icon">↕</span></th>
+              <th onclick="sortBy('estatus')">Estatus <span class="sort-icon">↕</span></th>
+              <th>Contacto</th>
+              <th style="text-align:center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="cotTbody">
+            <tr class="loading-row">
+              <td colspan="8">
+                <div class="pulse-dots">
+                  <div class="pulse-dot"></div>
+                  <div class="pulse-dot"></div>
+                  <div class="pulse-dot"></div>
+                </div>
+                &nbsp; Cargando cotizaciones...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span class="page-info" id="pageInfo">Página 1 de 1</span>
+        <div class="page-btns" id="pageBtns"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main><!-- /main -->
+
+<!-- ══════════════════════════════════════════
+     DELETE MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-icon">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 7h10l-1 9H6L5 7zM3 7h14M8 7V4.5A.5.5 0 018.5 4h3a.5.5 0 01.5.5V7M9 10.5v3M11 10.5v3"/></svg>
+    </div>
+    <div class="modal-title">Eliminar cotización</div>
+    <p class="modal-body">¿Estás seguro de que deseas eliminar la cotización <strong id="deleteTarget"></strong>? Esta acción no se puede deshacer y eliminará el registro de la hoja de cálculo.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancelar</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5M6.5 7v4M9.5 7v4"/></svg>
+        Sí, eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOAST CONTAINER
+══════════════════════════════════════════ -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ══════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────
+   CONFIG
+───────────────────────────────────────────── */
+const CFG = {
+  API_KEY:     'AIzaSyA2mDnl0kGWBdltS488u_5ZaXPWJFS18Ww',
+  SHEET_ID:    '1YhLwYYo_7C_1qB1NqU-puwMp8_TG1BfQcpkaAqJG8to',
+  RANGE_COT:   'Cotizaciones!A2:P',
+  RANGE_CLI:   'Clientes!A2:E',
+  RANGE_CON:   'Contactos!A2:E',
+  RANGE_ART:   'Articulos!A2:F',
+  RANGE_USR:   'Usuarios!A2:N',
+  PAGE_SIZE:   12,
+};
+
+// Column indices for Cotizaciones sheet (0-based)
+// A=ID_Cotizaciones, B=Fecha, C=ID_Clientes, D=Subtotal, E=Iva, F=Total,
+// G=Total_letras, H=PDF, I=Descripcion, J=Notas, K=Creacion,
+// L=ID_Usuarios, M=ID_Contactos, N=Vigencia, O=Estatus, P=ID_OC_Clientes
+const CC = {
+  ID:0, FECHA:1, ID_CLI:2, SUBTOTAL:3, IVA:4, TOTAL:5,
+  TOTAL_LETRAS:6, PDF:7, DESCRIPCION:8, NOTAS:9, CREACION:10,
+  ID_USR:11, ID_CON:12, VIGENCIA:13, ESTATUS:14, ID_OC:15
+};
+
+/* ─────────────────────────────────────────────
+   STATE
+───────────────────────────────────────────── */
+let ST = {
+  session:      null,
+  token:        null,
+  cotizaciones: [],
+  clientes:     {},
+  contactos:    {},
+  filtered:     [],
+  currentFilter:'all',
+  currentSort:  'fecha-desc',
+  searchQuery:  '',
+  page:         1,
+  deleteRow:    null,
+  deleteId:     null,
+};
+
+/* ─────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  const raw = sessionStorage.getItem('conecte_session');
+  if (raw) {
+    ST.session = JSON.parse(raw);
+    ST.token   = ST.session.token;
+    renderSidebarUser();
+  } else {
+    // Demo mode: allow viewing without real session
+    ST.session = { nombre: 'Demo Admin', nivel: 'Administrativo', correo: 'demo@conecte.com' };
+    ST.token   = null;
+    renderSidebarUser();
+    toast('info', 'Modo demo — conecta sesión real desde el login.');
+  }
+  loadCotizaciones();
+});
+
+function renderSidebarUser() {
+  const s = ST.session;
+  const initials = (s.nombre || 'U').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  document.getElementById('sidebarAvatar').textContent = initials;
+  document.getElementById('sidebarName').textContent   = s.nombre;
+  document.getElementById('sidebarRole').textContent   = s.nivel;
+}
+
+/* ─────────────────────────────────────────────
+   API HELPERS
+───────────────────────────────────────────── */
+function sheetsGet(range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CFG.SHEET_ID}/values/${encodeURIComponent(range)}?key=${CFG.API_KEY}`;
+  const headers = ST.token ? { Authorization: `Bearer ${ST.token}` } : {};
+  return fetch(url, { headers }).then(r => r.json()).then(d => d.values || []);
+}
+
+function sheetsAppend(range, values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CFG.SHEET_ID}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS&key=${CFG.API_KEY}`;
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(ST.token ? { Authorization: `Bearer ${ST.token}` } : {}) },
+    body: JSON.stringify({ values })
+  }).then(r => r.json());
+}
+
+function sheetsUpdate(range, values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CFG.SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED&key=${CFG.API_KEY}`;
+  return fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(ST.token ? { Authorization: `Bearer ${ST.token}` } : {}) },
+    body: JSON.stringify({ range, majorDimension: 'ROWS', values })
+  }).then(r => r.json());
+}
+
+function sheetsClear(range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CFG.SHEET_ID}/values/${encodeURIComponent(range)}:clear?key=${CFG.API_KEY}`;
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(ST.token ? { Authorization: `Bearer ${ST.token}` } : {}) },
+  }).then(r => r.json());
+}
+
+/* ─────────────────────────────────────────────
+   LOAD DATA
+───────────────────────────────────────────── */
+async function loadCotizaciones() {
+  setTableLoading(true);
+  try {
+    const [cotRows, cliRows, conRows] = await Promise.all([
+      sheetsGet(CFG.RANGE_COT),
+      sheetsGet(CFG.RANGE_CLI),
+      sheetsGet(CFG.RANGE_CON),
+    ]);
+
+    // Map clients: ID_Clientes → {nombre, rfc}
+    ST.clientes = {};
+    cliRows.forEach(r => {
+      if (r[0]) ST.clientes[r[0]] = { nombre: r[1] || '', rfc: r[0] || '' };
+    });
+
+    // Map contacts: ID_Contacto → nombre
+    ST.contactos = {};
+    conRows.forEach(r => {
+      if (r[0]) ST.contactos[r[0]] = r[2] || '';
+    });
+
+    // Parse cotizaciones with their sheet row number (1-based, +2 for header)
+    ST.cotizaciones = cotRows.map((r, i) => ({
+      _row:       i + 2,
+      id:         r[CC.ID]         || '',
+      fecha:      r[CC.FECHA]      || '',
+      id_cli:     r[CC.ID_CLI]     || '',
+      subtotal:   parseFloat(r[CC.SUBTOTAL]) || 0,
+      iva:        parseFloat(r[CC.IVA])      || 0,
+      total:      parseFloat(r[CC.TOTAL])    || 0,
+      descripcion:r[CC.DESCRIPCION]|| '',
+      notas:      r[CC.NOTAS]      || '',
+      id_usr:     r[CC.ID_USR]     || '',
+      id_con:     r[CC.ID_CON]     || '',
+      vigencia:   r[CC.VIGENCIA]   || '',
+      estatus:    r[CC.ESTATUS]    || 'Pendiente',
+      id_oc:      r[CC.ID_OC]      || '',
+      pdf:        r[CC.PDF]        || '',
+    }));
+
+    updateStats();
+    applyFiltersAndSort();
+    document.getElementById('lastUpdated').textContent =
+      'Actualizado ' + new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+
+  } catch(e) {
+    console.error(e);
+    toast('error', 'Error al cargar datos de la hoja. Verifica la sesión.');
+    setTableLoading(false);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   STATS
+───────────────────────────────────────────── */
+function updateStats() {
+  const all  = ST.cotizaciones;
+  const ace  = all.filter(c => c.estatus === 'Aceptado').length;
+  const pen  = all.filter(c => c.estatus === 'Pendiente').length;
+  const total = all.reduce((s,c) => s + c.total, 0);
+
+  document.getElementById('statTotal').textContent     = all.length;
+  document.getElementById('statAceptadas').textContent = ace;
+  document.getElementById('statPendientes').textContent= pen;
+  document.getElementById('statMonto').textContent     = '$' + total.toLocaleString('es-MX', { maximumFractionDigits:0 });
+}
+
+/* ─────────────────────────────────────────────
+   FILTER / SORT / SEARCH
+───────────────────────────────────────────── */
+function setFilter(f, el) {
+  ST.currentFilter = f;
+  ST.page = 1;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  applyFiltersAndSort();
+}
+
+function setSort(v) {
+  ST.currentSort = v;
+  ST.page = 1;
+  applyFiltersAndSort();
+}
+
+function onSearch(q) {
+  ST.searchQuery = q.toLowerCase();
+  ST.page = 1;
+  applyFiltersAndSort();
+}
+
+function sortBy(col) {
+  const map = { folio:'folio', fecha:'fecha-desc', total:'monto-desc', estatus:'estatus' };
+  ST.currentSort = map[col] || ST.currentSort;
+  applyFiltersAndSort();
+}
+
+function applyFiltersAndSort() {
+  let rows = [...ST.cotizaciones];
+
+  // Filter by status
+  if (ST.currentFilter !== 'all') {
+    rows = rows.filter(r => r.estatus === ST.currentFilter);
+  }
+
+  // Search
+  if (ST.searchQuery) {
+    const q = ST.searchQuery;
+    rows = rows.filter(r => {
+      const cli = ST.clientes[r.id_cli] || {};
+      return r.id.toLowerCase().includes(q)
+          || r.descripcion.toLowerCase().includes(q)
+          || (cli.nombre||'').toLowerCase().includes(q)
+          || (cli.rfc||'').toLowerCase().includes(q)
+          || r.estatus.toLowerCase().includes(q);
+    });
+  }
+
+  // Sort
+  rows.sort((a, b) => {
+    switch (ST.currentSort) {
+      case 'fecha-desc': return compareDates(b.fecha, a.fecha);
+      case 'fecha-asc':  return compareDates(a.fecha, b.fecha);
+      case 'monto-desc': return b.total - a.total;
+      case 'monto-asc':  return a.total - b.total;
+      case 'estatus':    return a.estatus.localeCompare(b.estatus);
+      default:           return compareDates(b.fecha, a.fecha);
+    }
+  });
+
+  ST.filtered = rows;
+  renderTable();
+}
+
+function compareDates(a, b) {
+  return new Date(a) - new Date(b);
+}
+
+/* ─────────────────────────────────────────────
+   RENDER TABLE
+───────────────────────────────────────────── */
+function renderTable() {
+  const tbody = document.getElementById('cotTbody');
+  const start = (ST.page - 1) * CFG.PAGE_SIZE;
+  const slice = ST.filtered.slice(start, start + CFG.PAGE_SIZE);
+
+  document.getElementById('tableCount').textContent =
+    ST.filtered.length + ' registro' + (ST.filtered.length !== 1 ? 's' : '');
+
+  if (slice.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="8">
+        <div class="empty-state">
+          <div class="empty-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" width="22" height="22"><path d="M3 5h14v12H3zM7 9h6M7 12h4"/><path d="M7 2v3M13 2v3"/></svg></div>
+          <div class="empty-title">Sin resultados</div>
+          <div class="empty-sub">No hay cotizaciones que coincidan con los filtros actuales.</div>
+        </div>
+      </td></tr>`;
+    renderPagination();
+    return;
+  }
+
+  tbody.innerHTML = slice.map(row => {
+    const cli    = ST.clientes[row.id_cli] || {};
+    const con    = ST.contactos[row.id_con] || '—';
+    const stClass= statusClass(row.estatus);
+    const fmtDate= formatDate(row.fecha);
+    const fmtTot = '$' + row.total.toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    const fmtSub = '$' + row.subtotal.toLocaleString('es-MX', { minimumFractionDigits:2 });
+    const descShort = (row.descripcion || '—').slice(0, 42) + (row.descripcion.length > 42 ? '…' : '');
+
+    return `
+    <tr data-id="${esc(row.id)}" data-row="${row._row}">
+      <td><span class="folio-badge">${esc(row.id.replace('Cotizaciones!',''))}</span></td>
+      <td><span class="date-cell">${fmtDate}</span></td>
+      <td class="client-cell">
+        <div class="client-name" title="${esc(cli.nombre)}">${esc(cli.nombre || row.id_cli || '—')}</div>
+        <div class="client-rfc">${esc(row.id_cli)}</div>
+      </td>
+      <td style="max-width:200px;font-size:12.5px;color:var(--gray-500);" title="${esc(row.descripcion)}">${esc(descShort)}</td>
+      <td class="amount-cell">
+        ${fmtTot}
+        <div class="amount-sub">${fmtSub} + IVA</div>
+      </td>
+      <td><span class="status-pill ${stClass}">${esc(row.estatus)}</span></td>
+      <td style="font-size:12px;color:var(--gray-500);">${esc(con)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="action-icon view" title="Ver detalles" onclick="viewCot('${esc(row.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M1.5 8C3 4.5 5 3 8 3s5 1.5 6.5 5c-1.5 3.5-3.5 5-6.5 5s-5-1.5-6.5-5z"/></svg>
+          </button>
+          <button class="action-icon edit" title="Editar" onclick="editCot('${esc(row.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+          </button>
+          <button class="action-icon pdf" title="Ver/Generar PDF" onclick="genPDF('${esc(row.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/><path d="M10 1.5v3H13"/></svg>
+          </button>
+          <button class="action-icon del" title="Eliminar" onclick="openDeleteModal('${esc(row.id)}', ${row._row})">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function setTableLoading(on) {
+  if (!on) return;
+  document.getElementById('cotTbody').innerHTML = `
+    <tr class="loading-row"><td colspan="8">
+      <div class="pulse-dots">
+        <div class="pulse-dot"></div><div class="pulse-dot"></div><div class="pulse-dot"></div>
+      </div>
+      &nbsp; Cargando cotizaciones desde Google Sheets...
+    </td></tr>`;
+}
+
+/* ─────────────────────────────────────────────
+   PAGINATION
+───────────────────────────────────────────── */
+function renderPagination() {
+  const total = ST.filtered.length;
+  const pages = Math.ceil(total / CFG.PAGE_SIZE) || 1;
+  document.getElementById('pageInfo').textContent =
+    `Página ${ST.page} de ${pages}  ·  ${total} registros`;
+
+  const wrap = document.getElementById('pageBtns');
+  let html = `<button class="page-btn" onclick="changePage(${ST.page-1})" ${ST.page===1?'disabled':''}>‹</button>`;
+  for (let i = 1; i <= pages; i++) {
+    if (pages > 7 && Math.abs(i - ST.page) > 2 && i !== 1 && i !== pages) {
+      if (i === 2 || i === pages - 1) html += `<button class="page-btn" disabled>…</button>`;
+      continue;
+    }
+    html += `<button class="page-btn ${i===ST.page?'active':''}" onclick="changePage(${i})">${i}</button>`;
+  }
+  html += `<button class="page-btn" onclick="changePage(${ST.page+1})" ${ST.page===pages?'disabled':''}>›</button>`;
+  wrap.innerHTML = html;
+}
+
+function changePage(p) {
+  const pages = Math.ceil(ST.filtered.length / CFG.PAGE_SIZE) || 1;
+  if (p < 1 || p > pages) return;
+  ST.page = p;
+  renderTable();
+  document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ─────────────────────────────────────────────
+   ACTIONS
+───────────────────────────────────────────── */
+function openNewCotizacion() {
+  // Etapa 3 — abrir el formulario de nueva cotización
+  sessionStorage.setItem('cot_mode', 'new');
+  toast('info', 'Abriendo formulario… (Etapa 3)');
+  // window.location.href = 'conecte-nueva-cotizacion.html';
+}
+
+function editCot(id) {
+  sessionStorage.setItem('cot_mode', 'edit');
+  sessionStorage.setItem('cot_edit_id', id);
+  toast('info', `Editando cotización ${id} … (Etapa 3)`);
+  // window.location.href = 'conecte-nueva-cotizacion.html';
+}
+
+function viewCot(id) {
+  const row = ST.cotizaciones.find(c => c.id === id);
+  if (!row) return;
+  const cli = ST.clientes[row.id_cli] || {};
+  toast('info', `${id} · ${cli.nombre || row.id_cli} · $${row.total.toLocaleString('es-MX')}`);
+}
+
+function genPDF(id) {
+  sessionStorage.setItem('cot_pdf_id', id);
+  toast('info', `Preparando PDF para ${id} … (Etapa 4)`);
+  // window.location.href = 'conecte-pdf.html';
+}
+
+/* ─────────────────────────────────────────────
+   DELETE
+───────────────────────────────────────────── */
+function openDeleteModal(id, row) {
+  ST.deleteRow = row;
+  ST.deleteId  = id;
+  document.getElementById('deleteTarget').textContent = id;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  ST.deleteRow = null;
+  ST.deleteId  = null;
+}
+
+async function confirmDelete() {
+  if (!ST.deleteRow) return;
+  const btn = document.getElementById('confirmDeleteBtn');
+  btn.disabled = true;
+  btn.textContent = 'Eliminando...';
+
+  try {
+    // Clear the row by blanking all cells in that row
+    const range = `Cotizaciones!A${ST.deleteRow}:P${ST.deleteRow}`;
+    await sheetsClear(range);
+
+    // Remove from local state
+    ST.cotizaciones = ST.cotizaciones.filter(c => c.id !== ST.deleteId);
+    updateStats();
+    applyFiltersAndSort();
+    closeDeleteModal();
+    toast('success', `Cotización ${ST.deleteId} eliminada correctamente.`);
+  } catch(e) {
+    console.error(e);
+    toast('error', 'Error al eliminar. Verifica permisos de la hoja.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Sí, eliminar';
+}
+
+/* ─────────────────────────────────────────────
+   EXPORT CSV
+───────────────────────────────────────────── */
+function exportCSV() {
+  const headers = ['ID_Cotizaciones','Fecha','ID_Clientes','Subtotal','IVA','Total','Descripcion','Estatus','Contacto'];
+  const rows = ST.filtered.map(r => {
+    const cli = ST.clientes[r.id_cli] || {};
+    const con = ST.contactos[r.id_con] || '';
+    return [r.id, r.fecha, cli.nombre || r.id_cli, r.subtotal, r.iva, r.total, r.descripcion, r.estatus, con]
+      .map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `cotizaciones_conecte_${today()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('success', 'CSV exportado correctamente.');
+}
+
+/* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
+function statusClass(s) {
+  const map = {
+    'Enviado':     'st-enviado',
+    'Aceptado':    'st-aceptado',
+    'Rechazado':   'st-rechazado',
+    'Pendiente':   'st-pendiente',
+    'Seguimiento 1':'st-seguimiento',
+    'Seguimiento 2':'st-seguimiento',
+  };
+  return map[s] || 'st-pendiente';
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const parts = String(d).split('/');
+  if (parts.length === 3) {
+    const [m,day,y] = parts;
+    const months = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${parseInt(day)} ${months[parseInt(m)] || m} ${y}`;
+  }
+  return d;
+}
+
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function logout() {
+  sessionStorage.removeItem('conecte_session');
+  window.location.href = 'conecte-login.html';
+}
+
+/* ─────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+function toast(type, msg) {
+  const icons = {
+    success: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3.5 3.5L13 5"/></svg>',
+    error:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+    info:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="6"/><path d="M8 7v4M8 5.5v.5"/></svg>',
+  };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${icons[type]||''} <span>${msg}</span>`;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.3s, transform 0.3s';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(8px)';
+    setTimeout(() => el.remove(), 320);
+  }, 3800);
+}
+</script>
+</body>
+</html>
