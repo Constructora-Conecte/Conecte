@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Constructora Conecte</title>
 
-<!-- FAVICON -->
 <link rel="icon" href="Imagenes/Logo.png" type="image/png">
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
@@ -23,9 +22,20 @@
 
 body{
   font-family:'Montserrat',sans-serif;
-  background:#fff;
-  color:var(--black);
-  overflow-x:hidden;
+  overflow:hidden;
+}
+
+/* SLIDE */
+.main-container{
+  display:flex;
+  width:200vw;
+  transition:transform .6s ease;
+}
+
+.page{
+  width:100vw;
+  min-height:100vh;
+  overflow-y:auto;
 }
 
 /* NAV */
@@ -38,7 +48,6 @@ nav{
   padding:1rem 3rem;
   display:flex;
   justify-content:space-between;
-  align-items:center;
   z-index:1000;
 }
 
@@ -48,9 +57,7 @@ nav{
   gap:.5rem;
 }
 
-.logo img{
-  height:35px;
-}
+.logo img{height:35px;}
 
 nav ul{
   display:flex;
@@ -59,13 +66,9 @@ nav ul{
 }
 
 nav a{
+  cursor:pointer;
   text-decoration:none;
   color:var(--black);
-  font-size:.9rem;
-}
-
-nav a:hover{
-  color:var(--red);
 }
 
 /* HERO */
@@ -74,33 +77,21 @@ nav a:hover{
   display:flex;
   align-items:center;
   padding:0 3rem;
+  background:url('Imagenes/foto1.jpg') center/cover no-repeat;
+  color:#fff;
 }
 
 .hero h2{
   font-size:3rem;
-}
-
-.hero span{
-  color:var(--red);
-}
-
-.hero p{
-  margin:1rem 0;
-  color:var(--gray);
-}
-
-.btn{
+  background:rgba(0,0,0,0.6);
   display:inline-block;
-  padding:.8rem 1.5rem;
-  background:var(--red);
-  color:#fff;
-  text-decoration:none;
+  padding:1rem;
 }
 
-/* SECTIONS */
-section{
-  padding:5rem 3rem;
-}
+.hero span{color:var(--red);}
+
+/* SECTION */
+section{padding:5rem 3rem;}
 
 .section-title{
   font-size:2rem;
@@ -121,58 +112,53 @@ section{
   padding:1.5rem;
 }
 
-/* FERRETERIA SLIDE */
-.ferreteria-section{
-  position:relative;
+.card img{
   width:100%;
-  height:100vh;
-  overflow:hidden;
+  height:150px;
+  object-fit:cover;
+  margin-bottom:1rem;
 }
 
-.ferreteria-container{
-  display:flex;
-  width:200%;
-  height:100%;
-  transition:transform .6s ease;
-}
-
-.ferreteria-left,
-.ferreteria-right{
-  width:100%;
-  padding:5rem 3rem;
-}
-
-/* IZQUIERDA */
-.ferreteria-left{
+/* CATALOGO */
+.catalogo{
   background:#111;
   color:#fff;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
 }
 
-.ferreteria-left h2{
-  font-size:2.5rem;
+.catalogo img{
+  width:100%;
+  max-height:300px;
+  object-fit:cover;
+  margin-top:1rem;
 }
 
-.ferreteria-left span{
-  color:var(--red);
+/* FERRETERIA */
+.ferreteria-page{
+  background:#111;
+  color:#fff;
 }
 
-/* DERECHA (CONTENIDO) */
-.ferreteria-right{
-  background:#fff;
-  overflow-y:auto;
-}
-
-/* BOTON */
-.slide-btn{
-  margin-top:2rem;
+.back-btn{
+  margin-top:6rem;
+  margin-left:3rem;
+  display:inline-block;
   background:var(--red);
   color:#fff;
-  padding:.8rem 1.5rem;
-  border:none;
+  padding:.7rem 1.5rem;
   cursor:pointer;
+}
+
+.galeria{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:1rem;
+  margin-top:2rem;
+}
+
+.galeria img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
 }
 
 /* CONTACT */
@@ -187,96 +173,74 @@ section{
   height:300px;
 }
 
-/* FOOTER */
-footer{
-  background:#111;
-  color:#fff;
-  padding:2rem;
-  text-align:center;
-}
-
-/* RESPONSIVE */
 @media(max-width:768px){
-  .contact{
-    grid-template-columns:1fr;
-  }
-
-  .ferreteria-container{
-    flex-direction:column;
-    width:100%;
-  }
+  .contact{grid-template-columns:1fr;}
 }
 </style>
 </head>
 
 <body>
 
-<!-- NAV -->
+<div class="main-container" id="mainContainer">
+
+<!-- ================= INICIO ================= -->
+<div class="page">
+
 <nav>
   <div class="logo">
-    <img src="Imagenes/Logo.png" alt="Logo">
+    <img src="Imagenes/Logo.png">
     <strong>CONSTRUCTORA CONECTE</strong>
   </div>
 
   <ul>
-    <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#ferreteria">Ferretería</a></li>
+    <li><a onclick="irInicio()">Inicio</a></li>
+    <li><a onclick="irFerreteria()">Ferretería</a></li>
+    <li><a href="#catalogo">Catálogo</a></li>
     <li><a href="#contacto">Contacto</a></li>
   </ul>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
-  <div>
-    <h2>Energía que <span>conecta</span>, soluciones que perduran</h2>
-    <p>Más de 30 años ofreciendo soluciones en ingeniería y construcción.</p>
-  </div>
+  <h2>Energía que <span>conecta</span></h2>
 </section>
 
-<!-- SERVICIOS -->
-<section id="servicios">
+<section>
   <h2 class="section-title">Servicios</h2>
 
   <div class="grid">
-    <div class="card"><h3>Electricidad</h3></div>
-    <div class="card"><h3>Climatización</h3></div>
-    <div class="card"><h3>Mantenimiento</h3></div>
-    <div class="card"><h3>Construcción</h3></div>
+    <div class="card">
+      <img src="Imagenes/foto2.jpg">
+      <h3>Electricidad</h3>
+    </div>
+
+    <div class="card">
+      <img src="Imagenes/foto3.jpg">
+      <h3>Climatización</h3>
+    </div>
+
+    <div class="card">
+      <img src="Imagenes/foto4.jpg">
+      <h3>Mantenimiento</h3>
+    </div>
+
+    <div class="card">
+      <img src="Imagenes/foto5.jpg">
+      <h3>Construcción</h3>
+    </div>
   </div>
 </section>
 
-<!-- FERRETERIA -->
-<section id="ferreteria" class="ferreteria-section">
+<section id="catalogo" class="catalogo">
+  <h2 class="section-title" style="border:none;">Catálogo</h2>
 
-  <div class="ferreteria-container" id="ferreteriaContainer">
+  <img src="Imagenes/foto6.jpg">
 
-    <!-- LADO IZQUIERDO -->
-    <div class="ferreteria-left">
-      <h2>Área de <span>Ferretería</span></h2>
-      <p>Accede a nuestro catálogo completo de productos.</p>
-
-      <button class="slide-btn" onclick="moverFerreteria()">Ver catálogo →</button>
-    </div>
-
-    <!-- LADO DERECHO -->
-    <div class="ferreteria-right">
-
-      <h2 class="section-title">Catálogo Ferretería</h2>
-
-      <!-- 🔴 AQUI VAS A PEGAR TODO TU CATALOGO 🔴 -->
-      <div style="border:2px dashed #ccc;padding:2rem;text-align:center;">
-        🔧 ESPACIO PARA CATALOGO DE FERRETERIA 🔧
-        <br><br>
-        (Aquí irá todo tu sistema, productos, etc.)
-      </div>
-
-    </div>
-
+  <!-- 🔴 AQUI VA TU CATALOGO 🔴 -->
+  <div style="border:2px dashed #555;padding:3rem;margin-top:2rem;">
+    ESPACIO PARA CATALOGO
   </div>
-
 </section>
 
-<!-- CONTACTO -->
 <section id="contacto">
   <h2 class="section-title">Contacto</h2>
 
@@ -292,14 +256,41 @@ footer{
   </div>
 </section>
 
-<!-- FOOTER -->
-<footer>
-  © 2026 Constructora Conecte
-</footer>
+</div>
+
+<!-- ================= FERRETERIA ================= -->
+<div class="page ferreteria-page">
+
+<div class="back-btn" onclick="irInicio()">← Regresar</div>
+
+<section>
+  <h2 class="section-title">Ferretería</h2>
+
+  <!-- 🔴 CONTENIDO PRINCIPAL 🔴 -->
+  <div style="border:2px dashed #888;padding:3rem;">
+    AQUI VA TU SISTEMA DE FERRETERIA
+  </div>
+
+  <!-- GALERIA LISTA -->
+  <div class="galeria">
+    <img src="Imagenes/foto7.jpg">
+    <img src="Imagenes/foto8.jpg">
+    <img src="Imagenes/foto9.jpg">
+    <img src="Imagenes/foto10.jpg">
+  </div>
+
+</section>
+
+</div>
+
+</div>
 
 <script>
-function moverFerreteria(){
-  document.getElementById("ferreteriaContainer").style.transform = "translateX(-50%)";
+function irFerreteria(){
+  document.getElementById("mainContainer").style.transform="translateX(-100vw)";
+}
+function irInicio(){
+  document.getElementById("mainContainer").style.transform="translateX(0)";
 }
 </script>
 
