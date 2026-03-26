@@ -1033,6 +1033,17 @@
               <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
             </div>
             <h3>Sección de Ferretería</h3>
+            <div class="ferr-body">
+
+  <!-- LOADER -->
+  <div id="ferr-loader" style="text-align:center; padding:60px; color:#999;">
+    Cargando productos...
+  </div>
+
+  <!-- CONTENIDO DINÁMICO -->
+  <div id="ferr-container"></div>
+
+</div>
             <p>Agrega aquí el inventario, productos y categorías de ferretería disponibles para tus clientes.</p>
           </div>
         </div>
@@ -1158,6 +1169,159 @@
 
     // Init
     goTo('inicio');
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+const API_KEY = "AIzaSyA2mDnl0kGWBdltS488u_5ZaXPWJFS18Ww";
+const SHEET_ID = "1YhLwYYo_7C_1qB1NqU-puwMp8_TG1BfQcpkaAqJG8to";
+const RANGE = "Productos";
+
+async function cargarFerreteria() {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const rows = data.values;
+    const headers = rows[0];
+
+    const productos = rows.slice(1).map(row => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = row[i]);
+      return obj;
+    });
+  
+    // FILTRAR SOLO TIENDA (SIN ERRORES DE ESPACIOS O MAYÚSCULAS)
+const filtrados = productos.filter(p => 
+  (p["Tienda/Inventario"] || "")
+    .toString()
+    .trim()
+    .toLowerCase() === "tienda"
+);
+
+// ORDENAR POR NOMBRE
+filtrados.sort((a, b) => (a.Nombre || "").localeCompare(b.Nombre || ""));
+
+    // AGRUPAR POR TIPO
+    const grupos = {};
+    filtrados.forEach(p => {
+      const tipo = p.Tipo || "Otros";
+      if (!grupos[tipo]) grupos[tipo] = [];
+      grupos[tipo].push(p);
+    });
+
+    renderFerreteria(grupos);
+
+  } catch (err) {
+    document.getElementById("ferr-loader").innerText = "Error cargando datos";
+    console.error(err);
+  }
+}
+
+function renderFerreteria(grupos) {
+  const container = document.getElementById("ferr-container");
+  const loader = document.getElementById("ferr-loader");
+
+  loader.style.display = "none";
+
+  let html = "";
+
+  Object.keys(grupos).forEach(tipo => {
+    html += `
+      <div style="margin-bottom:50px;">
+        <h2 style="
+          font-family: 'Barlow Condensed';
+          font-weight:800;
+          font-size:28px;
+          margin-bottom:20px;
+          text-transform:uppercase;
+          border-left:4px solid #C8102E;
+          padding-left:12px;
+        ">
+          ${tipo}
+        </h2>
+
+        <div style="
+          display:grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+          gap:20px;
+        ">
+    `;
+
+    grupos[tipo].forEach(p => {
+      html += `
+        <div style="
+          border:1.5px solid #E8E8E8;
+          border-radius:12px;
+          overflow:hidden;
+          transition:0.3s;
+          background:#fff;
+        " 
+        onmouseover="this.style.borderColor='#C8102E'; this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 30px rgba(200,16,46,0.15)'"
+        onmouseout="this.style.borderColor='#E8E8E8'; this.style.transform='none'; this.style.boxShadow='none'">
+
+          <div style="height:160px; background:#f0f0f0;">
+            <img src="${p.Foto}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+          </div>
+
+          <div style="padding:16px;">
+            <div style="
+              font-family:'Barlow Condensed';
+              font-weight:800;
+              font-size:16px;
+              text-transform:uppercase;
+              margin-bottom:6px;
+            ">
+              ${p.Nombre || "Sin nombre"}
+            </div>
+
+            <div style="
+              font-size:13px;
+              color:#666;
+            ">
+              $${p["Precio:venta"] || "0"}
+            </div>
+          </div>
+
+        </div>
+      `;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+// CARGAR CUANDO ENTRES A FERRETERÍA
+function goTo(name) {
+  const views = ['inicio', 'catalogo', 'ferreteria', 'contacto'];
+  const idx = views.indexOf(name);
+  if (idx === -1) return;
+
+  document.getElementById('sliderTrack').style.transform = `translateX(-${idx * 25}%)`;
+
+  views.forEach((v, i) => {
+    const btn = document.getElementById('btn-' + v);
+    if (btn) btn.classList.toggle('active', i === idx);
+  });
+
+  if (name === "ferreteria") {
+    if (!window.ferrLoaded) {
+      cargarFerreteria();
+      window.ferrLoaded = true;
+    }
+  }
+}
   </script>
 </body>
 </html>
