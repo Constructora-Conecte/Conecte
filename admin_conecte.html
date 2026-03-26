@@ -1,1087 +1,244 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Conecte — Sistema Administrativo</title>
+<meta charset="UTF-8">
+<title>Admin Conecte</title>
 
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- Google API Client -->
-  <script src="https://apis.google.com/js/api.js"></script>
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <style>
-    /* ─── VARIABLES ─────────────────────────────────────────────── */
-    :root {
-      --red:        #E81A1A;
-      --red-dark:   #B20000;
-      --red-light:  #FF3333;
-      --black:      #0A0A0A;
-      --black-mid:  #141414;
-      --black-soft: #1E1E1E;
-      --gray-dark:  #2A2A2A;
-      --gray:       #3D3D3D;
-      --gray-light: #8A8A8A;
-      --white:      #FFFFFF;
-      --white-soft: #F5F5F5;
-      --white-dim:  #CCCCCC;
-      --sidebar-w:  240px;
-      --header-h:   60px;
-      --radius:     4px;
-      --transition: 0.2s ease;
-    }
-
-    /* ─── RESET ──────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--black);
-      color: var(--white);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    a { color: inherit; text-decoration: none; }
-    button { cursor: pointer; font-family: inherit; }
-    input { font-family: inherit; }
-
-    /* ─── UTILITIES ──────────────────────────────────────────────── */
-    .hidden { display: none !important; }
-
-    /* ─── SCREENS ────────────────────────────────────────────────── */
-    .screen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-    }
-
-    /* ─── LOADING OVERLAY ────────────────────────────────────────── */
-    #screen-loading {
-      background: var(--black);
-      flex-direction: column;
-      gap: 20px;
-      z-index: 100;
-    }
-    .loader-logo {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: 6px;
-      color: var(--white);
-      text-transform: uppercase;
-    }
-    .loader-logo span { color: var(--red); }
-    .loader-bar {
-      width: 200px;
-      height: 2px;
-      background: var(--gray-dark);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .loader-bar::after {
-      content: '';
-      display: block;
-      height: 100%;
-      width: 40%;
-      background: var(--red);
-      border-radius: 2px;
-      animation: slide 1.2s ease-in-out infinite;
-    }
-    @keyframes slide {
-      0%   { transform: translateX(-100%); }
-      100% { transform: translateX(350%); }
-    }
-
-    /* ─── OAUTH SCREEN ───────────────────────────────────────────── */
-    #screen-oauth {
-      background: var(--black);
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-    }
-    .oauth-card {
-      background: var(--black-mid);
-      border: 1px solid var(--gray-dark);
-      border-radius: 6px;
-      padding: 48px 48px 40px;
-      width: 100%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 32px;
-      box-shadow: 0 24px 48px rgba(0,0,0,0.6);
-    }
-    .oauth-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-    .oauth-logo {
-      width: 64px;
-      height: 64px;
-      object-fit: contain;
-    }
-    .oauth-logo-fallback {
-      width: 64px;
-      height: 64px;
-      background: var(--red);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      font-weight: 900;
-      color: var(--white);
-      letter-spacing: -1px;
-    }
-    .oauth-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--white);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .oauth-subtitle {
-      font-size: 11px;
-      color: var(--gray-light);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-    .oauth-divider {
-      width: 100%;
-      height: 1px;
-      background: var(--gray-dark);
-    }
-    .oauth-desc {
-      font-size: 13px;
-      color: var(--gray-light);
-      text-align: center;
-      line-height: 1.7;
-    }
-    .btn-google {
-      width: 100%;
-      background: var(--white);
-      color: #3c4043;
-      border: none;
-      border-radius: var(--radius);
-      padding: 12px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: background var(--transition), box-shadow var(--transition);
-    }
-    .btn-google:hover {
-      background: #f8f8f8;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
-    .oauth-notice {
-      font-size: 11px;
-      color: var(--gray-light);
-      text-align: center;
-    }
-
-    /* ─── PASSWORD SCREEN ────────────────────────────────────────── */
-    #screen-password {
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(4px);
-    }
-    .pass-card {
-      background: var(--black-mid);
-      border: 1px solid var(--gray-dark);
-      border-radius: 6px;
-      padding: 40px 40px 36px;
-      width: 100%;
-      max-width: 380px;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-      box-shadow: 0 24px 48px rgba(0,0,0,0.7);
-      animation: fadeUp 0.3s ease;
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .pass-header { display: flex; flex-direction: column; gap: 4px; }
-    .pass-title { font-size: 18px; font-weight: 700; color: var(--white); }
-    .pass-email { font-size: 12px; color: var(--red); font-weight: 600; }
-
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--gray-light);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-    .form-input {
-      background: var(--black-soft);
-      border: 1px solid var(--gray-dark);
-      border-radius: var(--radius);
-      padding: 10px 14px;
-      color: var(--white);
-      font-size: 14px;
-      outline: none;
-      transition: border-color var(--transition);
-    }
-    .form-input:focus { border-color: var(--red); }
-    .form-input[readonly] {
-      color: var(--gray-light);
-      cursor: default;
-    }
-
-    .btn-primary {
-      width: 100%;
-      background: var(--red);
-      color: var(--white);
-      border: none;
-      border-radius: var(--radius);
-      padding: 11px 20px;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      transition: background var(--transition);
-    }
-    .btn-primary:hover { background: var(--red-dark); }
-    .btn-primary:disabled { background: var(--gray); cursor: not-allowed; }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--gray-light);
-      border: 1px solid var(--gray-dark);
-      border-radius: var(--radius);
-      padding: 8px 14px;
-      font-size: 12px;
-      transition: color var(--transition), border-color var(--transition);
-    }
-    .btn-ghost:hover { color: var(--white); border-color: var(--gray); }
-
-    /* ─── ALERT MESSAGES ─────────────────────────────────────────── */
-    .alert {
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 500;
-    }
-    .alert-error {
-      background: rgba(232, 26, 26, 0.15);
-      border: 1px solid rgba(232, 26, 26, 0.4);
-      color: #ff6b6b;
-    }
-    .alert-success {
-      background: rgba(34, 197, 94, 0.12);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      color: #86efac;
-    }
-    .alert-warning {
-      background: rgba(234, 179, 8, 0.12);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-      color: #fde047;
-    }
-
-    /* ─── BLOCKED SCREEN ─────────────────────────────────────────── */
-    #screen-blocked {
-      background: var(--black);
-      flex-direction: column;
-      gap: 24px;
-    }
-    .blocked-card {
-      background: var(--black-mid);
-      border: 1px solid rgba(232, 26, 26, 0.3);
-      border-radius: 6px;
-      padding: 48px;
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-    .blocked-icon {
-      width: 56px;
-      height: 56px;
-      background: rgba(232, 26, 26, 0.15);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-    .blocked-title { font-size: 20px; font-weight: 700; color: var(--white); }
-    .blocked-msg { font-size: 13px; color: var(--gray-light); line-height: 1.7; }
-    .blocked-email { font-size: 12px; color: var(--red); font-weight: 600; }
-
-    /* ─── APP SHELL ──────────────────────────────────────────────── */
-    #screen-app {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      z-index: 5;
-      background: var(--black);
-    }
-
-    /* Header */
-    .app-header {
-      height: var(--header-h);
-      background: var(--black-mid);
-      border-bottom: 1px solid var(--gray-dark);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 16px;
-      flex-shrink: 0;
-      z-index: 20;
-    }
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-right: auto;
-    }
-    .header-logo {
-      height: 32px;
-      object-fit: contain;
-    }
-    .header-logo-fallback {
-      height: 32px;
-      width: 32px;
-      background: var(--red);
-      border-radius: 3px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 900;
-      color: var(--white);
-    }
-    .header-appname {
-      font-size: 16px;
-      font-weight: 800;
-      color: var(--white);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-    .header-appname span { color: var(--red); }
-
-    .header-user {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .header-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--red);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--white);
-      flex-shrink: 0;
-    }
-    .header-info { display: flex; flex-direction: column; }
-    .header-name { font-size: 13px; font-weight: 600; color: var(--white); }
-    .header-level {
-      font-size: 10px;
-      color: var(--gray-light);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-    .header-level.level-patron { color: var(--red); }
-    .header-level.level-admin { color: #60a5fa; }
-
-    .btn-logout {
-      background: transparent;
-      color: var(--gray-light);
-      border: 1px solid var(--gray-dark);
-      border-radius: var(--radius);
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: color var(--transition), border-color var(--transition), background var(--transition);
-    }
-    .btn-logout:hover {
-      color: var(--white);
-      border-color: var(--red);
-      background: rgba(232, 26, 26, 0.08);
-    }
-
-    /* Layout */
-    .app-body {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      width: var(--sidebar-w);
-      background: var(--black-mid);
-      border-right: 1px solid var(--gray-dark);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      overflow-y: auto;
-    }
-    .sidebar-section {
-      padding: 20px 0 8px;
-    }
-    .sidebar-section-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--gray);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 0 20px;
-      margin-bottom: 4px;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      color: var(--gray-light);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background var(--transition), color var(--transition);
-      border-left: 3px solid transparent;
-      user-select: none;
-    }
-    .nav-item:hover {
-      background: rgba(255,255,255,0.04);
-      color: var(--white);
-    }
-    .nav-item.active {
-      background: rgba(232, 26, 26, 0.1);
-      color: var(--white);
-      border-left-color: var(--red);
-    }
-    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-    .sidebar-footer {
-      margin-top: auto;
-      padding: 16px 0;
-      border-top: 1px solid var(--gray-dark);
-    }
-
-    /* Main content */
-    .main-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 32px;
-      background: var(--black);
-    }
-
-    /* Page header */
-    .page-header {
-      margin-bottom: 28px;
-    }
-    .page-title {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--white);
-      letter-spacing: 0.5px;
-    }
-    .page-subtitle {
-      font-size: 13px;
-      color: var(--gray-light);
-      margin-top: 4px;
-    }
-
-    /* Dashboard cards */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-    .stat-card {
-      background: var(--black-mid);
-      border: 1px solid var(--gray-dark);
-      border-radius: 6px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .stat-card-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
-    .stat-card-icon.red   { background: rgba(232,26,26,0.15); }
-    .stat-card-icon.blue  { background: rgba(96,165,250,0.15); }
-    .stat-card-icon.green { background: rgba(34,197,94,0.12); }
-    .stat-card-icon.gold  { background: rgba(234,179,8,0.12); }
-    .stat-card-label { font-size: 11px; color: var(--gray-light); letter-spacing: 1px; text-transform: uppercase; }
-    .stat-card-value { font-size: 26px; font-weight: 800; color: var(--white); }
-    .stat-card-note { font-size: 11px; color: var(--gray-light); }
-
-    /* Welcome banner */
-    .welcome-banner {
-      background: linear-gradient(135deg, var(--black-mid) 0%, var(--black-soft) 100%);
-      border: 1px solid var(--gray-dark);
-      border-left: 3px solid var(--red);
-      border-radius: 6px;
-      padding: 24px 28px;
-      margin-bottom: 28px;
-    }
-    .welcome-banner h2 {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--white);
-      margin-bottom: 6px;
-    }
-    .welcome-banner p { font-size: 13px; color: var(--gray-light); line-height: 1.7; }
-
-    /* Section placeholder */
-    .section-placeholder {
-      background: var(--black-mid);
-      border: 1px dashed var(--gray-dark);
-      border-radius: 6px;
-      padding: 48px;
-      text-align: center;
-      color: var(--gray-light);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-    .section-placeholder svg { opacity: 0.3; }
-    .section-placeholder h3 { font-size: 16px; font-weight: 600; color: var(--white); }
-    .section-placeholder p { font-size: 13px; max-width: 300px; }
-
-    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
-    @media (max-width: 640px) {
-      .sidebar { width: 200px; }
-      .main-content { padding: 20px; }
-      .header-info { display: none; }
-      .oauth-card, .pass-card, .blocked-card { padding: 32px 24px; }
-    }
-  </style>
+<style>
+body{font-family:Arial;background:#111;color:#fff;margin:0}
+button{background:red;color:white;border:none;padding:10px;margin:5px}
+input{padding:6px;margin:5px}
+.sidebar{position:fixed;width:200px;height:100vh;background:#000;padding:20px}
+.content{margin-left:220px;padding:20px}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #444;padding:5px}
+</style>
 </head>
+
 <body>
 
-  <!-- ══ LOADING ══════════════════════════════════════════════════ -->
-  <div id="screen-loading" class="screen">
-    <div class="loader-logo">CON<span>ECTE</span></div>
-    <div class="loader-bar"></div>
-  </div>
-
-  <!-- ══ OAUTH ════════════════════════════════════════════════════ -->
-  <div id="screen-oauth" class="screen hidden">
-    <div class="oauth-card">
-      <div class="oauth-header">
-        <img src="/Imagenes/Logo.png" alt="Logo" class="oauth-logo"
-             onerror="this.style.display='none'; document.getElementById('logo-fallback-oauth').style.display='flex';" />
-        <div id="logo-fallback-oauth" class="oauth-logo-fallback" style="display:none;">C</div>
-        <div>
-          <div class="oauth-title">Conecte</div>
-          <div class="oauth-subtitle">Sistema Administrativo</div>
-        </div>
-      </div>
-
-      <div class="oauth-divider"></div>
-
-      <p class="oauth-desc">
-        Para acceder al sistema debes autenticarte con tu cuenta de Google institucional.
-      </p>
-
-      <button class="btn-google" id="btn-google-signin" onclick="startOAuth()">
-        <!-- Google G icon -->
-        <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-        Iniciar sesión con Google
-      </button>
-
-      <div id="oauth-error" class="alert alert-error hidden"></div>
-
-      <p class="oauth-notice">Solo usuarios registrados pueden acceder al sistema.</p>
-    </div>
-  </div>
-
-  <!-- ══ PASSWORD ══════════════════════════════════════════════════ -->
-  <div id="screen-password" class="screen hidden">
-    <div class="pass-card">
-      <div class="pass-header">
-        <div class="pass-title">Verificación de acceso</div>
-        <div class="pass-email" id="pass-email-display"></div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Correo</label>
-        <input type="email" id="input-email" class="form-input" readonly />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Contraseña</label>
-        <input type="password" id="input-password" class="form-input"
-               placeholder="Ingresa tu contraseña"
-               onkeydown="if(event.key==='Enter') verifyPassword()" />
-      </div>
-
-      <div id="pass-error" class="alert alert-error hidden"></div>
-
-      <button class="btn-primary" id="btn-verify" onclick="verifyPassword()">
-        Ingresar al Sistema
-      </button>
-
-      <button class="btn-ghost" onclick="backToOAuth()" style="align-self:center;">
-        ← Cambiar cuenta
-      </button>
-    </div>
-  </div>
-
-  <!-- ══ BLOCKED ════════════════════════════════════════════════════ -->
-  <div id="screen-blocked" class="screen hidden">
-    <div class="blocked-card">
-      <div class="blocked-icon">🔒</div>
-      <div class="blocked-title" id="blocked-title">Acceso Restringido</div>
-      <div class="blocked-email" id="blocked-email-display"></div>
-      <div class="blocked-msg" id="blocked-msg"></div>
-      <button class="btn-primary" style="width:auto; padding: 10px 28px; margin-top:8px;"
-              onclick="backToOAuth()">Volver al inicio</button>
-    </div>
-  </div>
-
-  <!-- ══ APP ════════════════════════════════════════════════════════ -->
-  <div id="screen-app" class="hidden">
-
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-brand">
-        <img src="/Imagenes/Logo.png" alt="Logo" class="header-logo"
-             onerror="this.style.display='none'; document.getElementById('header-logo-fallback').style.display='flex';" />
-        <div id="header-logo-fallback" class="header-logo-fallback" style="display:none;">C</div>
-        <span class="header-appname">CON<span>ECTE</span></span>
-      </div>
-
-      <div class="header-user">
-        <div class="header-avatar" id="header-avatar">U</div>
-        <div class="header-info">
-          <div class="header-name" id="header-name">Usuario</div>
-          <div class="header-level" id="header-level">Nivel</div>
-        </div>
-        <button class="btn-logout" onclick="logout()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          Salir
-        </button>
-      </div>
-    </header>
-
-    <!-- Body -->
-    <div class="app-body">
-
-      <!-- Sidebar -->
-      <nav class="sidebar">
-        <div class="sidebar-section">
-          <div class="sidebar-section-label">Menú</div>
-
-          <div class="nav-item active" id="nav-inicio" onclick="showSection('inicio')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            Inicio
-          </div>
-
-          <div class="nav-item hidden" id="nav-cotizaciones" onclick="showSection('cotizaciones')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-            Cotizaciones
-          </div>
-        </div>
-
-        <div class="sidebar-footer">
-          <div class="nav-item" onclick="logout()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Cerrar sesión
-          </div>
-        </div>
-      </nav>
-
-      <!-- Main -->
-      <main class="main-content">
-
-        <!-- INICIO -->
-        <div id="section-inicio">
-          <div class="page-header">
-            <div class="page-title">Dashboard</div>
-            <div class="page-subtitle">Resumen general del sistema</div>
-          </div>
-
-          <div class="welcome-banner">
-            <h2 id="welcome-name">Bienvenido</h2>
-            <p>Has iniciado sesión correctamente en el Sistema Administrativo de Conecte. Desde aquí puedes acceder a las diferentes secciones según tu nivel de acceso.</p>
-          </div>
-
-          <div class="cards-grid">
-            <div class="stat-card">
-              <div class="stat-card-icon red">📋</div>
-              <div class="stat-card-label">Módulo activo</div>
-              <div class="stat-card-value">Admin</div>
-              <div class="stat-card-note">Portal administrativo</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-card-icon blue">👤</div>
-              <div class="stat-card-label">Nivel de acceso</div>
-              <div class="stat-card-value" id="card-level">—</div>
-              <div class="stat-card-note">Tu rol en el sistema</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-card-icon green">✅</div>
-              <div class="stat-card-label">Estado</div>
-              <div class="stat-card-value">Activo</div>
-              <div class="stat-card-note">Sesión iniciada</div>
-            </div>
-            <div class="stat-card" id="card-cotizaciones" style="display:none;">
-              <div class="stat-card-icon gold">📄</div>
-              <div class="stat-card-label">Cotizaciones</div>
-              <div class="stat-card-value">—</div>
-              <div class="stat-card-note">Módulo disponible</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- COTIZACIONES -->
-        <div id="section-cotizaciones" class="hidden">
-          <div class="page-header">
-            <div class="page-title">Cotizaciones</div>
-            <div class="page-subtitle">Gestión de cotizaciones del sistema</div>
-          </div>
-          <div class="section-placeholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-            <h3>Módulo de Cotizaciones</h3>
-            <p>Este módulo se encuentra listo para integrar la funcionalidad de cotizaciones. Próximamente disponible.</p>
-          </div>
-        </div>
-
-      </main>
-    </div>
-  </div>
-
-  <!-- ══ SCRIPT ══════════════════════════════════════════════════ -->
-  <script>
-  // ── CONFIG ──────────────────────────────────────────────────────
-  const CLIENT_ID    = '413269286189-g75s5kq24g1c96en6pb4uvc9059062u7.apps.googleusercontent.com';
-  const API_KEY      = 'AIzaSyA2mDnl0kGWBdltS488u_5ZaXPWJFS18Ww';
-  const SHEET_ID     = '1YhLwYYo_7C_1qB1NqU-puwMp8_TG1BfQcpkaAqJG8to';
-  const SHEET_RANGE  = 'usuarios!A:D';
-  const SCOPES       = 'https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/userinfo.email';
-
-  // ── STATE ────────────────────────────────────────────────────────
-  let googleTokenClient = null;
-  let currentAccessToken = null;
-  let oauthUserEmail = null;
-
-  // ── INIT ─────────────────────────────────────────────────────────
-  window.addEventListener('load', () => {
-    // Check for existing session
-    const session = loadSession();
-    if (session) {
-      renderApp(session);
-      return;
-    }
-    showScreen('oauth');
-  });
-
-  // ── SCREEN MANAGER ───────────────────────────────────────────────
-  function showScreen(name) {
-    const screens = ['loading','oauth','password','blocked','app'];
-    screens.forEach(s => {
-      const el = document.getElementById('screen-' + s);
-      if (el) {
-        el.classList.toggle('hidden', s !== name);
-        // app uses different display
-        if (s === 'app') {
-          el.style.display = s === name ? 'flex' : 'none';
-          el.classList.toggle('hidden', s !== name);
-        }
-      }
-    });
-  }
-
-  // ── OAUTH ────────────────────────────────────────────────────────
-  function startOAuth() {
-    hideError('oauth-error');
-
-    if (!window.google || !google.accounts || !google.accounts.oauth2) {
-      showError('oauth-error', 'No se pudo cargar la librería de Google. Recarga la página e inténtalo de nuevo.');
-      return;
-    }
-
-    googleTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: handleTokenResponse,
-      error_callback: (err) => {
-        showError('oauth-error', 'Error de autenticación: ' + (err.message || err.type || 'Intenta de nuevo'));
-      }
-    });
-
-    googleTokenClient.requestAccessToken({ prompt: 'consent' });
-  }
-
-  async function handleTokenResponse(tokenResponse) {
-    if (tokenResponse.error) {
-      showError('oauth-error', 'No se pudo obtener autorización: ' + tokenResponse.error);
-      return;
-    }
-
-    currentAccessToken = tokenResponse.access_token;
-
-    try {
-      showScreen('loading');
-      // Get user email from Google
-      const userInfo = await fetchGoogleUserInfo(currentAccessToken);
-      oauthUserEmail = userInfo.email;
-
-      // Validate in Sheets
-      const userData = await findUserInSheet(oauthUserEmail);
-
-      if (!userData) {
-        showBlockedScreen(oauthUserEmail, 'Acceso no autorizado', 'Tu cuenta de Google no está registrada en el sistema. Contacta al administrador para solicitar acceso.');
-        return;
-      }
-
-      // Show password screen
-      document.getElementById('pass-email-display').textContent = oauthUserEmail;
-      document.getElementById('input-email').value = oauthUserEmail;
-      document.getElementById('input-password').value = '';
-      hideError('pass-error');
-      showScreen('password');
-      setTimeout(() => document.getElementById('input-password').focus(), 100);
-
-    } catch (err) {
-      showScreen('oauth');
-      showError('oauth-error', 'Error al verificar acceso: ' + err.message);
-    }
-  }
-
-  // ── GOOGLE USER INFO ─────────────────────────────────────────────
-  async function fetchGoogleUserInfo(accessToken) {
-    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: 'Bearer ' + accessToken }
-    });
-    if (!res.ok) throw new Error('No se pudo obtener información del usuario de Google.');
-    return res.json();
-  }
-
-  // ── SHEETS API ───────────────────────────────────────────────────
-  async function fetchSheetData() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_RANGE)}?key=${API_KEY}`;
-    const res = await fetch(url, {
-      headers: { Authorization: 'Bearer ' + currentAccessToken }
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error?.message || 'Error al leer la hoja de cálculo.');
-    }
-    return res.json();
-  }
-
-  async function findUserInSheet(email) {
-    const data = await fetchSheetData();
-    const rows = data.values || [];
-    // Skip header row (row 0)
-    const normalizedEmail = email.trim().toLowerCase();
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row[0]) continue;
-      if (row[0].trim().toLowerCase() === normalizedEmail) {
-        return {
-          correo:     row[0] || '',
-          contrasena: row[1] || '',
-          nivel:      row[2] || '',
-          nombre:     row[3] || row[0].split('@')[0] || 'Usuario'
-        };
-      }
-    }
-    return null;
-  }
-
-  // ── PASSWORD VERIFY ───────────────────────────────────────────────
-  async function verifyPassword() {
-    const password = document.getElementById('input-password').value.trim();
-    hideError('pass-error');
-
-    if (!password) {
-      showError('pass-error', 'Por favor ingresa tu contraseña.');
-      return;
-    }
-
-    const btn = document.getElementById('btn-verify');
-    btn.disabled = true;
-    btn.textContent = 'Verificando...';
-
-    try {
-      const userData = await findUserInSheet(oauthUserEmail);
-
-      if (!userData) {
-        showBlockedScreen(oauthUserEmail, 'Acceso no autorizado', 'Tu cuenta ya no está registrada en el sistema.');
-        return;
-      }
-
-      if (userData.contrasena !== password) {
-        showError('pass-error', 'Contraseña incorrecta. Verifica e intenta de nuevo.');
-        btn.disabled = false;
-        btn.textContent = 'Ingresar al Sistema';
-        return;
-      }
-
-      const nivel = userData.nivel.trim();
-
-      if (nivel.toLowerCase() === 'operativo') {
-        showBlockedScreen(oauthUserEmail, 'Acceso Denegado', 'No tienes permisos para este portal. Este sistema es exclusivo para niveles Administrativo y Patrón.');
-        return;
-      }
-
-      if (nivel.toLowerCase() !== 'administrativo' && nivel.toLowerCase() !== 'patron' && nivel.toLowerCase() !== 'patrón') {
-        showBlockedScreen(oauthUserEmail, 'Nivel no reconocido', 'Tu nivel de acceso "' + nivel + '" no está autorizado para este portal.');
-        return;
-      }
-
-      // SUCCESS
-      const session = {
-        correo: userData.correo,
-        nombre: userData.nombre,
-        nivel:  userData.nivel
-      };
-      saveSession(session);
-      renderApp(session);
-
-    } catch (err) {
-      showError('pass-error', 'Error al verificar: ' + err.message);
-      btn.disabled = false;
-      btn.textContent = 'Ingresar al Sistema';
-    }
-  }
-
-  // ── APP RENDER ───────────────────────────────────────────────────
-  function renderApp(session) {
-    const nombre = session.nombre || session.correo.split('@')[0];
-    const nivel  = session.nivel || 'Administrativo';
-    const inicial = nombre.charAt(0).toUpperCase();
-
-    // Header
-    document.getElementById('header-avatar').textContent = inicial;
-    document.getElementById('header-name').textContent   = nombre;
-    const levelEl = document.getElementById('header-level');
-    levelEl.textContent = nivel;
-    levelEl.className = 'header-level' +
-      (nivel.toLowerCase() === 'patron' || nivel.toLowerCase() === 'patrón' ? ' level-patron' : ' level-admin');
-
-    // Dashboard cards
-    document.getElementById('welcome-name').textContent = '¡Bienvenido, ' + nombre + '!';
-    document.getElementById('card-level').textContent   = nivel;
-
-    // Show cotizaciones if Administrativo or Patron
-    const isAdminOrPatron = ['administrativo','patron','patrón'].includes(nivel.toLowerCase());
-    document.getElementById('nav-cotizaciones').classList.toggle('hidden', !isAdminOrPatron);
-    document.getElementById('card-cotizaciones').style.display = isAdminOrPatron ? '' : 'none';
-
-    showScreen('app');
-    showSection('inicio');
-  }
-
-  // ── NAV ──────────────────────────────────────────────────────────
-  function showSection(name) {
-    const sections = ['inicio','cotizaciones'];
-    sections.forEach(s => {
-      document.getElementById('section-' + s).classList.toggle('hidden', s !== name);
-      const navEl = document.getElementById('nav-' + s);
-      if (navEl) navEl.classList.toggle('active', s === name);
-    });
-  }
-
-  // ── BLOCKED ──────────────────────────────────────────────────────
-  function showBlockedScreen(email, title, msg) {
-    document.getElementById('blocked-title').textContent       = title;
-    document.getElementById('blocked-email-display').textContent = email || '';
-    document.getElementById('blocked-msg').textContent         = msg;
-    showScreen('blocked');
-  }
-
-  // ── SESSION ──────────────────────────────────────────────────────
-  function saveSession(data) {
-    try { localStorage.setItem('conecte_session', JSON.stringify(data)); } catch(e) {}
-  }
-  function loadSession() {
-    try {
-      const raw = localStorage.getItem('conecte_session');
-      return raw ? JSON.parse(raw) : null;
-    } catch(e) { return null; }
-  }
-  function clearSession() {
-    try { localStorage.removeItem('conecte_session'); } catch(e) {}
-  }
-
-  // ── LOGOUT ───────────────────────────────────────────────────────
-  function logout() {
-    clearSession();
-    currentAccessToken = null;
-    oauthUserEmail     = null;
-    if (window.google && google.accounts && google.accounts.oauth2) {
-      google.accounts.oauth2.revoke(currentAccessToken, () => {});
-    }
-    backToOAuth();
-  }
-
-  function backToOAuth() {
-    clearSession();
-    currentAccessToken = null;
-    oauthUserEmail     = null;
-    hideError('oauth-error');
-    showScreen('oauth');
-  }
-
-  // ── HELPERS ──────────────────────────────────────────────────────
-  function showError(id, msg) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.remove('hidden');
-  }
-  function hideError(id) {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
-  }
-  </script>
+<div id="login">
+<h2>Login Conecte</h2>
+<button onclick="handleAuthClick()">Login con Google</button>
+
+<div id="login2" style="display:none">
+<input id="correo" placeholder="Correo">
+<input id="pass" type="password" placeholder="Contraseña">
+<button onclick="login()">Entrar</button>
+</div>
+</div>
+
+<div id="app" style="display:none">
+<div class="sidebar">
+<button onclick="show('home')">Inicio</button>
+<button onclick="show('cot')">Cotizaciones</button>
+<button onclick="logout()">Salir</button>
+</div>
+
+<div class="content">
+
+<div id="home">
+<h2>Bienvenido</h2>
+<p id="userInfo"></p>
+</div>
+
+<div id="cot" style="display:none">
+<h2>Cotización</h2>
+
+<input id="cliente" placeholder="RFC Cliente">
+<input id="desc" placeholder="Descripción">
+
+<table>
+<thead>
+<tr>
+<th>Concepto</th>
+<th>Cantidad</th>
+<th>Precio</th>
+<th>Importe</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="body"></tbody>
+</table>
+
+<button onclick="add()">Agregar</button>
+
+<h3>Subtotal: <span id="sub">0</span></h3>
+<h3>IVA: <span id="iva">0</span></h3>
+<h2>Total: <span id="tot">0</span></h2>
+
+<button onclick="guardar()">Guardar</button>
+<button onclick="pdf()">PDF</button>
+
+</div>
+
+</div>
+</div>
+
+<script>
+const CLIENT_ID = "413269286189-g75s5kq24g1c96en6pb4uvc9059062u7.apps.googleusercontent.com";
+const API_KEY = "AIzaSyA2mDnl0kGWBdltS488u_5ZaXPWJFS18Ww";
+const SHEET_ID = "1YhLwYYo_7C_1qB1NqU-puwMp8_TG1BfQcpkaAqJG8to";
+
+let tokenClient;
+let accessToken = null;
+let usuario = null;
+
+// INIT
+window.onload = ()=>{
+gapi.load('client', async ()=>{
+await gapi.client.init({
+apiKey: API_KEY,
+discoveryDocs:["https://sheets.googleapis.com/$discovery/rest?version=v4"]
+});
+});
+};
+
+// LOGIN GOOGLE
+function handleAuthClick(){
+tokenClient = google.accounts.oauth2.initTokenClient({
+client_id: CLIENT_ID,
+scope: "https://www.googleapis.com/auth/spreadsheets",
+callback: (resp)=>{
+accessToken = resp.access_token;
+document.getElementById("login2").style.display="block";
+}
+});
+tokenClient.requestAccessToken();
+}
+
+// LOGIN INTERNO
+async function login(){
+let correo = document.getElementById("correo").value;
+let pass = document.getElementById("pass").value;
+
+let res = await gapi.client.sheets.spreadsheets.values.get({
+spreadsheetId: SHEET_ID,
+range: "usuarios!A2:D"
+});
+
+let data = res.result.values;
+
+let user = data.find(r=>r[0]==correo && r[1]==pass);
+
+if(!user){ alert("Error"); return; }
+
+if(user[2]=="Operativo"){ alert("Sin acceso"); return; }
+
+usuario = correo;
+
+document.getElementById("login").style.display="none";
+document.getElementById("app").style.display="block";
+document.getElementById("userInfo").innerText = correo;
+}
+
+// UI
+function show(x){
+document.getElementById("home").style.display="none";
+document.getElementById("cot").style.display="none";
+document.getElementById(x).style.display="block";
+}
+
+function logout(){ location.reload(); }
+
+// TABLA
+function add(){
+let tr = document.createElement("tr");
+
+tr.innerHTML=`
+<td><input></td>
+<td><input type="number" value="1" onchange="calc()"></td>
+<td><input type="number" value="0" onchange="calc()"></td>
+<td class="imp">0</td>
+<td><button onclick="this.parentNode.parentNode.remove();calc()">X</button></td>
+`;
+
+document.getElementById("body").appendChild(tr);
+}
+
+// CALC
+function calc(){
+let rows=document.querySelectorAll("#body tr");
+let sub=0;
+
+rows.forEach(r=>{
+let c=r.children[1].children[0].value;
+let p=r.children[2].children[0].value;
+let imp=c*p;
+r.children[3].innerText=imp.toFixed(2);
+sub+=imp;
+});
+
+let iva=sub*0.16;
+let tot=sub+iva;
+
+document.getElementById("sub").innerText=sub.toFixed(2);
+document.getElementById("iva").innerText=iva.toFixed(2);
+document.getElementById("tot").innerText=tot.toFixed(2);
+}
+
+// GUARDAR REAL
+async function guardar(){
+let cliente=document.getElementById("cliente").value;
+let desc=document.getElementById("desc").value;
+
+let sub=document.getElementById("sub").innerText;
+let iva=document.getElementById("iva").innerText;
+let tot=document.getElementById("tot").innerText;
+
+let id="CONE-COT"+Date.now();
+
+await gapi.client.sheets.spreadsheets.values.append({
+spreadsheetId:SHEET_ID,
+range:"Cotizaciones!A2",
+valueInputOption:"RAW",
+resource:{
+values:[[id,new Date().toLocaleDateString(),cliente,desc,sub,iva,tot,usuario]]
+}
+});
+
+alert("Guardado");
+}
+
+// PDF
+async function pdf(){
+const {jsPDF}=window.jspdf;
+let doc=new jsPDF();
+
+let cliente=document.getElementById("cliente").value;
+let desc=document.getElementById("desc").value;
+
+doc.text("CONSTRUCTORA CONECTE",10,10);
+doc.text("Cliente: "+cliente,10,20);
+doc.text("Trabajo: "+desc,10,30);
+
+let y=40;
+
+document.querySelectorAll("#body tr").forEach(r=>{
+let con=r.children[0].children[0].value;
+let imp=r.children[3].innerText;
+doc.text(con+" $"+imp,10,y);
+y+=10;
+});
+
+let sub=document.getElementById("sub").innerText;
+let iva=document.getElementById("iva").innerText;
+let tot=document.getElementById("tot").innerText;
+
+y+=10;
+doc.text("Subtotal: "+sub,10,y);
+y+=10;
+doc.text("IVA: "+iva,10,y);
+y+=10;
+doc.text("TOTAL: "+tot,10,y);
+
+doc.save("cotizacion.pdf");
+}
+</script>
+
 </body>
 </html>
