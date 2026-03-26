@@ -1,348 +1,1163 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Constructora Conecte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Constructora Conecte</title>
+    :root {
+      --red: #C8102E;
+      --red-dark: #9B0B21;
+      --red-light: #E63950;
+      --black: #111111;
+      --gray-dark: #2A2A2A;
+      --gray-mid: #555555;
+      --gray-light: #AAAAAA;
+      --gray-bg: #F4F4F4;
+      --white: #FFFFFF;
+      --nav-h: 72px;
+      --font-display: 'Barlow Condensed', sans-serif;
+      --font-body: 'Barlow', sans-serif;
+      --transition: 0.65s cubic-bezier(0.77, 0, 0.175, 1);
+    }
 
-<link rel="icon" href="Imagenes/Logo.png" type="image/png">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--white);
+      font-family: var(--font-body);
+      color: var(--black);
+    }
 
-<style>
-:root{
-  --red:#c1121f;
-  --black:#111;
-  --gray:#666;
-  --light:#f8f8f8;
-}
+    /* ── NAVBAR ─────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      z-index: 9999;
+      background: var(--white);
+      border-bottom: 3px solid var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .nav-logo-img {
+      height: 44px;
+      width: 44px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+    .nav-logo-fallback {
+      height: 44px;
+      width: 44px;
+      background: var(--red);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 20px;
+      color: white;
+      letter-spacing: 1px;
+    }
+    .nav-brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .nav-brand-main {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--black);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .nav-brand-sub {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--red);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-btn {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 9px 20px;
+      border: none;
+      background: transparent;
+      color: var(--gray-mid);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .nav-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 20px; right: 20px;
+      height: 2px;
+      background: var(--red);
+      transform: scaleX(0);
+      transition: transform 0.25s ease;
+    }
+    .nav-btn:hover { color: var(--black); }
+    .nav-btn:hover::after { transform: scaleX(1); }
+    .nav-btn.active { color: var(--red); }
+    .nav-btn.active::after { transform: scaleX(1); }
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 6px;
+    }
+    .nav-hamburger span {
+      display: block;
+      width: 26px;
+      height: 2px;
+      background: var(--black);
+      transition: 0.3s;
+    }
 
-*{margin:0;padding:0;box-sizing:border-box;}
+    /* ── SLIDER WRAPPER ─────────────────────────── */
+    .slider-wrapper {
+      position: fixed;
+      top: var(--nav-h);
+      left: 0;
+      width: 100%;
+      height: calc(100vh - var(--nav-h));
+      overflow: hidden;
+    }
+    .slider-track {
+      display: flex;
+      width: 400%;
+      height: 100%;
+      transition: transform var(--transition);
+    }
+    .view {
+      width: 25%;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex-shrink: 0;
+    }
+    .view::-webkit-scrollbar { width: 5px; }
+    .view::-webkit-scrollbar-track { background: transparent; }
+    .view::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
 
-body{
-  font-family:'Montserrat',sans-serif;
-  overflow:hidden;
-}
+    /* ── VIEW: INICIO ───────────────────────────── */
+    #view-inicio { background: var(--white); }
 
-/* ===== SISTEMA DE VISTAS ===== */
-.main-container{
-  display:flex;
-  width:200vw;
-  transition:transform .6s ease;
-}
+    .hero {
+      position: relative;
+      min-height: 520px;
+      background: var(--black);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .hero-bg-pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(200,16,46,0.06) 0px, rgba(200,16,46,0.06) 1px, transparent 1px, transparent 60px),
+        repeating-linear-gradient(0deg, rgba(200,16,46,0.06) 0px, rgba(200,16,46,0.06) 1px, transparent 1px, transparent 60px);
+    }
+    .hero-accent {
+      position: absolute;
+      top: 0; right: 0;
+      width: 420px;
+      height: 100%;
+      background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+      clip-path: polygon(18% 0, 100% 0, 100% 100%, 0% 100%);
+      opacity: 0.92;
+    }
+    .hero-img-placeholder {
+      position: absolute;
+      top: 0; right: 0;
+      width: 420px;
+      height: 100%;
+      clip-path: polygon(18% 0, 100% 0, 100% 100%, 0% 100%);
+      overflow: hidden;
+    }
+    .hero-img-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.18;
+      mix-blend-mode: luminosity;
+    }
+    .hero-img-placeholder .img-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.35);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      padding: 80px 60px;
+      max-width: 700px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--red);
+      color: white;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(48px, 6vw, 80px);
+      color: var(--white);
+      line-height: 0.95;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+    .hero-title span { color: var(--red-light); }
+    .hero-slogan {
+      font-size: 16px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 30px;
+      font-style: italic;
+      letter-spacing: 0.5px;
+      border-left: 3px solid var(--red);
+      padding-left: 16px;
+    }
+    .hero-desc {
+      font-size: 15px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.7;
+      max-width: 500px;
+      margin-bottom: 36px;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+    }
+    .hero-stat { text-align: left; }
+    .hero-stat-num {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 40px;
+      color: var(--red-light);
+      line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
 
-.page{
-  width:100vw;
-  height:100vh;
-  overflow-y:auto;
-}
+    /* Servicios */
+    .section { padding: 72px 60px; }
+    .section-tag {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(32px, 4vw, 48px);
+      text-transform: uppercase;
+      color: var(--black);
+      line-height: 1;
+      margin-bottom: 48px;
+    }
+    .section-title em {
+      font-style: normal;
+      color: var(--red);
+    }
 
-/* NAV */
-nav{
-  position:fixed;
-  top:0;
-  width:100%;
-  background:#fff;
-  border-bottom:1px solid #eee;
-  padding:1rem 3rem;
-  display:flex;
-  justify-content:space-between;
-  z-index:1000;
-}
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: #E0E0E0;
+      border: 1px solid #E0E0E0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .service-card {
+      background: var(--white);
+      padding: 36px 28px;
+      position: relative;
+      transition: background 0.3s;
+      cursor: default;
+    }
+    .service-card:hover { background: var(--gray-bg); }
+    .service-card:hover .svc-icon-wrap { background: var(--red); }
+    .service-card:hover .svc-icon-wrap svg { stroke: white; }
+    .svc-icon-wrap {
+      width: 52px; height: 52px;
+      background: #FFF0F2;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      transition: background 0.3s;
+    }
+    .svc-icon-wrap svg { width: 26px; height: 26px; stroke: var(--red); stroke-width: 1.8; fill: none; transition: stroke 0.3s; }
+    .svc-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 18px;
+      text-transform: uppercase;
+      color: var(--black);
+      margin-bottom: 10px;
+    }
+    .svc-desc {
+      font-size: 13.5px;
+      color: var(--gray-mid);
+      line-height: 1.65;
+    }
+    .svc-num {
+      position: absolute;
+      top: 20px; right: 24px;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 40px;
+      color: rgba(200,16,46,0.06);
+      letter-spacing: -1px;
+      transition: color 0.3s;
+    }
+    .service-card:hover .svc-num { color: rgba(200,16,46,0.12); }
 
-.logo{
-  display:flex;
-  align-items:center;
-  gap:.5rem;
-}
+    /* Clientes */
+    .clients-section { background: var(--black); padding: 72px 60px; }
+    .clients-section .section-title { color: var(--white); }
+    .clients-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .client-card {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 28px;
+      background: rgba(255,255,255,0.03);
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .client-card:hover {
+      border-color: var(--red);
+      background: rgba(200,16,46,0.05);
+    }
+    .client-name {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 22px;
+      text-transform: uppercase;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    .client-years {
+      font-size: 11px;
+      color: var(--red);
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .client-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.65;
+    }
 
-.logo img{height:35px;}
+    /* Galería placeholder */
+    .gallery-section { padding: 72px 60px; background: var(--gray-bg); }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-rows: 220px 220px;
+      gap: 12px;
+    }
+    .gallery-item {
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: #DDDDDD;
+    }
+    .gallery-item:first-child { grid-row: span 2; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gallery-item .ph-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #D0D0D0, #BBBBBB);
+      color: #888;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
 
-nav ul{
-  display:flex;
-  gap:2rem;
-  list-style:none;
-}
+    /* ── VIEW: CATÁLOGO ─────────────────────────── */
+    #view-catalogo { background: var(--white); }
+    .catalog-hero {
+      background: var(--black);
+      padding: 80px 60px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .catalog-hero-accent {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 300px; height: 300px;
+      background: var(--red);
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.2;
+    }
+    .catalog-hero .section-tag { color: rgba(200,16,46,0.8); }
+    .catalog-hero .section-title { color: white; margin-bottom: 16px; }
+    .catalog-hero p { color: rgba(255,255,255,0.5); font-size: 15px; max-width: 560px; }
+    .catalog-body { padding: 60px; }
+    .catalog-filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 4px;
+      border: 1.5px solid #DDD;
+      background: transparent;
+      color: var(--gray-mid);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: #FFF0F2;
+    }
+    /* CATÁLOGO CONTENT */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .cat-card {
+      border: 1.5px solid #E8E8E8;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+    .cat-card:hover {
+      border-color: var(--red);
+      box-shadow: 0 12px 40px rgba(200,16,46,0.10);
+      transform: translateY(-4px);
+    }
+    .cat-card-img {
+      height: 180px;
+      background: linear-gradient(135deg, #E8E8E8, #D0D0D0);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cat-card-img .ph {
+      font-size: 11px;
+      color: #999;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .cat-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cat-card-body { padding: 22px 24px; }
+    .cat-card-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .cat-card-name {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 20px;
+      text-transform: uppercase;
+      color: var(--black);
+      margin-bottom: 8px;
+    }
+    .cat-card-desc { font-size: 13px; color: var(--gray-mid); line-height: 1.6; }
+    .cat-empty-note {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-light);
+      font-size: 14px;
+      letter-spacing: 1px;
+      border: 2px dashed #E0E0E0;
+      border-radius: 12px;
+    }
+    .cat-empty-note strong { display: block; font-family: var(--font-display); font-size: 24px; text-transform: uppercase; margin-bottom: 8px; color: #CCC; }
 
-nav a{
-  text-decoration:none;
-  color:var(--black);
-  cursor:pointer;
-}
+    /* ── VIEW: FERRETERÍA ───────────────────────── */
+    #view-ferreteria { background: var(--white); }
+    .ferr-hero {
+      background: linear-gradient(135deg, var(--gray-dark) 0%, var(--black) 100%);
+      padding: 80px 60px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .ferr-hero-lines {
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(45deg, rgba(200,16,46,0.04) 0px, rgba(200,16,46,0.04) 1px, transparent 1px, transparent 30px);
+    }
+    .ferr-hero .section-tag { color: rgba(200,16,46,0.8); }
+    .ferr-hero .section-title { color: white; margin-bottom: 16px; }
+    .ferr-hero p { color: rgba(255,255,255,0.5); font-size: 15px; max-width: 560px; }
+    .ferr-body { padding: 60px; }
+    .ferr-empty {
+      border: 2px dashed #E0E0E0;
+      border-radius: 16px;
+      padding: 80px 40px;
+      text-align: center;
+    }
+    .ferr-empty-icon {
+      width: 64px; height: 64px;
+      background: #FFF0F2;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .ferr-empty-icon svg { width: 32px; height: 32px; stroke: var(--red); stroke-width: 1.6; fill: none; }
+    .ferr-empty h3 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 28px;
+      text-transform: uppercase;
+      color: #CCC;
+      margin-bottom: 10px;
+    }
+    .ferr-empty p { color: #AAA; font-size: 14px; max-width: 400px; margin: 0 auto; }
 
-/* HERO */
-.hero{
-  height:100vh;
-  display:flex;
-  align-items:center;
-  padding:0 3rem;
-  background:url('Imagenes/foto1.jpg') center/cover no-repeat;
-  color:#fff;
-}
+    /* ── VIEW: CONTACTO ─────────────────────────── */
+    #view-contacto { background: var(--gray-bg); }
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - var(--nav-h));
+    }
+    .contact-left {
+      background: var(--black);
+      padding: 80px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .contact-left .section-title { color: white; margin-bottom: 40px; }
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .contact-icon {
+      width: 44px; height: 44px;
+      background: rgba(200,16,46,0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .contact-icon svg { width: 20px; height: 20px; stroke: var(--red); stroke-width: 1.8; fill: none; }
+    .contact-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 4px;
+    }
+    .contact-value {
+      font-size: 16px;
+      color: var(--white);
+      font-weight: 500;
+    }
+    .contact-value a { color: inherit; text-decoration: none; }
+    .contact-value a:hover { color: var(--red-light); }
+    .social-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 40px;
+    }
+    .social-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 40px;
+      padding: 10px 20px;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .social-pill:hover { border-color: var(--red); background: rgba(200,16,46,0.1); color: white; }
+    .social-pill svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+    .contact-right {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .contact-map {
+      flex: 1;
+      min-height: 400px;
+    }
+    .contact-map iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+    .contact-cta {
+      padding: 40px 50px;
+      background: var(--white);
+      border-top: 3px solid var(--red);
+    }
+    .contact-cta h3 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 22px;
+      text-transform: uppercase;
+      color: var(--black);
+      margin-bottom: 6px;
+    }
+    .contact-cta p { font-size: 13.5px; color: var(--gray-mid); margin-bottom: 20px; }
+    .btn-primary {
+      display: inline-block;
+      background: var(--red);
+      color: white;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      margin-right: 12px;
+    }
+    .btn-primary:hover { background: var(--red-dark); transform: translateY(-2px); }
+    .btn-outline {
+      display: inline-block;
+      border: 2px solid var(--black);
+      color: var(--black);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 12px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.2s;
+    }
+    .btn-outline:hover { background: var(--black); color: white; transform: translateY(-2px); }
 
-.hero h2{
-  font-size:3rem;
-  background:rgba(0,0,0,0.6);
-  padding:1rem;
-}
+    /* ── FOOTER ─────────────────────────────────── */
+    footer {
+      background: #0A0A0A;
+      padding: 24px 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 2px solid var(--red);
+    }
+    .footer-copy {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 1px;
+    }
+    .footer-copy span { color: var(--red); }
 
-/* SECTIONS */
-section{padding:6rem 3rem;}
+    /* ── MOBILE MENU ────────────────────────────── */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: var(--nav-h);
+      left: 0; right: 0;
+      background: var(--white);
+      border-bottom: 2px solid var(--red);
+      z-index: 9998;
+      padding: 16px 20px;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu .nav-btn {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 16px;
+      border-radius: 6px;
+    }
+    .mobile-menu .nav-btn::after { display: none; }
 
-.section-title{
-  font-size:2rem;
-  margin-bottom:2rem;
-  border-left:4px solid var(--red);
-  padding-left:1rem;
-}
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 900px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .nav-hamburger { display: flex; }
 
-/* SERVICIOS */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:2rem;
-}
+      .hero-content { padding: 60px 24px; }
+      .hero-accent, .hero-img-placeholder { width: 200px; }
+      .hero-stats { gap: 24px; }
 
-.card{
-  border:1px solid #eee;
-  transition:.3s;
-}
+      .section { padding: 52px 24px; }
+      .services-grid { grid-template-columns: 1fr 1fr; }
+      .clients-grid { grid-template-columns: 1fr 1fr; }
+      .gallery-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+      .gallery-item:first-child { grid-row: span 1; height: 220px; }
+      .gallery-item { height: 180px; }
 
-.card:hover{
-  transform:translateY(-5px);
-  border-color:var(--red);
-}
+      .catalog-body, .ferr-body { padding: 40px 24px; }
+      .catalog-hero, .ferr-hero { padding: 60px 24px 40px; }
+      .catalog-grid { grid-template-columns: 1fr 1fr; }
 
-.card img{
-  width:100%;
-  height:180px;
-  object-fit:cover;
-}
+      .contact-layout { grid-template-columns: 1fr; }
+      .contact-left { padding: 60px 24px; }
+      .contact-map { min-height: 300px; }
+      .contact-cta { padding: 30px 24px; }
 
-.card-body{
-  padding:1rem;
-}
+      footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
 
-/* ===== CATALOGO PRO ===== */
-.catalogo{
-  background:#111;
-  color:#fff;
-}
-
-.catalogo-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:2rem;
-}
-
-.producto{
-  background:#fff;
-  color:#000;
-  border-radius:6px;
-  overflow:hidden;
-  transition:.3s;
-}
-
-.producto:hover{
-  transform:translateY(-6px);
-}
-
-.producto img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
-
-.producto-body{
-  padding:1rem;
-}
-
-.producto h3{
-  font-size:1rem;
-  margin-bottom:.5rem;
-}
-
-.producto p{
-  font-size:.8rem;
-  color:var(--gray);
-}
-
-.producto .precio{
-  color:var(--red);
-  font-weight:bold;
-  margin:1rem 0;
-}
-
-.producto button{
-  width:100%;
-  padding:.6rem;
-  background:var(--black);
-  color:#fff;
-  border:none;
-  cursor:pointer;
-}
-
-.producto button:hover{
-  background:var(--red);
-}
-
-/* FERRETERIA */
-.ferreteria-page{
-  background:#111;
-  color:#fff;
-}
-
-.back-btn{
-  margin:6rem 3rem 0;
-  display:inline-block;
-  background:var(--red);
-  padding:.7rem 1.5rem;
-  cursor:pointer;
-}
-
-/* CONTACT */
-.contact{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:3rem;
-}
-
-.map iframe{
-  width:100%;
-  height:300px;
-}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  .contact{grid-template-columns:1fr;}
-}
-</style>
+      .clients-section { padding: 52px 24px; }
+      .gallery-section { padding: 52px 24px; }
+    }
+    @media (max-width: 600px) {
+      .services-grid { grid-template-columns: 1fr; }
+      .clients-grid { grid-template-columns: 1fr; }
+      .catalog-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 44px; }
+      .hero-stats { flex-wrap: wrap; gap: 16px; }
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="main-container" id="mainContainer">
-
-<!-- ===== INICIO ===== -->
-<div class="page">
-
-<nav>
-  <div class="logo">
-    <img src="Imagenes/Logo.png">
-    <strong>CONSTRUCTORA CONECTE</strong>
-  </div>
-
-  <ul>
-    <li><a onclick="irInicio()">Inicio</a></li>
-    <li><a onclick="irFerreteria()">Ferretería</a></li>
-    <li><a href="#catalogo">Catálogo</a></li>
-    <li><a href="#contacto">Contacto</a></li>
-  </ul>
-</nav>
-
-<section class="hero">
-  <h2>Energía que conecta</h2>
-</section>
-
-<section>
-  <h2 class="section-title">Servicios</h2>
-
-  <div class="grid">
-    <div class="card"><img src="Imagenes/foto2.jpg"><div class="card-body">Electricidad</div></div>
-    <div class="card"><img src="Imagenes/foto3.jpg"><div class="card-body">Climatización</div></div>
-    <div class="card"><img src="Imagenes/foto4.jpg"><div class="card-body">Mantenimiento</div></div>
-    <div class="card"><img src="Imagenes/foto5.jpg"><div class="card-body">Construcción</div></div>
-  </div>
-</section>
-
-<!-- ===== CATALOGO ===== -->
-<section id="catalogo" class="catalogo">
-  <h2 class="section-title" style="border:none;">Catálogo</h2>
-
-  <div class="catalogo-grid">
-
-    <!-- PRODUCTO 1 -->
-    <div class="producto">
-      <img src="Imagenes/foto6.jpg">
-      <div class="producto-body">
-        <h3>Producto 1</h3>
-        <p>Descripción breve del producto</p>
-        <div class="precio">$---</div>
-        <button>Cotizar</button>
+  <!-- NAVBAR -->
+  <nav>
+    <div class="nav-logo" onclick="goTo('inicio')">
+      <div class="nav-logo-fallback" id="logoFallback">CE</div>
+      <img src="Imagenes/Logo.png" alt="Logo Conecte" class="nav-logo-img" id="logoImg" style="display:none;" onload="this.style.display='block'; document.getElementById('logoFallback').style.display='none';" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';"/>
+      <div class="nav-brand">
+        <span class="nav-brand-main">Constructora Conecte</span>
+        <span class="nav-brand-sub">Fundada 1993 · Mérida, Yuc.</span>
       </div>
     </div>
+    <div class="nav-links">
+      <button class="nav-btn active" onclick="goTo('inicio')" id="btn-inicio">Inicio</button>
+      <button class="nav-btn" onclick="goTo('catalogo')" id="btn-catalogo">Catálogo</button>
+      <button class="nav-btn" onclick="goTo('ferreteria')" id="btn-ferreteria">Ferretería</button>
+      <button class="nav-btn" onclick="goTo('contacto')" id="btn-contacto">Contacto</button>
+    </div>
+    <div class="nav-hamburger" onclick="toggleMenu()" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
 
-    <!-- PRODUCTO 2 -->
-    <div class="producto">
-      <img src="Imagenes/foto7.jpg">
-      <div class="producto-body">
-        <h3>Producto 2</h3>
-        <p>Descripción breve del producto</p>
-        <div class="precio">$---</div>
-        <button>Cotizar</button>
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="nav-btn" onclick="goTo('inicio'); closeMenu()">Inicio</button>
+    <button class="nav-btn" onclick="goTo('catalogo'); closeMenu()">Catálogo</button>
+    <button class="nav-btn" onclick="goTo('ferreteria'); closeMenu()">Ferretería</button>
+    <button class="nav-btn" onclick="goTo('contacto'); closeMenu()">Contacto</button>
+  </div>
+
+  <!-- SLIDER -->
+  <div class="slider-wrapper">
+    <div class="slider-track" id="sliderTrack">
+
+      <!-- ══════════════ VIEW: INICIO ══════════════ -->
+      <div class="view" id="view-inicio">
+
+        <!-- HERO -->
+        <div class="hero">
+          <div class="hero-bg-pattern"></div>
+          <div class="hero-accent"></div>
+          <div class="hero-img-placeholder">
+            <img src="Imagenes/foto1.jpg" alt="Conecte trabajo" onerror="this.style.display='none'"/>
+            <div class="img-label">Imagenes/foto1.jpg</div>
+          </div>
+          <div class="hero-content">
+            <div class="hero-badge">Desde 1993 · Mérida, Yucatán</div>
+            <h1 class="hero-title">Constructora<br/><span>Conecte</span></h1>
+            <p class="hero-slogan">"Energía que conecta, soluciones que perduran"</p>
+            <p class="hero-desc">
+              Empresa especializada en soluciones integrales de ingeniería. Con más de 30 años de trayectoria, ofrecemos servicios de alta calidad en electricidad, climatización, mantenimiento industrial y construcción para la industria y el sector público.
+            </p>
+            <div class="hero-stats">
+              <div class="hero-stat">
+                <div class="hero-stat-num">30+</div>
+                <div class="hero-stat-label">Años de exp.</div>
+              </div>
+              <div class="hero-stat">
+                <div class="hero-stat-num">6+</div>
+                <div class="hero-stat-label">Clientes clave</div>
+              </div>
+              <div class="hero-stat">
+                <div class="hero-stat-num">5</div>
+                <div class="hero-stat-label">Áreas de servicio</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SERVICIOS -->
+        <div class="section">
+          <p class="section-tag">Nuestros servicios</p>
+          <h2 class="section-title">Lo que <em>hacemos</em></h2>
+          <div class="services-grid">
+            <div class="service-card">
+              <span class="svc-num">01</span>
+              <div class="svc-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              </div>
+              <div class="svc-name">Electricidad</div>
+              <p class="svc-desc">Alta, media y baja tensión. Montaje de tableros de control, fuerza, subestaciones e iluminación industrial.</p>
+            </div>
+            <div class="service-card">
+              <span class="svc-num">02</span>
+              <div class="svc-icon-wrap">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+              </div>
+              <div class="svc-name">Climatización</div>
+              <p class="svc-desc">Instalación y mantenimiento de cuartos fríos, compresores, aires acondicionados y equipos tipo Shiler.</p>
+            </div>
+            <div class="service-card">
+              <span class="svc-num">03</span>
+              <div class="svc-icon-wrap">
+                <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+              </div>
+              <div class="svc-name">Mantenimiento</div>
+              <p class="svc-desc">Servicios preventivos y correctivos para equipos y plantas industriales. Diagnóstico y optimización energética.</p>
+            </div>
+            <div class="service-card">
+              <span class="svc-num">04</span>
+              <div class="svc-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </div>
+              <div class="svc-name">Construcción</div>
+              <p class="svc-desc">Soldadura estructural, pailería, herrería, plomería, albañilería e instalación de tubería galvanizada.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- GALERÍA -->
+        <div class="gallery-section">
+          <p class="section-tag">Nuestro trabajo</p>
+          <h2 class="section-title" style="margin-bottom:32px;">Proyectos <em>destacados</em></h2>
+          <div class="gallery-grid">
+            <div class="gallery-item">
+              <img src="Imagenes/foto2.jpg" alt="" onerror="this.style.display='none'"/>
+              <div class="ph-label">Imagenes/foto2.jpg</div>
+            </div>
+            <div class="gallery-item">
+              <img src="Imagenes/foto3.jpg" alt="" onerror="this.style.display='none'"/>
+              <div class="ph-label">Imagenes/foto3.jpg</div>
+            </div>
+            <div class="gallery-item">
+              <img src="Imagenes/foto4.jpg" alt="" onerror="this.style.display='none'"/>
+              <div class="ph-label">Imagenes/foto4.jpg</div>
+            </div>
+            <div class="gallery-item">
+              <img src="Imagenes/foto5.jpg" alt="" onerror="this.style.display='none'"/>
+              <div class="ph-label">Imagenes/foto5.jpg</div>
+            </div>
+            <div class="gallery-item">
+              <img src="Imagenes/foto6.jpg" alt="" onerror="this.style.display='none'"/>
+              <div class="ph-label">Imagenes/foto6.jpg</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLIENTES -->
+        <div class="clients-section">
+          <p class="section-tag" style="color:rgba(200,16,46,0.7);">Experiencia comprobada</p>
+          <h2 class="section-title">Clientes que <em>confían</em></h2>
+          <div class="clients-grid">
+            <div class="client-card">
+              <div class="client-name">Bachoco</div>
+              <div class="client-years">2022 – 2026</div>
+              <p class="client-desc">Mantenimiento industrial general, aires acondicionados e instalación de líneas eléctricas.</p>
+            </div>
+            <div class="client-card">
+              <div class="client-name">Pilgrim's</div>
+              <div class="client-years">2024 – 2026</div>
+              <p class="client-desc">Mantenimiento en silos y soldadura de cangilones en planta industrial.</p>
+            </div>
+            <div class="client-card">
+              <div class="client-name">Grupo Crío</div>
+              <div class="client-years">1994 – 2026</div>
+              <p class="client-desc">Soporte técnico integral en plantas de rastro, empaques y peletizadoras; refrigeración e instalación eléctrica.</p>
+            </div>
+            <div class="client-card">
+              <div class="client-name">Helados Holanda</div>
+              <div class="client-years">1994 – 1999</div>
+              <p class="client-desc">Mantenimiento de equipos Shiler y optimización de sistemas eléctricos industriales.</p>
+            </div>
+            <div class="client-card">
+              <div class="client-name">Millet</div>
+              <div class="client-years">2016 – 2020</div>
+              <p class="client-desc">Mantenimiento de cuartos fríos y equipos de aire acondicionado.</p>
+            </div>
+            <div class="client-card">
+              <div class="client-name">Obras Públicas</div>
+              <div class="client-years">1997 – 2023</div>
+              <p class="client-desc">Supervisión de instalaciones de media y baja tensión y sistemas de refrigeración.</p>
+            </div>
+          </div>
+        </div>
+
+        <footer>
+          <span class="footer-copy">© 2025 <span>Constructora Conecte</span>. Todos los derechos reservados.</span>
+          <span class="footer-copy">Ing. Josue Flores · Mérida, Yucatán</span>
+        </footer>
       </div>
-    </div>
+      <!-- ══ FIN INICIO ══ -->
 
-    <!-- PRODUCTO 3 -->
-    <div class="producto">
-      <img src="Imagenes/foto8.jpg">
-      <div class="producto-body">
-        <h3>Producto 3</h3>
-        <p>Descripción breve del producto</p>
-        <div class="precio">$---</div>
-        <button>Cotizar</button>
+
+      <!-- ══════════════ VIEW: CATÁLOGO ══════════════ -->
+      <div class="view" id="view-catalogo">
+        <div class="catalog-hero">
+          <div class="catalog-hero-accent"></div>
+          <p class="section-tag">Nuestros productos</p>
+          <h2 class="section-title">Catálogo</h2>
+          <p>Equipos, materiales y soluciones especializadas para proyectos eléctricos, de climatización e industriales.</p>
+        </div>
+        <div class="catalog-body">
+          <div class="catalog-filters">
+            <button class="filter-btn active">Todos</button>
+            <button class="filter-btn">Eléctrico</button>
+            <button class="filter-btn">Climatización</button>
+            <button class="filter-btn">Industrial</button>
+            <button class="filter-btn">Construcción</button>
+          </div>
+          <div class="catalog-grid">
+            <!-- AQUÍ VA EL CONTENIDO DEL CATÁLOGO -->
+            <div class="cat-empty-note">
+              <strong>Catálogo en construcción</strong>
+              Agrega tus productos y categorías en este espacio.
+            </div>
+          </div>
+        </div>
+        <footer>
+          <span class="footer-copy">© 2025 <span>Constructora Conecte</span>. Todos los derechos reservados.</span>
+        </footer>
       </div>
-    </div>
+      <!-- ══ FIN CATÁLOGO ══ -->
 
-  </div>
 
-</section>
+      <!-- ══════════════ VIEW: FERRETERÍA ══════════════ -->
+      <div class="view" id="view-ferreteria">
+        <div class="ferr-hero">
+          <div class="ferr-hero-lines"></div>
+          <p class="section-tag">Suministros y materiales</p>
+          <h2 class="section-title">Ferretería</h2>
+          <p>Herramientas, materiales eléctricos, tubería y accesorios para tu proyecto industrial o de construcción.</p>
+        </div>
+        <div class="ferr-body">
+          <!-- AQUÍ VA LA INFORMACIÓN DE FERRETERÍA -->
+          <div class="ferr-empty">
+            <div class="ferr-empty-icon">
+              <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <h3>Sección de Ferretería</h3>
+            <p>Agrega aquí el inventario, productos y categorías de ferretería disponibles para tus clientes.</p>
+          </div>
+        </div>
+        <footer>
+          <span class="footer-copy">© 2025 <span>Constructora Conecte</span>. Todos los derechos reservados.</span>
+        </footer>
+      </div>
+      <!-- ══ FIN FERRETERÍA ══ -->
 
-<!-- CONTACTO -->
-<section id="contacto">
-  <h2 class="section-title">Contacto</h2>
 
-  <div class="contact">
-    <div>
-      <p>Tel: 9992226016</p>
-      <p>Email: conexionesconecte@hotmail.com</p>
-    </div>
+      <!-- ══════════════ VIEW: CONTACTO ══════════════ -->
+      <div class="view" id="view-contacto">
+        <div class="contact-layout">
+          <div class="contact-left">
+            <p class="section-tag">Hablemos</p>
+            <h2 class="section-title">Contáctanos</h2>
 
-    <div class="map">
-      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2702.555930228358!2d-89.64674302650165!3d20.939464790842948!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f567330b2aa0f2b%3A0x14f33139dc7ecb05!2sConstructora%20Conecte!5e1!3m2!1ses-419!2smx"></iframe>
-    </div>
-  </div>
-</section>
+            <div class="contact-item">
+              <div class="contact-icon">
+                <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.09 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .99h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.92.36 1.87.61 2.81.7A2 2 0 0122 16.92z"/></svg>
+              </div>
+              <div>
+                <div class="contact-label">Teléfonos</div>
+                <div class="contact-value">
+                  <a href="tel:9992226016">999 222 6016</a><br/>
+                  <a href="tel:9999089592">999 908 9592</a>
+                </div>
+              </div>
+            </div>
 
-</div>
+            <div class="contact-item">
+              <div class="contact-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div>
+                <div class="contact-label">Correo electrónico</div>
+                <div class="contact-value">
+                  <a href="mailto:conexionesconecte@hotmail.com">conexionesconecte@hotmail.com</a>
+                </div>
+              </div>
+            </div>
 
-<!-- ===== FERRETERIA ===== -->
-<div class="page ferreteria-page">
+            <div class="contact-item">
+              <div class="contact-icon">
+                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div>
+                <div class="contact-label">Ubicación</div>
+                <div class="contact-value">Mérida, Yucatán, México</div>
+              </div>
+            </div>
 
-<div class="back-btn" onclick="irInicio()">← Regresar</div>
+            <div class="social-row">
+              <a href="https://www.instagram.com/constructoraconecte" target="_blank" class="social-pill">
+                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                @constructoraconecte
+              </a>
+            </div>
+          </div>
 
-<section>
-  <h2 class="section-title">Ferretería</h2>
+          <div class="contact-right">
+            <div class="contact-map">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2702.555930228358!2d-89.64674302650165!3d20.939464790842948!2m3!1f0!2f0!2f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f567330b2aa0f2b%3A0x14f33139dc7ecb05!2sConstructora%20Conecte!5e1!3m2!1ses-419!2smx!4v1774537854739!5m2!1ses-419!2smx"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Ubicación Constructora Conecte"
+              ></iframe>
+            </div>
+            <div class="contact-cta">
+              <h3>¿Listo para tu proyecto?</h3>
+              <p>Cuéntanos qué necesitas y te brindaremos una solución a la medida.</p>
+              <a href="tel:9992226016" class="btn-primary">Llamar ahora</a>
+              <a href="mailto:conexionesconecte@hotmail.com" class="btn-outline">Enviar correo</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ══ FIN CONTACTO ══ -->
 
-  <!-- 🔴 AQUI VA TU SISTEMA 🔴 -->
-  <div style="border:2px dashed #888;padding:3rem;">
-    AQUI VA TODO TU SISTEMA DE FERRETERIA
-  </div>
+    </div><!-- /slider-track -->
+  </div><!-- /slider-wrapper -->
 
-</section>
+  <script>
+    const views = ['inicio', 'catalogo', 'ferreteria', 'contacto'];
+    let current = 0;
 
-</div>
+    function goTo(name) {
+      const idx = views.indexOf(name);
+      if (idx === -1) return;
+      current = idx;
+      document.getElementById('sliderTrack').style.transform = `translateX(-${idx * 25}%)`;
+      views.forEach((v, i) => {
+        const btn = document.getElementById('btn-' + v);
+        if (btn) btn.classList.toggle('active', i === idx);
+      });
+    }
 
-</div>
+    function toggleMenu() {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    }
+    function closeMenu() {
+      document.getElementById('mobileMenu').classList.remove('open');
+    }
 
-<script>
-function irFerreteria(){
-  document.getElementById("mainContainer").style.transform="translateX(-100vw)";
-}
-function irInicio(){
-  document.getElementById("mainContainer").style.transform="translateX(0)";
-}
-</script>
+    // Close mobile menu on outside click
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('mobileMenu');
+      const hbg = document.getElementById('hamburger');
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !hbg.contains(e.target)) {
+        menu.classList.remove('open');
+      }
+    });
 
+    // Filter buttons (catálogo)
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    // Init
+    goTo('inicio');
+  </script>
 </body>
 </html>
