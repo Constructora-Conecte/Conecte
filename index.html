@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="Imagenes/Logo.png" type="image/png">
 <title>Constructora Conecte</title>
+
+<!-- FAVICON -->
+<link rel="icon" href="Imagenes/Logo.png" type="image/png">
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
 
@@ -22,6 +25,7 @@ body{
   font-family:'Montserrat',sans-serif;
   background:#fff;
   color:var(--black);
+  overflow-x:hidden;
 }
 
 /* NAV */
@@ -34,12 +38,18 @@ nav{
   padding:1rem 3rem;
   display:flex;
   justify-content:space-between;
+  align-items:center;
   z-index:1000;
 }
 
-nav h1{
-  color:var(--red);
-  font-size:1.2rem;
+.logo{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+
+.logo img{
+  height:35px;
 }
 
 nav ul{
@@ -64,17 +74,10 @@ nav a:hover{
   display:flex;
   align-items:center;
   padding:0 3rem;
-  background:linear-gradient(to right,#fff 50%,#111 50%);
-  color:#fff;
-}
-
-.hero-content{
-  max-width:600px;
 }
 
 .hero h2{
   font-size:3rem;
-  color:var(--black);
 }
 
 .hero span{
@@ -92,7 +95,6 @@ nav a:hover{
   background:var(--red);
   color:#fff;
   text-decoration:none;
-  margin-top:1rem;
 }
 
 /* SECTIONS */
@@ -107,7 +109,7 @@ section{
   padding-left:1rem;
 }
 
-/* SERVICIOS */
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -117,47 +119,69 @@ section{
 .card{
   border:1px solid #eee;
   padding:1.5rem;
-  transition:.3s;
 }
 
-.card:hover{
-  border-color:var(--red);
+/* FERRETERIA SLIDE */
+.ferreteria-section{
+  position:relative;
+  width:100%;
+  height:100vh;
+  overflow:hidden;
 }
 
-.card h3{
-  margin-bottom:.5rem;
+.ferreteria-container{
+  display:flex;
+  width:200%;
+  height:100%;
+  transition:transform .6s ease;
 }
 
-/* EXPERIENCIA */
-.exp{
-  background:var(--light);
+.ferreteria-left,
+.ferreteria-right{
+  width:100%;
+  padding:5rem 3rem;
 }
 
-/* CATALOGO */
-.catalogo{
+/* IZQUIERDA */
+.ferreteria-left{
   background:#111;
   color:#fff;
-  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
 }
 
-.catalogo-box{
-  border:2px dashed #555;
-  padding:3rem;
+.ferreteria-left h2{
+  font-size:2.5rem;
+}
+
+.ferreteria-left span{
+  color:var(--red);
+}
+
+/* DERECHA (CONTENIDO) */
+.ferreteria-right{
+  background:#fff;
+  overflow-y:auto;
+}
+
+/* BOTON */
+.slide-btn{
   margin-top:2rem;
+  background:var(--red);
+  color:#fff;
+  padding:.8rem 1.5rem;
+  border:none;
+  cursor:pointer;
 }
 
-/* CONTACTO */
+/* CONTACT */
 .contact{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:3rem;
 }
 
-.contact-info p{
-  margin:.5rem 0;
-}
-
-/* MAP */
 .map iframe{
   width:100%;
   height:300px;
@@ -173,13 +197,13 @@ footer{
 
 /* RESPONSIVE */
 @media(max-width:768px){
-  .hero{
-    background:#fff;
-    color:#000;
-  }
-
   .contact{
     grid-template-columns:1fr;
+  }
+
+  .ferreteria-container{
+    flex-direction:column;
+    width:100%;
   }
 }
 </style>
@@ -189,21 +213,23 @@ footer{
 
 <!-- NAV -->
 <nav>
-  <h1>CONSTRUCTORA CONECTE</h1>
+  <div class="logo">
+    <img src="Imagenes/Logo.png" alt="Logo">
+    <strong>CONSTRUCTORA CONECTE</strong>
+  </div>
+
   <ul>
     <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#experiencia">Experiencia</a></li>
-    <li><a href="#catalogo">Catálogo</a></li>
+    <li><a href="#ferreteria">Ferretería</a></li>
     <li><a href="#contacto">Contacto</a></li>
   </ul>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-content">
-    <h2>Energía que <span>conecta</span>,<br> soluciones que perduran</h2>
-    <p>Más de 30 años ofreciendo soluciones integrales en ingeniería eléctrica, mantenimiento industrial y construcción.</p>
-    <a href="#contacto" class="btn">Contáctanos</a>
+  <div>
+    <h2>Energía que <span>conecta</span>, soluciones que perduran</h2>
+    <p>Más de 30 años ofreciendo soluciones en ingeniería y construcción.</p>
   </div>
 </section>
 
@@ -212,51 +238,42 @@ footer{
   <h2 class="section-title">Servicios</h2>
 
   <div class="grid">
-    <div class="card">
-      <h3>Electricidad</h3>
-      <p>Alta, media y baja tensión, subestaciones, tableros de control e iluminación.</p>
-    </div>
-
-    <div class="card">
-      <h3>Climatización</h3>
-      <p>Instalación y mantenimiento de aires, cuartos fríos y sistemas industriales.</p>
-    </div>
-
-    <div class="card">
-      <h3>Mantenimiento Industrial</h3>
-      <p>Servicios preventivos y correctivos para plantas y equipos.</p>
-    </div>
-
-    <div class="card">
-      <h3>Construcción</h3>
-      <p>Soldadura, herrería, plomería, albañilería y estructuras metálicas.</p>
-    </div>
+    <div class="card"><h3>Electricidad</h3></div>
+    <div class="card"><h3>Climatización</h3></div>
+    <div class="card"><h3>Mantenimiento</h3></div>
+    <div class="card"><h3>Construcción</h3></div>
   </div>
 </section>
 
-<!-- EXPERIENCIA -->
-<section id="experiencia" class="exp">
-  <h2 class="section-title">Experiencia</h2>
+<!-- FERRETERIA -->
+<section id="ferreteria" class="ferreteria-section">
 
-  <div class="grid">
-    <div class="card"><h3>Bachoco</h3><p>2022 - 2026</p></div>
-    <div class="card"><h3>Pilgrim's</h3><p>2024 - 2026</p></div>
-    <div class="card"><h3>Grupo Crío</h3><p>1994 - 2026</p></div>
-    <div class="card"><h3>Helados Holanda</h3><p>1994 - 1999</p></div>
+  <div class="ferreteria-container" id="ferreteriaContainer">
+
+    <!-- LADO IZQUIERDO -->
+    <div class="ferreteria-left">
+      <h2>Área de <span>Ferretería</span></h2>
+      <p>Accede a nuestro catálogo completo de productos.</p>
+
+      <button class="slide-btn" onclick="moverFerreteria()">Ver catálogo →</button>
+    </div>
+
+    <!-- LADO DERECHO -->
+    <div class="ferreteria-right">
+
+      <h2 class="section-title">Catálogo Ferretería</h2>
+
+      <!-- 🔴 AQUI VAS A PEGAR TODO TU CATALOGO 🔴 -->
+      <div style="border:2px dashed #ccc;padding:2rem;text-align:center;">
+        🔧 ESPACIO PARA CATALOGO DE FERRETERIA 🔧
+        <br><br>
+        (Aquí irá todo tu sistema, productos, etc.)
+      </div>
+
+    </div>
+
   </div>
-</section>
 
-<!-- CATALOGO -->
-<section id="catalogo" class="catalogo">
-  <h2 class="section-title" style="border:none;">Catálogo de Servicios</h2>
-
-  <p>Aquí podrás visualizar todos nuestros servicios detallados.</p>
-
-  <div class="catalogo-box">
-    🔧 ESPACIO RESERVADO PARA EL CATÁLOGO 🔧  
-    <br><br>
-    (Aquí después se integrará tu sistema o contenido dinámico)
-  </div>
 </section>
 
 <!-- CONTACTO -->
@@ -264,23 +281,27 @@ footer{
   <h2 class="section-title">Contacto</h2>
 
   <div class="contact">
-    <div class="contact-info">
-      <p><strong>Tel:</strong> 9992226016</p>
-      <p><strong>Tel:</strong> 9999089592</p>
-      <p><strong>Email:</strong> conexionesconecte@hotmail.com</p>
-      <p><strong>Ubicación:</strong> Mérida, Yucatán</p>
+    <div>
+      <p>Tel: 9992226016</p>
+      <p>Email: conexionesconecte@hotmail.com</p>
     </div>
 
     <div class="map">
-      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2702.555930228358!2d-89.64674302650165!3d20.939464790842948!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f567330b2aa0f2b%3A0x14f33139dc7ecb05!2sConstructora%20Conecte!5e1!3m2!1ses-419!2smx!4v1774537854739!5m2!1ses-419!2smx" allowfullscreen="" loading="lazy"></iframe>
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2702.555930228358!2d-89.64674302650165!3d20.939464790842948!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f567330b2aa0f2b%3A0x14f33139dc7ecb05!2sConstructora%20Conecte!5e1!3m2!1ses-419!2smx!4v1774537854739!5m2!1ses-419!2smx"></iframe>
     </div>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <p>© 2026 Constructora Conecte — Todos los derechos reservados</p>
+  © 2026 Constructora Conecte
 </footer>
+
+<script>
+function moverFerreteria(){
+  document.getElementById("ferreteriaContainer").style.transform = "translateX(-50%)";
+}
+</script>
 
 </body>
 </html>
