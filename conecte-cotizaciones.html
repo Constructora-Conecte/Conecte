@@ -463,11 +463,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="form-grid" style="margin-bottom:16px">
         <div class="form-group">
           <label class="form-label">Cliente (RFC / ID) *</label>
-          <select class="form-select" id="fCliente"></select>
+          <div style="display:flex;gap:5px">
+            <select class="form-select" id="fCliente" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo cliente" onclick="openAddCliente()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Contacto</label>
-          <select class="form-select" id="fContacto"></select>
+          <div style="display:flex;gap:5px">
+            <select class="form-select" id="fContacto" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo contacto" onclick="openAddContacto()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Fecha *</label>
@@ -565,6 +575,75 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeDel()">Cancelar</button>
       <button class="btn" style="background:var(--red);color:#fff" id="delConfBtn" onclick="confirmDel()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD CLIENT MODAL ══ -->
+<div class="modal-bg" id="addClienteModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-title">Nuevo Cliente</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <div class="form-group">
+        <label class="form-label">RFC / ID *</label>
+        <input type="text" class="form-input" id="ncRFC" placeholder="Ej. CAL031230UL6" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre / Razón Social *</label>
+        <input type="text" class="form-input" id="ncNombre" placeholder="Ej. CAMPI ALIMENTOS S.A. DE C.V.">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-input" id="ncTel" placeholder="(999) 000-0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="ncEmail" placeholder="contacto@empresa.com">
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('addClienteModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-red" id="saveClienteBtn" onclick="saveNewCliente()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar Cliente
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD CONTACT MODAL ══ -->
+<div class="modal-bg" id="addContactoModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-title">Nuevo Contacto</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <div class="form-group">
+        <label class="form-label">ID Contacto *</label>
+        <input type="text" class="form-input" id="ncoId" placeholder="Ej. ING001" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente al que pertenece</label>
+        <input type="text" class="form-input" id="ncoClienteLabel" readonly style="background:var(--bg4);color:var(--text2)">
+        <input type="hidden" id="ncoClienteId">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre Completo *</label>
+        <input type="text" class="form-input" id="ncoNombre" placeholder="Ej. ING. Jorge Armando Uicab Canul">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-input" id="ncoTel" placeholder="(999) 000-0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="ncoEmail" placeholder="contacto@empresa.com">
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('addContactoModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-red" id="saveContactoBtn" onclick="saveNewContacto()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar Contacto
+      </button>
     </div>
   </div>
 </div>
@@ -715,9 +794,16 @@ async function loadAll() {
     ST.clientes = {};
     (cliR||[]).forEach(r => { if(r[0]) ST.clientes[r[0]] = { id:r[0], nombre:r[1]||r[0] }; });
 
-    /* Contactos */
+    /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email (or similar) */
     ST.contactos = {};
-    (conR||[]).forEach(r => { if(r[0]) ST.contactos[r[0]] = r[2]||r[1]||r[0]; });
+    ST.contactosList = [];
+    (conR||[]).forEach(r => {
+      if(r[0]){
+        const id=r[0], id_cli=r[1]||'', nombre=r[2]||r[1]||r[0];
+        ST.contactos[id] = nombre;
+        ST.contactosList.push({ id, id_cli, nombre });
+      }
+    });
 
     /* Artículos — cols: A=ID, B=Nombre, C=Precio, D=Impuesto, E=Descripcion, F=Unidad */
     ST.articulos = (artR||[]).filter(r=>r[0]).map(r => ({
@@ -920,11 +1006,15 @@ function populateContactos(id_cli) {
   const sel=document.getElementById('fContacto');
   sel.innerHTML='<option value="">— Seleccionar contacto —</option>';
   if(!id_cli) return;
-  // Show all contacts (could be filtered by client if data allows)
-  Object.entries(ST.contactos).forEach(([id,nombre])=>{
+  // Filter contacts by client: ST.contactosList holds full rows with id_cli
+  const filtered = ST.contactosList ? ST.contactosList.filter(c=>c.id_cli===id_cli) : [];
+  filtered.forEach(c=>{
     const o=document.createElement('option');
-    o.value=id; o.textContent=nombre; sel.appendChild(o);
+    o.value=c.id; o.textContent=c.nombre; sel.appendChild(o);
   });
+  // Add "new contact" option at bottom
+  const addO=document.createElement('option');
+  addO.value='__new__'; addO.textContent='+ Agregar nuevo contacto…'; sel.appendChild(addO);
 }
 
 /* ─── ARTÍCULOS DROPDOWN ─── */
@@ -1103,7 +1193,7 @@ async function guardarCot() {
   const iva = sub*0.16;
   const tot = sub+iva;
 
-  const newId = ST.editId || genId(cliente);
+  const newId = ST.editId || await genNextFolio(cliente, desc);
   const itemsJSON = JSON.stringify(ST.items.map(it=>({
     desc: it.desc, cant: it.cant, unidad: it.unidad, precio: it.precio, imp: it.imp
   })));
@@ -1158,82 +1248,248 @@ function generarPDF(id, itemsOverride) {
   if(cotId) r=ST.cotizaciones.find(c=>c.id===cotId);
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const W=210, ml=14, mr=196;
 
   const cliSel = document.getElementById('fCliente');
+  const rfcCli = r ? r.id_cli : (cliSel.value||'');
   const cliente = r
     ? (ST.clientes[r.id_cli]?.nombre||r.id_cli)
     : (cliSel.options[cliSel.selectedIndex]?.text||'—');
   const desc    = r ? r.desc : document.getElementById('fDesc').value;
   const folio   = r ? r.id : (ST.editId || 'BORRADOR');
   const notas   = r ? r.notas : document.getElementById('fNotas').value;
-  const fecha   = r ? fmtDate(r.fecha) : new Date().toLocaleDateString('es-MX');
+  const fechaRaw = r ? r.fecha : new Date().toLocaleDateString('es-MX');
+  const vigencia = r ? r.vigencia : (document.getElementById('fVigencia').value||'30');
+  const contactoId = r ? r.id_con : document.getElementById('fContacto').value;
+  const contacto = ST.contactos[contactoId] || contactoId || '';
 
-  // Use provided items, saved items, form items — in that order
+  // Vigencia date
+  let fechaEmision='', fechaVigencia='';
+  try {
+    const parts = String(fechaRaw).split('/');
+    let d;
+    if(parts.length===3) d=new Date(`${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}T12:00:00`);
+    else d=new Date((fechaRaw||'')+'T12:00:00');
+    if(!isNaN(d)){
+      fechaEmision=d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+      const dv=new Date(d); dv.setDate(dv.getDate()+parseInt(vigencia||30));
+      fechaVigencia=dv.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+    }
+  } catch(e){ fechaEmision=fechaRaw||''; fechaVigencia=''; }
+
   const items = itemsOverride
     || (r && r.items && r.items.length ? r.items : null)
     || ST.items;
 
-  // Header
-  doc.setFillColor(229,62,62);
-  doc.rect(0,0,210,18,'F');
-  doc.setTextColor(255,255,255);
+  const RED=[229,62,62], WHITE=[255,255,255], DARK=[30,30,30], GRAY=[120,120,120], LGRAY=[240,240,240];
+  const DKGRAY=[60,60,60];
+
+  /* ── LOGO AREA / HEADER ── */
+  // Red top accent line
+  doc.setFillColor(...RED);
+  doc.rect(0,0,W,3,'F');
+
+  // Company name block
   doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
-  doc.text('CONSTRUCTORA CONECTE',10,11);
-  doc.setFontSize(9);
-  doc.text('COTIZACIÓN: '+folio,210-10,11,{align:'right'});
+  doc.setFontSize(16);
+  doc.setTextColor(...DARK);
+  doc.text('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.',W/2,14,{align:'center'});
 
-  // Body
-  doc.setTextColor(50,50,50);
   doc.setFont('helvetica','normal');
-  doc.setFontSize(10);
-  doc.text('Cliente: '+cliente,10,26);
-  doc.text('Trabajo: '+desc,10,33);
-  doc.text('Fecha: '+fecha,10,40);
-  if(notas) doc.text('Notas: '+doc.splitTextToSize(notas,180).join(' '),10,47);
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text('CALLE 109B #610 X 66 Y 66A FRACC. OBRERA · TEL: (999) 222-6016 / (999) 908-9592',W/2,19,{align:'center'});
+  doc.text('conexionesconecte@hotmail.com',W/2,23,{align:'center'});
 
-  // Table header
-  let y = notas ? 57 : 50;
-  doc.setFillColor(40,40,40);
-  doc.rect(8,y-5,194,8,'F');
-  doc.setTextColor(255,255,255);
+  // Folio badge top right
+  doc.setFillColor(...RED);
+  doc.roundedRect(mr-52,6,52,10,2,2,'F');
   doc.setFont('helvetica','bold');
-  doc.setFontSize(9);
-  doc.text('Concepto',12,y); doc.text('Cant',110,y); doc.text('P.Unit',130,y); doc.text('Importe',165,y);
+  doc.setFontSize(7.5);
+  doc.setTextColor(...WHITE);
+  doc.text(folio,mr-26,12.5,{align:'center'});
 
-  doc.setTextColor(50,50,50);
-  doc.setFont('helvetica','normal');
-  y+=10;
-  items.forEach(it=>{
-    if(y>270){ doc.addPage(); y=20; }
-    doc.setFontSize(9);
-    const dLines=doc.splitTextToSize(it.desc||'—',85);
-    doc.text(dLines,12,y);
-    doc.text(String(it.cant||1),112,y);
-    doc.text('$'+((it.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2})),132,y);
-    doc.text('$'+((it.imp||0).toLocaleString('es-MX',{minimumFractionDigits:2})),167,y);
-    y+=dLines.length*5+3;
-    doc.setDrawColor(220,220,220);
-    doc.line(8,y-1,202,y-1);
-  });
+  // Separator line
+  doc.setDrawColor(...RED);
+  doc.setLineWidth(0.5);
+  doc.line(ml,27,mr,27);
 
-  // Totals
+  /* ── INFO TABLE (Dirigida a / Fecha) ── */
+  let y=31;
+  // Row 1 headers
+  doc.setFillColor(...RED);
+  doc.rect(ml,y,88,6,'F');
+  doc.rect(ml+92,y,mr-ml-92,6,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
+  doc.text('Dirigida a:',ml+2,y+4.2);
+  doc.text('Fecha de emisión',ml+94,y+4.2);
   y+=6;
+
+  // Row 1 data
+  doc.setFillColor(252,252,252);
+  doc.rect(ml,y,88,10,'F');
+  doc.rect(ml+92,y,mr-ml-92,10,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...DARK);
+  doc.text('Nombre: '+cliente,ml+2,y+4.5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('RFC: '+rfcCli,ml+2,y+8.5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text(fechaEmision,ml+94,y+6);
+  y+=10;
+
+  // Row 2 headers
+  doc.setFillColor(...RED);
+  doc.rect(ml,y,88,6,'F');
+  doc.rect(ml+92,y,mr-ml-92,6,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
+  doc.text('Trabajo:',ml+2,y+4.2);
+  doc.text('Contacto',ml+94,y+4.2);
+  y+=6;
+
+  // Row 2 data
+  doc.setFillColor(252,252,252);
+  doc.rect(ml,y,88,8,'F');
+  doc.rect(ml+92,y,mr-ml-92,8,'F');
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+  const descLines=doc.splitTextToSize(desc||'—',84);
+  doc.text(descLines[0]||'—',ml+2,y+5.5);
+  doc.text(contacto||'—',ml+94,y+5.5);
+  y+=8+4;
+
+  /* ── ITEMS TABLE HEADER ── */
+  doc.setFillColor(...RED);
+  doc.rect(ml,y,mr-ml,7,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
+  doc.text('Cantidad',ml+2,y+4.8);
+  doc.text('Producto / Servicio',ml+22,y+4.8);
+  doc.text('Unidad',mr-62,y+4.8,{align:'left'});
+  doc.text('$/Uni',mr-38,y+4.8,{align:'left'});
+  doc.text('Total',mr-2,y+4.8,{align:'right'});
+  y+=7;
+
+  /* ── ITEMS ROWS ── */
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...DARK);
+  let rowBg=false;
+  items.forEach(it=>{
+    const lines=doc.splitTextToSize(it.desc||'—',100);
+    const rh=Math.max(lines.length*4.5+4, 8);
+    if(y+rh>272){ doc.addPage(); y=14; }
+    doc.setFillColor(rowBg?247:255,rowBg?247:255,rowBg?247:255);
+    doc.rect(ml,y,mr-ml,rh,'F');
+    doc.setTextColor(...DARK);
+    doc.text(String(it.cant||1),ml+10,y+rh/2+1.5,{align:'center'});
+    doc.text(lines,ml+22,y+4.5);
+    doc.text(it.unidad||'—',mr-62,y+rh/2+1.5);
+    doc.text('$'+((it.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2})),mr-38,y+rh/2+1.5);
+    doc.text('$'+((it.imp||0).toLocaleString('es-MX',{minimumFractionDigits:2})),mr-2,y+rh/2+1.5,{align:'right'});
+    doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
+    doc.line(ml,y+rh,mr,y+rh);
+    y+=rh;
+    rowBg=!rowBg;
+  });
+  y+=5;
+
+  /* ── TOTALS BOX ── */
   const sub = items.reduce((s,it)=>s+(it.imp||0),0);
   const iva = sub*0.16;
   const tot = sub+iva;
-  doc.setFontSize(9);
-  doc.text('Subtotal:',140,y); doc.text('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}),202,y,{align:'right'}); y+=7;
-  doc.text('IVA (16%):',140,y); doc.text('$'+iva.toLocaleString('es-MX',{minimumFractionDigits:2}),202,y,{align:'right'}); y+=7;
-  doc.setFillColor(229,62,62);
-  doc.rect(130,y-5,72,8,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.text('TOTAL:',140,y); doc.text('$'+tot.toLocaleString('es-MX',{minimumFractionDigits:2}),202,y,{align:'right'});
 
-  doc.save(`cotizacion_${folio}.pdf`);
+  if(y+36>278){ doc.addPage(); y=14; }
+
+  // Totals right-aligned box
+  const bx=mr-70, bw=70;
+  doc.setFillColor(252,252,252);
+  doc.rect(bx,y,bw,8,'F');
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DKGRAY);
+  doc.text('Subtotal:',bx+2,y+5.5);
+  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
+  doc.text('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}),mr-2,y+5.5,{align:'right'});
+  y+=8;
+
+  doc.setFillColor(252,252,252);
+  doc.rect(bx,y,bw,8,'F');
+  doc.setFont('helvetica','normal'); doc.setTextColor(...DKGRAY);
+  doc.text('+ IVA 16%:',bx+2,y+5.5);
+  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
+  doc.text('$'+iva.toLocaleString('es-MX',{minimumFractionDigits:2}),mr-2,y+5.5,{align:'right'});
+  y+=8;
+
+  doc.setFillColor(...RED);
+  doc.rect(bx,y,bw,10,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...WHITE);
+  doc.text('GRAN TOTAL:',bx+2,y+6.8);
+  doc.text('$'+tot.toLocaleString('es-MX',{minimumFractionDigits:2}),mr-2,y+6.8,{align:'right'});
+  y+=10;
+
+  // Total en letras
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...DARK);
+  const totWords=numberToWordsES(Math.round(tot));
+  doc.text('En letras: ',bx,y+6);
+  doc.setFont('helvetica','italic');
+  doc.text(totWords,bx+22,y+6);
+  y+=12;
+
+  /* ── NOTAS ── */
+  if(notas){
+    if(y+20>278){ doc.addPage(); y=14; }
+    doc.setFillColor(...RED);
+    doc.rect(ml,y,mr-ml,6,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
+    doc.text('Notas',ml+2,y+4.2);
+    y+=6;
+    doc.setFillColor(252,252,252);
+    const nLines=doc.splitTextToSize(notas,mr-ml-4);
+    const nh=nLines.length*4.5+6;
+    doc.rect(ml,y,mr-ml,nh,'F');
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...DKGRAY);
+    doc.text(nLines,ml+2,y+5);
+    y+=nh;
+  }
+
+  // Vigencia
+  if(fechaVigencia){
+    y+=4;
+    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...RED);
+    doc.text(`Esta cotización es vigente hasta: ${fechaVigencia}`,ml,y);
+    y+=5;
+  }
+
+  /* ── FOOTER ── */
+  const pageCount=doc.getNumberOfPages();
+  for(let p=1;p<=pageCount;p++){
+    doc.setPage(p);
+    doc.setDrawColor(...RED); doc.setLineWidth(0.5);
+    doc.line(ml,285,mr,285);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...GRAY);
+    doc.text('Para cualquier aclaración o duda, comuníquese con nosotros. ¡Gracias por su confianza!',W/2,289,{align:'center'});
+    doc.text(`Pág. ${p}/${pageCount}`,mr,289,{align:'right'});
+  }
+
+  // Save with proper name: CONE_COTnum_RFC_desc
+  const rfcSlug=(rfcCli||'').replace(/[^A-Z0-9]/gi,'').toUpperCase();
+  const descSlug=(desc||'').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);
+  doc.save(`${folio}.pdf`);
   toast('ok','PDF generado.');
+}
+
+/* Number to words ES (simplified) */
+function numberToWordsES(n){
+  if(n===0) return 'CERO PESOS';
+  const u=['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const d=['','','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const c=['','CIEN','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  function chunk(n){
+    if(n<20) return u[n];
+    if(n<100){ const r=n%10; return d[Math.floor(n/10)]+(r?' Y '+u[r]:''); }
+    if(n===100) return 'CIEN';
+    const r=n%100; return c[Math.floor(n/100)]+(r?' '+chunk(r):'');
+  }
+  let s='';
+  if(n>=1000000){ const m=Math.floor(n/1000000); s+=(m===1?'UN MILLÓN':chunk(m)+' MILLONES')+' '; n%=1000000; }
+  if(n>=1000){ const m=Math.floor(n/1000); s+=(m===1?'MIL':chunk(m)+' MIL')+' '; n%=1000; }
+  if(n>0) s+=chunk(n);
+  return s.trim()+' PESOS';
 }
 
 function quickPDF(id){
@@ -1274,6 +1530,29 @@ function isoDate(d){
 }
 function sheetDate(iso){ if(!iso) return ''; const[y,m,day]=iso.split('-'); return `${parseInt(m)}/${parseInt(day)}/${y}`; }
 function fmtMXN(n){ return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+async function genNextFolio(cliente, desc) {
+  // Get next folio number from Config sheet (persistent, never repeats)
+  let num = 1999;
+  let folioRow = null;
+  try {
+    const r = await sheetsGet('Config!A1:B20');
+    (r||[]).forEach((row, idx) => {
+      if(row[0]==='ULTIMO_FOLIO'){ num = parseInt(row[1])||1999; folioRow = idx+1; }
+    });
+  } catch(e){}
+  num++;
+  // Save immediately so it's reserved
+  try {
+    if(folioRow) {
+      await sheetsUpdate(`Config!B${folioRow}`, [[num]]);
+    } else {
+      await sheetsAppend('Config!A1:B', [['ULTIMO_FOLIO', num]]);
+    }
+  } catch(e){ console.warn('Could not persist folio', e); }
+  const rfc = (cliente||'').replace(/[^A-Z0-9]/gi,'').slice(0,12).toUpperCase();
+  const descSlug = (desc||'').trim().replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚ ]/g,'').split(' ').slice(0,3).join('').toUpperCase().slice(0,15);
+  return `CONE-COT${num}-${rfc}${descSlug?'-'+descSlug:''}`;
+}
 function genId(cli){ return 'CONE-COT'+String(Math.floor(Math.random()*900)+100)+'-'+(cli||'CA').slice(0,3).toUpperCase(); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -1295,6 +1574,66 @@ function toast(type,msg){
   },3800);
 }
 
+/* ─── ADD CLIENT ─── */
+function openAddCliente() {
+  ['ncRFC','ncNombre','ncTel','ncEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addClienteModal').classList.add('open');
+}
+async function saveNewCliente() {
+  const rfc = document.getElementById('ncRFC').value.trim().toUpperCase();
+  const nom  = document.getElementById('ncNombre').value.trim();
+  if(!rfc){ toast('err','El RFC/ID es obligatorio.'); return; }
+  if(!nom){ toast('err','El nombre es obligatorio.'); return; }
+  if(ST.clientes[rfc]){ toast('err','Ya existe un cliente con ese RFC/ID.'); return; }
+  const btn=document.getElementById('saveClienteBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try {
+    const tel  = document.getElementById('ncTel').value.trim();
+    const mail = document.getElementById('ncEmail').value.trim();
+    await sheetsAppend('Clientes!A2:E', [[rfc, nom, tel, mail, '']]);
+    ST.clientes[rfc]={ id:rfc, nombre:nom };
+    populateClientes();
+    document.getElementById('fCliente').value=rfc;
+    populateContactos(rfc);
+    document.getElementById('addClienteModal').classList.remove('open');
+    toast('ok',`Cliente "${nom}" agregado.`);
+  } catch(e){ toast('err','Error al guardar cliente: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Cliente';
+}
+
+/* ─── ADD CONTACT ─── */
+function openAddContacto() {
+  const cliId  = document.getElementById('fCliente').value;
+  const cliNom = cliId ? (ST.clientes[cliId]?.nombre||cliId) : '— (selecciona un cliente primero) —';
+  ['ncoId','ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ncoClienteId').value  = cliId;
+  document.getElementById('ncoClienteLabel').value = cliNom;
+  document.getElementById('addContactoModal').classList.add('open');
+}
+async function saveNewContacto() {
+  const id   = document.getElementById('ncoId').value.trim().toUpperCase();
+  const nom  = document.getElementById('ncoNombre').value.trim();
+  const cliId= document.getElementById('ncoClienteId').value;
+  if(!id)  { toast('err','El ID del contacto es obligatorio.'); return; }
+  if(!nom) { toast('err','El nombre es obligatorio.'); return; }
+  if(!cliId){ toast('err','Primero selecciona un cliente en el formulario.'); return; }
+  const btn=document.getElementById('saveContactoBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try {
+    const tel  = document.getElementById('ncoTel').value.trim();
+    const mail = document.getElementById('ncoEmail').value.trim();
+    await sheetsAppend('Contactos!A2:E', [[id, cliId, nom, tel, mail]]);
+    ST.contactos[id]=nom;
+    if(!ST.contactosList) ST.contactosList=[];
+    ST.contactosList.push({ id, id_cli:cliId, nombre:nom });
+    populateContactos(cliId);
+    setTimeout(()=>{ document.getElementById('fContacto').value=id; },30);
+    document.getElementById('addContactoModal').classList.remove('open');
+    toast('ok',`Contacto "${nom}" agregado.`);
+  } catch(e){ toast('err','Error al guardar contacto: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Contacto';
+}
+
 /* Close modals on overlay click */
 document.querySelectorAll('.modal-bg').forEach(o=>{
   o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
@@ -1303,6 +1642,14 @@ document.querySelectorAll('.modal-bg').forEach(o=>{
 /* Cliente change → populate contactos */
 document.getElementById('fCliente').addEventListener('change',function(){
   populateContactos(this.value);
+});
+
+/* Contacto change → intercept __new__ */
+document.getElementById('fContacto').addEventListener('change',function(){
+  if(this.value==='__new__'){
+    this.value='';
+    openAddContacto();
+  }
 });
 </script>
 </body>
