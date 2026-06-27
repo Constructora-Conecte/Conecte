@@ -1245,251 +1245,202 @@ async function confirmDel(){
 function generarPDF(id, itemsOverride) {
   const cotId = id || ST.editId;
   let r;
-  if(cotId) r=ST.cotizaciones.find(c=>c.id===cotId);
+  if(cotId) r = ST.cotizaciones.find(c => c.id === cotId);
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
-  const W=210, ml=14, mr=196;
 
-  const cliSel = document.getElementById('fCliente');
-  const rfcCli = r ? r.id_cli : (cliSel.value||'');
-  const cliente = r
-    ? (ST.clientes[r.id_cli]?.nombre||r.id_cli)
-    : (cliSel.options[cliSel.selectedIndex]?.text||'—');
-  const desc    = r ? r.desc : document.getElementById('fDesc').value;
-  const folio   = r ? r.id : (ST.editId || 'BORRADOR');
-  const notas   = r ? r.notas : document.getElementById('fNotas').value;
-  const fechaRaw = r ? r.fecha : new Date().toLocaleDateString('es-MX');
-  const vigencia = r ? r.vigencia : (document.getElementById('fVigencia').value||'30');
+  // Data
+  const cliSel  = document.getElementById('fCliente');
+  const rfcCli  = r ? r.id_cli : (cliSel.value || '');
+  const cliente = r ? (ST.clientes[r.id_cli]?.nombre || r.id_cli)
+                    : (cliSel.options[cliSel.selectedIndex]?.text || '—');
+  const desc      = r ? r.desc  : document.getElementById('fDesc').value;
+  const folio     = r ? r.id    : (ST.editId || 'BORRADOR');
+  const notas     = r ? r.notas : document.getElementById('fNotas').value;
+  const fechaRaw  = r ? r.fecha : new Date().toLocaleDateString('es-MX');
+  const vigDias   = parseInt(r ? r.vigencia : (document.getElementById('fVigencia').value || '30')) || 30;
   const contactoId = r ? r.id_con : document.getElementById('fContacto').value;
-  const contacto = ST.contactos[contactoId] || contactoId || '';
+  const contacto   = ST.contactos[contactoId] || contactoId || '—';
+  const items = itemsOverride || (r && r.items && r.items.length ? r.items : null) || ST.items;
 
-  // Vigencia date
-  let fechaEmision='', fechaVigencia='';
-  try {
-    const parts = String(fechaRaw).split('/');
-    let d;
-    if(parts.length===3) d=new Date(`${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}T12:00:00`);
-    else d=new Date((fechaRaw||'')+'T12:00:00');
-    if(!isNaN(d)){
-      fechaEmision=d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
-      const dv=new Date(d); dv.setDate(dv.getDate()+parseInt(vigencia||30));
-      fechaVigencia=dv.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
-    }
-  } catch(e){ fechaEmision=fechaRaw||''; fechaVigencia=''; }
+  // Dates
+  function parseDMY(raw) {
+    const p = String(raw).split('/');
+    let d = p.length===3
+      ? new Date(`${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}T12:00:00`)
+      : new Date((raw||'')+(String(raw).includes('T')?'':'T12:00:00'));
+    return isNaN(d)?null:d;
+  }
+  function fmt(d){ return d?d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}):''; }
+  const dE=parseDMY(fechaRaw), dV=dE?new Date(dE.getTime()+vigDias*864e5):null;
+  const strE=fmt(dE)||String(fechaRaw), strV=fmt(dV);
 
-  const items = itemsOverride
-    || (r && r.items && r.items.length ? r.items : null)
-    || ST.items;
+  // Palette
+  const RED=[229,62,62],WHITE=[255,255,255],DARK=[20,20,20],MGRAY=[90,90,90],LGRAY=[210,210,210],BG2=[248,248,248];
+  const PW=210, ML=14, MR=196, CW=182;
 
-  const RED=[229,62,62], WHITE=[255,255,255], DARK=[30,30,30], GRAY=[120,120,120], LGRAY=[240,240,240];
-  const DKGRAY=[60,60,60];
+  // Column x-positions for items table
+  const cCant=ML+10, cDescX=ML+22, cDescW=96, cUnidCX=MR-52, cPrecCX=MR-28, cTotRX=MR-2;
 
-  /* ── LOGO AREA / HEADER ── */
-  // Red top accent line
-  doc.setFillColor(...RED);
-  doc.rect(0,0,W,3,'F');
+  // ── Draw page header + footer ──
+  function pageDecor(pg, total) {
+    // Top red bar
+    doc.setFillColor(...RED); doc.rect(0,0,PW,4,'F');
+    // Company name
+    doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...DARK);
+    doc.text('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.', PW/2, 13, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...MGRAY);
+    doc.text('DIRECCIÓN: CALLE 109B #610 X 66 Y 66A FRACC. OBRERA', PW/2, 18.5, {align:'center'});
+    doc.text('TELÉFONO: (999) 222-6016  ·  (999) 908-9592  ·  E-MAIL: conexionesconecte@hotmail.com', PW/2, 22.5, {align:'center'});
+    // Folio
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...MGRAY);
+    doc.text(folio, MR, 27, {align:'right'});
+    // Red separator
+    doc.setDrawColor(...RED); doc.setLineWidth(0.6); doc.line(ML,29.5,MR,29.5);
+    // Footer
+    doc.setDrawColor(...LGRAY); doc.setLineWidth(0.25); doc.line(ML,283,MR,283);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...MGRAY);
+    doc.text('Para cualquier aclaración o duda, comuníquese con nosotros.  ¡Gracias por su confianza!',PW/2,287,{align:'center'});
+    if(total>1) doc.text('Pág. '+pg+' / '+total, MR, 287, {align:'right'});
+  }
 
-  // Company name block
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(16);
-  doc.setTextColor(...DARK);
-  doc.text('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.',W/2,14,{align:'center'});
-
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...GRAY);
-  doc.text('CALLE 109B #610 X 66 Y 66A FRACC. OBRERA · TEL: (999) 222-6016 / (999) 908-9592',W/2,19,{align:'center'});
-  doc.text('conexionesconecte@hotmail.com',W/2,23,{align:'center'});
-
-  // Folio badge top right
-  doc.setFillColor(...RED);
-  doc.roundedRect(mr-52,6,52,10,2,2,'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...WHITE);
-  doc.text(folio,mr-26,12.5,{align:'center'});
-
-  // Separator line
-  doc.setDrawColor(...RED);
-  doc.setLineWidth(0.5);
-  doc.line(ml,27,mr,27);
-
-  /* ── INFO TABLE (Dirigida a / Fecha) ── */
-  let y=31;
-  // Row 1 headers
-  doc.setFillColor(...RED);
-  doc.rect(ml,y,88,6,'F');
-  doc.rect(ml+92,y,mr-ml-92,6,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
-  doc.text('Dirigida a:',ml+2,y+4.2);
-  doc.text('Fecha de emisión',ml+94,y+4.2);
-  y+=6;
-
-  // Row 1 data
-  doc.setFillColor(252,252,252);
-  doc.rect(ml,y,88,10,'F');
-  doc.rect(ml+92,y,mr-ml-92,10,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...DARK);
-  doc.text('Nombre: '+cliente,ml+2,y+4.5);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8);
-  doc.text('RFC: '+rfcCli,ml+2,y+8.5);
-  doc.setFont('helvetica','bold'); doc.setFontSize(9);
-  doc.text(fechaEmision,ml+94,y+6);
-  y+=10;
-
-  // Row 2 headers
-  doc.setFillColor(...RED);
-  doc.rect(ml,y,88,6,'F');
-  doc.rect(ml+92,y,mr-ml-92,6,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
-  doc.text('Trabajo:',ml+2,y+4.2);
-  doc.text('Contacto',ml+94,y+4.2);
-  y+=6;
-
-  // Row 2 data
-  doc.setFillColor(252,252,252);
-  doc.rect(ml,y,88,8,'F');
-  doc.rect(ml+92,y,mr-ml-92,8,'F');
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
-  const descLines=doc.splitTextToSize(desc||'—',84);
-  doc.text(descLines[0]||'—',ml+2,y+5.5);
-  doc.text(contacto||'—',ml+94,y+5.5);
-  y+=8+4;
-
-  /* ── ITEMS TABLE HEADER ── */
-  doc.setFillColor(...RED);
-  doc.rect(ml,y,mr-ml,7,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
-  doc.text('Cantidad',ml+2,y+4.8);
-  doc.text('Producto / Servicio',ml+22,y+4.8);
-  doc.text('Unidad',mr-62,y+4.8,{align:'left'});
-  doc.text('$/Uni',mr-38,y+4.8,{align:'left'});
-  doc.text('Total',mr-2,y+4.8,{align:'right'});
-  y+=7;
-
-  /* ── ITEMS ROWS ── */
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...DARK);
-  let rowBg=false;
-  items.forEach(it=>{
-    const lines=doc.splitTextToSize(it.desc||'—',100);
-    const rh=Math.max(lines.length*4.5+4, 8);
-    if(y+rh>272){ doc.addPage(); y=14; }
-    doc.setFillColor(rowBg?247:255,rowBg?247:255,rowBg?247:255);
-    doc.rect(ml,y,mr-ml,rh,'F');
-    doc.setTextColor(...DARK);
-    doc.text(String(it.cant||1),ml+10,y+rh/2+1.5,{align:'center'});
-    doc.text(lines,ml+22,y+4.5);
-    doc.text(it.unidad||'—',mr-62,y+rh/2+1.5);
-    doc.text('$'+((it.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2})),mr-38,y+rh/2+1.5);
-    doc.text('$'+((it.imp||0).toLocaleString('es-MX',{minimumFractionDigits:2})),mr-2,y+rh/2+1.5,{align:'right'});
-    doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
-    doc.line(ml,y+rh,mr,y+rh);
-    y+=rh;
-    rowBg=!rowBg;
-  });
-  y+=5;
-
-  /* ── TOTALS BOX ── */
-  const sub = items.reduce((s,it)=>s+(it.imp||0),0);
-  const iva = sub*0.16;
-  const tot = sub+iva;
-
-  if(y+36>278){ doc.addPage(); y=14; }
-
-  // Totals right-aligned box
-  const bx=mr-70, bw=70;
-  doc.setFillColor(252,252,252);
-  doc.rect(bx,y,bw,8,'F');
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DKGRAY);
-  doc.text('Subtotal:',bx+2,y+5.5);
-  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
-  doc.text('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}),mr-2,y+5.5,{align:'right'});
-  y+=8;
-
-  doc.setFillColor(252,252,252);
-  doc.rect(bx,y,bw,8,'F');
-  doc.setFont('helvetica','normal'); doc.setTextColor(...DKGRAY);
-  doc.text('+ IVA 16%:',bx+2,y+5.5);
-  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
-  doc.text('$'+iva.toLocaleString('es-MX',{minimumFractionDigits:2}),mr-2,y+5.5,{align:'right'});
-  y+=8;
-
-  doc.setFillColor(...RED);
-  doc.rect(bx,y,bw,10,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...WHITE);
-  doc.text('GRAN TOTAL:',bx+2,y+6.8);
-  doc.text('$'+tot.toLocaleString('es-MX',{minimumFractionDigits:2}),mr-2,y+6.8,{align:'right'});
-  y+=10;
-
-  // Total en letras
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...DARK);
-  const totWords=numberToWordsES(Math.round(tot));
-  doc.text('En letras: ',bx,y+6);
-  doc.setFont('helvetica','italic');
-  doc.text(totWords,bx+22,y+6);
-  y+=12;
-
-  /* ── NOTAS ── */
-  if(notas){
-    if(y+20>278){ doc.addPage(); y=14; }
+  // ── Info grid ──
+  function drawInfoGrid(y0) {
+    const c1W=100, c2W=CW-c1W-2, c1X=ML, c2X=ML+c1W+2;
+    const hH=7, hD=13;
+    // Row1 header
     doc.setFillColor(...RED);
-    doc.rect(ml,y,mr-ml,6,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
-    doc.text('Notas',ml+2,y+4.2);
-    y+=6;
-    doc.setFillColor(252,252,252);
-    const nLines=doc.splitTextToSize(notas,mr-ml-4);
-    const nh=nLines.length*4.5+6;
-    doc.rect(ml,y,mr-ml,nh,'F');
-    doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...DKGRAY);
-    doc.text(nLines,ml+2,y+5);
-    y+=nh;
+    doc.rect(c1X,y0,c1W,hH,'F'); doc.rect(c2X,y0,c2W,hH,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
+    doc.text('Dirigida a:', c1X+3, y0+5); doc.text('Fecha de emisión', c2X+3, y0+5);
+    // Row1 data
+    let y1=y0+hH;
+    doc.setFillColor(252,252,252); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
+    doc.rect(c1X,y1,c1W,hD,'FD'); doc.rect(c2X,y1,c2W,hD,'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...DARK);
+    doc.text('Nombre: '+cliente, c1X+3, y1+5.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...MGRAY);
+    doc.text('RFC: '+rfcCli, c1X+3, y1+10);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...DARK);
+    doc.text(strE, c2X+3, y1+7.5);
+    // Row2 header
+    let y2h=y1+hD+1.5;
+    doc.setFillColor(...RED);
+    doc.rect(c1X,y2h,c1W,hH,'F'); doc.rect(c2X,y2h,c2W,hH,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
+    doc.text('Trabajo:', c1X+3, y2h+5); doc.text('Contacto', c2X+3, y2h+5);
+    // Row2 data
+    let y2d=y2h+hH;
+    const wLines=doc.splitTextToSize(desc||'—', c1W-6);
+    const dH=Math.max(hD, wLines.length*5+6);
+    doc.setFillColor(252,252,252); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
+    doc.rect(c1X,y2d,c1W,dH,'FD'); doc.rect(c2X,y2d,c2W,dH,'FD');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+    doc.text(wLines, c1X+3, y2d+5);
+    doc.text(contacto, c2X+3, y2d+7);
+    return y2d+dH+6;
+  }
+
+  // ── Table header ──
+  function drawTblHdr(y0) {
+    doc.setFillColor(...RED); doc.rect(ML,y0,CW,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
+    doc.text('Cantidad',  cCant,    y0+5.5, {align:'center'});
+    doc.text('Producto / Servicio', cDescX+cDescW/2, y0+5.5, {align:'center'});
+    doc.text('Unidad',    cUnidCX,  y0+5.5, {align:'center'});
+    doc.text('$/Uni',     cPrecCX,  y0+5.5, {align:'center'});
+    doc.text('Total',     cTotRX,   y0+5.5, {align:'right'});
+    return y0+8;
+  }
+
+  // ── Build doc ──
+  let y=0, pg=1;
+  pageDecor(pg,1);
+  y=drawInfoGrid(32);
+  y=drawTblHdr(y);
+
+  items.forEach((it,idx)=>{
+    const lines=doc.splitTextToSize(it.desc||'—', cDescW);
+    const rh=Math.max(lines.length*5+5, 11);
+    if(y+rh>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; y=drawTblHdr(y); }
+    // Alternate row bg
+    doc.setFillColor(...(idx%2===0?[255,255,255]:[248,248,248]));
+    doc.rect(ML,y,CW,rh,'F');
+    doc.setDrawColor(...LGRAY); doc.setLineWidth(0.15); doc.line(ML,y+rh,MR,y+rh);
+    const mid=y+rh/2+1.8;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+    doc.text(String(it.cant||1), cCant, mid, {align:'center'});
+    doc.text(lines, cDescX, y+5.5);
+    doc.text(it.unidad||'—', cUnidCX, mid, {align:'center'});
+    doc.text('$'+(it.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2}), cPrecCX, mid, {align:'center'});
+    doc.text('$'+(it.imp||0).toLocaleString('es-MX',{minimumFractionDigits:2}), cTotRX, mid, {align:'right'});
+    y+=rh;
+  });
+
+  // Totals
+  const sub=items.reduce((s,it)=>s+(it.imp||0),0), iva=sub*0.16, tot=sub+iva;
+  const bW=78, bX=MR-bW, rH=9;
+  y+=5;
+  if(y+36>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; }
+  // Subtotal
+  doc.setFillColor(250,250,250); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
+  doc.rect(bX,y,bW,rH,'FD');
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MGRAY);
+  doc.text('Subtotal:', bX+3, y+6);
+  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
+  doc.text('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}), MR-3, y+6, {align:'right'});
+  y+=rH;
+  // IVA
+  doc.setFillColor(250,250,250); doc.rect(bX,y,bW,rH,'FD');
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MGRAY);
+  doc.text('+ IVA 16%:', bX+3, y+6);
+  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
+  doc.text('$'+iva.toLocaleString('es-MX',{minimumFractionDigits:2}), MR-3, y+6, {align:'right'});
+  y+=rH;
+  // Gran Total
+  doc.setFillColor(...RED); doc.rect(bX,y,bW,rH+2,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...WHITE);
+  doc.text('GRAN TOTAL:', bX+3, y+7);
+  doc.text('$'+tot.toLocaleString('es-MX',{minimumFractionDigits:2}), MR-3, y+7, {align:'right'});
+  y+=rH+2;
+  // En letras
+  y+=5;
+  const words=numberToWordsES(Math.round(tot));
+  const wl=doc.splitTextToSize('En letras: '+words, CW);
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...DARK);
+  doc.text(wl, ML, y);
+  y+=wl.length*4.5+5;
+
+  // Notas
+  if(notas&&notas.trim()){
+    if(y+22>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; }
+    doc.setFillColor(...RED); doc.rect(ML,y,CW,7,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
+    doc.text('Notas', ML+3, y+5);
+    y+=7;
+    const nl=doc.splitTextToSize(notas.trim(), CW-6);
+    const nh=nl.length*4.8+8;
+    doc.setFillColor(252,252,252); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
+    doc.rect(ML,y,CW,nh,'FD');
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(55,55,55);
+    doc.text(nl, ML+3, y+6);
+    y+=nh+4;
   }
 
   // Vigencia
-  if(fechaVigencia){
-    y+=4;
-    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...RED);
-    doc.text(`Esta cotización es vigente hasta: ${fechaVigencia}`,ml,y);
-    y+=5;
+  if(strV){
+    if(y+8>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; }
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...RED);
+    doc.text('Esta cotización es vigente hasta: '+strV, ML, y);
   }
 
-  /* ── FOOTER ── */
-  const pageCount=doc.getNumberOfPages();
-  for(let p=1;p<=pageCount;p++){
-    doc.setPage(p);
-    doc.setDrawColor(...RED); doc.setLineWidth(0.5);
-    doc.line(ml,285,mr,285);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...GRAY);
-    doc.text('Para cualquier aclaración o duda, comuníquese con nosotros. ¡Gracias por su confianza!',W/2,289,{align:'center'});
-    doc.text(`Pág. ${p}/${pageCount}`,mr,289,{align:'right'});
-  }
+  // Re-draw all headers/footers with correct total page count
+  const total=doc.getNumberOfPages();
+  for(let p=1;p<=total;p++){ doc.setPage(p); pageDecor(p,total); }
 
-  // Save with proper name: CONE_COTnum_RFC_desc
-  const rfcSlug=(rfcCli||'').replace(/[^A-Z0-9]/gi,'').toUpperCase();
-  const descSlug=(desc||'').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);
-  doc.save(`${folio}.pdf`);
-  toast('ok','PDF generado.');
-}
-
-/* Number to words ES (simplified) */
-function numberToWordsES(n){
-  if(n===0) return 'CERO PESOS';
-  const u=['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
-  const d=['','','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
-  const c=['','CIEN','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
-  function chunk(n){
-    if(n<20) return u[n];
-    if(n<100){ const r=n%10; return d[Math.floor(n/10)]+(r?' Y '+u[r]:''); }
-    if(n===100) return 'CIEN';
-    const r=n%100; return c[Math.floor(n/100)]+(r?' '+chunk(r):'');
-  }
-  let s='';
-  if(n>=1000000){ const m=Math.floor(n/1000000); s+=(m===1?'UN MILLÓN':chunk(m)+' MILLONES')+' '; n%=1000000; }
-  if(n>=1000){ const m=Math.floor(n/1000); s+=(m===1?'MIL':chunk(m)+' MIL')+' '; n%=1000; }
-  if(n>0) s+=chunk(n);
-  return s.trim()+' PESOS';
+  doc.save(folio+'.pdf');
+  toast('ok','PDF generado: '+folio+'.pdf');
 }
 
 function quickPDF(id){
@@ -1531,27 +1482,47 @@ function isoDate(d){
 function sheetDate(iso){ if(!iso) return ''; const[y,m,day]=iso.split('-'); return `${parseInt(m)}/${parseInt(day)}/${y}`; }
 function fmtMXN(n){ return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 async function genNextFolio(cliente, desc) {
-  // Get next folio number from Config sheet (persistent, never repeats)
-  let num = 1999;
-  let folioRow = null;
+  // Read Config sheet to find stored counter
+  let maxNum = 1999;
+  let folioRowIdx = null;
   try {
-    const r = await sheetsGet('Config!A1:B20');
-    (r||[]).forEach((row, idx) => {
-      if(row[0]==='ULTIMO_FOLIO'){ num = parseInt(row[1])||1999; folioRow = idx+1; }
+    const cfg = await sheetsGet('Config!A1:B50');
+    (cfg||[]).forEach((row, idx) => {
+      if(String(row[0]).trim()==='ULTIMO_FOLIO'){
+        const n = parseInt(row[1]);
+        if(!isNaN(n) && n > maxNum) maxNum = n;
+        folioRowIdx = idx + 1; // 1-based row
+      }
+    });
+  } catch(e){ console.warn('Config read failed', e); }
+
+  // Also scan existing cotizaciones to guarantee no collision
+  try {
+    (ST.cotizaciones||[]).forEach(c => {
+      const m = String(c.id||'').match(/CONE-COT(\d+)/i);
+      if(m){ const n=parseInt(m[1]); if(n>maxNum) maxNum=n; }
     });
   } catch(e){}
-  num++;
-  // Save immediately so it's reserved
+
+  const nextNum = maxNum + 1;
+
+  // Persist BEFORE returning so number is reserved
   try {
-    if(folioRow) {
-      await sheetsUpdate(`Config!B${folioRow}`, [[num]]);
+    if(folioRowIdx !== null) {
+      await sheetsUpdate(`Config!B${folioRowIdx}`, [[nextNum]]);
     } else {
-      await sheetsAppend('Config!A1:B', [['ULTIMO_FOLIO', num]]);
+      await sheetsAppend('Config!A:B', [['ULTIMO_FOLIO', nextNum]]);
     }
-  } catch(e){ console.warn('Could not persist folio', e); }
+  } catch(e){ console.warn('Could not persist folio counter:', e); }
+
   const rfc = (cliente||'').replace(/[^A-Z0-9]/gi,'').slice(0,12).toUpperCase();
-  const descSlug = (desc||'').trim().replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚ ]/g,'').split(' ').slice(0,3).join('').toUpperCase().slice(0,15);
-  return `CONE-COT${num}-${rfc}${descSlug?'-'+descSlug:''}`;
+  // Full description — strip accents and special chars, keep spaces, uppercase
+  const descClean = (desc||'').trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9 ]/g,' ')
+    .replace(/\s+/g,' ').trim()
+    .toUpperCase();
+  return `CONE-COT${nextNum}-${rfc}-${descClean||'SIN DESC'}`;
 }
 function genId(cli){ return 'CONE-COT'+String(Math.floor(Math.random()*900)+100)+'-'+(cli||'CA').slice(0,3).toUpperCase(); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
