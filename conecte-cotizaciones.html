@@ -1243,6 +1243,11 @@ async function confirmDel(){
 
 /* ─── PDF ─── */
 function generarPDF(id, itemsOverride) {
+  // Guard: jsPDF library check
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    toast('err','La librería de PDF no está cargada. Recarga la página e intenta de nuevo.');
+    return;
+  }
   const cotId = id || ST.editId;
   let r;
   if(cotId) r = ST.cotizaciones.find(c => c.id === cotId);
@@ -1262,7 +1267,12 @@ function generarPDF(id, itemsOverride) {
   const vigDias   = parseInt(r ? r.vigencia : (document.getElementById('fVigencia').value || '30')) || 30;
   const contactoId = r ? r.id_con : document.getElementById('fContacto').value;
   const contacto   = ST.contactos[contactoId] || contactoId || '—';
-  const items = itemsOverride || (r && r.items && r.items.length ? r.items : null) || ST.items;
+  // Ensure items is always a valid array
+  const rawItems = itemsOverride || (r && r.items && r.items.length ? r.items : null) || ST.items || [];
+  const items = rawItems.length ? rawItems : [{ desc: desc||'—', cant:1, unidad:'', precio:0, imp:0 }];
+
+  // Wrap entire PDF generation to catch and display errors
+  try {
 
   // Dates
   function parseDMY(raw) {
@@ -1441,6 +1451,11 @@ function generarPDF(id, itemsOverride) {
 
   doc.save(folio+'.pdf');
   toast('ok','PDF generado: '+folio+'.pdf');
+
+  } catch(err) {
+    console.error('PDF error:', err);
+    toast('err', 'Error al generar PDF: ' + (err.message || err));
+  }
 }
 
 function quickPDF(id){
