@@ -2974,44 +2974,69 @@ function openFacXML(facId){
   document.getElementById('xmlViewerModal').classList.add('open');
 }
 
-/* ─── FACTURAS — render con botones PDF/XML ─── */
+/* ─── FACTURAS — render con dropdowns + botones PDF/XML ─── */
 function renderFacTableFull(){
   const tbody=document.getElementById('facTbody');
   if(!tbody) return;
   document.getElementById('facCount').textContent=(ST.facFiltered||[]).length+' registros';
   if(!ST.facFiltered||!ST.facFiltered.length){
     tbody.innerHTML='<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3)">Sin facturas registradas</td></tr>';
-    return;
+    renderFacPagi(); return;
   }
-  const start=((ST.facPage||1)-1)*15;
-  const slice=ST.facFiltered.slice(start,start+15);
-  tbody.innerHTML=slice.map(f=>{
-    const cliNom=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
-    const stClass={Pagado:'pill-acep',Pendiente:'pill-pend',Cancelado:'pill-rech'}[f.estatus]||'pill-pend';
-    const hasPDF=!!f.pdfB64;
-    const hasXML=!!f.xmlContent;
+  const start=((ST.facPage||1)-1)*ST.PAGE;
+  const slice=ST.facFiltered.slice(start,start+ST.PAGE);
+  const metodos=['','Transferencia','Efectivo','Factoraje'];
+  const estatusOpts=['Pendiente','Pagado','Cancelado'];
+  tbody.innerHTML=slice.map(r=>{
+    const cli=ST.clientes[r.id_cli]||{};
+    const fmtTot='$'+r.total.toLocaleString('es-MX',{minimumFractionDigits:2});
+    const conc=(r.concepto||'—').slice(0,45)+((r.concepto||'').length>45?'…':'');
+    const est=parseNotasEstado(r.notas);
+    const hasPDF=!!r.pdfB64;
+    const hasXML=!!r.xmlContent;
     return `<tr>
-      <td><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)">${esc(f.folio||f.id)}</span></td>
-      <td style="font-size:12.5px;font-weight:500">${esc(cliNom)}</td>
-      <td style="font-size:12px;color:var(--text2);max-width:150px" title="${esc(f.concepto)}">${esc((f.concepto||'—').slice(0,35))}${(f.concepto||'').length>35?'…':''}</td>
-      <td style="font-family:var(--mono);font-size:12px;text-align:right;font-weight:500">${fmtMXN(f.total)}</td>
-      <td style="font-size:12px;color:var(--text3)">${esc(f.metodo||'—')}</td>
-      <td><span class="pill ${stClass}">${esc(f.estatus||'—')}</span></td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(f.fecha)}</td>
-      <td style="font-size:11px;color:var(--text3)">${esc(f.oc||'—')}</td>
-      <td style="font-size:11px;color:var(--text3)">${esc(f.notas||'—')}</td>
+      <td><span class="folio" style="cursor:default">${esc(r.folio||r.id)}</span></td>
+      <td>
+        <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
+        <div style="font-size:10.5px;color:var(--text3);font-family:var(--mono)">${esc(r.id_cli)}</div>
+      </td>
+      <td style="max-width:200px;font-size:12px;color:var(--text2)" title="${esc(r.concepto)}">${esc(conc)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
+      <td>
+        <select class="form-select" style="height:24px;font-size:11px;padding:0 4px" onchange="changeFacMetodo(${r._row},this.value)">
+          ${metodos.map(m=>`<option value="${esc(m)}" ${r.metodo===m?'selected':''}>${m||'— Método —'}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="form-select" style="height:24px;font-size:11px;padding:0 4px" onchange="changeFacEstatus(${r._row},this.value)">
+          ${estatusOpts.map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
+      <td style="font-size:11.5px;color:var(--blue);font-family:var(--mono)">${esc(r.oc||'—')}</td>
+      <td>
+        <div style="display:flex;gap:3px;align-items:center">
+          <select class="form-select" style="height:24px;font-size:10.5px;padding:0 2px;width:58px" onchange="changeFacNotas(${r._row},this.value,this.closest('div').querySelector('input').value)">
+            <option value="" ${!est.tipo?'selected':''}>—</option>
+            <option value="EPC" ${est.tipo==='EPC'?'selected':''}>EPC</option>
+            <option value="PPP" ${est.tipo==='PPP'?'selected':''}>PPP</option>
+          </select>
+          <input type="date" class="form-input" style="height:24px;font-size:10px;padding:0 3px;width:84px" value="${esc(est.fecha)}" onchange="changeFacNotas(${r._row},this.closest('div').querySelector('select').value,this.value)">
+        </div>
+      </td>
       <td>
         <div style="display:flex;gap:3px">
-          ${hasPDF?`<button class="btn-icon" title="Ver PDF" onclick="openFacPDF('${esc(f.id)}')">
+          ${hasPDF?`<button class="btn-icon" title="Ver PDF" onclick="openFacPDF('${esc(r.id)}')">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/></svg>
           </button>`:''}
-          ${hasXML?`<button class="btn-icon" title="Ver XML" onclick="openFacXML('${esc(f.id)}')" style="color:var(--green)">
+          ${hasXML?`<button class="btn-icon" title="Ver XML" onclick="openFacXML('${esc(r.id)}')" style="color:var(--green)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5l-3 3 3 3M12 5l3 3-3 3M9 3l-2 10"/></svg>
           </button>`:''}
         </div>
       </td>
     </tr>`;
   }).join('');
+  renderFacPagi();
 }
 
 /* Init currentTab */
