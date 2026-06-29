@@ -1288,7 +1288,9 @@ async function loadAll() {
       notas:      r[8]||'', oc:       r[9]||'',
     }));
     ST.facFiltered = [...ST.facturas];
-    renderFacTable();
+    // Usar la versión extendida si está disponible (definida en el segundo bloque <script>)
+    if(typeof renderFacTableFull === 'function') renderFacTableFull();
+    else if(typeof renderFacTable === 'function') renderFacTable();
     updateFacStats();
 
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
@@ -1444,7 +1446,14 @@ function renderTable() {
 }
 
 function setLoading(on) {
-  if(!on) return;
+  if(!on) {
+    // Quitar spinner: si todavía no hay datos, mostrar mensaje vacío
+    const tbody = document.getElementById('cotTbody');
+    if(tbody && tbody.querySelector('.loading-row')) {
+      tbody.innerHTML = `<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin resultados</td></tr>`;
+    }
+    return;
+  }
   document.getElementById('cotTbody').innerHTML=`<tr class="loading-row"><td colspan="9">
     <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     &nbsp;Cargando cotizaciones…</td></tr>`;
@@ -2970,7 +2979,7 @@ function renderFacTableFull(){
     tbody.innerHTML='<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3)">Sin facturas registradas</td></tr>';
     return;
   }
-  const start=(ST.facPage||1-1)*15;
+  const start=((ST.facPage||1)-1)*15;
   const slice=ST.facFiltered.slice(start,start+15);
   tbody.innerHTML=slice.map(f=>{
     const cliNom=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
@@ -3107,3 +3116,4 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
+
