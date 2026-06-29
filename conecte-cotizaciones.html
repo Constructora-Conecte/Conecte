@@ -506,9 +506,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
             <option>Rechazado</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">OC Relacionada</label>
-          <input type="text" class="form-input" id="fOC" placeholder="Número de OC del cliente">
+      </div>
+
+      <!-- ── ÓRDENES DE COMPRA ── -->
+      <div class="card" style="margin-bottom:16px;background:var(--bg3)">
+        <div class="card-header" style="padding:10px 14px">
+          <span class="card-title" style="font-size:12px">Órdenes de Compra Asociadas</span>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="ocCount">0 OC</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="addOCBtn" onclick="openAddOC()" style="margin-left:auto;color:var(--red);border-color:rgba(229,62,62,.3)" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
+            Agregar OC
+          </button>
+        </div>
+        <div id="ocListWrap" style="padding:10px 14px;min-height:36px">
+          <div id="ocEmptyMsg" style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0">
+            Guarda la cotización primero para agregar OC
+          </div>
+          <div id="ocList" style="display:flex;flex-direction:column;gap:6px"></div>
         </div>
       </div>
 
@@ -648,6 +662,35 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ══ OC MODAL ══ -->
+<div class="modal-bg" id="ocModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-title" id="ocModalTitle">Agregar Orden de Compra</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;margin-top:14px">
+      <div class="form-group">
+        <label class="form-label">Número / Folio de OC *</label>
+        <input type="text" class="form-input" id="ocNumero" placeholder="Ej. OC-88291, PEDIDO-2026-11, 445882">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de OC</label>
+        <input type="date" class="form-input" id="ocFecha">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-textarea" id="ocObs" placeholder="Notas, condiciones, referencia adicional…" style="min-height:52px"></textarea>
+      </div>
+      <input type="hidden" id="ocEditId">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeOCModal()">Cancelar</button>
+      <button class="btn btn-red" id="saveOCBtn" onclick="saveOC()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar OC
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- TOASTS -->
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -681,6 +724,8 @@ const ST = {
   delRow: null,
   delId: null,
   items: [],          // partidas del form
+  ocList: [],         // OC de la cotizacion en edicion
+  ocAll:  [],         // todas las OC de Oc_Client
 };
 
 /* ─── GOOGLE INIT ─── */
@@ -783,11 +828,12 @@ function doLogout() {
 async function loadAll() {
   setLoading(true);
   try {
-    const [cotR, cliR, conR, artR] = await Promise.all([
+    const [cotR, cliR, conR, artR, ocR] = await Promise.all([
       sheetsGet('Cotizaciones!A2:P'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
       sheetsGet('Articulos!A2:F'),
+      sheetsGet('Oc_Client!A2:F'),
     ]);
 
     /* Clientes */
@@ -815,6 +861,16 @@ async function loadAll() {
       unidad: r[5]||'pza',
     }));
 
+    /* Oc_Client — cols: A=ID_OC, B=ID_COTIZACION, C=NUMERO_OC, D=FECHA_OC, E=OBSERVACIONES, F=_row */
+    ST.ocAll = (ocR||[]).filter(r=>r[0]).map((r,i)=>({
+      _row: i+2,
+      id:       r[0]||'',
+      id_cot:   r[1]||'',
+      numero:   r[2]||'',
+      fecha:    r[3]||'',
+      obs:      r[4]||'',
+    }));
+
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
        G=ItemsJSON (guardamos partidas aquí), H=PDF, I=Descripcion, J=Notas, K=Creacion,
        L=ID_Usr, M=ID_Con, N=Vigencia, O=Estatus, P=OC */
@@ -827,7 +883,7 @@ async function loadAll() {
         sub:  parseFloat(r[3])||0, iva: parseFloat(r[4])||0, total: parseFloat(r[5])||0,
         items: itemsArr,
         desc: r[8]||'', notas: r[9]||'', id_usr: r[11]||'',
-        id_con: r[12]||'', vigencia: r[13]||'', estatus: r[14]||'Pendiente', oc: r[15]||'',
+        id_con: r[12]||'', vigencia: r[13]||'', estatus: r[14]||'Pendiente',
       };
     });
 
@@ -948,7 +1004,7 @@ function renderTable() {
       <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
       <td><span class="pill ${pClass}">${esc(r.estatus)}</span></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
-      <td style="font-size:11.5px;color:var(--text3)">${esc(r.oc||'—')}</td>
+      <td style="font-size:11.5px;color:var(--text3)">${(() => { const ocs = ST.ocAll.filter(o=>o.id_cot===r.id); return ocs.length ? `<span style="font-family:var(--mono);color:var(--blue)">${ocs.map(o=>esc(o.numero)).join(', ')}</span>` : '<span style="color:var(--text3)">—</span>'; })()}</td>
       <td>
         <div class="row-acts">
           <button class="btn-icon" title="Editar" onclick="openEdit('${esc(r.id)}',${r._row})">
@@ -1128,8 +1184,9 @@ function abrirNueva() {
   document.getElementById('fDesc').value='';
   document.getElementById('fNotas').value='';
   document.getElementById('fEstatus').value='Pendiente';
-  document.getElementById('fOC').value='';
   document.getElementById('artSearch').value='';
+  ST.ocList = [];
+  renderOCSection(false); // nueva cotización: no tiene ID aún
   renderItems();
   document.getElementById('formModal').classList.add('open');
 }
@@ -1164,8 +1221,9 @@ function openEdit(id,rowNum) {
   document.getElementById('fDesc').value=r.desc;
   document.getElementById('fNotas').value=r.notas;
   document.getElementById('fEstatus').value=r.estatus;
-  document.getElementById('fOC').value=r.oc;
   document.getElementById('artSearch').value='';
+  ST.ocList = ST.ocAll.filter(o => o.id_cot === id);
+  renderOCSection(true);
   renderItems();
   document.getElementById('formModal').classList.add('open');
 }
@@ -1187,7 +1245,6 @@ async function guardarCot() {
   const vigencia = document.getElementById('fVigencia').value||'30';
   const notas    = document.getElementById('fNotas').value;
   const estatus  = document.getElementById('fEstatus').value;
-  const oc       = document.getElementById('fOC').value;
 
   const sub = ST.items.reduce((s,it)=>s+(it.imp||0),0);
   const iva = sub*0.16;
@@ -1201,7 +1258,7 @@ async function guardarCot() {
     newId, sheetDate(fecha), cliente,
     sub.toFixed(2), iva.toFixed(2), tot.toFixed(2),
     itemsJSON, '', desc, notas, sheetDate(todayISO()),
-    ST.usuario||'', contacto, vigencia, estatus, oc
+    ST.usuario||'', contacto, vigencia, estatus, ''
   ];
 
   const btn=document.getElementById('saveBtn');
@@ -1213,10 +1270,13 @@ async function guardarCot() {
       toast('ok',`${newId} actualizada.`);
     } else {
       await sheetsAppend('Cotizaciones!A2:P', [row]);
+      ST.editId = newId;
       toast('ok',`${newId} creada.`);
     }
-    closeForm();
+    // Enable OC section now that we have an ID
+    renderOCSection(true);
     await loadAll();
+    closeForm();
   } catch(e){
     console.error(e);
     toast('err','Error al guardar: '+(e.result?.error?.message||e.message||'sin detalles'));
@@ -1491,6 +1551,139 @@ function quickPDF(id){
   generarPDF(id, savedItems);
 }
 
+/* ─── OC SECTION ─── */
+function renderOCSection(hasId) {
+  const btn = document.getElementById('addOCBtn');
+  const emptyMsg = document.getElementById('ocEmptyMsg');
+  const ocListEl = document.getElementById('ocList');
+  const ocCountEl = document.getElementById('ocCount');
+
+  if (!hasId) {
+    btn.disabled = true;
+    emptyMsg.style.display = '';
+    ocListEl.innerHTML = '';
+    ocCountEl.textContent = '0 OC';
+    return;
+  }
+  btn.disabled = false;
+  const ocs = ST.ocList;
+  ocCountEl.textContent = ocs.length + (ocs.length === 1 ? ' OC' : ' OC');
+  if (!ocs.length) {
+    emptyMsg.textContent = 'Sin OC asociadas. Usa "+ Agregar OC" para vincular.';
+    emptyMsg.style.display = '';
+    ocListEl.innerHTML = '';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+  ocListEl.innerHTML = ocs.map(oc => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r4);">
+      <div style="flex:1;min-width:0">
+        <span style="font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--blue)">${esc(oc.numero)}</span>
+        ${oc.fecha ? `<span style="font-size:11px;color:var(--text3);margin-left:8px">${fmtDate(oc.fecha)}</span>` : ''}
+        ${oc.obs ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(oc.obs)}</div>` : ''}
+      </div>
+      <button class="btn-icon" title="Editar OC" onclick="openEditOC('${esc(oc.id)}')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+      </button>
+      <button class="btn-icon del" title="Eliminar OC" onclick="deleteOC('${esc(oc.id)}')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function openAddOC() {
+  document.getElementById('ocModalTitle').textContent = 'Agregar Orden de Compra';
+  document.getElementById('ocNumero').value = '';
+  document.getElementById('ocFecha').value = todayISO();
+  document.getElementById('ocObs').value = '';
+  document.getElementById('ocEditId').value = '';
+  document.getElementById('ocModal').classList.add('open');
+  setTimeout(() => document.getElementById('ocNumero').focus(), 80);
+}
+
+function openEditOC(ocId) {
+  const oc = ST.ocList.find(o => o.id === ocId);
+  if (!oc) return;
+  document.getElementById('ocModalTitle').textContent = 'Editar Orden de Compra';
+  document.getElementById('ocNumero').value = oc.numero;
+  document.getElementById('ocFecha').value = isoDate(oc.fecha);
+  document.getElementById('ocObs').value = oc.obs;
+  document.getElementById('ocEditId').value = ocId;
+  document.getElementById('ocModal').classList.add('open');
+  setTimeout(() => document.getElementById('ocNumero').focus(), 80);
+}
+
+function closeOCModal() {
+  document.getElementById('ocModal').classList.remove('open');
+}
+
+async function saveOC() {
+  const numero = document.getElementById('ocNumero').value.trim();
+  if (!numero) { toast('err', 'El número de OC es obligatorio.'); return; }
+  if (!ST.editId) { toast('err', 'Error: no hay cotización activa.'); return; }
+
+  const fecha = document.getElementById('ocFecha').value;
+  const obs   = document.getElementById('ocObs').value.trim();
+  const editId = document.getElementById('ocEditId').value;
+
+  const btn = document.getElementById('saveOCBtn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  try {
+    if (editId) {
+      // Update existing OC
+      const oc = ST.ocList.find(o => o.id === editId);
+      if (!oc) throw new Error('OC no encontrada en memoria.');
+      await sheetsUpdate(`Oc_Client!A${oc._row}:E${oc._row}`, [[
+        oc.id, ST.editId, numero, sheetDate(fecha), obs
+      ]]);
+      oc.numero = numero; oc.fecha = sheetDate(fecha); oc.obs = obs;
+      toast('ok', `OC "${numero}" actualizada.`);
+    } else {
+      // New OC — generate a simple unique ID
+      const newOCId = 'OC-' + Date.now();
+      await sheetsAppend('Oc_Client!A2:E', [[
+        newOCId, ST.editId, numero, sheetDate(fecha), obs
+      ]]);
+      // Re-fetch Oc_Client to get correct _row
+      const ocR = await sheetsGet('Oc_Client!A2:E');
+      const newRow = (ocR||[]).findIndex(r => r[0] === newOCId) + 2;
+      ST.ocList.push({ _row: newRow, id: newOCId, id_cot: ST.editId, numero, fecha: sheetDate(fecha), obs });
+      ST.ocAll.push({ _row: newRow, id: newOCId, id_cot: ST.editId, numero, fecha: sheetDate(fecha), obs });
+      toast('ok', `OC "${numero}" agregada.`);
+    }
+    closeOCModal();
+    renderOCSection(true);
+  } catch (e) {
+    toast('err', 'Error al guardar OC: ' + (e.result?.error?.message || e.message || 'sin detalles'));
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar OC';
+}
+
+async function deleteOC(ocId) {
+  const oc = ST.ocList.find(o => o.id === ocId);
+  if (!oc) return;
+  if (!confirm(`¿Eliminar la OC "${oc.numero}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    await sheetsClear(`Oc_Client!A${oc._row}:E${oc._row}`);
+    ST.ocList = ST.ocList.filter(o => o.id !== ocId);
+    ST.ocAll  = ST.ocAll.filter(o => o.id !== ocId);
+    renderOCSection(true);
+    toast('ok', `OC "${oc.numero}" eliminada.`);
+  } catch (e) {
+    toast('err', 'Error al eliminar OC: ' + (e.result?.error?.message || e.message));
+  }
+}
+
+async function loadOCByCotizacion(id_cot) {
+  const ocR = await sheetsGet('Oc_Client!A2:E');
+  return (ocR||[]).filter(r => r[1] === id_cot).map((r, i) => ({
+    _row: i+2, id: r[0]||'', id_cot: r[1]||'', numero: r[2]||'', fecha: r[3]||'', obs: r[4]||''
+  }));
+}
+
 /* ─── HELPERS ─── */
 function pillClass(s){
   return {Enviado:'pill-env',Aceptado:'pill-acep',Rechazado:'pill-rech',
@@ -1645,7 +1838,7 @@ async function saveNewContacto() {
 
 /* Close modals on overlay click */
 document.querySelectorAll('.modal-bg').forEach(o=>{
-  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+  o.addEventListener('click',e=>{ if(e.target===o){ o.classList.remove('open'); } });
 });
 
 /* Cliente change → populate contactos */
