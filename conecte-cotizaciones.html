@@ -327,6 +327,28 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pbtn.on{background:var(--red);color:#fff;border-color:var(--red)}
 .pbtn:disabled{opacity:.3;cursor:not-allowed}
 
+
+/* ── TABS NAV ── */
+.tabs-nav{display:flex;gap:2px;padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-btn{
+  padding:0 18px;height:42px;border:none;background:transparent;font-family:var(--font);
+  font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;position:relative;
+  display:flex;align-items:center;gap:7px;transition:color .15s;white-space:nowrap;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--white)}
+.tab-btn.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);border-radius:2px 2px 0 0}
+.tab-btn svg{width:13px;height:13px;flex-shrink:0}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── FACTURAS TABLE ── */
+.fac-table{width:100%;border-collapse:collapse}
+.fac-table th{padding:7px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.fac-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.fac-table tr:last-child td{border-bottom:none}
+.fac-table tr:hover td{background:rgba(255,255,255,.02)}
+
 /* RESPONSIVE */
 @media(max-width:900px){.stats{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.form-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
@@ -360,9 +382,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="btn btn-ghost btn-sm" title="Recargar datos" onclick="loadAll()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8A5.5 5.5 0 112 8M13.5 8V5M13.5 8H10.5"/></svg>
       </button>
-      <button class="btn btn-red btn-sm" onclick="abrirNueva()">
+      <button class="btn btn-red btn-sm" id="mainAddBtn" onclick="abrirNueva()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
-        + Agregar
+        + Cotización
       </button>
       <div class="user-chip" id="userChipWrap" style="display:none">
         <span class="user-dot"></span>
@@ -376,72 +398,150 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     ⚠️ <strong>Error 401:</strong> Agrega <strong id="currentOrigin"></strong> en Google Cloud Console → APIs &amp; Services → Credentials → OAuth 2.0 Client → Authorized JavaScript origins
   </div>
 
+  <!-- TABS NAV -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" id="tabCotBtn" onclick="switchTab('cot')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
+      Cotizaciones
+    </button>
+    <button class="tab-btn" id="tabFacBtn" onclick="switchTab('fac')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 5.5h5M5 8h5M5 10.5h3"/><path d="M10 1.5v3H13"/></svg>
+      Facturas
+    </button>
+  </nav>
+
   <!-- CONTENT -->
   <div class="content">
 
-    <!-- Stats -->
-    <div class="stats">
-      <div class="stat cr"><div class="stat-lbl">Total Cotizaciones</div><div class="stat-val" id="sTotal">—</div><div class="stat-delta">Todas</div></div>
-      <div class="stat cg"><div class="stat-lbl">Aceptadas</div><div class="stat-val" id="sAcep">—</div><div class="stat-delta" id="sAcepPct">—</div></div>
-      <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="sPend">—</div><div class="stat-delta">Sin respuesta</div></div>
-      <div class="stat cb"><div class="stat-lbl">Monto Total</div><div class="stat-val" id="sMonto">—</div><div class="stat-delta">Suma</div></div>
-    </div>
+    <!-- ══ TAB: COTIZACIONES ══ -->
+    <div id="tabCot" class="tab-pane active">
 
-    <!-- Filter bar -->
-    <div class="filter-bar">
-      <button class="fchip on" onclick="setFilter('all',this)">Todas</button>
-      <button class="fchip" onclick="setFilter('Pendiente',this)">Pendiente</button>
-      <button class="fchip" onclick="setFilter('Enviado',this)">Enviado</button>
-      <button class="fchip" onclick="setFilter('Seguimiento 1',this)">Seguimiento</button>
-      <button class="fchip" onclick="setFilter('Aceptado',this)">Aceptado</button>
-      <button class="fchip" onclick="setFilter('Rechazado',this)">Rechazado</button>
-      <span class="fsep"></span>
-      <input type="text" id="searchBar" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar…" oninput="onSearch(this.value)">
-      <select class="fsort" onchange="setSort(this.value)">
-        <option value="fecha-desc">Fecha ↓</option>
-        <option value="fecha-asc">Fecha ↑</option>
-        <option value="monto-desc">Monto ↓</option>
-        <option value="monto-asc">Monto ↑</option>
-      </select>
-    </div>
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat cr"><div class="stat-lbl">Total Cotizaciones</div><div class="stat-val" id="sTotal">—</div><div class="stat-delta">Todas</div></div>
+        <div class="stat cg"><div class="stat-lbl">Aceptadas</div><div class="stat-val" id="sAcep">—</div><div class="stat-delta" id="sAcepPct">—</div></div>
+        <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="sPend">—</div><div class="stat-delta">Sin respuesta</div></div>
+        <div class="stat cb"><div class="stat-lbl">Monto Total</div><div class="stat-val" id="sMonto">—</div><div class="stat-delta">Suma</div></div>
+      </div>
 
-    <!-- Table card -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Listado de Cotizaciones</span>
-        <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="cotCount">0</span>
-        <span class="card-sub" id="lastUpd"></span>
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <button class="fchip on" onclick="setFilter('all',this)">Todas</button>
+        <button class="fchip" onclick="setFilter('Pendiente',this)">Pendiente</button>
+        <button class="fchip" onclick="setFilter('Enviado',this)">Enviado</button>
+        <button class="fchip" onclick="setFilter('Seguimiento 1',this)">Seguimiento</button>
+        <button class="fchip" onclick="setFilter('Aceptado',this)">Aceptado</button>
+        <button class="fchip" onclick="setFilter('Rechazado',this)">Rechazado</button>
+        <span class="fsep"></span>
+        <input type="text" id="searchBar" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar…" oninput="onSearch(this.value)">
+        <select class="fsort" onchange="setSort(this.value)">
+          <option value="fecha-desc">Fecha ↓</option>
+          <option value="fecha-asc">Fecha ↑</option>
+          <option value="monto-desc">Monto ↓</option>
+          <option value="monto-asc">Monto ↑</option>
+        </select>
       </div>
-      <div class="cot-table-wrap">
-        <table class="cot-table">
-          <thead>
-            <tr>
-              <th>Folio</th>
-              <th>Cliente</th>
-              <th>Descripción</th>
-              <th style="text-align:right">Subtotal</th>
-              <th style="text-align:right">Total</th>
-              <th>Estatus</th>
-              <th>Fecha</th>
-              <th>OC</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="cotTbody">
-            <tr class="loading-row">
-              <td colspan="9">
-                <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                &nbsp;Cargando…
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+      <!-- Table card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Listado de Cotizaciones</span>
+          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="cotCount">0</span>
+          <span class="card-sub" id="lastUpd"></span>
+        </div>
+        <div class="cot-table-wrap">
+          <table class="cot-table">
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Cliente</th>
+                <th>Descripción</th>
+                <th style="text-align:right">Subtotal</th>
+                <th style="text-align:right">Total</th>
+                <th>Estatus</th>
+                <th>Fecha</th>
+                <th>OC</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cotTbody">
+              <tr class="loading-row">
+                <td colspan="9">
+                  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                  &nbsp;Cargando…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagi">
+          <span class="pagi-info" id="pagiInfo">—</span>
+          <div class="pagi-btns" id="pagiBtns"></div>
+        </div>
       </div>
-      <div class="pagi">
-        <span class="pagi-info" id="pagiInfo">—</span>
-        <div class="pagi-btns" id="pagiBtns"></div>
+    </div><!-- /tabCot -->
+
+    <!-- ══ TAB: FACTURAS ══ -->
+    <div id="tabFac" class="tab-pane">
+      <!-- Stats Facturas -->
+      <div class="stats" style="margin-bottom:16px">
+        <div class="stat cr"><div class="stat-lbl">Total Facturas</div><div class="stat-val" id="fsTotalF">—</div><div class="stat-delta">Registradas</div></div>
+        <div class="stat cg"><div class="stat-lbl">Pagadas</div><div class="stat-val" id="fsPagadas">—</div><div class="stat-delta" id="fsPagPct">—</div></div>
+        <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="fsPendF">—</div><div class="stat-delta">Sin confirmar</div></div>
+        <div class="stat cb"><div class="stat-lbl">Monto Total</div><div class="stat-val" id="fsMontoF">—</div><div class="stat-delta">Facturado</div></div>
       </div>
-    </div>
+      <!-- Filter bar facturas -->
+      <div class="filter-bar">
+        <button class="fchip on" id="facChipAll" onclick="setFacFilter('all',this)">Todas</button>
+        <button class="fchip" onclick="setFacFilter('Pagado',this)">Pagado</button>
+        <button class="fchip" onclick="setFacFilter('Pendiente',this)">Pendiente</button>
+        <button class="fchip" onclick="setFacFilter('Cancelado',this)">Cancelado</button>
+        <span class="fsep"></span>
+        <input type="text" id="facSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar factura…" oninput="onFacSearch(this.value)">
+        <select class="fsort" id="facSort" onchange="setFacSort(this.value)">
+          <option value="fecha-desc">Fecha ↓</option>
+          <option value="fecha-asc">Fecha ↑</option>
+          <option value="monto-desc">Monto ↓</option>
+          <option value="monto-asc">Monto ↑</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Listado de Facturas</span>
+          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="facCount">0</span>
+          <span class="card-sub" id="facLastUpd"></span>
+        </div>
+        <div class="cot-table-wrap">
+          <table class="fac-table">
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Cliente</th>
+                <th>Concepto</th>
+                <th style="text-align:right">Monto Total</th>
+                <th>Método Pago</th>
+                <th>Estatus</th>
+                <th>Fecha</th>
+                <th>OC / Ref</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody id="facTbody">
+              <tr class="loading-row">
+                <td colspan="9">
+                  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                  &nbsp;Cargando facturas…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagi">
+          <span class="pagi-info" id="facPagiInfo">—</span>
+          <div class="pagi-btns" id="facPagiBtns"></div>
+        </div>
+      </div>
+    </div><!-- /tabFac -->
 
   </div><!-- /content -->
 </div><!-- /appScreen -->
@@ -558,6 +658,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
           Agregar partida manual
         </button>
+        <div style="padding:6px 12px;font-size:10.5px;color:var(--text3);border-top:1px solid var(--border);display:flex;align-items:center;gap:5px">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11" style="flex-shrink:0;color:var(--blue)"><circle cx="8" cy="8" r="6"/><path d="M8 7v4M8 5.5v.5"/></svg>
+          Las partidas (catálogo y manuales) se guardan en la cotización. Los artículos del catálogo se usan como plantilla; el texto editable se guarda en esta cotización, no en el catálogo.
+        </div>
       </div>
 
       <!-- Totals -->
@@ -726,6 +830,12 @@ const ST = {
   items: [],          // partidas del form
   ocList: [],         // OC de la cotizacion en edicion
   ocAll:  [],         // todas las OC de Oc_Client
+  facturas: [],       // todas las facturas
+  facFiltered: [],    // facturas filtradas
+  facFilter: 'all',
+  facSort: 'fecha-desc',
+  facSearch: '',
+  facPage: 1,
 };
 
 /* ─── GOOGLE INIT ─── */
@@ -828,12 +938,13 @@ function doLogout() {
 async function loadAll() {
   setLoading(true);
   try {
-    const [cotR, cliR, conR, artR, ocR] = await Promise.all([
+    const [cotR, cliR, conR, artR, ocR, facR] = await Promise.all([
       sheetsGet('Cotizaciones!A2:P'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
       sheetsGet('Articulos!A2:F'),
       sheetsGet('Oc_Client!A2:F'),
+      sheetsGet('Facturas!A2:O'),
     ]);
 
     /* Clientes */
@@ -870,6 +981,21 @@ async function loadAll() {
       fecha:    r[3]||'',
       obs:      r[4]||'',
     }));
+
+    /* Facturas — cols: A=ID_Factura,B=Folio,C=Cliente,D=Fecha_creacion,E=Concepto,
+       F=Monto_total,G=Metodo_pago,H=Estatus,I=Notas,J=Orden_compra,K=ID_Ingreso,
+       L=Subida_a_efacto,M=Fecha_registro,N=PDF,O=Folio_Num */
+    ST.facturas = (facR||[]).filter(r=>r[0]).map((r,i)=>({
+      _row: i+2,
+      id:         r[0]||'', folio:    r[1]||'', id_cli:   r[2]||'',
+      fecha:      r[3]||'', concepto: r[4]||'',
+      total:      parseFloat((r[5]||'').toString().replace(/[$,]/g,''))||0,
+      metodo:     r[6]||'', estatus:  r[7]||'',
+      notas:      r[8]||'', oc:       r[9]||'',
+    }));
+    ST.facFiltered = [...ST.facturas];
+    renderFacTable();
+    updateFacStats();
 
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
        G=ItemsJSON (guardamos partidas aquí), H=PDF, I=Descripcion, J=Notas, K=Creacion,
@@ -1326,229 +1452,407 @@ function numberToWordsES(n){
 
 /* ─── PDF ─── */
 function generarPDF(id, itemsOverride) {
-  // Guard: jsPDF library check
   if(!window.jspdf || !window.jspdf.jsPDF){
-    toast('err','La librería de PDF no está cargada. Recarga la página e intenta de nuevo.');
+    toast('err','La librería de PDF no está cargada. Recarga la página.');
     return;
   }
   const cotId = id || ST.editId;
-  let r;
-  if(cotId) r = ST.cotizaciones.find(c => c.id === cotId);
+  let r = cotId ? ST.cotizaciones.find(c => c.id === cotId) : null;
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
 
-  // Data
-  const cliSel  = document.getElementById('fCliente');
-  const rfcCli  = r ? r.id_cli : (cliSel.value || '');
-  const cliente = r ? (ST.clientes[r.id_cli]?.nombre || r.id_cli)
-                    : (cliSel.options[cliSel.selectedIndex]?.text || '—');
-  const desc      = r ? r.desc  : document.getElementById('fDesc').value;
-  const folio     = r ? r.id    : (ST.editId || 'BORRADOR');
-  const notas     = r ? r.notas : document.getElementById('fNotas').value;
-  const fechaRaw  = r ? r.fecha : new Date().toLocaleDateString('es-MX');
-  const vigDias   = parseInt(r ? r.vigencia : (document.getElementById('fVigencia').value || '30')) || 30;
-  const contactoId = r ? r.id_con : document.getElementById('fContacto').value;
-  const contacto   = ST.contactos[contactoId] || contactoId || '—';
-  // Ensure items is always a valid array
-  const rawItems = itemsOverride || (r && r.items && r.items.length ? r.items : null) || ST.items || [];
-  const items = rawItems.length ? rawItems : [{ desc: desc||'—', cant:1, unidad:'', precio:0, imp:0 }];
+  // ── DATA ──
+  const cliSel   = document.getElementById('fCliente');
+  const rfcCli   = r ? r.id_cli : (cliSel.value||'');
+  const cliente  = r ? (ST.clientes[r.id_cli]?.nombre||r.id_cli)
+                     : (cliSel.options[cliSel.selectedIndex]?.text||'—');
+  const desc     = r ? r.desc  : document.getElementById('fDesc').value;
+  const folio    = r ? r.id    : (ST.editId||'BORRADOR');
+  const notas    = r ? r.notas : document.getElementById('fNotas').value;
+  const fechaRaw = r ? r.fecha : todayISO();
+  const vigDias  = parseInt(r ? r.vigencia : (document.getElementById('fVigencia').value||'30'))||30;
+  const conId    = r ? r.id_con : document.getElementById('fContacto').value;
+  const contacto = ST.contactos[conId]||conId||'—';
+  const rawItems = itemsOverride||(r&&r.items&&r.items.length?r.items:null)||ST.items||[];
+  const items    = rawItems.length ? rawItems : [{desc:desc||'—',cant:1,unidad:'',precio:0,imp:0}];
+  // OC asociadas
+  const ocList   = ST.ocAll.filter(o=>o.id_cot===folio).map(o=>o.numero).join(' · ')||'';
 
-  // Wrap entire PDF generation to catch and display errors
   try {
-
-  // Dates
-  function parseDMY(raw) {
-    const p = String(raw).split('/');
-    let d = p.length===3
-      ? new Date(`${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}T12:00:00`)
-      : new Date((raw||'')+(String(raw).includes('T')?'':'T12:00:00'));
+  // ── DATES ──
+  function parseDMY(raw){
+    const p=String(raw).split('/');
+    let d=p.length===3
+      ?new Date(`${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}T12:00:00`)
+      :new Date((raw||'')+(String(raw).includes('T')?'':'T12:00:00'));
     return isNaN(d)?null:d;
   }
-  function fmt(d){ return d?d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}):''; }
+  function fmt(d){return d?d.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}):''}
   const dE=parseDMY(fechaRaw), dV=dE?new Date(dE.getTime()+vigDias*864e5):null;
-  const strE=fmt(dE)||String(fechaRaw), strV=fmt(dV);
+  const strE=fmt(dE)||String(fechaRaw), strV=fmt(dV)||'';
 
-  // Palette
-  const RED=[229,62,62],WHITE=[255,255,255],DARK=[20,20,20],MGRAY=[90,90,90],LGRAY=[210,210,210],BG2=[248,248,248];
-  const PW=210, ML=14, MR=196, CW=182;
+  // ── COLORS ──
+  const C={
+    red:[175,13,18], redL:[200,30,35],
+    white:[255,255,255], dark:[30,30,30],
+    gray:[100,100,100], lgray:[220,220,220],
+    bg:[248,248,248], bgH:[240,240,240]
+  };
+  const PW=210,ML=12,MR=198,CW=186;
 
-  // Column x-positions for items table
-  const cCant=ML+10, cDescX=ML+22, cDescW=96, cUnidCX=MR-52, cPrecCX=MR-28, cTotRX=MR-2;
+  // ── LOGO area sizes ──
+  const LOGO_W=38, LOGO_H=23;
 
-  // ── Draw page header + footer ──
-  function pageDecor(pg, total) {
-    // Top red bar
-    doc.setFillColor(...RED); doc.rect(0,0,PW,4,'F');
-    // Company name
-    doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...DARK);
-    doc.text('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.', PW/2, 13, {align:'center'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...MGRAY);
-    doc.text('DIRECCIÓN: CALLE 109B #610 X 66 Y 66A FRACC. OBRERA', PW/2, 18.5, {align:'center'});
-    doc.text('TELÉFONO: (999) 222-6016  ·  (999) 908-9592  ·  E-MAIL: conexionesconecte@hotmail.com', PW/2, 22.5, {align:'center'});
-    // Folio
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...MGRAY);
-    doc.text(folio, MR, 27, {align:'right'});
-    // Red separator
-    doc.setDrawColor(...RED); doc.setLineWidth(0.6); doc.line(ML,29.5,MR,29.5);
-    // Footer
-    doc.setDrawColor(...LGRAY); doc.setLineWidth(0.25); doc.line(ML,283,MR,283);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...MGRAY);
-    doc.text('Para cualquier aclaración o duda, comuníquese con nosotros.  ¡Gracias por su confianza!',PW/2,287,{align:'center'});
-    if(total>1) doc.text('Pág. '+pg+' / '+total, MR, 287, {align:'right'});
+  // ── HELPERS ──
+  function rr(x,y,w,h,col,stroke){
+    doc.setFillColor(...col);
+    if(stroke){doc.setDrawColor(...stroke);doc.setLineWidth(0.2);doc.roundedRect(x,y,w,h,1.5,1.5,'FD');}
+    else doc.roundedRect(x,y,w,h,1.5,1.5,'F');
+  }
+  function cell(x,y,w,h,bg,bdCol){
+    doc.setFillColor(...bg);
+    if(bdCol){doc.setDrawColor(...bdCol);doc.setLineWidth(0.25);doc.rect(x,y,w,h,'FD');}
+    else doc.rect(x,y,w,h,'F');
+  }
+  function txt(s,x,y,opts){doc.text(String(s||''),x,y,opts||{});}
+
+  // ── PAGE HEADER ──
+  function pageHeader(pg,total){
+    // Red top bar + white stripe
+    doc.setFillColor(...C.red); doc.rect(0,0,PW,14,'F');
+    doc.setFillColor(...C.white); doc.rect(0,14,PW,22,'F');
+
+    // Company name in white on red
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C.white);
+    txt('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.',PW/2,9,{align:'center'});
+
+    // Sub-info on white strip (right-aligned, left of folio box)
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
+    txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.', ML+LOGO_W+4, 19.5);
+    txt('Tel: (999) 222-6016 / (999) 908-9592   Email: conexionesconecte@hotmail.com', ML+LOGO_W+4, 24);
+    txt('RFC: —', ML+LOGO_W+4, 28.5);
+
+    // Folio badge (top-right)
+    const fBox={x:MR-54,y:15,w:54,h:20};
+    doc.setFillColor(...C.red); doc.rect(fBox.x,fBox.y,fBox.w,fBox.h,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...C.white);
+    txt('COTIZACIÓN',fBox.x+fBox.w/2,fBox.y+6,{align:'center'});
+    doc.setFontSize(8.5);
+    const folShort = folio.length>18 ? folio.slice(0,18)+'…' : folio;
+    txt(folShort, fBox.x+fBox.w/2, fBox.y+13, {align:'center'});
+    doc.setFontSize(7); doc.setFont('helvetica','normal');
+    txt('Pág '+(total>1?pg+'/'+total:'1'), fBox.x+fBox.w/2, fBox.y+18.5, {align:'center'});
+
+    // Red bottom border
+    doc.setDrawColor(...C.red); doc.setLineWidth(0.8); doc.line(ML,37,MR,37);
   }
 
-  // ── Info grid ──
-  function drawInfoGrid(y0) {
-    const c1W=100, c2W=CW-c1W-2, c1X=ML, c2X=ML+c1W+2;
-    const hH=7, hD=13;
-    // Row1 header
-    doc.setFillColor(...RED);
-    doc.rect(c1X,y0,c1W,hH,'F'); doc.rect(c2X,y0,c2W,hH,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
-    doc.text('Dirigida a:', c1X+3, y0+5); doc.text('Fecha de emisión', c2X+3, y0+5);
-    // Row1 data
-    let y1=y0+hH;
-    doc.setFillColor(252,252,252); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
-    doc.rect(c1X,y1,c1W,hD,'FD'); doc.rect(c2X,y1,c2W,hD,'FD');
-    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...DARK);
-    doc.text('Nombre: '+cliente, c1X+3, y1+5.5);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...MGRAY);
-    doc.text('RFC: '+rfcCli, c1X+3, y1+10);
-    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...DARK);
-    doc.text(strE, c2X+3, y1+7.5);
-    // Row2 header
-    let y2h=y1+hD+1.5;
-    doc.setFillColor(...RED);
-    doc.rect(c1X,y2h,c1W,hH,'F'); doc.rect(c2X,y2h,c2W,hH,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
-    doc.text('Trabajo:', c1X+3, y2h+5); doc.text('Contacto', c2X+3, y2h+5);
-    // Row2 data
-    let y2d=y2h+hH;
-    const wLines=doc.splitTextToSize(desc||'—', c1W-6);
-    const dH=Math.max(hD, wLines.length*5+6);
-    doc.setFillColor(252,252,252); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
-    doc.rect(c1X,y2d,c1W,dH,'FD'); doc.rect(c2X,y2d,c2W,dH,'FD');
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
-    doc.text(wLines, c1X+3, y2d+5);
-    doc.text(contacto, c2X+3, y2d+7);
-    return y2d+dH+6;
+  // ── PAGE FOOTER ──
+  function pageFooter(){
+    doc.setDrawColor(...C.lgray); doc.setLineWidth(0.3); doc.line(ML,281,MR,281);
+    doc.setFillColor(...C.red); doc.rect(ML,283,CW,6,'F');
+    doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
+    txt('Para cualquier aclaración o duda, comuníquese con nosotros.  ¡Gracias por su confianza!',PW/2,287.2,{align:'center'});
   }
 
-  // ── Table header ──
-  function drawTblHdr(y0) {
-    doc.setFillColor(...RED); doc.rect(ML,y0,CW,8,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
-    doc.text('Cantidad',  cCant,    y0+5.5, {align:'center'});
-    doc.text('Producto / Servicio', cDescX+cDescW/2, y0+5.5, {align:'center'});
-    doc.text('Unidad',    cUnidCX,  y0+5.5, {align:'center'});
-    doc.text('$/Uni',     cPrecCX,  y0+5.5, {align:'center'});
-    doc.text('Total',     cTotRX,   y0+5.5, {align:'right'});
+  // ── INFO GRID ──
+  function drawInfoGrid(y0){
+    const col1W=90, col2W=CW-col1W-3, col2X=ML+col1W+3;
+    const HH=6.5, DH=14;
+
+    // Row 1 headers
+    cell(ML,y0,col1W,HH,C.red); cell(col2X,y0,col2W,HH,C.red);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
+    txt('Dirigida a:',ML+3,y0+4.5); txt('Fecha de emisión',col2X+3,y0+4.5);
+
+    // Row 1 data
+    const r1y=y0+HH;
+    cell(ML,r1y,col1W,DH,C.bg,C.lgray); cell(col2X,r1y,col2W,DH,C.bg,C.lgray);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.dark);
+    txt(cliente,ML+3,r1y+6);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.gray);
+    txt('RFC: '+rfcCli,ML+3,r1y+11.5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.dark);
+    txt(strE,col2X+3,r1y+9);
+
+    // Row 2 headers
+    const r2hy=r1y+DH+2;
+    cell(ML,r2hy,col1W,HH,C.red); cell(col2X,r2hy,col2W,HH,C.red);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
+    txt('Trabajo / Descripción',ML+3,r2hy+4.5); txt('Contacto',col2X+3,r2hy+4.5);
+
+    // Row 2 data
+    const r2dy=r2hy+HH;
+    const dLines=doc.splitTextToSize(desc||'—',col1W-6);
+    const ddH=Math.max(DH,dLines.length*5+5);
+    cell(ML,r2dy,col1W,ddH,C.bg,C.lgray); cell(col2X,r2dy,col2W,ddH,C.bg,C.lgray);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.dark);
+    doc.text(dLines,ML+3,r2dy+5.5);
+    txt(contacto,col2X+3,r2dy+8);
+
+    // Row 3: OC (if any)
+    let endY=r2dy+ddH;
+    if(ocList){
+      const r3y=endY+2;
+      cell(ML,r3y,CW,HH,C.red);
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
+      txt('OC Asociadas:',ML+3,r3y+4.5);
+      const r3dy=r3y+HH;
+      cell(ML,r3dy,CW,9,C.bg,C.lgray);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C.dark);
+      txt(ocList,ML+3,r3dy+6);
+      endY=r3dy+9;
+    }
+    return endY+5;
+  }
+
+  // ── ITEMS TABLE HEADER ──
+  const cCantW=14, cDescW2=CW-14-24-18-24, cUnidW=18, cPrecW=26, cTotW=24;
+  const xCant=ML, xDesc=ML+cCantW, xUnid=ML+cCantW+cDescW2, xPrec=ML+cCantW+cDescW2+cUnidW, xTot=ML+cCantW+cDescW2+cUnidW+cPrecW;
+
+  function drawItemsHeader(y0){
+    cell(ML,y0,CW,8,C.red);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
+    txt('Cant.',xCant+cCantW/2,y0+5.5,{align:'center'});
+    txt('Producto / Servicio',xDesc+cDescW2/2,y0+5.5,{align:'center'});
+    txt('Unidad',xUnid+cUnidW/2,y0+5.5,{align:'center'});
+    txt('P. Unit.',xPrec+cPrecW/2,y0+5.5,{align:'center'});
+    txt('Total',xTot+cTotW/2,y0+5.5,{align:'center'});
     return y0+8;
   }
 
-  // ── Build doc ──
+  // ── BUILD DOC ──
   let y=0, pg=1;
-  pageDecor(pg,1);
-  y=drawInfoGrid(32);
-  y=drawTblHdr(y);
+  pageHeader(pg,1); pageFooter();
+  y=drawInfoGrid(39);
+  y=drawItemsHeader(y);
 
   items.forEach((it,idx)=>{
-    const lines=doc.splitTextToSize(it.desc||'—', cDescW);
-    const rh=Math.max(lines.length*5+5, 11);
-    if(y+rh>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; y=drawTblHdr(y); }
-    // Alternate row bg
-    doc.setFillColor(...(idx%2===0?[255,255,255]:[248,248,248]));
-    doc.rect(ML,y,CW,rh,'F');
-    doc.setDrawColor(...LGRAY); doc.setLineWidth(0.15); doc.line(ML,y+rh,MR,y+rh);
+    const lines=doc.splitTextToSize(it.desc||'—',cDescW2-4);
+    const rh=Math.max(lines.length*4.8+5,10);
+    if(y+rh>278){
+      doc.addPage(); pg++;
+      pageHeader(pg,1); pageFooter();
+      y=40; y=drawItemsHeader(y);
+    }
+    // Alternate
+    const rowBg = idx%2===0 ? C.white : C.bg;
+    cell(ML,y,CW,rh,rowBg,C.lgray);
+    // Vertical dividers
+    doc.setDrawColor(...C.lgray); doc.setLineWidth(0.15);
+    [xDesc,xUnid,xPrec,xTot].forEach(cx=>doc.line(cx,y,cx,y+rh));
     const mid=y+rh/2+1.8;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
-    doc.text(String(it.cant||1), cCant, mid, {align:'center'});
-    doc.text(lines, cDescX, y+5.5);
-    doc.text(it.unidad||'—', cUnidCX, mid, {align:'center'});
-    doc.text('$'+(it.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2}), cPrecCX, mid, {align:'center'});
-    doc.text('$'+(it.imp||0).toLocaleString('es-MX',{minimumFractionDigits:2}), cTotRX, mid, {align:'right'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C.dark);
+    txt(String(it.cant||1),xCant+cCantW/2,mid,{align:'center'});
+    doc.text(lines,xDesc+2,y+5);
+    txt(it.unidad||'—',xUnid+cUnidW/2,mid,{align:'center'});
+    txt('$'+(it.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2}),xPrec+cPrecW-2,mid,{align:'right'});
+    doc.setFont('helvetica','bold');
+    txt('$'+(it.imp||0).toLocaleString('es-MX',{minimumFractionDigits:2}),xTot+cTotW-2,mid,{align:'right'});
     y+=rh;
   });
 
-  // Totals
+  // ── TOTALS ──
   const sub=items.reduce((s,it)=>s+(it.imp||0),0), iva=sub*0.16, tot=sub+iva;
-  const bW=78, bX=MR-bW, rH=9;
-  y+=5;
-  if(y+36>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; }
-  // Subtotal
-  doc.setFillColor(250,250,250); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
-  doc.rect(bX,y,bW,rH,'FD');
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MGRAY);
-  doc.text('Subtotal:', bX+3, y+6);
-  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
-  doc.text('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}), MR-3, y+6, {align:'right'});
-  y+=rH;
-  // IVA
-  doc.setFillColor(250,250,250); doc.rect(bX,y,bW,rH,'FD');
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MGRAY);
-  doc.text('+ IVA 16%:', bX+3, y+6);
-  doc.setFont('helvetica','bold'); doc.setTextColor(...DARK);
-  doc.text('$'+iva.toLocaleString('es-MX',{minimumFractionDigits:2}), MR-3, y+6, {align:'right'});
-  y+=rH;
+  const tW=80, tX=MR-tW;
+  y+=4;
+  if(y+40>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=40;}
+
+  // Subtotal row
+  cell(tX,y,tW,8,C.bg,C.lgray);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.gray);
+  txt('Subtotal:',tX+4,y+5.5);
+  doc.setFont('helvetica','bold'); doc.setTextColor(...C.dark);
+  txt('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}),MR-3,y+5.5,{align:'right'});
+  y+=8;
+  // IVA row
+  cell(tX,y,tW,8,C.bg,C.lgray);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.gray);
+  txt('+ IVA (16%):',tX+4,y+5.5);
+  doc.setFont('helvetica','bold'); doc.setTextColor(...C.dark);
+  txt('$'+iva.toLocaleString('es-MX',{minimumFractionDigits:2}),MR-3,y+5.5,{align:'right'});
+  y+=8;
   // Gran Total
-  doc.setFillColor(...RED); doc.rect(bX,y,bW,rH+2,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...WHITE);
-  doc.text('GRAN TOTAL:', bX+3, y+7);
-  doc.text('$'+tot.toLocaleString('es-MX',{minimumFractionDigits:2}), MR-3, y+7, {align:'right'});
-  y+=rH+2;
+  cell(tX,y,tW,11,C.red);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C.white);
+  txt('GRAN TOTAL:',tX+4,y+7.5);
+  txt('$'+tot.toLocaleString('es-MX',{minimumFractionDigits:2}),MR-3,y+7.5,{align:'right'});
+  y+=11+4;
+
   // En letras
-  y+=5;
   const words=numberToWordsES(Math.round(tot));
-  const wl=doc.splitTextToSize('En letras: '+words, CW);
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...DARK);
-  doc.text(wl, ML, y);
-  y+=wl.length*4.5+5;
+  const wl=doc.splitTextToSize('Son: '+words+' M.N.',CW-6);
+  cell(ML,y,CW,wl.length*4.5+6,C.bgH,C.lgray);
+  doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(...C.gray);
+  doc.text(wl,ML+3,y+5);
+  y+=wl.length*4.5+10;
 
   // Notas
   if(notas&&notas.trim()){
-    if(y+22>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; }
-    doc.setFillColor(...RED); doc.rect(ML,y,CW,7,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHITE);
-    doc.text('Notas', ML+3, y+5);
+    if(y+24>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=40;}
+    cell(ML,y,CW,7,C.red);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
+    txt('Notas y Condiciones',ML+3,y+5);
     y+=7;
-    const nl=doc.splitTextToSize(notas.trim(), CW-6);
-    const nh=nl.length*4.8+8;
-    doc.setFillColor(252,252,252); doc.setDrawColor(...LGRAY); doc.setLineWidth(0.2);
-    doc.rect(ML,y,CW,nh,'FD');
-    doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(55,55,55);
-    doc.text(nl, ML+3, y+6);
+    const nl=doc.splitTextToSize(notas.trim(),CW-6);
+    const nh=nl.length*4.5+7;
+    cell(ML,y,CW,nh,C.bg,C.lgray);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,50,50);
+    doc.text(nl,ML+3,y+5);
     y+=nh+4;
   }
 
   // Vigencia
   if(strV){
-    if(y+8>276){ doc.addPage(); pg++; pageDecor(pg,1); y=34; }
-    doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...RED);
-    doc.text('Esta cotización es vigente hasta: '+strV, ML, y);
+    if(y+10>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=40;}
+    doc.setFillColor(...C.red); doc.setDrawColor(...C.red); doc.setLineWidth(0.3);
+    doc.rect(ML,y,3,7,'F');
+    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...C.red);
+    txt('Vigencia hasta: ',ML+6,y+5);
+    doc.setFont('helvetica','bold'); doc.setTextColor(...C.dark);
+    txt(strV,ML+6+doc.getTextWidth('Vigencia hasta: '),y+5);
   }
 
-  // Re-draw all headers/footers with correct total page count
-  const total=doc.getNumberOfPages();
-  for(let p=1;p<=total;p++){ doc.setPage(p); pageDecor(p,total); }
+  // Fix all page headers with correct total
+  const totalPg=doc.getNumberOfPages();
+  for(let p=1;p<=totalPg;p++){doc.setPage(p); pageHeader(p,totalPg); pageFooter();}
 
   doc.save(folio+'.pdf');
   toast('ok','PDF generado: '+folio+'.pdf');
 
-  } catch(err) {
-    console.error('PDF error:', err);
-    toast('err', 'Error al generar PDF: ' + (err.message || err));
+  } catch(err){
+    console.error('PDF error:',err);
+    toast('err','Error al generar PDF: '+(err.message||err));
   }
 }
 
 function quickPDF(id){
   const r=ST.cotizaciones.find(c=>c.id===id);
   if(!r){ toast('err','No se encontró la cotización.'); return; }
-  // Use saved items if available
-  const savedItems = (r.items && r.items.length)
-    ? r.items
-    : [{ desc:r.desc, cant:1, precio:r.sub, imp:r.sub, unidad:'' }];
-  generarPDF(id, savedItems);
+  const savedItems=(r.items&&r.items.length)?r.items:[{desc:r.desc,cant:1,precio:r.sub,imp:r.sub,unidad:''}];
+  generarPDF(id,savedItems);
+}
+
+/* ─── TABS ─── */
+function switchTab(tab){
+  document.getElementById('tabCot').classList.toggle('active', tab==='cot');
+  document.getElementById('tabFac').classList.toggle('active', tab==='fac');
+  document.getElementById('tabCotBtn').classList.toggle('active', tab==='cot');
+  document.getElementById('tabFacBtn').classList.toggle('active', tab==='fac');
+  // Update topbar add button
+  const addBtn = document.getElementById('mainAddBtn');
+  if(addBtn){
+    if(tab==='cot'){ addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg> + Cotización'; addBtn.onclick=abrirNueva; }
+    else { addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg> + Factura'; addBtn.onclick=()=>toast('inf','Las facturas se administran directamente en la hoja "Facturas" de Google Sheets.'); }
+  }
+}
+
+/* ─── FACTURAS ─── */
+function setFacFilter(f,el){
+  ST.facFilter=f; ST.facPage=1;
+  document.querySelectorAll('#tabFac .fchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  applyFacFilter();
+}
+function setFacSort(v){ ST.facSort=v; ST.facPage=1; applyFacFilter(); }
+function onFacSearch(q){ ST.facSearch=q.toLowerCase(); ST.facPage=1; applyFacFilter(); }
+
+function applyFacFilter(){
+  let rows=[...ST.facturas];
+  if(ST.facFilter!=='all') rows=rows.filter(r=>r.estatus===ST.facFilter);
+  if(ST.facSearch){
+    const q=ST.facSearch;
+    rows=rows.filter(r=>{
+      const cli=ST.clientes[r.id_cli]||{};
+      return r.folio.toLowerCase().includes(q)||r.concepto.toLowerCase().includes(q)||
+        (cli.nombre||'').toLowerCase().includes(q)||r.id_cli.toLowerCase().includes(q)||
+        r.estatus.toLowerCase().includes(q)||r.oc.toLowerCase().includes(q);
+    });
+  }
+  rows.sort((a,b)=>{
+    switch(ST.facSort){
+      case 'fecha-asc':  return cmpDate(a.fecha,b.fecha);
+      case 'fecha-desc': return cmpDate(b.fecha,a.fecha);
+      case 'monto-desc': return b.total-a.total;
+      case 'monto-asc':  return a.total-b.total;
+      default: return cmpDate(b.fecha,a.fecha);
+    }
+  });
+  ST.facFiltered=rows;
+  renderFacTable();
+}
+
+function facPillClass(s){
+  return {Pagado:'pill-acep',Cancelado:'pill-rech',Pendiente:'pill-pend'}[s]||'pill-pend';
+}
+
+function renderFacTable(){
+  const tbody=document.getElementById('facTbody');
+  if(!tbody) return;
+  const start=(ST.facPage-1)*ST.PAGE;
+  const slice=ST.facFiltered.slice(start,start+ST.PAGE);
+  document.getElementById('facCount').textContent=ST.facFiltered.length+' registros';
+
+  if(!slice.length){
+    tbody.innerHTML=`<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin resultados</td></tr>`;
+    renderFacPagi(); return;
+  }
+  tbody.innerHTML=slice.map(r=>{
+    const cli=ST.clientes[r.id_cli]||{};
+    const pClass=facPillClass(r.estatus);
+    const fmtTot='$'+r.total.toLocaleString('es-MX',{minimumFractionDigits:2});
+    const conc=(r.concepto||'—').slice(0,45)+(r.concepto.length>45?'…':'');
+    return `<tr>
+      <td><span class="folio" style="cursor:default">${esc(r.folio||r.id)}</span></td>
+      <td>
+        <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
+        <div style="font-size:10.5px;color:var(--text3);font-family:var(--mono)">${esc(r.id_cli)}</div>
+      </td>
+      <td style="max-width:200px;font-size:12px;color:var(--text2)" title="${esc(r.concepto)}">${esc(conc)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(r.metodo||'—')}</td>
+      <td><span class="pill ${pClass}">${esc(r.estatus||'—')}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
+      <td style="font-size:11.5px;color:var(--blue);font-family:var(--mono)">${esc(r.oc||'—')}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:140px" title="${esc(r.notas)}">${esc((r.notas||'').slice(0,30)+(r.notas&&r.notas.length>30?'…':''))}</td>
+    </tr>`;
+  }).join('');
+  renderFacPagi();
+}
+
+function renderFacPagi(){
+  const total=ST.facFiltered.length;
+  const pages=Math.ceil(total/ST.PAGE)||1;
+  const info=document.getElementById('facPagiInfo');
+  const wrap=document.getElementById('facPagiBtns');
+  if(!info||!wrap) return;
+  info.textContent=`Pág ${ST.facPage}/${pages} · ${total} registros`;
+  let h=`<button class="pbtn" onclick="goFacPage(${ST.facPage-1})" ${ST.facPage===1?'disabled':''}>‹</button>`;
+  for(let i=1;i<=pages;i++){
+    if(pages>7&&Math.abs(i-ST.facPage)>2&&i!==1&&i!==pages){
+      if(i===2||i===pages-1) h+=`<button class="pbtn" disabled>…</button>`;
+      continue;
+    }
+    h+=`<button class="pbtn ${i===ST.facPage?'on':''}" onclick="goFacPage(${i})">${i}</button>`;
+  }
+  h+=`<button class="pbtn" onclick="goFacPage(${ST.facPage+1})" ${ST.facPage===pages?'disabled':''}>›</button>`;
+  wrap.innerHTML=h;
+}
+function goFacPage(p){const pages=Math.ceil(ST.facFiltered.length/ST.PAGE)||1;if(p<1||p>pages)return;ST.facPage=p;renderFacTable();}
+
+function updateFacStats(){
+  const all=ST.facturas;
+  const pag=all.filter(f=>f.estatus==='Pagado').length;
+  const pend=all.filter(f=>f.estatus==='Pendiente').length;
+  const mont=all.reduce((s,f)=>s+f.total,0);
+  const pct=all.length?Math.round(pag/all.length*100):0;
+  const el=id=>document.getElementById(id);
+  if(el('fsTotalF')) el('fsTotalF').textContent=all.length;
+  if(el('fsPagadas')) el('fsPagadas').textContent=pag;
+  if(el('fsPendF')) el('fsPendF').textContent=pend;
+  if(el('fsMontoF')) el('fsMontoF').textContent='$'+mont.toLocaleString('es-MX',{maximumFractionDigits:0});
+  if(el('fsPagPct')) el('fsPagPct').textContent=pct+'% cobradas';
 }
 
 /* ─── OC SECTION ─── */
