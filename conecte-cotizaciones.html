@@ -38,6 +38,61 @@
   --mono:'JetBrains Mono',monospace;
   --r4:4px; --r8:8px; --r12:12px;
 }
+
+/* ── LIGHT MODE ── */
+body.light{
+  --bg:      #f5f5f5;
+  --bg2:     #ffffff;
+  --bg3:     #f0f0f0;
+  --bg4:     #e5e5e5;
+  --border:  rgba(0,0,0,0.09);
+  --border2: rgba(0,0,0,0.15);
+  --text:    #1a1a1a;
+  --text2:   #555;
+  --text3:   #999;
+  --white:   #1a1a1a;
+  --red-p:   rgba(229,62,62,.1);
+  --green-p: rgba(72,187,120,.12);
+  --yellow-p:rgba(236,201,75,.12);
+  --blue-p:  rgba(99,179,237,.12);
+  --orange-p:rgba(237,137,54,.12);
+}
+body.light .topbar{ background:#b91c1c; border-color:#991b1b; }
+body.light .topbar-brand{ color:#fff !important; }
+body.light .topbar-sep{ color:rgba(255,255,255,.5) !important; }
+body.light .topbar-page{ color:#ffe4e4 !important; }
+body.light .topbar-page[style*="color:var(--text)"]{ color:#fff !important; }
+body.light .tabs-nav{ background:#991b1b; border-color:#7f1d1d; }
+body.light .tab-btn{ color:rgba(255,255,255,.65); }
+body.light .tab-btn:hover{ color:#fff; background:rgba(255,255,255,.1); }
+body.light .tab-btn.active{ color:#fff; }
+body.light .tab-btn.active::after{ background:#fff; }
+body.light .btn-google{ background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff; }
+body.light .btn-google:hover{ background:rgba(255,255,255,.25); }
+body.light .btn-google.connected{ background:rgba(72,187,120,.2);border-color:rgba(72,187,120,.4);color:#fff; }
+body.light .user-chip{ background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff; }
+body.light .folio{ background:rgba(229,62,62,.15);color:#b91c1c; }
+body.light .art-dropdown{ background:#fff;border-color:#ddd; }
+body.light .art-option:hover{ background:#f9f9f9; }
+body.light .modal{ background:#fff; }
+body.light .modal-lg{ background:#fff; }
+body.light .mlg-head,.body.light .mlg-foot{ background:#fff; }
+body.light .form-input,.body.light .form-select,.body.light .form-textarea{ background:#fff;color:#1a1a1a; }
+body.light .items-table th{ background:#f0f0f0; }
+body.light .cot-table tr:hover td,.body.light .fac-table tr:hover td{ background:rgba(0,0,0,.02); }
+body.light #oauthHint{ background:rgba(236,201,75,.15); }
+body.light .toast.ok{ background:rgba(72,187,120,.15);color:#166534; }
+body.light .toast.err{ background:rgba(229,62,62,.12);color:#991b1b; }
+body.light .toast.inf{ background:rgba(99,179,237,.12);color:#1d4ed8; }
+
+/* ── THEME TOGGLE BTN ── */
+.theme-toggle{
+  width:30px;height:30px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);
+  border-radius:var(--r4);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#fff;transition:all .15s;flex-shrink:0;
+}
+.theme-toggle:hover{background:rgba(255,255,255,.2);}
+.theme-toggle svg{width:14px;height:14px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
 
@@ -379,17 +434,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <svg viewBox="0 0 18 18"><path fill="#EA4335" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#4285F4" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#34A853" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
         <span id="googleBtnTxt">Conectar Google</span>
       </button>
-      <button class="btn btn-ghost btn-sm" title="Recargar datos" onclick="loadAll()">
+      <!-- Theme toggle -->
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Modo claro/oscuro">
+        <svg id="themeIconDark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v1M8 14v1M1 8h1M14 8h1M3.05 3.05l.71.71M12.24 12.24l.71.71M3.05 12.95l.71-.71M12.24 3.76l.71-.71"/><circle cx="8" cy="8" r="3"/></svg>
+        <svg id="themeIconLight" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><path d="M12 8A4 4 0 113 5.5a5.5 5.5 0 009 2.5z"/></svg>
+      </button>
+      <button class="btn btn-ghost btn-sm" title="Recargar datos" onclick="loadAll()" style="border-color:rgba(255,255,255,.2);color:#fff;">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8A5.5 5.5 0 112 8M13.5 8V5M13.5 8H10.5"/></svg>
       </button>
-      <button class="btn btn-red btn-sm" id="mainAddBtn" onclick="abrirNueva()">
+      <button class="btn btn-red btn-sm" id="mainAddBtn" onclick="mainAdd()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
-        + Cotización
+        <span id="mainAddTxt">+ Cotización</span>
       </button>
       <div class="user-chip" id="userChipWrap" style="display:none">
         <span class="user-dot"></span>
         <span id="userChip">—</span>
-        <button onclick="doLogout()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0 0 0 6px;" title="Cerrar sesión">✕</button>
+        <button onclick="doLogout()" style="background:none;border:none;color:inherit;cursor:pointer;font-size:11px;padding:0 0 0 6px;" title="Cerrar sesión">✕</button>
       </div>
     </div>
   </header>
@@ -407,6 +467,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button class="tab-btn" id="tabFacBtn" onclick="switchTab('fac')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 5.5h5M5 8h5M5 10.5h3"/><path d="M10 1.5v3H13"/></svg>
       Facturas
+    </button>
+    <button class="tab-btn" id="tabOCBtn" onclick="switchTab('oc')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>
+      OC Clientes
     </button>
   </nav>
 
@@ -547,6 +611,62 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div><!-- /tabFac -->
 
+    <!-- ══ TAB: OC CLIENTES ══ -->
+    <div id="tabOC" class="tab-pane">
+      <!-- Stats OC -->
+      <div class="stats" style="margin-bottom:16px">
+        <div class="stat cr"><div class="stat-lbl">Total OC</div><div class="stat-val" id="ocsTot">—</div><div class="stat-delta">Registradas</div></div>
+        <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="ocsPend">—</div><div class="stat-delta">Sin facturar</div></div>
+        <div class="stat cg"><div class="stat-lbl">Facturadas</div><div class="stat-val" id="ocsFact">—</div><div class="stat-delta">Completas</div></div>
+        <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Canceladas</div><div class="stat-val" id="ocsCan">—</div><div class="stat-delta">Anuladas</div></div>
+      </div>
+
+      <!-- Filter OC -->
+      <div class="filter-bar" style="margin-bottom:12px">
+        <button class="fchip on" onclick="setOCFilter('all',this)">Todas</button>
+        <button class="fchip" onclick="setOCFilter('Pendiente',this)">Pendiente</button>
+        <button class="fchip" onclick="setOCFilter('Facturado',this)">Facturado</button>
+        <button class="fchip" onclick="setOCFilter('Cancelado',this)">Cancelado</button>
+        <span class="fsep"></span>
+        <input type="text" id="ocSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar OC…" oninput="onOCSearch(this.value)">
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Órdenes de Compra de Clientes</span>
+          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="ocCount2">0</span>
+          <button class="btn btn-red btn-sm" style="margin-left:auto" onclick="openNewOCCliente()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
+            Nueva OC
+          </button>
+        </div>
+        <div class="cot-table-wrap">
+          <table class="fac-table">
+            <thead>
+              <tr>
+                <th>Folio OC</th>
+                <th>Cliente</th>
+                <th>Fecha OC</th>
+                <th>Concepto</th>
+                <th style="text-align:right">Monto</th>
+                <th>Estatus</th>
+                <th>Cotización</th>
+                <th>PDF</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ocClientTbody">
+              <tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagi">
+          <span class="pagi-info" id="ocPagiInfo">—</span>
+          <div class="pagi-btns" id="ocPagiBtns"></div>
+        </div>
+      </div>
+    </div><!-- /tabOC -->
+
   </div><!-- /content -->
 </div><!-- /appScreen -->
 
@@ -636,11 +756,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <span style="font-size:11px;color:var(--text3);">Busca del catálogo o agrega manualmente</span>
       </div>
 
-      <div class="art-search-wrap" id="artSearchWrap">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5"/></svg>
-        <input class="art-search-input" id="artSearch" placeholder="Buscar concepto del catálogo (nombre, ID)…"
-          oninput="filterArt(this.value)" onfocus="showDropdown()" onblur="setTimeout(hideDropdown,200)">
-        <div class="art-dropdown" id="artDropdown"></div>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <div class="art-search-wrap" id="artSearchWrap" style="flex:1">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5"/></svg>
+          <input class="art-search-input" id="artSearch" placeholder="Buscar concepto del catálogo (nombre, ID)…"
+            oninput="filterArt(this.value)" onfocus="showDropdown()" onblur="setTimeout(hideDropdown,200)">
+          <div class="art-dropdown" id="artDropdown"></div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="openNewArticulo()"
+          title="Crear nuevo artículo en el catálogo"
+          style="height:34px;padding:0 10px;flex-shrink:0;gap:4px;border-color:var(--red);color:var(--red)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M8 3v10M3 8h10"/></svg>
+          Nuevo artículo
+        </button>
       </div>
 
       <!-- Items table -->
@@ -770,24 +898,59 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
-<!-- ══ OC MODAL ══ -->
+<!-- ══ OC MODAL (crear/editar OC de cliente) ══ -->
 <div class="modal-bg" id="ocModal">
-  <div class="modal" style="width:440px">
-    <div class="modal-title" id="ocModalTitle">Agregar Orden de Compra</div>
+  <div class="modal" style="width:500px">
+    <div class="modal-title" id="ocModalTitle">Nueva Orden de Compra</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;margin-top:14px">
-      <div class="form-group">
-        <label class="form-label">Número / Folio de OC *</label>
-        <input type="text" class="form-input" id="ocNumero" placeholder="Ej. OC-88291, PEDIDO-2026-11, 445882">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Fecha de OC</label>
-        <input type="date" class="form-input" id="ocFecha">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Observaciones</label>
-        <textarea class="form-textarea" id="ocObs" placeholder="Notas, condiciones, referencia adicional…" style="min-height:52px"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Folio / Número de OC *</label>
+          <input type="text" class="form-input" id="ocNumero" placeholder="Ej. OC-88291, PEDIDO-2026-11">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de OC * <span style="font-weight:400;text-transform:none;color:var(--text3)">(fecha que llegó al correo)</span></label>
+          <input type="date" class="form-input" id="ocFecha">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estatus</label>
+          <select class="form-select" id="ocEstatus">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Facturado">Facturado</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Cliente *</label>
+          <select class="form-select" id="ocClienteSel">
+            <option value="">— Seleccionar cliente —</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Concepto / Descripción</label>
+          <input type="text" class="form-input" id="ocConcepto" placeholder="Ej. Suministro e instalación de equipo eléctrico">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto OC</label>
+          <input type="number" class="form-input" id="ocMonto" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cotización vinculada</label>
+          <input type="text" class="form-input" id="ocCotId" placeholder="ID cotización (opcional)">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Observaciones</label>
+          <textarea class="form-textarea" id="ocObs" placeholder="Condiciones, notas adicionales…" style="min-height:48px"></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Archivo PDF de OC</label>
+          <input type="file" class="form-input" id="ocPdfFile" accept=".pdf,application/pdf">
+          <span style="font-size:10.5px;color:var(--text3)">Se guarda como base64 en la hoja. Podrás abrirlo/descargarlo desde la tabla de OC.</span>
+        </div>
       </div>
       <input type="hidden" id="ocEditId">
+      <input type="hidden" id="ocEditRow">
+      <input type="hidden" id="ocContext"> <!-- 'form' = from cotizacion form, 'tab' = from OC tab -->
     </div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeOCModal()">Cancelar</button>
@@ -827,6 +990,88 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <!-- TOASTS -->
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- datalist unidades -->
+<datalist id="unidadesList">
+  <option value="pza"><option value="m"><option value="m²"><option value="m³">
+  <option value="kg"><option value="ltr"><option value="hr"><option value="día">
+  <option value="servicio"><option value="juego"><option value="tramo"><option value="lote">
+</datalist>
+
+<!-- ══ NUEVO ARTÍCULO MODAL ══ -->
+<div class="modal-bg" id="newArticuloModal">
+  <div class="modal" style="width:460px">
+    <div class="modal-title">Nuevo Artículo al Catálogo</div>
+    <p style="font-size:11.5px;color:var(--text3);margin:-4px 0 14px">Este artículo quedará guardado en tu hoja "Articulos" y estará disponible en búsquedas futuras.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <div class="form-group">
+        <label class="form-label">Nombre del concepto *</label>
+        <input type="text" class="form-input" id="naName" placeholder="Ej. SUMINISTRO DE CABLE THW CAL. 10">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Precio unitario *</label>
+          <input type="number" class="form-input" id="naPrice" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unidad</label>
+          <input type="text" class="form-input" id="naUnit" list="unidadesList" placeholder="pza">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción larga (opcional)</label>
+        <textarea class="form-textarea" id="naDesc" placeholder="Descripción técnica detallada del artículo…" style="min-height:52px"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Impuesto</label>
+        <select class="form-select" id="naImpuesto">
+          <option value="0.00%">0.00%</option>
+          <option value="16.00%">16.00%</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('newArticuloModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-red" id="saveArticuloBtn" onclick="saveNewArticulo()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar al catálogo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PDF VIEWER MODAL ══ -->
+<div class="modal-bg" id="pdfViewerModal">
+  <div class="modal" style="width:900px;max-width:97vw;padding:0;background:var(--bg2);border-radius:var(--r12);overflow:hidden;display:flex;flex-direction:column;max-height:92vh">
+    <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <span style="font-size:13px;font-weight:600;color:var(--white)" id="pdfViewerTitle">Documento</span>
+      <span style="flex:1"></span>
+      <a id="pdfDownloadLink" download style="display:none">
+        <button class="btn btn-ghost btn-sm">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><path d="M8 3v8M4.5 8.5L8 12l3.5-3.5M2.5 14h11"/></svg>
+          Descargar
+        </button>
+      </a>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pdfViewerModal').classList.remove('open')">Cerrar</button>
+    </div>
+    <iframe id="pdfViewerFrame" style="flex:1;border:none;min-height:600px" src="about:blank"></iframe>
+  </div>
+</div>
+
+<!-- ══ XML VIEWER MODAL ══ -->
+<div class="modal-bg" id="xmlViewerModal">
+  <div class="modal" style="width:600px;max-width:97vw;padding:0;background:var(--bg2);border-radius:var(--r12);overflow:hidden;max-height:86vh;display:flex;flex-direction:column">
+    <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <span style="font-size:13px;font-weight:600;color:var(--white)" id="xmlViewerTitle">XML CFDI</span>
+      <span style="flex:1"></span>
+      <a id="xmlDownloadLink" download="factura.xml">
+        <button class="btn btn-ghost btn-sm">⬇ Descargar XML</button>
+      </a>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('xmlViewerModal').classList.remove('open')">Cerrar</button>
+    </div>
+    <pre id="xmlViewerPre" style="flex:1;overflow:auto;padding:16px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.5;white-space:pre-wrap"></pre>
+  </div>
+</div>
 
 <!-- ══════════════ SCRIPTS ══════════════ -->
 <script>
@@ -1314,8 +1559,10 @@ function renderItems() {
         oninput="ST.items[${i}].desc=this.value"></td>
       <td><input class="item-inp num" type="number" min="0" step="any" value="${it.cant}"
         oninput="ST.items[${i}].cant=parseFloat(this.value)||0;recalcItem(${i})"></td>
-      <td><input class="item-inp" value="${esc(it.unidad)}" placeholder="pza"
-        oninput="ST.items[${i}].unidad=this.value"></td>
+      <td>
+        <input class="item-inp" list="unidadesList" value="${esc(it.unidad)}" placeholder="pza"
+          oninput="ST.items[${i}].unidad=this.value;addCustomUnidad(this.value)">
+      </td>
       <td><input class="item-inp num" type="number" min="0" step="0.01" value="${it.precio}"
         oninput="ST.items[${i}].precio=parseFloat(this.value)||0;recalcItem(${i})"></td>
       <td class="item-imp" id="imp${i}">${fmtMXN(it.imp)}</td>
@@ -1794,19 +2041,7 @@ function quickPDF(id){
   generarPDF(id,savedItems);
 }
 
-/* ─── TABS ─── */
-function switchTab(tab){
-  document.getElementById('tabCot').classList.toggle('active', tab==='cot');
-  document.getElementById('tabFac').classList.toggle('active', tab==='fac');
-  document.getElementById('tabCotBtn').classList.toggle('active', tab==='cot');
-  document.getElementById('tabFacBtn').classList.toggle('active', tab==='fac');
-  // Update topbar add button
-  const addBtn = document.getElementById('mainAddBtn');
-  if(addBtn){
-    if(tab==='cot'){ addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg> + Cotización'; addBtn.onclick=abrirNueva; }
-    else { addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg> + Factura'; addBtn.onclick=openFacUpload; }
-  }
-}
+/* switchTab → defined below */
 
 /* ─── FACTURAS ─── */
 function setFacFilter(f,el){
@@ -2369,6 +2604,506 @@ document.getElementById('fContacto').addEventListener('change',function(){
     openAddContacto();
   }
 });
+
+/* ─── THEME TOGGLE ─── */
+function toggleTheme(){
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('coneTheme', isLight?'light':'dark');
+  document.getElementById('themeIconDark').style.display = isLight?'none':'block';
+  document.getElementById('themeIconLight').style.display= isLight?'block':'none';
+}
+// Load saved theme
+(function(){
+  const saved = localStorage.getItem('coneTheme');
+  if(saved==='light'){
+    document.body.classList.add('light');
+    document.getElementById('themeIconDark').style.display='none';
+    document.getElementById('themeIconLight').style.display='block';
+  }
+})();
+
+/* ─── SWITCH TAB (única definición) ─── */
+function switchTab(tab){
+  // Exact IDs in HTML: tabCot, tabFac, tabOC  /  tabCotBtn, tabFacBtn, tabOCBtn
+  const TABS = { cot:{pane:'tabCot', btn:'tabCotBtn'}, fac:{pane:'tabFac', btn:'tabFacBtn'}, oc:{pane:'tabOC', btn:'tabOCBtn'} };
+
+  // Hide all panes, deactivate all buttons
+  Object.values(TABS).forEach(({pane, btn}) => {
+    const p = document.getElementById(pane);
+    const b = document.getElementById(btn);
+    if(p) p.classList.remove('active');
+    if(b) b.classList.remove('active');
+  });
+
+  // Show requested tab
+  const target = TABS[tab];
+  if(!target){ console.error('switchTab: unknown tab', tab); return; }
+  const pane = document.getElementById(target.pane);
+  const btn  = document.getElementById(target.btn);
+  if(pane) pane.classList.add('active');
+  if(btn)  btn.classList.add('active');
+
+  ST.currentTab = tab;
+
+  // Update + button label
+  const addTxt = document.getElementById('mainAddTxt');
+  if(addTxt){
+    const labels = {cot:'+ Cotización', fac:'+ Factura', oc:'+ OC'};
+    addTxt.textContent = labels[tab] || '+ Agregar';
+  }
+
+  // Lazy render
+  if(tab==='oc') renderOCClienteTable();
+  if(tab==='fac') renderFacTableFull();
+}
+
+function mainAdd(){
+  const tab = ST.currentTab||'cot';
+  if(tab==='cot') abrirNueva();
+  else if(tab==='fac') openFacUpload();
+  else if(tab==='oc') openNewOCCliente();
+}
+
+/* ─── UNIDADES CUSTOM ─── */
+function addCustomUnidad(val){
+  if(!val||!val.trim()) return;
+  const dl = document.getElementById('unidadesList');
+  const existing = [...dl.options].map(o=>o.value.toLowerCase());
+  if(!existing.includes(val.trim().toLowerCase())){
+    const opt = document.createElement('option');
+    opt.value = val.trim();
+    dl.appendChild(opt);
+    // persist to localStorage
+    const saved = JSON.parse(localStorage.getItem('customUnidades')||'[]');
+    if(!saved.includes(val.trim())){ saved.push(val.trim()); localStorage.setItem('customUnidades',JSON.stringify(saved)); }
+  }
+}
+// Load custom unidades on init
+(function(){
+  const saved = JSON.parse(localStorage.getItem('customUnidades')||'[]');
+  const dl = document.getElementById('unidadesList');
+  saved.forEach(u=>{ const o=document.createElement('option'); o.value=u; dl.appendChild(o); });
+})();
+
+/* ─── NUEVO ARTÍCULO ─── */
+function openNewArticulo(){
+  ['naName','naPrice','naUnit','naDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('naImpuesto').value='0.00%';
+  document.getElementById('newArticuloModal').classList.add('open');
+}
+
+async function saveNewArticulo(){
+  const name  = document.getElementById('naName').value.trim();
+  const price = parseFloat(document.getElementById('naPrice').value)||0;
+  const unit  = document.getElementById('naUnit').value.trim()||'pza';
+  const desc  = document.getElementById('naDesc').value.trim();
+  const imp   = document.getElementById('naImpuesto').value;
+  if(!name){ toast('err','El nombre del artículo es obligatorio.'); return; }
+  if(!ST.token){ toast('err','Conecta Google para guardar artículos.'); return; }
+  const btn = document.getElementById('saveArticuloBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    const id = 'ART'+Date.now().toString(36).toUpperCase();
+    await sheetsAppend('Articulos!A2:F',[[id,name,price,imp,desc,unit]]);
+    ST.articulos.push({id,nombre:name,precio:price,impuesto:imp,desc,unidad:unit});
+    addCustomUnidad(unit);
+    document.getElementById('newArticuloModal').classList.remove('open');
+    toast('ok',`Artículo "${name}" guardado al catálogo.`);
+  }catch(e){ toast('err','Error al guardar artículo: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar al catálogo';
+}
+
+/* ─── OC MODAL (new full version) ─── */
+function openAddOC(){
+  // Called from cotización form
+  document.getElementById('ocModalTitle').textContent='Agregar OC a esta Cotización';
+  ['ocNumero','ocConcepto','ocObs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ocFecha').value=todayISO();
+  document.getElementById('ocEstatus').value='Pendiente';
+  document.getElementById('ocMonto').value='';
+  document.getElementById('ocCotId').value=ST.editId||'';
+  document.getElementById('ocCotId').readOnly = !!(ST.editId);
+  document.getElementById('ocEditId').value='';
+  document.getElementById('ocEditRow').value='';
+  document.getElementById('ocContext').value='form';
+  populateOCClienteSel(ST.editId ? document.getElementById('fCliente').value : '');
+  document.getElementById('ocPdfFile').value='';
+  document.getElementById('ocModal').classList.add('open');
+}
+
+function openNewOCCliente(){
+  // Called from OC Clientes tab
+  document.getElementById('ocModalTitle').textContent='Nueva Orden de Compra';
+  ['ocNumero','ocConcepto','ocObs','ocCotId'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ocFecha').value=todayISO();
+  document.getElementById('ocEstatus').value='Pendiente';
+  document.getElementById('ocMonto').value='';
+  document.getElementById('ocCotId').readOnly=false;
+  document.getElementById('ocEditId').value='';
+  document.getElementById('ocEditRow').value='';
+  document.getElementById('ocContext').value='tab';
+  populateOCClienteSel('');
+  document.getElementById('ocPdfFile').value='';
+  document.getElementById('ocModal').classList.add('open');
+}
+
+function populateOCClienteSel(preselect){
+  const sel=document.getElementById('ocClienteSel');
+  sel.innerHTML='<option value="">— Seleccionar cliente —</option>';
+  Object.values(ST.clientes).forEach(cli=>{
+    const o=document.createElement('option');
+    o.value=cli.id; o.textContent=cli.nombre; sel.appendChild(o);
+  });
+  if(preselect) sel.value=preselect;
+}
+
+function closeOCModal(){
+  document.getElementById('ocModal').classList.remove('open');
+}
+
+async function saveOC(){
+  const numero  = document.getElementById('ocNumero').value.trim();
+  const fecha   = document.getElementById('ocFecha').value;
+  const cliente = document.getElementById('ocClienteSel').value;
+  const estatus = document.getElementById('ocEstatus').value;
+  const concepto= document.getElementById('ocConcepto').value.trim();
+  const monto   = parseFloat(document.getElementById('ocMonto').value)||0;
+  const cot     = document.getElementById('ocCotId').value.trim();
+  const obs     = document.getElementById('ocObs').value.trim();
+  const ctx     = document.getElementById('ocContext').value;
+  const editId  = document.getElementById('ocEditId').value;
+  const editRow = document.getElementById('ocEditRow').value;
+
+  if(!numero){ toast('err','El folio/número de OC es obligatorio.'); return; }
+  if(!ST.token){ toast('err','Conecta Google para guardar.'); return; }
+
+  const btn=document.getElementById('saveOCBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+
+  // Handle PDF file → base64
+  let pdfB64='';
+  const pdfFile=document.getElementById('ocPdfFile').files[0];
+  if(pdfFile){
+    pdfB64 = await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result); r.onerror=rej;
+      r.readAsDataURL(pdfFile);
+    });
+  }
+
+  try{
+    const id = editId || ('OC'+Date.now().toString(36).toUpperCase());
+    // Oc_Client cols: A=ID_OC, B=ID_COTIZACION, C=NUMERO_OC, D=FECHA_OC, E=OBSERVACIONES, F=ESTATUS, G=CLIENTE, H=CONCEPTO, I=MONTO, J=PDF_B64
+    const row=[id, cot, numero, sheetDate(fecha), obs, estatus, cliente, concepto, monto, pdfB64];
+    if(editRow){
+      await sheetsUpdate(`Oc_Client!A${editRow}:J${editRow}`,[row]);
+      toast('ok','OC actualizada.');
+    } else {
+      await sheetsAppend('Oc_Client!A2:J',[row]);
+      toast('ok',`OC ${numero} guardada.`);
+    }
+    // Add to local state
+    const newOC={id,id_cot:cot,numero,fecha:sheetDate(fecha),obs,estatus,id_cli:cliente,concepto,monto,pdfB64};
+    if(editRow){
+      const idx=ST.ocAll.findIndex(o=>o.id===editId);
+      if(idx>=0) ST.ocAll[idx]=newOC;
+    } else {
+      ST.ocAll.push(newOC);
+    }
+    closeOCModal();
+    if(ctx==='form' && ST.editId){
+      ST.ocList=ST.ocAll.filter(o=>o.id_cot===ST.editId);
+      renderOCSection(true);
+    }
+    if(ctx==='tab') renderOCClienteTable();
+    renderTable(); // refresh OC column in cot table
+  }catch(e){ toast('err','Error al guardar OC: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar OC';
+}
+
+/* ─── OC CLIENTE TABLE ─── */
+let ocClientFilter='all', ocClientSearch='';
+
+function setOCFilter(f,el){
+  ocClientFilter=f;
+  document.querySelectorAll('#tabOC .fchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderOCClienteTable();
+}
+
+function onOCSearch(q){ ocClientSearch=q.toLowerCase(); renderOCClienteTable(); }
+
+function getOCClientes(){
+  // Extended Oc_Client has cols: id,id_cot,numero,fecha,obs,estatus,id_cli,concepto,monto,pdfB64
+  return ST.ocAll.map(o=>({
+    id:o.id, id_cot:o.id_cot||'', numero:o.numero||'', fecha:o.fecha||'',
+    estatus:o.estatus||'Pendiente', id_cli:o.id_cli||'', concepto:o.concepto||'',
+    monto:parseFloat(o.monto)||0, pdfB64:o.pdfB64||'', obs:o.obs||'', _row:o._row
+  }));
+}
+
+function renderOCClienteTable(){
+  let rows=getOCClientes();
+  if(ocClientFilter!=='all') rows=rows.filter(r=>r.estatus===ocClientFilter);
+  if(ocClientSearch) rows=rows.filter(r=>
+    r.numero.toLowerCase().includes(ocClientSearch)||
+    (ST.clientes[r.id_cli]?.nombre||'').toLowerCase().includes(ocClientSearch)||
+    r.concepto.toLowerCase().includes(ocClientSearch)||
+    r.id_cot.toLowerCase().includes(ocClientSearch)
+  );
+
+  // Stats
+  const all=getOCClientes();
+  document.getElementById('ocsTot').textContent=all.length;
+  document.getElementById('ocsPend').textContent=all.filter(r=>r.estatus==='Pendiente').length;
+  document.getElementById('ocsFact').textContent=all.filter(r=>r.estatus==='Facturado').length;
+  document.getElementById('ocsCan').textContent=all.filter(r=>r.estatus==='Cancelado').length;
+  document.getElementById('ocCount2').textContent=rows.length+' registros';
+
+  const tbody=document.getElementById('ocClientTbody');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin OC registradas</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML=rows.map(r=>{
+    const cliNom=ST.clientes[r.id_cli]?.nombre||r.id_cli||'—';
+    const stClass={Pendiente:'pill-pend',Facturado:'pill-acep',Cancelado:'pill-rech'}[r.estatus]||'pill-pend';
+    const hasPDF=!!r.pdfB64;
+    return `<tr>
+      <td><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)">${esc(r.numero)}</span></td>
+      <td style="font-size:12.5px;font-weight:500">${esc(cliNom)}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:160px" title="${esc(r.concepto)}">${esc((r.concepto||'—').slice(0,40))+(r.concepto.length>40?'…':'')}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:right">${r.monto?fmtMXN(r.monto):'—'}</td>
+      <td><span class="pill ${stClass}">${esc(r.estatus)}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${esc(r.id_cot||'—')}</td>
+      <td>
+        ${hasPDF
+          ?`<button class="btn btn-ghost btn-sm" onclick="openPDFViewer('${r.id}','OC: '+encodeURIComponent('${esc(r.numero)}'))" style="gap:4px;font-size:11px">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/></svg>
+              Ver PDF
+            </button>`
+          :'<span style="font-size:11px;color:var(--text3)">Sin PDF</span>'}
+      </td>
+      <td>
+        <div class="row-acts" style="opacity:1">
+          <button class="btn-icon" title="Editar" onclick="editOCCliente('${esc(r.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function editOCCliente(id){
+  const r=ST.ocAll.find(o=>o.id===id);
+  if(!r) return;
+  document.getElementById('ocModalTitle').textContent='Editar OC';
+  document.getElementById('ocNumero').value=r.numero||'';
+  document.getElementById('ocFecha').value=isoDate(r.fecha);
+  document.getElementById('ocEstatus').value=r.estatus||'Pendiente';
+  document.getElementById('ocConcepto').value=r.concepto||'';
+  document.getElementById('ocMonto').value=r.monto||'';
+  document.getElementById('ocCotId').value=r.id_cot||'';
+  document.getElementById('ocObs').value=r.obs||'';
+  document.getElementById('ocEditId').value=r.id;
+  document.getElementById('ocEditRow').value=r._row||'';
+  document.getElementById('ocContext').value='tab';
+  document.getElementById('ocPdfFile').value='';
+  populateOCClienteSel(r.id_cli||'');
+  document.getElementById('ocModal').classList.add('open');
+}
+
+/* ─── PDF VIEWER ─── */
+function openPDFViewer(ocId, label){
+  const oc=ST.ocAll.find(o=>o.id===ocId);
+  if(!oc||!oc.pdfB64){ toast('err','No hay PDF disponible.'); return; }
+  // pdfB64 is a data URL like data:application/pdf;base64,...
+  const title=decodeURIComponent(label)||'PDF';
+  document.getElementById('pdfViewerTitle').textContent=title;
+  const frame=document.getElementById('pdfViewerFrame');
+  frame.src=oc.pdfB64;
+  // Also set download link
+  const dl=document.getElementById('pdfDownloadLink');
+  dl.href=oc.pdfB64;
+  dl.download=(oc.numero||'oc')+'.pdf';
+  dl.style.display='inline';
+  document.getElementById('pdfViewerModal').classList.add('open');
+}
+
+function openFacPDF(facId){
+  const f=ST.facturas.find(x=>x.id===facId||x.folio===facId);
+  if(!f){ toast('err','No se encontró la factura.'); return; }
+  if(f.pdfB64){
+    document.getElementById('pdfViewerTitle').textContent='Factura '+f.folio;
+    document.getElementById('pdfViewerFrame').src=f.pdfB64;
+    const dl=document.getElementById('pdfDownloadLink');
+    dl.href=f.pdfB64; dl.download=f.folio+'.pdf'; dl.style.display='inline';
+    document.getElementById('pdfViewerModal').classList.add('open');
+  } else {
+    toast('err','No hay PDF cargado para esta factura.');
+  }
+}
+
+function openFacXML(facId){
+  const f=ST.facturas.find(x=>x.id===facId||x.folio===facId);
+  if(!f||!f.xmlContent){ toast('err','No hay XML para esta factura.'); return; }
+  document.getElementById('xmlViewerTitle').textContent='XML CFDI — '+f.folio;
+  document.getElementById('xmlViewerPre').textContent=f.xmlContent;
+  const dl=document.getElementById('xmlDownloadLink');
+  const blob=new Blob([f.xmlContent],{type:'application/xml'});
+  dl.href=URL.createObjectURL(blob);
+  dl.download=f.folio+'.xml';
+  document.getElementById('xmlViewerModal').classList.add('open');
+}
+
+/* ─── FACTURAS — extend render to show PDF/XML buttons ─── */
+const _origRenderFacTable = typeof renderFacTable==='function'?renderFacTable:null;
+function renderFacTableFull(){
+  const tbody=document.getElementById('facTbody');
+  if(!tbody) return;
+  if(!ST.facFiltered||!ST.facFiltered.length){
+    tbody.innerHTML='<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3)">Sin facturas registradas</td></tr>';
+    return;
+  }
+  const start=(ST.facPage||1-1)*15;
+  const slice=ST.facFiltered.slice(start,start+15);
+  tbody.innerHTML=slice.map(f=>{
+    const cliNom=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
+    const stClass={Pagado:'pill-acep',Pendiente:'pill-pend',Cancelado:'pill-rech'}[f.estatus]||'pill-pend';
+    const hasPDF=!!f.pdfB64;
+    const hasXML=!!f.xmlContent;
+    return `<tr>
+      <td><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)">${esc(f.folio)}</span></td>
+      <td style="font-size:12.5px;font-weight:500">${esc(cliNom)}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:150px" title="${esc(f.concepto)}">${esc((f.concepto||'—').slice(0,35))}${f.concepto?.length>35?'…':''}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:right;font-weight:500">${fmtMXN(f.total)}</td>
+      <td style="font-size:12px;color:var(--text3)">${esc(f.metodo||'—')}</td>
+      <td><span class="pill ${stClass}">${esc(f.estatus||'—')}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(f.fecha)}</td>
+      <td style="font-size:11px;color:var(--text3)">${esc(f.oc||'—')}</td>
+      <td style="font-size:11px;color:var(--text3)">${esc(f.notas||'—')}</td>
+      <td>
+        <div style="display:flex;gap:3px">
+          ${hasPDF?`<button class="btn-icon" title="Ver PDF" onclick="openFacPDF('${esc(f.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/></svg>
+          </button>`:''}
+          ${hasXML?`<button class="btn-icon" title="Ver XML" onclick="openFacXML('${esc(f.id)}')" style="color:var(--green)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5l-3 3 3 3M12 5l3 3-3 3M9 3l-2 10"/></svg>
+          </button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* Extend loadAll to also load extended OC fields */
+const _origLoadAll = loadAll;
+async function loadAll(){
+  await _origLoadAll();
+  // Re-map ocAll with extended columns if available
+  try{
+    const ocR=await sheetsGet('Oc_Client!A2:J');
+    ST.ocAll=(ocR||[]).filter(r=>r[0]).map((r,i)=>({
+      _row:i+2,id:r[0]||'',id_cot:r[1]||'',numero:r[2]||'',fecha:r[3]||'',
+      obs:r[4]||'',estatus:r[5]||'Pendiente',id_cli:r[6]||'',
+      concepto:r[7]||'',monto:parseFloat(r[8])||0,pdfB64:r[9]||''
+    }));
+  }catch(e){ console.warn('Extended OC load failed',e); }
+  // Re-render OC if tab visible
+  if(ST.currentTab==='oc') renderOCClienteTable();
+  // Override factura renderer to new version
+  if(typeof renderFacTableFull==='function') renderFacTableFull();
+}
+
+/* Also patch factura upload to store pdfB64 + xmlContent in ST.facturas */
+const _origProcesar = typeof procesarFacturaUpload==='function'?procesarFacturaUpload:null;
+async function procesarFacturaUpload(){
+  const xmlFile=document.getElementById('facXmlFile').files[0];
+  const pdfFile=document.getElementById('facPdfFile').files[0];
+  if(!xmlFile){ toast('err','Selecciona el archivo XML CFDI.'); return; }
+  if(!ST.token){ toast('err','Conecta Google para guardar facturas.'); return; }
+
+  const btn=document.getElementById('saveFacUploadBtn');
+  btn.disabled=true; btn.textContent='Procesando…';
+
+  // Read XML
+  const xmlText=await xmlFile.text();
+  let extracted={folio:'',cliente:'',fecha:'',concepto:'',total:0,metodo:'',oc:''};
+  try{
+    const parser=new DOMParser();
+    const xml=parser.parseFromString(xmlText,'text/xml');
+    const cfdi=xml.querySelector('[name="Comprobante"]')||xml.documentElement;
+    const getNS=(el,local)=>el.querySelector(`*[*|${local}]`)||el.querySelector(local)||null;
+    const attr=(el,a)=>el?.getAttribute(a)||el?.getAttributeNS(null,a)||'';
+    // Folio
+    extracted.folio='CONE-'+attr(cfdi,'Serie')+'-'+attr(cfdi,'Folio');
+    // Total
+    extracted.total=parseFloat(attr(cfdi,'Total'))||parseFloat(attr(cfdi,'total'))||0;
+    // Date
+    extracted.fecha=(attr(cfdi,'Fecha')||attr(cfdi,'fecha')||'').slice(0,10).replace(/-/g,'/');
+    // Cliente from Receptor
+    const receptor=xml.querySelector('Receptor')||xml.querySelector('[*|Receptor]');
+    if(receptor){
+      extracted.cliente=attr(receptor,'RFC')||attr(receptor,'Rfc')||attr(receptor,'rfc')||'';
+    }
+    // Concepto from first Concepto element
+    const conc=xml.querySelector('Concepto')||xml.querySelector('[*|Concepto]');
+    if(conc){ extracted.concepto=attr(conc,'Descripcion')||attr(conc,'descripcion')||''; }
+    // Metodo
+    extracted.metodo=attr(cfdi,'MetodoPago')||attr(cfdi,'metodoPago')||'';
+  }catch(e){ console.warn('XML parse error',e); }
+
+  // Show preview
+  const prev=document.getElementById('facExtractPreview');
+  prev.style.display='block';
+  prev.innerHTML=`<b>Extraído del XML:</b><br>
+    Folio: ${extracted.folio||'—'}<br>
+    Cliente: ${extracted.cliente||'—'}<br>
+    Fecha: ${extracted.fecha||'—'}<br>
+    Concepto: ${(extracted.concepto||'—').slice(0,80)}<br>
+    Total: ${fmtMXN(extracted.total)}<br>
+    Método: ${extracted.metodo||'—'}`;
+
+  // Read PDF to b64
+  let pdfB64='';
+  if(pdfFile){
+    pdfB64=await new Promise((res,rej)=>{
+      const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej;
+      r.readAsDataURL(pdfFile);
+    });
+  }
+
+  try{
+    const id='FAC'+Date.now().toString(36).toUpperCase();
+    // Facturas cols: A=ID_Factura,B=Folio,C=Cliente,D=Fecha_creacion,E=Concepto,
+    // F=Monto_total,G=Metodo_pago,H=Estatus,I=Notas,J=Orden_compra,K=ID_Ingreso,
+    // L=Subida_a_efacto,M=Fecha_registro,N=PDF_B64,O=Folio_Num,P=XML_CONTENT
+    const now=new Date().toLocaleDateString('es-MX');
+    const row=[id,extracted.folio,extracted.cliente,extracted.fecha,extracted.concepto,
+      extracted.total,extracted.metodo,'Pendiente','','','','',now,pdfB64,'',xmlText];
+    await sheetsAppend('Facturas!A2:P',[row]);
+    const newFac={id,folio:extracted.folio,id_cli:extracted.cliente,fecha:extracted.fecha,
+      concepto:extracted.concepto,total:extracted.total,metodo:extracted.metodo,
+      estatus:'Pendiente',pdfB64,xmlContent:xmlText};
+    ST.facturas.push(newFac);
+    ST.facFiltered=[...ST.facturas];
+    renderFacTableFull();
+    document.getElementById('facUploadModal').classList.remove('open');
+    toast('ok','Factura registrada: '+extracted.folio);
+  }catch(e){ toast('err','Error al guardar factura: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false; btn.textContent='Procesar y Guardar';
+}
+
+/* Also patch factura loadAll to pick up pdfB64 and xmlContent from col N and P */
+// Already handled in the extended loadAll above via re-read
+
+/* Init currentTab */
+ST.currentTab='cot';
 </script>
 </body>
 </html>
