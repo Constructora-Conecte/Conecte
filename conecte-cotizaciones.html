@@ -510,6 +510,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <span class="card-title">Listado de Facturas</span>
           <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="facCount">0</span>
           <span class="card-sub" id="facLastUpd"></span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openFacUpload()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><path d="M8 11V3M4.5 6.5L8 3l3.5 3.5M3 13h10"/></svg>
+            Subir Factura (PDF/XML)
+          </button>
         </div>
         <div class="cot-table-wrap">
           <table class="fac-table">
@@ -795,6 +799,32 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ══ FACTURA UPLOAD MODAL ══ -->
+<div class="modal-bg" id="facUploadModal">
+  <div class="modal" style="width:460px">
+    <div class="modal-title">Subir Factura (PDF + XML)</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;margin-top:14px">
+      <div class="form-group">
+        <label class="form-label">Archivo XML (CFDI) *</label>
+        <input type="file" class="form-input" id="facXmlFile" accept=".xml,text/xml" onchange="onFacXmlSelected(this)">
+        <span style="font-size:10.5px;color:var(--text3)">Se usa para extraer folio, cliente, fecha, concepto y monto automáticamente.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Archivo PDF *</label>
+        <input type="file" class="form-input" id="facPdfFile" accept=".pdf,application/pdf">
+      </div>
+      <div id="facExtractPreview" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);padding:10px;font-size:11.5px;color:var(--text2);line-height:1.6"></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('facUploadModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-red" id="saveFacUploadBtn" onclick="procesarFacturaUpload()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Procesar y Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- TOASTS -->
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -848,7 +878,26 @@ window.onload = () => {
     // Load public/read-only data immediately using just API key (no auth needed for reading)
     await loadAll();
   });
+  preloadLogo();
 };
+
+/* ─── LOGO (para PDF) ─── */
+function preloadLogo(){
+  const url='https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/logotiponuev.png';
+  const img=new Image();
+  img.crossOrigin='Anonymous';
+  img.onload=()=>{
+    try{
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth; c.height=img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0);
+      ST.logoDataUrl=c.toDataURL('image/png');
+      ST.logoDims={w:img.naturalWidth,h:img.naturalHeight};
+    }catch(e){ console.error('No se pudo preparar el logo para el PDF:',e); }
+  };
+  img.onerror=()=>{ console.error('No se pudo cargar el logo desde GitHub.'); };
+  img.src=url;
+}
 
 let tokenClient;
 
@@ -869,7 +918,7 @@ function handleAuthClick() {
 
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
+    scope: "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file",
     callback: async (resp) => {
       btn.disabled = false;
       if (resp.error) {
@@ -1527,6 +1576,17 @@ function generarPDF(id, itemsOverride) {
     doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C.white);
     txt('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.',PW/2,9,{align:'center'});
 
+    // Logo (cargado desde GitHub: Imagenes/logotiponuev.png)
+    if(ST.logoDataUrl){
+      try{
+        const dim = ST.logoDims||{w:LOGO_W,h:LOGO_H};
+        let dw=LOGO_W, dh=LOGO_W*(dim.h/dim.w);
+        if(dh>LOGO_H){ dh=LOGO_H; dw=LOGO_H*(dim.w/dim.h); }
+        const lx = ML + (LOGO_W-dw)/2, ly = 14 + (LOGO_H-dh)/2;
+        doc.addImage(ST.logoDataUrl, 'PNG', lx, ly, dw, dh);
+      }catch(e){ console.error('Logo PDF error:',e); }
+    }
+
     // Sub-info on white strip (right-aligned, left of folio box)
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
     txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.', ML+LOGO_W+4, 19.5);
@@ -1744,7 +1804,7 @@ function switchTab(tab){
   const addBtn = document.getElementById('mainAddBtn');
   if(addBtn){
     if(tab==='cot'){ addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg> + Cotización'; addBtn.onclick=abrirNueva; }
-    else { addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg> + Factura'; addBtn.onclick=()=>toast('inf','Las facturas se administran directamente en la hoja "Facturas" de Google Sheets.'); }
+    else { addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg> + Factura'; addBtn.onclick=openFacUpload; }
   }
 }
 
@@ -1787,6 +1847,15 @@ function facPillClass(s){
   return {Pagado:'pill-acep',Cancelado:'pill-rech',Pendiente:'pill-pend'}[s]||'pill-pend';
 }
 
+function parseNotasEstado(notas){
+  const m = String(notas||'').match(/^(EPC|PPP)\s*(\d{4}-\d{2}-\d{2})?/i);
+  return m ? { tipo: m[1].toUpperCase(), fecha: m[2]||'' } : { tipo:'', fecha:'' };
+}
+function buildNotasEstado(tipo, fecha){
+  if(!tipo) return '';
+  return fecha ? `${tipo} ${fecha}` : tipo;
+}
+
 function renderFacTable(){
   const tbody=document.getElementById('facTbody');
   if(!tbody) return;
@@ -1798,11 +1867,13 @@ function renderFacTable(){
     tbody.innerHTML=`<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin resultados</td></tr>`;
     renderFacPagi(); return;
   }
+  const metodos=['','Transferencia','Efectivo','Factoraje'];
+  const estatusOpts=['Pendiente','Pagado','Cancelado'];
   tbody.innerHTML=slice.map(r=>{
     const cli=ST.clientes[r.id_cli]||{};
-    const pClass=facPillClass(r.estatus);
     const fmtTot='$'+r.total.toLocaleString('es-MX',{minimumFractionDigits:2});
     const conc=(r.concepto||'—').slice(0,45)+(r.concepto.length>45?'…':'');
+    const est=parseNotasEstado(r.notas);
     return `<tr>
       <td><span class="folio" style="cursor:default">${esc(r.folio||r.id)}</span></td>
       <td>
@@ -1811,14 +1882,48 @@ function renderFacTable(){
       </td>
       <td style="max-width:200px;font-size:12px;color:var(--text2)" title="${esc(r.concepto)}">${esc(conc)}</td>
       <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
-      <td style="font-size:12px;color:var(--text2)">${esc(r.metodo||'—')}</td>
-      <td><span class="pill ${pClass}">${esc(r.estatus||'—')}</span></td>
+      <td>
+        <select class="form-select" style="height:24px;font-size:11px;padding:0 4px" onchange="changeFacMetodo(${r._row},this.value)">
+          ${metodos.map(m=>`<option value="${esc(m)}" ${r.metodo===m?'selected':''}>${m||'— Método —'}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="form-select" style="height:24px;font-size:11px;padding:0 4px" onchange="changeFacEstatus(${r._row},this.value)">
+          ${estatusOpts.map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
       <td style="font-size:11.5px;color:var(--blue);font-family:var(--mono)">${esc(r.oc||'—')}</td>
-      <td style="font-size:11px;color:var(--text3);max-width:140px" title="${esc(r.notas)}">${esc((r.notas||'').slice(0,30)+(r.notas&&r.notas.length>30?'…':''))}</td>
+      <td>
+        <div style="display:flex;gap:3px;align-items:center">
+          <select class="form-select" style="height:24px;font-size:10.5px;padding:0 2px;width:58px" onchange="changeFacNotas(${r._row},this.value,this.closest('div').querySelector('input').value)">
+            <option value="" ${!est.tipo?'selected':''}>—</option>
+            <option value="EPC" ${est.tipo==='EPC'?'selected':''}>EPC</option>
+            <option value="PPP" ${est.tipo==='PPP'?'selected':''}>PPP</option>
+          </select>
+          <input type="date" class="form-input" style="height:24px;font-size:10px;padding:0 3px;width:84px" value="${esc(est.fecha)}" onchange="changeFacNotas(${r._row},this.closest('div').querySelector('select').value,this.value)">
+        </div>
+      </td>
     </tr>`;
   }).join('');
   renderFacPagi();
+}
+
+async function changeFacEstatus(row,val){
+  const f=ST.facturas.find(x=>x._row===row); if(!f) return;
+  try{ await sheetsUpdate(`Facturas!H${row}`,[[val]]); f.estatus=val; updateFacStats(); toast('ok','Estatus actualizado.'); }
+  catch(e){ toast('err','Error al actualizar estatus: '+(e.result?.error?.message||e.message)); }
+}
+async function changeFacMetodo(row,val){
+  const f=ST.facturas.find(x=>x._row===row); if(!f) return;
+  try{ await sheetsUpdate(`Facturas!G${row}`,[[val]]); f.metodo=val; toast('ok','Método de pago actualizado.'); }
+  catch(e){ toast('err','Error al actualizar método de pago: '+(e.result?.error?.message||e.message)); }
+}
+async function changeFacNotas(row,tipo,fecha){
+  const f=ST.facturas.find(x=>x._row===row); if(!f) return;
+  const val=buildNotasEstado(tipo,fecha);
+  try{ await sheetsUpdate(`Facturas!I${row}`,[[val]]); f.notas=val; toast('ok','Notas (EPC/PPP) actualizadas.'); }
+  catch(e){ toast('err','Error al actualizar notas: '+(e.result?.error?.message||e.message)); }
 }
 
 function renderFacPagi(){
@@ -1853,6 +1958,113 @@ function updateFacStats(){
   if(el('fsPendF')) el('fsPendF').textContent=pend;
   if(el('fsMontoF')) el('fsMontoF').textContent='$'+mont.toLocaleString('es-MX',{maximumFractionDigits:0});
   if(el('fsPagPct')) el('fsPagPct').textContent=pct+'% cobradas';
+}
+
+/* ─── SUBIR FACTURA (PDF + XML) ─── */
+function openFacUpload(){
+  document.getElementById('facXmlFile').value='';
+  document.getElementById('facPdfFile').value='';
+  document.getElementById('facExtractPreview').style.display='none';
+  ST.facExtract=null;
+  document.getElementById('facUploadModal').classList.add('open');
+}
+
+function onFacXmlSelected(input){
+  const file=input.files[0];
+  const prev=document.getElementById('facExtractPreview');
+  if(!file){ prev.style.display='none'; ST.facExtract=null; return; }
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const xml=new DOMParser().parseFromString(reader.result,'text/xml');
+      if(xml.querySelector('parsererror')) throw new Error('XML inválido');
+      const comp = xml.querySelector('*|Comprobante') || xml.documentElement;
+      const recep = xml.querySelector('*|Receptor');
+      const conceptos = Array.from(xml.querySelectorAll('*|Conceptos > *|Concepto'));
+      const folio = (comp.getAttribute('Folio')||comp.getAttribute('folio')||'') ;
+      const serie = (comp.getAttribute('Serie')||comp.getAttribute('serie')||'');
+      const fechaRaw = comp.getAttribute('Fecha')||comp.getAttribute('fecha')||'';
+      const total = parseFloat(comp.getAttribute('Total')||comp.getAttribute('total')||'0')||0;
+      const cliente = recep ? (recep.getAttribute('Nombre')||recep.getAttribute('nombre')||'') : '';
+      const rfcCli = recep ? (recep.getAttribute('Rfc')||recep.getAttribute('rfc')||'') : '';
+      const concepto = conceptos.map(c=>c.getAttribute('Descripcion')||c.getAttribute('descripcion')||'').filter(Boolean).join(' / ');
+      const fecha = fechaRaw ? fechaRaw.split('T')[0] : todayISO();
+      ST.facExtract = { folio: (serie?serie+'-':'')+folio, cliente, rfcCli, concepto, total, fecha };
+      prev.style.display='block';
+      prev.innerHTML = `<strong>Datos extraídos del XML:</strong><br>
+        Folio: <b>${esc(ST.facExtract.folio||'—')}</b> &nbsp;·&nbsp; Fecha: <b>${esc(ST.facExtract.fecha)}</b><br>
+        Cliente: <b>${esc(cliente||'—')}</b> ${rfcCli?'('+esc(rfcCli)+')':''}<br>
+        Concepto: ${esc(concepto||'—')}<br>
+        Total: <b>$${total.toLocaleString('es-MX',{minimumFractionDigits:2})}</b>`;
+    }catch(e){
+      ST.facExtract=null;
+      prev.style.display='block';
+      prev.innerHTML = `<span style="color:var(--red)">No se pudo leer el XML: ${esc(e.message)}</span>`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function driveUploadFile(file){
+  const base64 = await fileToBase64(file);
+  const metadata = { name: file.name };
+  const boundary='conecte_boundary_'+Math.random().toString(36).slice(2);
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
+    `--${boundary}\r\nContent-Type: ${file.type||'application/octet-stream'}\r\nContent-Transfer-Encoding: base64\r\n\r\n${base64}\r\n`+
+    `--${boundary}--`;
+  const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{
+    method:'POST',
+    headers:{ Authorization:'Bearer '+ST.token, 'Content-Type':`multipart/related; boundary=${boundary}` },
+    body
+  });
+  const data = await resp.json();
+  if(!resp.ok) throw new Error(data.error?.message||'Error al subir a Drive');
+  return data.webViewLink || ('https://drive.google.com/file/d/'+data.id+'/view');
+}
+
+async function procesarFacturaUpload(){
+  if(!ST.token){ toast('err','Conecta tu cuenta de Google primero (botón arriba).'); return; }
+  const pdfFile = document.getElementById('facPdfFile').files[0];
+  const xmlFile = document.getElementById('facXmlFile').files[0];
+  if(!xmlFile){ toast('err','Selecciona el archivo XML.'); return; }
+  if(!pdfFile){ toast('err','Selecciona el archivo PDF.'); return; }
+  if(!ST.facExtract){ toast('err','No se pudieron extraer datos del XML.'); return; }
+  const btn=document.getElementById('saveFacUploadBtn');
+  btn.disabled=true; btn.textContent='Subiendo…';
+  try{
+    const pdfLink = await driveUploadFile(pdfFile);
+    const xmlLink = await driveUploadFile(xmlFile);
+    const ex = ST.facExtract;
+    const id = 'FAC-'+Date.now();
+    const row = [
+      id, ex.folio||id, ex.rfcCli||ex.cliente||'', ex.fecha, ex.concepto,
+      ex.total, '', 'Pendiente', '', '', '', '', todayISO(),
+      pdfLink+(xmlLink?' | XML: '+xmlLink:''), ex.folio||''
+    ];
+    await sheetsAppend('Facturas!A2:O', [row]);
+    ST.facturas.push({
+      _row: ST.facturas.length+2, id, folio: row[1], id_cli: row[2], fecha: ex.fecha,
+      concepto: ex.concepto, total: ex.total, metodo:'', estatus:'Pendiente', notas:'', oc:''
+    });
+    if(ex.rfcCli && ex.cliente && !ST.clientes[ex.rfcCli]) ST.clientes[ex.rfcCli]={id:ex.rfcCli,nombre:ex.cliente};
+    ST.facFiltered=[...ST.facturas];
+    renderFacTable(); updateFacStats();
+    document.getElementById('facUploadModal').classList.remove('open');
+    toast('ok','Factura "'+(row[1])+'" agregada correctamente.');
+  }catch(e){
+    toast('err','Error al procesar la factura: '+(e.message||e));
+  }
+  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Procesar y Guardar';
 }
 
 /* ─── OC SECTION ─── */
