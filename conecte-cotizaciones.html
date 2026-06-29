@@ -1237,15 +1237,15 @@ async function loadAll() {
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
       sheetsGet('Articulos!A2:F'),
-      sheetsGet('Oc_Client!A2:F'),
-      sheetsGet('Facturas!A2:O'),
+      sheetsGet('Oc_Client!A2:J'),   // 10 cols: extended
+      sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
     ]);
 
     /* Clientes */
     ST.clientes = {};
     (cliR||[]).forEach(r => { if(r[0]) ST.clientes[r[0]] = { id:r[0], nombre:r[1]||r[0] }; });
 
-    /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email (or similar) */
+    /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email */
     ST.contactos = {};
     ST.contactosList = [];
     (conR||[]).forEach(r => {
@@ -1266,35 +1266,45 @@ async function loadAll() {
       unidad: r[5]||'pza',
     }));
 
-    /* Oc_Client — cols: A=ID_OC, B=ID_COTIZACION, C=NUMERO_OC, D=FECHA_OC, E=OBSERVACIONES, F=_row */
+    /* Oc_Client — cols: A=ID_OC, B=ID_COT, C=NUMERO, D=FECHA, E=OBS, F=ESTATUS, G=CLIENTE, H=CONCEPTO, I=MONTO, J=PDF */
     ST.ocAll = (ocR||[]).filter(r=>r[0]).map((r,i)=>({
-      _row: i+2,
+      _row:     i+2,
       id:       r[0]||'',
       id_cot:   r[1]||'',
       numero:   r[2]||'',
       fecha:    r[3]||'',
       obs:      r[4]||'',
+      estatus:  r[5]||'Pendiente',
+      id_cli:   r[6]||'',
+      concepto: r[7]||'',
+      monto:    parseFloat(r[8])||0,
+      pdfB64:   r[9]||'',
     }));
 
-    /* Facturas — cols: A=ID_Factura,B=Folio,C=Cliente,D=Fecha_creacion,E=Concepto,
-       F=Monto_total,G=Metodo_pago,H=Estatus,I=Notas,J=Orden_compra,K=ID_Ingreso,
-       L=Subida_a_efacto,M=Fecha_registro,N=PDF,O=Folio_Num */
+    /* Facturas — cols: A=ID, B=Folio, C=Cliente(RFC), D=Fecha, E=Concepto,
+       F=Monto, G=Metodo, H=Estatus, I=Notas, J=OC, K=ID_Ingreso,
+       L=Subida_efacto, M=Fecha_reg, N=PDF_link/b64, O=Folio_Num, P=XML */
     ST.facturas = (facR||[]).filter(r=>r[0]).map((r,i)=>({
-      _row: i+2,
-      id:         r[0]||'', folio:    r[1]||'', id_cli:   r[2]||'',
-      fecha:      r[3]||'', concepto: r[4]||'',
+      _row:       i+2,
+      id:         r[0]||'',
+      folio:      r[1]||'',
+      id_cli:     r[2]||'',
+      fecha:      r[3]||'',
+      concepto:   r[4]||'',
       total:      parseFloat((r[5]||'').toString().replace(/[$,]/g,''))||0,
-      metodo:     r[6]||'', estatus:  r[7]||'',
-      notas:      r[8]||'', oc:       r[9]||'',
+      metodo:     r[6]||'',
+      estatus:    r[7]||'',
+      notas:      r[8]||'',
+      oc:         r[9]||'',
+      pdfB64:     r[13]||'',
+      xmlContent: r[15]||'',
     }));
     ST.facFiltered = [...ST.facturas];
-    // Usar la versión extendida si está disponible (definida en el segundo bloque <script>)
-    if(typeof renderFacTableFull === 'function') renderFacTableFull();
-    else if(typeof renderFacTable === 'function') renderFacTable();
+    renderFacTableFull();
     updateFacStats();
 
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
-       G=ItemsJSON (guardamos partidas aquí), H=PDF, I=Descripcion, J=Notas, K=Creacion,
+       G=ItemsJSON, H=PDF, I=Descripcion, J=Notas, K=Creacion,
        L=ID_Usr, M=ID_Con, N=Vigencia, O=Estatus, P=OC */
     ST.cotizaciones = (cotR||[]).filter(r=>r[0]).map((r,i)=>{
       let itemsArr = [];
@@ -1314,11 +1324,12 @@ async function loadAll() {
     populateClientes();
     document.getElementById('lastUpd').textContent = 'Act. ' +
       new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+
   } catch(e) {
     console.error(e);
     toast('err', 'Error al cargar datos: ' + (e.result?.error?.message || e.message || e));
-    setLoading(false);
   }
+  setLoading(false);
 }
 
 /* ─── SHEETS HELPERS ─── */
@@ -1446,14 +1457,7 @@ function renderTable() {
 }
 
 function setLoading(on) {
-  if(!on) {
-    // Quitar spinner: si todavía no hay datos, mostrar mensaje vacío
-    const tbody = document.getElementById('cotTbody');
-    if(tbody && tbody.querySelector('.loading-row')) {
-      tbody.innerHTML = `<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin resultados</td></tr>`;
-    }
-    return;
-  }
+  if(!on) return;
   document.getElementById('cotTbody').innerHTML=`<tr class="loading-row"><td colspan="9">
     <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     &nbsp;Cargando cotizaciones…</td></tr>`;
@@ -2084,7 +2088,7 @@ function applyFacFilter(){
     }
   });
   ST.facFiltered=rows;
-  renderFacTable();
+  renderFacTableFull();
 }
 
 function facPillClass(s){
@@ -2188,7 +2192,7 @@ function renderFacPagi(){
   h+=`<button class="pbtn" onclick="goFacPage(${ST.facPage+1})" ${ST.facPage===pages?'disabled':''}>›</button>`;
   wrap.innerHTML=h;
 }
-function goFacPage(p){const pages=Math.ceil(ST.facFiltered.length/ST.PAGE)||1;if(p<1||p>pages)return;ST.facPage=p;renderFacTable();}
+function goFacPage(p){const pages=Math.ceil(ST.facFiltered.length/ST.PAGE)||1;if(p<1||p>pages)return;ST.facPage=p;renderFacTableFull();}
 
 function updateFacStats(){
   const all=ST.facturas;
@@ -2302,7 +2306,7 @@ async function procesarFacturaUpload(){
     });
     if(ex.rfcCli && ex.cliente && !ST.clientes[ex.rfcCli]) ST.clientes[ex.rfcCli]={id:ex.rfcCli,nombre:ex.cliente};
     ST.facFiltered=[...ST.facturas];
-    renderFacTable(); updateFacStats();
+    renderFacTableFull(); updateFacStats();
     document.getElementById('facUploadModal').classList.remove('open');
     toast('ok','Factura "'+(row[1])+'" agregada correctamente.');
   }catch(e){
@@ -2970,11 +2974,11 @@ function openFacXML(facId){
   document.getElementById('xmlViewerModal').classList.add('open');
 }
 
-/* ─── FACTURAS — extend render to show PDF/XML buttons ─── */
-const _origRenderFacTable = typeof renderFacTable==='function'?renderFacTable:null;
+/* ─── FACTURAS — render con botones PDF/XML ─── */
 function renderFacTableFull(){
   const tbody=document.getElementById('facTbody');
   if(!tbody) return;
+  document.getElementById('facCount').textContent=(ST.facFiltered||[]).length+' registros';
   if(!ST.facFiltered||!ST.facFiltered.length){
     tbody.innerHTML='<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3)">Sin facturas registradas</td></tr>';
     return;
@@ -2987,9 +2991,9 @@ function renderFacTableFull(){
     const hasPDF=!!f.pdfB64;
     const hasXML=!!f.xmlContent;
     return `<tr>
-      <td><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)">${esc(f.folio)}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)">${esc(f.folio||f.id)}</span></td>
       <td style="font-size:12.5px;font-weight:500">${esc(cliNom)}</td>
-      <td style="font-size:12px;color:var(--text2);max-width:150px" title="${esc(f.concepto)}">${esc((f.concepto||'—').slice(0,35))}${f.concepto?.length>35?'…':''}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:150px" title="${esc(f.concepto)}">${esc((f.concepto||'—').slice(0,35))}${(f.concepto||'').length>35?'…':''}</td>
       <td style="font-family:var(--mono);font-size:12px;text-align:right;font-weight:500">${fmtMXN(f.total)}</td>
       <td style="font-size:12px;color:var(--text3)">${esc(f.metodo||'—')}</td>
       <td><span class="pill ${stClass}">${esc(f.estatus||'—')}</span></td>
@@ -3010,110 +3014,8 @@ function renderFacTableFull(){
   }).join('');
 }
 
-/* Extend loadAll to also load extended OC fields */
-const _origLoadAll = loadAll;
-async function loadAll(){
-  await _origLoadAll();
-  // Re-map ocAll with extended columns if available
-  try{
-    const ocR=await sheetsGet('Oc_Client!A2:J');
-    ST.ocAll=(ocR||[]).filter(r=>r[0]).map((r,i)=>({
-      _row:i+2,id:r[0]||'',id_cot:r[1]||'',numero:r[2]||'',fecha:r[3]||'',
-      obs:r[4]||'',estatus:r[5]||'Pendiente',id_cli:r[6]||'',
-      concepto:r[7]||'',monto:parseFloat(r[8])||0,pdfB64:r[9]||''
-    }));
-  }catch(e){ console.warn('Extended OC load failed',e); }
-  // Re-render OC if tab visible
-  if(ST.currentTab==='oc') renderOCClienteTable();
-  // Override factura renderer to new version
-  if(typeof renderFacTableFull==='function') renderFacTableFull();
-}
-
-/* Also patch factura upload to store pdfB64 + xmlContent in ST.facturas */
-const _origProcesar = typeof procesarFacturaUpload==='function'?procesarFacturaUpload:null;
-async function procesarFacturaUpload(){
-  const xmlFile=document.getElementById('facXmlFile').files[0];
-  const pdfFile=document.getElementById('facPdfFile').files[0];
-  if(!xmlFile){ toast('err','Selecciona el archivo XML CFDI.'); return; }
-  if(!ST.token){ toast('err','Conecta Google para guardar facturas.'); return; }
-
-  const btn=document.getElementById('saveFacUploadBtn');
-  btn.disabled=true; btn.textContent='Procesando…';
-
-  // Read XML
-  const xmlText=await xmlFile.text();
-  let extracted={folio:'',cliente:'',fecha:'',concepto:'',total:0,metodo:'',oc:''};
-  try{
-    const parser=new DOMParser();
-    const xml=parser.parseFromString(xmlText,'text/xml');
-    const cfdi=xml.querySelector('[name="Comprobante"]')||xml.documentElement;
-    const getNS=(el,local)=>el.querySelector(`*[*|${local}]`)||el.querySelector(local)||null;
-    const attr=(el,a)=>el?.getAttribute(a)||el?.getAttributeNS(null,a)||'';
-    // Folio
-    extracted.folio='CONE-'+attr(cfdi,'Serie')+'-'+attr(cfdi,'Folio');
-    // Total
-    extracted.total=parseFloat(attr(cfdi,'Total'))||parseFloat(attr(cfdi,'total'))||0;
-    // Date
-    extracted.fecha=(attr(cfdi,'Fecha')||attr(cfdi,'fecha')||'').slice(0,10).replace(/-/g,'/');
-    // Cliente from Receptor
-    const receptor=xml.querySelector('Receptor')||xml.querySelector('[*|Receptor]');
-    if(receptor){
-      extracted.cliente=attr(receptor,'RFC')||attr(receptor,'Rfc')||attr(receptor,'rfc')||'';
-    }
-    // Concepto from first Concepto element
-    const conc=xml.querySelector('Concepto')||xml.querySelector('[*|Concepto]');
-    if(conc){ extracted.concepto=attr(conc,'Descripcion')||attr(conc,'descripcion')||''; }
-    // Metodo
-    extracted.metodo=attr(cfdi,'MetodoPago')||attr(cfdi,'metodoPago')||'';
-  }catch(e){ console.warn('XML parse error',e); }
-
-  // Show preview
-  const prev=document.getElementById('facExtractPreview');
-  prev.style.display='block';
-  prev.innerHTML=`<b>Extraído del XML:</b><br>
-    Folio: ${extracted.folio||'—'}<br>
-    Cliente: ${extracted.cliente||'—'}<br>
-    Fecha: ${extracted.fecha||'—'}<br>
-    Concepto: ${(extracted.concepto||'—').slice(0,80)}<br>
-    Total: ${fmtMXN(extracted.total)}<br>
-    Método: ${extracted.metodo||'—'}`;
-
-  // Read PDF to b64
-  let pdfB64='';
-  if(pdfFile){
-    pdfB64=await new Promise((res,rej)=>{
-      const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej;
-      r.readAsDataURL(pdfFile);
-    });
-  }
-
-  try{
-    const id='FAC'+Date.now().toString(36).toUpperCase();
-    // Facturas cols: A=ID_Factura,B=Folio,C=Cliente,D=Fecha_creacion,E=Concepto,
-    // F=Monto_total,G=Metodo_pago,H=Estatus,I=Notas,J=Orden_compra,K=ID_Ingreso,
-    // L=Subida_a_efacto,M=Fecha_registro,N=PDF_B64,O=Folio_Num,P=XML_CONTENT
-    const now=new Date().toLocaleDateString('es-MX');
-    const row=[id,extracted.folio,extracted.cliente,extracted.fecha,extracted.concepto,
-      extracted.total,extracted.metodo,'Pendiente','','','','',now,pdfB64,'',xmlText];
-    await sheetsAppend('Facturas!A2:P',[row]);
-    const newFac={id,folio:extracted.folio,id_cli:extracted.cliente,fecha:extracted.fecha,
-      concepto:extracted.concepto,total:extracted.total,metodo:extracted.metodo,
-      estatus:'Pendiente',pdfB64,xmlContent:xmlText};
-    ST.facturas.push(newFac);
-    ST.facFiltered=[...ST.facturas];
-    renderFacTableFull();
-    document.getElementById('facUploadModal').classList.remove('open');
-    toast('ok','Factura registrada: '+extracted.folio);
-  }catch(e){ toast('err','Error al guardar factura: '+(e.result?.error?.message||e.message)); }
-  btn.disabled=false; btn.textContent='Procesar y Guardar';
-}
-
-/* Also patch factura loadAll to pick up pdfB64 and xmlContent from col N and P */
-// Already handled in the extended loadAll above via re-read
-
 /* Init currentTab */
 ST.currentTab='cot';
 </script>
 </body>
 </html>
-
