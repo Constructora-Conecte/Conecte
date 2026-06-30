@@ -2043,7 +2043,7 @@ function generarPDF(id, itemsOverride) {
   const TOPY=20;     // inicio del contenido tras el header
   const BOTY=271;    // límite inferior antes del footer
 
-  const LOGO_W=24, LOGO_H=24;
+  const LOGO_W=29, LOGO_H=29;
 
   // ── HELPERS ──
   function txt(s,x,y,opts){doc.text(String(s==null?'':s),x,y,opts||{});}
@@ -2069,26 +2069,31 @@ function generarPDF(id, itemsOverride) {
 
     const infoX=ML+LOGO_W+6;
     setF('bold',11.5,C.ink);
-    txt('CONSTRUCTORA CONECTE',infoX,TOPY+5);
-    setF('normal',7.5,C.sub);
-    txt('S. DE R.L. DE C.V.   ·   RFC CCO220311K99',infoX,TOPY+9.8);
-    setF('normal',7.2,C.faint);
-    txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.',infoX,TOPY+14.2);
-    txt('Tel. (999) 222-6016 / (999) 908-9592   ·   conexionesconecte@hotmail.com',infoX,TOPY+18);
+    const nameStr='CONSTRUCTORA CONECTE';
+    txt(nameStr,infoX,TOPY+6);
+    const nameW=doc.getTextWidth(nameStr);
+    setF('normal',9,C.sub);
+    txt('S. DE R.L. DE C.V.',infoX+nameW+2.5,TOPY+6);
+    setF('normal',7.5,C.faint);
+    txt('RFC CCO220311K99',infoX,TOPY+11.3);
+    txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.',infoX,TOPY+15.3);
+    txt('Tel. (999) 222-6016 / (999) 908-9592   ·   conexionesconecte@hotmail.com',infoX,TOPY+19);
 
     const fBox={x:MR-46,y:TOPY-1,w:46,h:20};
     doc.setDrawColor(...C.line); doc.setLineWidth(0.3);
     doc.roundedRect(fBox.x,fBox.y,fBox.w,fBox.h,1.2,1.2,'S');
     eyebrow('Cotización',fBox.x+fBox.w/2,fBox.y+5.5,{align:'center'});
     setF('bold',9.5,C.red);
-    const folShort=folio.length>20?folio.slice(0,20)+'…':folio;
+    // El folio trae el formato CONE-COTxxx-RFC; mostramos solo la parte antes del RFC
+    const folParts=folio.split('-');
+    const folShort=folParts.length>2 ? folParts.slice(0,2).join('-') : folio;
     txt(folShort,fBox.x+fBox.w/2,fBox.y+11.7,{align:'center'});
     setF('normal',6.8,C.faint);
     txt(total>1?('Página '+pg+' de '+total):' ',fBox.x+fBox.w/2,fBox.y+16.7,{align:'center'});
 
-    const headerBottom=Math.max(logoBottom,TOPY+20)+4;
+    const headerBottom=Math.max(logoBottom,TOPY+LOGO_H)+3.5;
     hline(ML,MR,headerBottom,C.line,0.4);
-    return headerBottom+6;
+    return headerBottom+4.5;
   }
 
   // ── PIE DE PÁGINA ──
@@ -2106,41 +2111,41 @@ function generarPDF(id, itemsOverride) {
 
     eyebrow('Dirigida a',ML,y);
     eyebrow('Fecha de emisión',col2X,y);
-    y+=5.3;
+    y+=4.8;
     setF('bold',10,C.ink);
     txt(cliente,ML,y);
     txt(strE,col2X,y);
-    y+=4.6;
+    y+=4.3;
     setF('normal',7.6,C.sub);
     txt('RFC: '+rfcCli,ML,y);
-    y+=7;
+    y+=5.5;
 
     hline(ML,MR,y,C.lineSoft,0.3);
-    y+=6;
+    y+=4.8;
 
     eyebrow('Trabajo / Descripción',ML,y);
     eyebrow('Contacto',col2X,y);
-    y+=5.3;
+    y+=4.8;
     setF('normal',8.6,C.ink);
     const dLines=doc.splitTextToSize(desc||'—',col1W);
     doc.text(dLines,ML,y);
     const cLines=doc.splitTextToSize(contacto,col2W);
     doc.text(cLines,col2X,y);
-    y+=Math.max(dLines.length,cLines.length)*4.3+3.5;
+    y+=Math.max(dLines.length,cLines.length)*4.1+2.2;
 
     if(ocList){
       hline(ML,MR,y,C.lineSoft,0.3);
-      y+=6;
+      y+=4.8;
       eyebrow('OC Asociadas',ML,y);
-      y+=5.3;
+      y+=4.8;
       setF('normal',8.6,C.ink);
       const oLines=doc.splitTextToSize(ocList,CW);
       doc.text(oLines,ML,y);
-      y+=oLines.length*4.3+3.5;
+      y+=oLines.length*4.1+2.2;
     }
 
     hline(ML,MR,y,C.line,0.4);
-    return y+7;
+    return y+5.5;
   }
 
   // ── ENCABEZADO DE TABLA DE ITEMS ──
@@ -2225,15 +2230,17 @@ function generarPDF(id, itemsOverride) {
   doc.text(wl,ML,y);
   y+=wl.length*4+6;
 
-  // ── NOTAS ──
-  if(notas&&notas.trim()){
-    if(y+20>BOTY){doc.addPage();pg++;y=pageHeader(pg,1);pageFooter();}
+  // ── NOTAS (siempre visible, aunque esté vacía) ──
+  {
+    const notasTxt=(notas&&notas.trim())?notas.trim():'—';
+    const nl=doc.splitTextToSize(notasTxt,CW);
+    const blockH=2.6+5+nl.length*4.3+6;
+    if(y+blockH>BOTY){doc.addPage();pg++;y=pageHeader(pg,1);pageFooter();}
     eyebrow('Notas y condiciones',ML,y);
     y+=2.6;
     hline(ML,MR,y,C.lineSoft,0.3);
     y+=5;
     setF('normal',8.2,C.ink);
-    const nl=doc.splitTextToSize(notas.trim(),CW);
     doc.text(nl,ML,y);
     y+=nl.length*4.3+6;
   }
