@@ -2028,243 +2028,227 @@ function generarPDF(id, itemsOverride) {
   const dE=parseDMY(fechaRaw), dV=dE?new Date(dE.getTime()+vigDias*864e5):null;
   const strE=fmt(dE)||String(fechaRaw), strV=fmt(dV)||'';
 
-  // ── COLORS ──
+  // ── COLORS — paleta moderna, más neutra, el rojo queda como acento ──
   const C={
-    red:[175,13,18], redL:[200,30,35],
-    white:[255,255,255], dark:[30,30,30],
-    gray:[100,100,100], lgray:[220,220,220],
-    bg:[248,248,248], bgH:[240,240,240]
+    red:[175,13,18],
+    ink:[26,26,26],        // texto principal
+    sub:[120,120,120],     // texto secundario
+    faint:[160,160,160],   // etiquetas
+    line:[222,222,222],    // líneas divisorias
+    lineSoft:[238,238,238]
   };
-  const PW=210,ML=12,MR=198,CW=186;
 
-  // ── LOGO area sizes ──
-  const LOGO_W=38, LOGO_H=23;
+  // ── MÁRGENES amplios y consistentes ──
+  const PW=210, ML=17, MR=193, CW=MR-ML;
+  const TOPY=20;     // inicio del contenido tras el header
+  const BOTY=271;    // límite inferior antes del footer
+
+  const LOGO_W=24, LOGO_H=24;
 
   // ── HELPERS ──
-  function rr(x,y,w,h,col,stroke){
-    doc.setFillColor(...col);
-    if(stroke){doc.setDrawColor(...stroke);doc.setLineWidth(0.2);doc.roundedRect(x,y,w,h,1.5,1.5,'FD');}
-    else doc.roundedRect(x,y,w,h,1.5,1.5,'F');
-  }
-  function cell(x,y,w,h,bg,bdCol){
-    doc.setFillColor(...bg);
-    if(bdCol){doc.setDrawColor(...bdCol);doc.setLineWidth(0.25);doc.rect(x,y,w,h,'FD');}
-    else doc.rect(x,y,w,h,'F');
-  }
-  function txt(s,x,y,opts){doc.text(String(s||''),x,y,opts||{});}
+  function txt(s,x,y,opts){doc.text(String(s==null?'':s),x,y,opts||{});}
+  function hline(x1,x2,y,col,w){doc.setDrawColor(...(col||C.line));doc.setLineWidth(w||0.25);doc.line(x1,y,x2,y);}
+  function setF(style,size,col){doc.setFont('helvetica',style);doc.setFontSize(size);doc.setTextColor(...(col||C.ink));}
+  function money(n){return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function eyebrow(s,x,y,opts){ setF('bold',6.7,C.faint); txt(String(s).toUpperCase(),x,y,opts); }
 
-  // ── PAGE HEADER ──
+  // ── ENCABEZADO DE PÁGINA ──
   function pageHeader(pg,total){
-    // Red top bar (full company name) + white info strip
-    doc.setFillColor(...C.red); doc.rect(0,0,PW,12,'F');
-    doc.setFillColor(...C.white); doc.rect(0,12,PW,24,'F');
+    doc.setFillColor(...C.red); doc.rect(0,0,PW,2.2,'F');
 
-    // Company name centered on red bar
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.white);
-    txt('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.',PW/2,8,{align:'center'});
-
-    // Logo on white strip, left-aligned
+    let logoBottom=TOPY+2;
     if(ST.logoDataUrl){
       try{
-        const dim = ST.logoDims||{w:LOGO_W,h:LOGO_H};
+        const dim=ST.logoDims||{w:LOGO_W,h:LOGO_H};
         let dw=LOGO_W, dh=LOGO_W*(dim.h/dim.w);
         if(dh>LOGO_H){ dh=LOGO_H; dw=LOGO_H*(dim.w/dim.h); }
-        const lx = ML, ly = 12 + (24-dh)/2;
-        doc.addImage(ST.logoDataUrl, 'PNG', lx, ly, dw, dh);
+        doc.addImage(ST.logoDataUrl,'PNG',ML,TOPY,dw,dh);
+        logoBottom=TOPY+dh;
       }catch(e){ console.error('Logo PDF error:',e); }
     }
 
-    // Company info block — clean vertical stack, clear hierarchy
-    const infoX = ML+LOGO_W+5;
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.dark);
-    txt('RFC: CCO220311K99', infoX, 18.5);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
-    txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.', infoX, 23);
-    txt('Tel: (999) 222-6016 / (999) 908-9592', infoX, 27);
-    txt('conexionesconecte@hotmail.com', infoX, 31);
+    const infoX=ML+LOGO_W+6;
+    setF('bold',11.5,C.ink);
+    txt('CONSTRUCTORA CONECTE',infoX,TOPY+5);
+    setF('normal',7.5,C.sub);
+    txt('S. DE R.L. DE C.V.   ·   RFC CCO220311K99',infoX,TOPY+9.8);
+    setF('normal',7.2,C.faint);
+    txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.',infoX,TOPY+14.2);
+    txt('Tel. (999) 222-6016 / (999) 908-9592   ·   conexionesconecte@hotmail.com',infoX,TOPY+18);
 
-    // Folio badge (top-right)
-    const fBox={x:MR-54,y:14,w:54,h:20};
-    doc.setFillColor(...C.red); doc.rect(fBox.x,fBox.y,fBox.w,fBox.h,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...C.white);
-    txt('COTIZACIÓN',fBox.x+fBox.w/2,fBox.y+6,{align:'center'});
-    doc.setFontSize(8.5);
-    const folShort = folio.length>18 ? folio.slice(0,18)+'…' : folio;
-    txt(folShort, fBox.x+fBox.w/2, fBox.y+13, {align:'center'});
-    doc.setFontSize(7); doc.setFont('helvetica','normal');
-    txt('Pág '+(total>1?pg+'/'+total:'1'), fBox.x+fBox.w/2, fBox.y+18.5, {align:'center'});
+    const fBox={x:MR-46,y:TOPY-1,w:46,h:20};
+    doc.setDrawColor(...C.line); doc.setLineWidth(0.3);
+    doc.roundedRect(fBox.x,fBox.y,fBox.w,fBox.h,1.2,1.2,'S');
+    eyebrow('Cotización',fBox.x+fBox.w/2,fBox.y+5.5,{align:'center'});
+    setF('bold',9.5,C.red);
+    const folShort=folio.length>20?folio.slice(0,20)+'…':folio;
+    txt(folShort,fBox.x+fBox.w/2,fBox.y+11.7,{align:'center'});
+    setF('normal',6.8,C.faint);
+    txt(total>1?('Página '+pg+' de '+total):' ',fBox.x+fBox.w/2,fBox.y+16.7,{align:'center'});
 
-    // Red bottom border
-    doc.setDrawColor(...C.red); doc.setLineWidth(0.8); doc.line(ML,36,MR,36);
+    const headerBottom=Math.max(logoBottom,TOPY+20)+4;
+    hline(ML,MR,headerBottom,C.line,0.4);
+    return headerBottom+6;
   }
 
-  // ── PAGE FOOTER ──
+  // ── PIE DE PÁGINA ──
   function pageFooter(){
-    doc.setDrawColor(...C.lgray); doc.setLineWidth(0.3); doc.line(ML,281,MR,281);
-    doc.setFillColor(...C.red); doc.rect(ML,283,CW,6,'F');
-    doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
-    txt('Para cualquier aclaración o duda, comuníquese con nosotros.  ¡Gracias por su confianza!',PW/2,287.2,{align:'center'});
+    hline(ML,MR,278,C.lineSoft,0.3);
+    setF('normal',7.3,C.faint);
+    doc.setFont('helvetica','italic');
+    txt('Para cualquier aclaración o duda, comuníquese con nosotros · ¡Gracias por su confianza!',PW/2,283,{align:'center'});
   }
 
-  // ── INFO GRID ──
+  // ── BLOQUE DE INFORMACIÓN ──
   function drawInfoGrid(y0){
-    const col1W=90, col2W=CW-col1W-3, col2X=ML+col1W+3;
-    const HH=6.5, DH=14;
+    const colGap=10, col1W=(CW-colGap)*0.6, col2W=CW-colGap-col1W, col2X=ML+col1W+colGap;
+    let y=y0;
 
-    // Row 1 headers
-    cell(ML,y0,col1W,HH,C.red); cell(col2X,y0,col2W,HH,C.red);
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
-    txt('Dirigida a:',ML+3,y0+4.5); txt('Fecha de emisión',col2X+3,y0+4.5);
+    eyebrow('Dirigida a',ML,y);
+    eyebrow('Fecha de emisión',col2X,y);
+    y+=5.3;
+    setF('bold',10,C.ink);
+    txt(cliente,ML,y);
+    txt(strE,col2X,y);
+    y+=4.6;
+    setF('normal',7.6,C.sub);
+    txt('RFC: '+rfcCli,ML,y);
+    y+=7;
 
-    // Row 1 data
-    const r1y=y0+HH;
-    cell(ML,r1y,col1W,DH,C.bg,C.lgray); cell(col2X,r1y,col2W,DH,C.bg,C.lgray);
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.dark);
-    txt(cliente,ML+3,r1y+6);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.gray);
-    txt('RFC: '+rfcCli,ML+3,r1y+11.5);
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.dark);
-    txt(strE,col2X+3,r1y+9);
+    hline(ML,MR,y,C.lineSoft,0.3);
+    y+=6;
 
-    // Row 2 headers
-    const r2hy=r1y+DH+2;
-    cell(ML,r2hy,col1W,HH,C.red); cell(col2X,r2hy,col2W,HH,C.red);
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
-    txt('Trabajo / Descripción',ML+3,r2hy+4.5); txt('Contacto',col2X+3,r2hy+4.5);
+    eyebrow('Trabajo / Descripción',ML,y);
+    eyebrow('Contacto',col2X,y);
+    y+=5.3;
+    setF('normal',8.6,C.ink);
+    const dLines=doc.splitTextToSize(desc||'—',col1W);
+    doc.text(dLines,ML,y);
+    const cLines=doc.splitTextToSize(contacto,col2W);
+    doc.text(cLines,col2X,y);
+    y+=Math.max(dLines.length,cLines.length)*4.3+3.5;
 
-    // Row 2 data
-    const r2dy=r2hy+HH;
-    const dLines=doc.splitTextToSize(desc||'—',col1W-6);
-    const ddH=Math.max(DH,dLines.length*5+5);
-    cell(ML,r2dy,col1W,ddH,C.bg,C.lgray); cell(col2X,r2dy,col2W,ddH,C.bg,C.lgray);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.dark);
-    doc.text(dLines,ML+3,r2dy+5.5);
-    txt(contacto,col2X+3,r2dy+8);
-
-    // Row 3: OC (if any)
-    let endY=r2dy+ddH;
     if(ocList){
-      const r3y=endY+2;
-      cell(ML,r3y,CW,HH,C.red);
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
-      txt('OC Asociadas:',ML+3,r3y+4.5);
-      const r3dy=r3y+HH;
-      cell(ML,r3dy,CW,9,C.bg,C.lgray);
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C.dark);
-      txt(ocList,ML+3,r3dy+6);
-      endY=r3dy+9;
+      hline(ML,MR,y,C.lineSoft,0.3);
+      y+=6;
+      eyebrow('OC Asociadas',ML,y);
+      y+=5.3;
+      setF('normal',8.6,C.ink);
+      const oLines=doc.splitTextToSize(ocList,CW);
+      doc.text(oLines,ML,y);
+      y+=oLines.length*4.3+3.5;
     }
-    return endY+5;
+
+    hline(ML,MR,y,C.line,0.4);
+    return y+7;
   }
 
-  // ── ITEMS TABLE HEADER ──
-  const cCantW=14, cDescW2=CW-14-24-18-24, cUnidW=18, cPrecW=26, cTotW=24;
-  const xCant=ML, xDesc=ML+cCantW, xUnid=ML+cCantW+cDescW2, xPrec=ML+cCantW+cDescW2+cUnidW, xTot=ML+cCantW+cDescW2+cUnidW+cPrecW;
+  // ── ENCABEZADO DE TABLA DE ITEMS ──
+  const cCantW=16, cUnidW=20, cPrecW=28, cTotW=28;
+  const cDescW=CW-cCantW-cUnidW-cPrecW-cTotW;
+  const xCant=ML, xDesc=ML+cCantW, xUnid=xDesc+cDescW, xPrec=xUnid+cUnidW, xTot=xPrec+cPrecW;
+  const colRight=MR;
 
   function drawItemsHeader(y0){
-    cell(ML,y0,CW,8,C.red);
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
-    txt('Cant.',xCant+cCantW/2,y0+5.5,{align:'center'});
-    txt('Producto / Servicio',xDesc+cDescW2/2,y0+5.5,{align:'center'});
-    txt('Unidad',xUnid+cUnidW/2,y0+5.5,{align:'center'});
-    txt('P. Unit.',xPrec+cPrecW/2,y0+5.5,{align:'center'});
-    txt('Total',xTot+cTotW/2,y0+5.5,{align:'center'});
-    return y0+8;
+    eyebrow('Cant.',xCant,y0);
+    eyebrow('Producto / Servicio',xDesc,y0);
+    eyebrow('Unidad',xUnid+cUnidW,y0,{align:'right'});
+    eyebrow('P. Unit.',xPrec+cPrecW,y0,{align:'right'});
+    eyebrow('Total',xTot+cTotW,y0,{align:'right'});
+    const ly=y0+2.6;
+    hline(ML,colRight,ly,C.ink,0.5);
+    return ly+6;
   }
 
-  // ── BUILD DOC ──
+  // ── CONSTRUCCIÓN DEL DOCUMENTO ──
   let y=0, pg=1;
-  pageHeader(pg,1); pageFooter();
-  y=drawInfoGrid(38);
+  y=pageHeader(pg,1); pageFooter();
+  y=drawInfoGrid(y);
   y=drawItemsHeader(y);
 
-  items.forEach((it,idx)=>{
-    const lines=doc.splitTextToSize(it.desc||'—',cDescW2-4);
-    const rh=Math.max(lines.length*4.8+5,10);
-    if(y+rh>278){
+  items.forEach((it)=>{
+    const lines=doc.splitTextToSize(it.desc||'—',cDescW-2);
+    const rh=Math.max(lines.length*4.3+4,9);
+    if(y+rh>BOTY){
       doc.addPage(); pg++;
-      pageHeader(pg,1); pageFooter();
-      y=39; y=drawItemsHeader(y);
+      y=pageHeader(pg,1); pageFooter();
+      y=drawItemsHeader(y);
     }
-    // Alternate
-    const rowBg = idx%2===0 ? C.white : C.bg;
-    cell(ML,y,CW,rh,rowBg,C.lgray);
-    // Vertical dividers
-    doc.setDrawColor(...C.lgray); doc.setLineWidth(0.15);
-    [xDesc,xUnid,xPrec,xTot].forEach(cx=>doc.line(cx,y,cx,y+rh));
-    const mid=y+rh/2+1.8;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C.dark);
-    txt(String(it.cant||1),xCant+cCantW/2,mid,{align:'center'});
-    doc.text(lines,xDesc+2,y+5);
-    txt(it.unidad||'—',xUnid+cUnidW/2,mid,{align:'center'});
-    txt('$'+(it.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2}),xPrec+cPrecW-2,mid,{align:'right'});
-    doc.setFont('helvetica','bold');
-    txt('$'+(it.imp||0).toLocaleString('es-MX',{minimumFractionDigits:2}),xTot+cTotW-2,mid,{align:'right'});
+    const textBlockH=lines.length*4.3;
+    const descTop=y+rh/2-textBlockH/2+3.4;
+    const midSingle=y+rh/2+1.6;
+
+    setF('normal',8.4,C.ink);
+    txt(String(it.cant||1),xCant,midSingle);
+    doc.text(lines,xDesc,descTop);
+    setF('normal',8.4,C.sub);
+    txt(it.unidad||'—',xUnid+cUnidW,midSingle,{align:'right'});
+    txt(money(it.precio),xPrec+cPrecW,midSingle,{align:'right'});
+    setF('bold',8.4,C.ink);
+    txt(money(it.imp),xTot+cTotW,midSingle,{align:'right'});
+
     y+=rh;
+    hline(ML,colRight,y,C.lineSoft,0.25);
   });
 
-  // ── TOTALS ──
+  // ── TOTALES ──
   const sub=items.reduce((s,it)=>s+(it.imp||0),0), iva=sub*0.16, tot=sub+iva;
-  const tW=80, tX=MR-tW;
-  y+=4;
-  if(y+40>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=39;}
+  const tW=72, tX=MR-tW;
+  y+=7;
+  if(y+44>BOTY){doc.addPage();pg++;y=pageHeader(pg,1);pageFooter();}
 
-  // Subtotal row
-  cell(tX,y,tW,8,C.bg,C.lgray);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.gray);
-  txt('Subtotal:',tX+4,y+5.5);
-  doc.setFont('helvetica','bold'); doc.setTextColor(...C.dark);
-  txt('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}),MR-3,y+5.5,{align:'right'});
-  y+=8;
-  // IVA row
-  cell(tX,y,tW,8,C.bg,C.lgray);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.gray);
-  txt('+ IVA (16%):',tX+4,y+5.5);
-  doc.setFont('helvetica','bold'); doc.setTextColor(...C.dark);
-  txt('$'+iva.toLocaleString('es-MX',{minimumFractionDigits:2}),MR-3,y+5.5,{align:'right'});
-  y+=8;
-  // Gran Total
-  cell(tX,y,tW,11,C.red);
-  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C.white);
-  txt('GRAN TOTAL:',tX+4,y+7.5);
-  txt('$'+tot.toLocaleString('es-MX',{minimumFractionDigits:2}),MR-3,y+7.5,{align:'right'});
-  y+=11+4;
+  setF('normal',8.6,C.sub);
+  txt('Subtotal',tX,y);
+  setF('normal',8.6,C.ink);
+  txt(money(sub),MR,y,{align:'right'});
+  y+=6.2;
+
+  setF('normal',8.6,C.sub);
+  txt('IVA (16%)',tX,y);
+  setF('normal',8.6,C.ink);
+  txt(money(iva),MR,y,{align:'right'});
+  y+=4.5;
+
+  hline(tX,MR,y,C.line,0.4);
+  y+=6.4;
+
+  setF('bold',11,C.ink);
+  txt('GRAN TOTAL',tX,y);
+  setF('bold',12.5,C.red);
+  txt(money(tot),MR,y,{align:'right'});
+  y+=9;
 
   // En letras
   const words=numberToWordsES(Math.round(tot));
-  const wl=doc.splitTextToSize('Son: '+words+' M.N.',CW-6);
-  cell(ML,y,CW,wl.length*4.5+6,C.bgH,C.lgray);
-  doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(...C.gray);
-  doc.text(wl,ML+3,y+5);
-  y+=wl.length*4.5+10;
+  setF('italic',7.8,C.sub);
+  const wl=doc.splitTextToSize('Son: '+words+' M.N.',CW);
+  doc.text(wl,ML,y);
+  y+=wl.length*4+6;
 
-  // Notas
+  // ── NOTAS ──
   if(notas&&notas.trim()){
-    if(y+24>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=39;}
-    cell(ML,y,CW,7,C.red);
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
-    txt('Notas y Condiciones',ML+3,y+5);
-    y+=7;
-    const nl=doc.splitTextToSize(notas.trim(),CW-6);
-    const nh=nl.length*4.5+7;
-    cell(ML,y,CW,nh,C.bg,C.lgray);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,50,50);
-    doc.text(nl,ML+3,y+5);
-    y+=nh+4;
+    if(y+20>BOTY){doc.addPage();pg++;y=pageHeader(pg,1);pageFooter();}
+    eyebrow('Notas y condiciones',ML,y);
+    y+=2.6;
+    hline(ML,MR,y,C.lineSoft,0.3);
+    y+=5;
+    setF('normal',8.2,C.ink);
+    const nl=doc.splitTextToSize(notas.trim(),CW);
+    doc.text(nl,ML,y);
+    y+=nl.length*4.3+6;
   }
 
-  // Vigencia
+  // ── VIGENCIA ──
   if(strV){
-    if(y+10>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=39;}
-    doc.setFillColor(...C.red); doc.setDrawColor(...C.red); doc.setLineWidth(0.3);
-    doc.rect(ML,y,3,7,'F');
-    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...C.red);
-    txt('Vigencia hasta: ',ML+6,y+5);
-    doc.setFont('helvetica','bold'); doc.setTextColor(...C.dark);
-    txt(strV,ML+6+doc.getTextWidth('Vigencia hasta: '),y+5);
+    if(y+10>BOTY){doc.addPage();pg++;y=pageHeader(pg,1);pageFooter();}
+    doc.setFillColor(...C.red); doc.circle(ML+1,y-1.3,1,'F');
+    setF('italic',8.2,C.sub);
+    txt('Vigencia hasta',ML+5,y);
+    setF('bold',8.2,C.ink);
+    txt(strV,ML+5+doc.getTextWidth('Vigencia hasta ')+1,y);
   }
 
-  // Fix all page headers with correct total
+  // Repaginar encabezados/pies con el total correcto de páginas
   const totalPg=doc.getNumberOfPages();
   for(let p=1;p<=totalPg;p++){doc.setPage(p); pageHeader(p,totalPg); pageFooter();}
 
