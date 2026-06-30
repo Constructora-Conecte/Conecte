@@ -261,6 +261,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pill-rech{background:var(--red-p);color:var(--red)}
 .pill-seg{background:var(--orange-p);color:var(--orange)}
 
+/* Group header row used in Facturas / OC tables to separate by estatus */
+.group-row td{
+  padding:7px 14px!important;
+  font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  border-top:1px solid var(--border); border-bottom:none!important;
+}
+.group-row.g-pend td{ background:var(--yellow-p); color:var(--yellow); }
+.group-row.g-acep td{ background:var(--green-p); color:var(--green); }
+.group-row.g-rech td{ background:var(--red-p); color:var(--red); }
+.group-row .g-sum{ font-weight:500; opacity:.75; margin-left:8px; font-size:10.5px; }
+
 /* ── COTIZACIONES TABLE ── */
 .cot-table-wrap{overflow-x:auto}
 .cot-table{width:100%;border-collapse:collapse}
@@ -563,6 +574,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <span class="fsep"></span>
         <input type="text" id="facSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar factura…" oninput="onFacSearch(this.value)">
         <select class="fsort" id="facSort" onchange="setFacSort(this.value)">
+          <option value="agrupado" selected>Agrupado por Estatus</option>
           <option value="fecha-desc">Fecha ↓</option>
           <option value="fecha-asc">Fecha ↑</option>
           <option value="monto-desc">Monto ↓</option>
@@ -1108,9 +1120,11 @@ const ST = {
   facturas: [],       // todas las facturas
   facFiltered: [],    // facturas filtradas
   facFilter: 'all',
-  facSort: 'fecha-desc',
+  facSort: 'agrupado',
   facSearch: '',
   facPage: 1,
+  formDirty: false,   // true si hay cambios sin guardar en el modal de cotización
+  ocFormDirty: false, // true si hay cambios sin guardar en el modal de OC
 };
 
 /* ─── GOOGLE INIT ─── */
@@ -1122,9 +1136,42 @@ window.onload = () => {
     });
     // Load public/read-only data immediately using just API key (no auth needed for reading)
     await loadAll();
+    startAutoRefresh();
   });
   preloadLogo();
 };
+
+/* ─── AUTO-REFRESH (multiusuario) ───
+   Cada X segundos, si no hay un modal de edición abierto con cambios sin guardar,
+   se vuelve a cargar todo silenciosamente para que varios usuarios vean los
+   cambios de los demás (nuevas cotizaciones, OC, facturas) sin tener que recargar
+   la página manualmente. */
+const AUTO_REFRESH_MS = 25000;
+let autoRefreshTimer = null;
+function startAutoRefresh(){
+  if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(async ()=>{
+    // No interrumpir si el usuario está editando algo sin guardar
+    const formOpen = document.getElementById('formModal').classList.contains('open');
+    const ocOpen   = document.getElementById('ocModal').classList.contains('open');
+    if((formOpen && ST.formDirty) || (ocOpen && ST.ocFormDirty)) return;
+    // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
+    const otherCaptureModals = ['addClienteModal','addContactoModal','newArticuloModal','facUploadModal'];
+    if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
+    try{
+      await loadAll();
+      flashSyncIndicator();
+    }catch(e){ console.warn('Auto-refresh falló (se reintentará):', e); }
+  }, AUTO_REFRESH_MS);
+}
+
+function flashSyncIndicator(){
+  const el=document.getElementById('lastUpd');
+  if(!el) return;
+  el.style.transition='color .15s';
+  el.style.color='var(--green)';
+  setTimeout(()=>{ el.style.color=''; },900);
+}
 
 /* ─── LOGO (para PDF) ─── */
 function preloadLogo(){
@@ -1299,8 +1346,7 @@ async function loadAll() {
       pdfB64:     r[13]||'',
       xmlContent: r[15]||'',
     }));
-    ST.facFiltered = [...ST.facturas];
-    renderFacTableFull();
+    applyFacFilter();
     updateFacStats();
 
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
@@ -1322,6 +1368,7 @@ async function loadAll() {
     updateStats();
     applyFilter();
     populateClientes();
+    renderOCClienteTable();
     document.getElementById('lastUpd').textContent = 'Act. ' +
       new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
 
@@ -1543,6 +1590,7 @@ function insertArt(id) {
   const a=ST.articulos.find(x=>x.id===id);
   if(!a) return;
   ST.items.push({ desc:a.nombre, cant:1, unidad:a.unidad||'pza', precio:a.precio, imp:a.precio });
+  ST.formDirty=true;
   renderItems();
   document.getElementById('artSearch').value='';
   hideDropdown();
@@ -1552,11 +1600,13 @@ function insertArt(id) {
 /* ─── ITEMS ─── */
 function addBlankItem() {
   ST.items.push({ desc:'', cant:1, unidad:'', precio:0, imp:0 });
+  ST.formDirty=true;
   renderItems();
 }
 
 function removeItem(i) {
   ST.items.splice(i,1);
+  ST.formDirty=true;
   renderItems();
 }
 
@@ -1609,6 +1659,7 @@ function calcTotals() {
 /* ─── OPEN FORM ─── */
 function abrirNueva() {
   ST.editId=null; ST.editRow=null;
+  ST.formDirty=false;
   ST.items=[{ desc:'', cant:1, unidad:'', precio:0, imp:0 }];
   document.getElementById('fmTitle').textContent='Nueva Cotización';
   document.getElementById('fmSub').textContent='Completa los datos y agrega las partidas';
@@ -1624,12 +1675,14 @@ function abrirNueva() {
   renderOCSection(false); // nueva cotización: no tiene ID aún
   renderItems();
   document.getElementById('formModal').classList.add('open');
+  setTimeout(()=>{ ST.formDirty=false; },100);
 }
 
 function openEdit(id,rowNum) {
   const r=ST.cotizaciones.find(c=>c.id===id);
   if(!r) return;
   ST.editId=id; ST.editRow=rowNum;
+  ST.formDirty=false;
 
   // Restore saved partidas if available, else single-item fallback
   if(r.items && r.items.length) {
@@ -1661,9 +1714,14 @@ function openEdit(id,rowNum) {
   renderOCSection(true);
   renderItems();
   document.getElementById('formModal').classList.add('open');
+  setTimeout(()=>{ ST.formDirty=false; },100);
 }
 
-function closeForm() {
+function closeForm(force) {
+  if(!force && ST.formDirty){
+    if(!confirm('Tienes cambios sin guardar en esta cotización. ¿Seguro que deseas salir sin guardar?')) return;
+  }
+  ST.formDirty=false;
   document.getElementById('formModal').classList.remove('open');
 }
 
@@ -1711,7 +1769,8 @@ async function guardarCot() {
     // Enable OC section now that we have an ID
     renderOCSection(true);
     await loadAll();
-    closeForm();
+    ST.formDirty=false;
+    closeForm(true);
   } catch(e){
     console.error(e);
     toast('err','Error al guardar: '+(e.result?.error?.message||e.message||'sin detalles'));
@@ -1828,33 +1887,36 @@ function generarPDF(id, itemsOverride) {
 
   // ── PAGE HEADER ──
   function pageHeader(pg,total){
-    // Red top bar + white stripe
-    doc.setFillColor(...C.red); doc.rect(0,0,PW,14,'F');
-    doc.setFillColor(...C.white); doc.rect(0,14,PW,22,'F');
+    // Red top bar (full company name) + white info strip
+    doc.setFillColor(...C.red); doc.rect(0,0,PW,12,'F');
+    doc.setFillColor(...C.white); doc.rect(0,12,PW,24,'F');
 
-    // Company name in white on red
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C.white);
-    txt('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.',PW/2,9,{align:'center'});
+    // Company name centered on red bar
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.white);
+    txt('CONSTRUCTORA CONECTE S. DE R.L. DE C.V.',PW/2,8,{align:'center'});
 
-    // Logo (cargado desde GitHub: Imagenes/logotiponuev.png)
+    // Logo on white strip, left-aligned
     if(ST.logoDataUrl){
       try{
         const dim = ST.logoDims||{w:LOGO_W,h:LOGO_H};
         let dw=LOGO_W, dh=LOGO_W*(dim.h/dim.w);
         if(dh>LOGO_H){ dh=LOGO_H; dw=LOGO_H*(dim.w/dim.h); }
-        const lx = ML + (LOGO_W-dw)/2, ly = 14 + (LOGO_H-dh)/2;
+        const lx = ML, ly = 12 + (24-dh)/2;
         doc.addImage(ST.logoDataUrl, 'PNG', lx, ly, dw, dh);
       }catch(e){ console.error('Logo PDF error:',e); }
     }
 
-    // Sub-info on white strip (right-aligned, left of folio box)
+    // Company info block — clean vertical stack, clear hierarchy
+    const infoX = ML+LOGO_W+5;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.dark);
+    txt('RFC: CCO220311K99', infoX, 18.5);
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
-    txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.', ML+LOGO_W+4, 19.5);
-    txt('Tel: (999) 222-6016 / (999) 908-9592   Email: conexionesconecte@hotmail.com', ML+LOGO_W+4, 24);
-    txt('RFC: —', ML+LOGO_W+4, 28.5);
+    txt('Calle 109B #610 x 66 y 66A, Fracc. Obrera, Mérida, Yuc.', infoX, 23);
+    txt('Tel: (999) 222-6016 / (999) 908-9592', infoX, 27);
+    txt('conexionesconecte@hotmail.com', infoX, 31);
 
     // Folio badge (top-right)
-    const fBox={x:MR-54,y:15,w:54,h:20};
+    const fBox={x:MR-54,y:14,w:54,h:20};
     doc.setFillColor(...C.red); doc.rect(fBox.x,fBox.y,fBox.w,fBox.h,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...C.white);
     txt('COTIZACIÓN',fBox.x+fBox.w/2,fBox.y+6,{align:'center'});
@@ -1865,7 +1927,7 @@ function generarPDF(id, itemsOverride) {
     txt('Pág '+(total>1?pg+'/'+total:'1'), fBox.x+fBox.w/2, fBox.y+18.5, {align:'center'});
 
     // Red bottom border
-    doc.setDrawColor(...C.red); doc.setLineWidth(0.8); doc.line(ML,37,MR,37);
+    doc.setDrawColor(...C.red); doc.setLineWidth(0.8); doc.line(ML,36,MR,36);
   }
 
   // ── PAGE FOOTER ──
@@ -1945,7 +2007,7 @@ function generarPDF(id, itemsOverride) {
   // ── BUILD DOC ──
   let y=0, pg=1;
   pageHeader(pg,1); pageFooter();
-  y=drawInfoGrid(39);
+  y=drawInfoGrid(38);
   y=drawItemsHeader(y);
 
   items.forEach((it,idx)=>{
@@ -1954,7 +2016,7 @@ function generarPDF(id, itemsOverride) {
     if(y+rh>278){
       doc.addPage(); pg++;
       pageHeader(pg,1); pageFooter();
-      y=40; y=drawItemsHeader(y);
+      y=39; y=drawItemsHeader(y);
     }
     // Alternate
     const rowBg = idx%2===0 ? C.white : C.bg;
@@ -1977,7 +2039,7 @@ function generarPDF(id, itemsOverride) {
   const sub=items.reduce((s,it)=>s+(it.imp||0),0), iva=sub*0.16, tot=sub+iva;
   const tW=80, tX=MR-tW;
   y+=4;
-  if(y+40>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=40;}
+  if(y+40>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=39;}
 
   // Subtotal row
   cell(tX,y,tW,8,C.bg,C.lgray);
@@ -2010,7 +2072,7 @@ function generarPDF(id, itemsOverride) {
 
   // Notas
   if(notas&&notas.trim()){
-    if(y+24>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=40;}
+    if(y+24>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=39;}
     cell(ML,y,CW,7,C.red);
     doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.white);
     txt('Notas y Condiciones',ML+3,y+5);
@@ -2025,7 +2087,7 @@ function generarPDF(id, itemsOverride) {
 
   // Vigencia
   if(strV){
-    if(y+10>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=40;}
+    if(y+10>278){doc.addPage();pg++;pageHeader(pg,1);pageFooter();y=39;}
     doc.setFillColor(...C.red); doc.setDrawColor(...C.red); doc.setLineWidth(0.3);
     doc.rect(ML,y,3,7,'F');
     doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...C.red);
@@ -2078,13 +2140,18 @@ function applyFacFilter(){
         r.estatus.toLowerCase().includes(q)||r.oc.toLowerCase().includes(q);
     });
   }
+  const facEstatusOrder={Pendiente:0,Pagado:1,Cancelado:2};
   rows.sort((a,b)=>{
     switch(ST.facSort){
       case 'fecha-asc':  return cmpDate(a.fecha,b.fecha);
       case 'fecha-desc': return cmpDate(b.fecha,a.fecha);
       case 'monto-desc': return b.total-a.total;
       case 'monto-asc':  return a.total-b.total;
-      default: return cmpDate(b.fecha,a.fecha);
+      default:
+        // Agrupado: Pendiente -> Pagado -> Cancelado, y dentro de cada grupo, más antiguo a más nuevo
+        const oa=facEstatusOrder[a.estatus]??3, ob=facEstatusOrder[b.estatus]??3;
+        if(oa!==ob) return oa-ob;
+        return cmpDate(a.fecha,b.fecha);
     }
   });
   ST.facFiltered=rows;
@@ -2477,38 +2544,54 @@ function isoDate(d){
 function sheetDate(iso){ if(!iso) return ''; const[y,m,day]=iso.split('-'); return `${parseInt(m)}/${parseInt(day)}/${y}`; }
 function fmtMXN(n){ return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 async function genNextFolio(cliente, desc) {
-  // Read Config sheet to find stored counter
-  let maxNum = 1999;
-  let folioRowIdx = null;
-  try {
-    const cfg = await sheetsGet('Config!A1:B50');
-    (cfg||[]).forEach((row, idx) => {
-      if(String(row[0]).trim()==='ULTIMO_FOLIO'){
-        const n = parseInt(row[1]);
-        if(!isNaN(n) && n > maxNum) maxNum = n;
-        folioRowIdx = idx + 1; // 1-based row
+  // Reintentamos hasta 5 veces con verificación optimista para evitar folios
+  // duplicados si dos usuarios guardan al mismo tiempo.
+  let nextNum;
+  for(let attempt=0; attempt<5; attempt++){
+    // Read Config sheet to find stored counter
+    let maxNum = 1999;
+    let folioRowIdx = null;
+    try {
+      const cfg = await sheetsGet('Config!A1:B50');
+      (cfg||[]).forEach((row, idx) => {
+        if(String(row[0]).trim()==='ULTIMO_FOLIO'){
+          const n = parseInt(row[1]);
+          if(!isNaN(n) && n > maxNum) maxNum = n;
+          folioRowIdx = idx + 1; // 1-based row
+        }
+      });
+    } catch(e){ console.warn('Config read failed', e); }
+
+    // Also scan existing cotizaciones to guarantee no collision
+    try {
+      (ST.cotizaciones||[]).forEach(c => {
+        const m = String(c.id||'').match(/CONE-COT(\d+)/i);
+        if(m){ const n=parseInt(m[1]); if(n>maxNum) maxNum=n; }
+      });
+    } catch(e){}
+
+    nextNum = maxNum + 1;
+
+    // Reservar: escribir el nuevo número
+    try {
+      if(folioRowIdx !== null) {
+        await sheetsUpdate(`Config!B${folioRowIdx}`, [[nextNum]]);
+      } else {
+        await sheetsAppend('Config!A:B', [['ULTIMO_FOLIO', nextNum]]);
       }
-    });
-  } catch(e){ console.warn('Config read failed', e); }
+    } catch(e){ console.warn('Could not persist folio counter:', e); break; }
 
-  // Also scan existing cotizaciones to guarantee no collision
-  try {
-    (ST.cotizaciones||[]).forEach(c => {
-      const m = String(c.id||'').match(/CONE-COT(\d+)/i);
-      if(m){ const n=parseInt(m[1]); if(n>maxNum) maxNum=n; }
-    });
-  } catch(e){}
-
-  const nextNum = maxNum + 1;
-
-  // Persist BEFORE returning so number is reserved
-  try {
-    if(folioRowIdx !== null) {
-      await sheetsUpdate(`Config!B${folioRowIdx}`, [[nextNum]]);
-    } else {
-      await sheetsAppend('Config!A:B', [['ULTIMO_FOLIO', nextNum]]);
-    }
-  } catch(e){ console.warn('Could not persist folio counter:', e); }
+    // Verificación optimista: releer y confirmar que el valor sigue siendo el que escribimos.
+    // Si otro usuario escribió un número distinto justo después (carrera), reintentamos.
+    try {
+      const cfg2 = await sheetsGet('Config!A1:B50');
+      const row2 = (cfg2||[]).find(r=>String(r[0]).trim()==='ULTIMO_FOLIO');
+      const confirmed = row2 ? parseInt(row2[1]) : nextNum;
+      if(confirmed === nextNum) break; // éxito, número reservado sin colisión
+      // colisión detectada: esperar un poco (jitter) y reintentar
+      await new Promise(res=>setTimeout(res, 200+Math.random()*300));
+    } catch(e){ break; } // si no podemos verificar, seguimos adelante con lo que tenemos
+  }
 
   const rfc = (cliente||'').replace(/[^A-Z0-9]/gi,'').slice(0,12).toUpperCase();
   // Full description — strip accents and special chars, keep spaces, uppercase
@@ -2600,9 +2683,27 @@ async function saveNewContacto() {
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Contacto';
 }
 
-/* Close modals on overlay click */
+/* Close modals on overlay click — EXCEPTO formModal y ocModal (requieren guardar o X para evitar pérdida accidental de datos) */
 document.querySelectorAll('.modal-bg').forEach(o=>{
+  if(o.id==='formModal' || o.id==='ocModal') return;
   o.addEventListener('click',e=>{ if(e.target===o){ o.classList.remove('open'); } });
+});
+
+/* Marcar formulario de cotización como "con cambios sin guardar" ante cualquier input/cambio */
+document.getElementById('formModal').addEventListener('input', ()=>{ ST.formDirty=true; });
+document.getElementById('formModal').addEventListener('change', ()=>{ ST.formDirty=true; });
+
+/* Marcar formulario de OC como "con cambios sin guardar" ante cualquier input/cambio */
+document.getElementById('ocModal').addEventListener('input', ()=>{ ST.ocFormDirty=true; });
+document.getElementById('ocModal').addEventListener('change', ()=>{ ST.ocFormDirty=true; });
+
+/* Advertencia del navegador si se intenta cerrar/recargar la pestaña con cambios sin guardar */
+window.addEventListener('beforeunload', (e)=>{
+  if(ST.formDirty || ST.ocFormDirty){
+    e.preventDefault();
+    e.returnValue='';
+    return '';
+  }
 });
 
 /* Cliente change → populate contactos */
@@ -2730,6 +2831,7 @@ async function saveNewArticulo(){
 /* ─── OC MODAL (new full version) ─── */
 function openAddOC(){
   // Called from cotización form
+  ST.ocFormDirty=false;
   document.getElementById('ocModalTitle').textContent='Agregar OC a esta Cotización';
   ['ocNumero','ocConcepto','ocObs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ocFecha').value=todayISO();
@@ -2743,10 +2845,12 @@ function openAddOC(){
   populateOCClienteSel(ST.editId ? document.getElementById('fCliente').value : '');
   document.getElementById('ocPdfFile').value='';
   document.getElementById('ocModal').classList.add('open');
+  setTimeout(()=>{ ST.ocFormDirty=false; },100);
 }
 
 function openNewOCCliente(){
   // Called from OC Clientes tab
+  ST.ocFormDirty=false;
   document.getElementById('ocModalTitle').textContent='Nueva Orden de Compra';
   ['ocNumero','ocConcepto','ocObs','ocCotId'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ocFecha').value=todayISO();
@@ -2759,6 +2863,7 @@ function openNewOCCliente(){
   populateOCClienteSel('');
   document.getElementById('ocPdfFile').value='';
   document.getElementById('ocModal').classList.add('open');
+  setTimeout(()=>{ ST.ocFormDirty=false; },100);
 }
 
 function populateOCClienteSel(preselect){
@@ -2771,7 +2876,11 @@ function populateOCClienteSel(preselect){
   if(preselect) sel.value=preselect;
 }
 
-function closeOCModal(){
+function closeOCModal(force){
+  if(!force && ST.ocFormDirty){
+    if(!confirm('Tienes cambios sin guardar en esta Orden de Compra. ¿Seguro que deseas salir sin guardar?')) return;
+  }
+  ST.ocFormDirty=false;
   document.getElementById('ocModal').classList.remove('open');
 }
 
@@ -2824,7 +2933,7 @@ async function saveOC(){
     } else {
       ST.ocAll.push(newOC);
     }
-    closeOCModal();
+    closeOCModal(true);
     if(ctx==='form' && ST.editId){
       ST.ocList=ST.ocAll.filter(o=>o.id_cot===ST.editId);
       renderOCSection(true);
@@ -2867,6 +2976,14 @@ function renderOCClienteTable(){
     r.id_cot.toLowerCase().includes(ocClientSearch)
   );
 
+  // Agrupado: Pendiente -> Facturado -> Cancelado, y dentro de cada grupo, más antiguo a más nuevo
+  const ocEstatusOrder={Pendiente:0,Facturado:1,Cancelado:2};
+  rows.sort((a,b)=>{
+    const oa=ocEstatusOrder[a.estatus]??3, ob=ocEstatusOrder[b.estatus]??3;
+    if(oa!==ob) return oa-ob;
+    return cmpDate(a.fecha,b.fecha);
+  });
+
   // Stats
   const all=getOCClientes();
   document.getElementById('ocsTot').textContent=all.length;
@@ -2881,11 +2998,24 @@ function renderOCClienteTable(){
     return;
   }
 
+  const ocGroupMeta={
+    Pendiente:{label:'PENDIENTE',cls:'g-pend'},
+    Facturado:{label:'FACTURADO',cls:'g-acep'},
+    Cancelado:{label:'CANCELADO',cls:'g-rech'},
+  };
+  let lastOcGroup=null;
   tbody.innerHTML=rows.map(r=>{
+    let groupHeader='';
+    if(r.estatus!==lastOcGroup){
+      lastOcGroup=r.estatus;
+      const meta=ocGroupMeta[r.estatus]||{label:(r.estatus||'OTRO').toUpperCase(),cls:'g-pend'};
+      const sum=rows.filter(x=>x.estatus===r.estatus).reduce((s,x)=>s+(x.monto||0),0);
+      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="9">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
+    }
     const cliNom=ST.clientes[r.id_cli]?.nombre||r.id_cli||'—';
     const stClass={Pendiente:'pill-pend',Facturado:'pill-acep',Cancelado:'pill-rech'}[r.estatus]||'pill-pend';
     const hasPDF=!!r.pdfB64;
-    return `<tr>
+    return groupHeader + `<tr>
       <td><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)">${esc(r.numero)}</span></td>
       <td style="font-size:12.5px;font-weight:500">${esc(cliNom)}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
@@ -2915,6 +3045,7 @@ function renderOCClienteTable(){
 function editOCCliente(id){
   const r=ST.ocAll.find(o=>o.id===id);
   if(!r) return;
+  ST.ocFormDirty=false;
   document.getElementById('ocModalTitle').textContent='Editar OC';
   document.getElementById('ocNumero').value=r.numero||'';
   document.getElementById('ocFecha').value=isoDate(r.fecha);
@@ -2929,6 +3060,7 @@ function editOCCliente(id){
   document.getElementById('ocPdfFile').value='';
   populateOCClienteSel(r.id_cli||'');
   document.getElementById('ocModal').classList.add('open');
+  setTimeout(()=>{ ST.ocFormDirty=false; },100);
 }
 
 /* ─── PDF VIEWER ─── */
@@ -2987,14 +3119,28 @@ function renderFacTableFull(){
   const slice=ST.facFiltered.slice(start,start+ST.PAGE);
   const metodos=['','Transferencia','Efectivo','Factoraje'];
   const estatusOpts=['Pendiente','Pagado','Cancelado'];
-  tbody.innerHTML=slice.map(r=>{
+  const groupedView = !ST.facSort || ST.facSort==='agrupado';
+  const groupMeta={
+    Pendiente:{label:'PENDIENTE',cls:'g-pend'},
+    Pagado:   {label:'PAGADO',   cls:'g-acep'},
+    Cancelado:{label:'CANCELADO',cls:'g-rech'},
+  };
+  let lastGroup=null;
+  const rowsHtml=slice.map(r=>{
+    let groupHeader='';
+    if(groupedView && r.estatus!==lastGroup){
+      lastGroup=r.estatus;
+      const meta=groupMeta[r.estatus]||{label:(r.estatus||'OTRO').toUpperCase(),cls:'g-pend'};
+      const sum=ST.facFiltered.filter(x=>x.estatus===r.estatus).reduce((s,x)=>s+x.total,0);
+      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="10">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
+    }
     const cli=ST.clientes[r.id_cli]||{};
     const fmtTot='$'+r.total.toLocaleString('es-MX',{minimumFractionDigits:2});
     const conc=(r.concepto||'—').slice(0,45)+((r.concepto||'').length>45?'…':'');
     const est=parseNotasEstado(r.notas);
     const hasPDF=!!r.pdfB64;
     const hasXML=!!r.xmlContent;
-    return `<tr>
+    return groupHeader + `<tr>
       <td><span class="folio" style="cursor:default">${esc(r.folio||r.id)}</span></td>
       <td>
         <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
@@ -3035,7 +3181,8 @@ function renderFacTableFull(){
         </div>
       </td>
     </tr>`;
-  }).join('');
+  });
+  tbody.innerHTML=rowsHtml.join('');
   renderFacPagi();
 }
 
