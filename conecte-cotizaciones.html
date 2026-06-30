@@ -1944,7 +1944,7 @@ async function loadAll() {
       sheetsGet('Articulos!A2:F'),
       sheetsGet('Oc_Client!A2:I'),   // 9 cols: + I=ID_Cotizacion (vínculo)
       sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
-      sheetsGet('Balance!A2:R'),     // 18 cols: balance movements
+      sheetsGet('Balance!A2:Q'),     // 17 cols: balance movements (A=ID ... Q=Pdf)
     ]);
 
     /* Clientes */
@@ -2032,7 +2032,9 @@ async function loadAll() {
     applyFilter();
     populateClientes();
     renderOCClienteTable();
-    // Balance
+    // Balance — cols reales: A=ID,B=Fecha,C=Tipo_Movimiento,D=Concepto,E=Monto,F=Cuenta,
+    // G=Afecta_Caja,H=Estado,I=Fecha_Limite,J=Fecha_Pago,K=Es_Deuda,L=Prioridad,
+    // M=Cliente,N=Proyecto,O=Responsable,P=Observaciones,Q=Pdf (17 cols, sin columna Foto)
     ST.balance = (balR||[]).map((r,i)=>({
       _row:       i+2,
       id:         r[0]||'',
@@ -2052,7 +2054,6 @@ async function loadAll() {
       responsable:r[14]||'',
       obs:        r[15]||'',
       pdf:        r[16]||'',
-      foto:       r[17]||'',
     })).filter(b=>b.id);
     applyIngFilter();
     applyGasFilter();
@@ -4260,7 +4261,7 @@ function renderIngTable(){
       <td style="font-size:10.5px;color:var(--text3)">${b.obs||'—'}</td>
       <td>
         <div class="row-acts" style="opacity:1">
-          ${(b.pdf||b.foto)?`<a href="${esc(b.pdf||b.foto)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
+          ${b.pdf?`<a href="${esc(b.pdf)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
           <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
           </button>
@@ -4333,7 +4334,7 @@ function renderGasTable(){
     <td style="text-align:center;font-size:11px;color:${b.esDeuda==='TRUE'?'var(--red)':'var(--text3)'}">${b.esDeuda==='TRUE'?'Sí':'No'}</td>
     <td>
       <div class="row-acts" style="opacity:1">
-        ${(b.pdf||b.foto)?`<a href="${esc(b.pdf||b.foto)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
+        ${b.pdf?`<a href="${esc(b.pdf)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
         <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
         </button>
@@ -4423,9 +4424,9 @@ function openBalEdit(id){
   // evidencia de pago (PDF / foto) existente
   ST._balEvidenciaFile = null;
   document.getElementById('bEvidencia').value = '';
-  ST._balEvidenciaExisting = { pdf:b.pdf||'', foto:b.foto||'' };
+  ST._balEvidenciaExisting = { pdf:b.pdf||'' };
   const evCur=document.getElementById('bEvidenciaCurrent');
-  const evLink=b.pdf||b.foto;
+  const evLink=b.pdf;
   if(evLink){
     evCur.style.display='block';
     evCur.innerHTML=`<a href="${esc(evLink)}" target="_blank" rel="noopener" style="color:var(--blue)">📎 Ver evidencia actual</a> <button type="button" class="btn-icon" title="Quitar evidencia" onclick="clearBEvidencia()" style="color:var(--text3);margin-left:6px">✕</button>`;
@@ -4450,8 +4451,8 @@ function onBEvidenciaSelected(input){
   if(f){
     evCur.style.display='block';
     evCur.innerHTML=`📎 ${esc(f.name)} <span style="color:var(--text3)">(se subirá al guardar)</span>`;
-  } else if(ST._balEvidenciaExisting && (ST._balEvidenciaExisting.pdf||ST._balEvidenciaExisting.foto)){
-    const evLink=ST._balEvidenciaExisting.pdf||ST._balEvidenciaExisting.foto;
+  } else if(ST._balEvidenciaExisting && ST._balEvidenciaExisting.pdf){
+    const evLink=ST._balEvidenciaExisting.pdf;
     evCur.style.display='block';
     evCur.innerHTML=`<a href="${esc(evLink)}" target="_blank" rel="noopener" style="color:var(--blue)">📎 Ver evidencia actual</a> <button type="button" class="btn-icon" title="Quitar evidencia" onclick="clearBEvidencia()" style="color:var(--text3);margin-left:6px">✕</button>`;
   } else {
@@ -4460,7 +4461,7 @@ function onBEvidenciaSelected(input){
 }
 function clearBEvidencia(){
   ST._balEvidenciaFile = null;
-  if(ST._balEvidenciaExisting) ST._balEvidenciaExisting = { pdf:'', foto:'' };
+  if(ST._balEvidenciaExisting) ST._balEvidenciaExisting = { pdf:'' };
   document.getElementById('bEvidencia').value='';
   const evCur=document.getElementById('bEvidenciaCurrent');
   evCur.style.display='none'; evCur.innerHTML='';
@@ -4475,17 +4476,15 @@ async function saveBalEntry(){
   btn.disabled=true; btn.textContent='Guardando…';
   // Evidencia de pago: si hay un archivo nuevo, subirlo a Drive; si no, conservar el link existente (o vacío si se quitó)
   let pdfLink = ST._balEvidenciaExisting?.pdf || '';
-  let fotoLink = ST._balEvidenciaExisting?.foto || '';
   try{
     if(ST._balEvidenciaFile){
       if(!ST.token){ toast('err','Conecta tu cuenta de Google primero para subir la evidencia.'); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
       btn.textContent='Subiendo evidencia…';
-      const isPdf = ST._balEvidenciaFile.type==='application/pdf' || /\.pdf$/i.test(ST._balEvidenciaFile.name);
-      const link = await driveUploadFile(ST._balEvidenciaFile, 'Balance/Evidencias', `EVID_${concepto}_${Date.now()}`.slice(0,80));
-      if(isPdf){ pdfLink=link; } else { fotoLink=link; }
+      pdfLink = await driveUploadFile(ST._balEvidenciaFile, 'Balance/Evidencias', `EVID_${concepto}_${Date.now()}`.slice(0,80));
       btn.textContent='Guardando…';
     }
   } catch(e){ toast('err','Error al subir la evidencia: '+(e.message||e)); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
+  // Fila con las 17 columnas reales de la hoja Balance (A=ID … Q=Pdf, sin columna Foto)
   const row=[
     ST.balEditId || genBalId(),
     fecha,
@@ -4503,14 +4502,14 @@ async function saveBalEntry(){
     '', // Proyecto (N)
     document.getElementById('bResponsable').value,
     document.getElementById('bObs').value,
-    pdfLink, fotoLink,
+    pdfLink,
   ];
   try{
     if(ST.balEditId){
       const b=ST.balance.find(x=>x.id===ST.balEditId);
-      if(b) await sheetsUpdate(`Balance!A${b._row}:R${b._row}`,[row]);
+      if(b) await sheetsUpdate(`Balance!A${b._row}:Q${b._row}`,[row]);
     } else {
-      await sheetsAppend('Balance!A2:R',[row]);
+      await sheetsAppend('Balance!A2:Q',[row]);
       // If from a factura, write ingreso id back to Facturas!K
       if(ST.balFacRef){
         const f=ST.facturas.find(x=>x.id===ST.balFacRef.id);
@@ -4529,7 +4528,7 @@ async function saveBalEntry(){
 async function delBalEntry(id,row){
   if(!confirm('¿Eliminar este movimiento?')) return;
   try{
-    await sheetsClear(`Balance!A${row}:R${row}`);
+    await sheetsClear(`Balance!A${row}:Q${row}`);
     ST.balance=ST.balance.filter(b=>b.id!==id);
     applyIngFilter(); applyGasFilter();
     renderDashboard();
@@ -5377,3 +5376,4 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
+
