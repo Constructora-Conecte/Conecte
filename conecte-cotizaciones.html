@@ -979,7 +979,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           </div>
         </div>
         <!-- Charts row 2 -->
-        <div class="dash-grid">
+        <div class="dash-grid-3">
+          <div class="dash-card">
+            <div class="dash-card-title">Entradas vs Salidas (Total del año)</div>
+            <div class="dash-chart-wrap"><canvas id="chartPieComp"></canvas></div>
+          </div>
           <div class="dash-card">
             <div class="dash-card-title">Estado de Ingresos</div>
             <div class="dash-chart-wrap"><canvas id="chartDonutIng"></canvas></div>
@@ -1237,6 +1241,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <option value="TRUE">Sí</option>
             <option value="FALSE">No</option>
           </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Evidencia de pago (PDF o fotografía)</label>
+          <input type="file" class="form-input" id="bEvidencia" accept=".pdf,application/pdf,image/*" onchange="onBEvidenciaSelected(this)">
+          <span style="font-size:10.5px;color:var(--text3)">Comprobante, ticket o captura del pago (opcional).</span>
+          <div id="bEvidenciaCurrent" style="display:none;margin-top:6px;font-size:11.5px"></div>
         </div>
         <div class="form-group full">
           <label class="form-label">Proyecto / Observaciones</label>
@@ -2048,6 +2058,7 @@ async function loadAll() {
     applyGasFilter();
     updateIngStats();
     updateGasStats();
+    renderDashboard();
     document.getElementById('lastUpd').textContent = 'Act. ' +
       new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
 
@@ -4036,9 +4047,9 @@ async function saveNewContacto() {
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Contacto';
 }
 
-/* Close modals on overlay click — EXCEPTO formModal y ocModal (requieren guardar o X para evitar pérdida accidental de datos) */
+/* Close modals on overlay click — EXCEPTO formModal, ocModal y balModal (requieren guardar o X para evitar pérdida accidental de datos) */
 document.querySelectorAll('.modal-bg').forEach(o=>{
-  if(o.id==='formModal' || o.id==='ocModal') return;
+  if(o.id==='formModal' || o.id==='ocModal' || o.id==='balModal') return;
   o.addEventListener('click',e=>{ if(e.target===o){ o.classList.remove('open'); } });
 });
 
@@ -4214,7 +4225,7 @@ function applyIngFilter(){
   let rows=ST.balance.filter(b=>b.tipo==='Ingreso');
   if(ST.ingFilter!=='all') rows=rows.filter(b=>b.estado===ST.ingFilter);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
-  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha)||(b._row-a._row));
   ST.ingFiltered=rows;
   document.getElementById('ingCount').textContent=rows.length;
   renderIngTable();
@@ -4249,6 +4260,7 @@ function renderIngTable(){
       <td style="font-size:10.5px;color:var(--text3)">${b.obs||'—'}</td>
       <td>
         <div class="row-acts" style="opacity:1">
+          ${(b.pdf||b.foto)?`<a href="${esc(b.pdf||b.foto)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
           <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
           </button>
@@ -4288,7 +4300,7 @@ function applyGasFilter(){
   let rows=ST.balance.filter(b=>b.tipo==='Gasto');
   if(ST.gasFilter!=='all') rows=rows.filter(b=>b.estado===ST.gasFilter);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
-  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha)||(b._row-a._row));
   ST.gasFiltered=rows;
   document.getElementById('gasCount').textContent=rows.length;
   renderGasTable();
@@ -4321,6 +4333,7 @@ function renderGasTable(){
     <td style="text-align:center;font-size:11px;color:${b.esDeuda==='TRUE'?'var(--red)':'var(--text3)'}">${b.esDeuda==='TRUE'?'Sí':'No'}</td>
     <td>
       <div class="row-acts" style="opacity:1">
+        ${(b.pdf||b.foto)?`<a href="${esc(b.pdf||b.foto)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
         <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
         </button>
@@ -4367,6 +4380,12 @@ function openBalModal(tipo, prefill){
   document.getElementById('bAfectaCaja').value= 'TRUE';
   document.getElementById('bObs').value       = prefill?.obs||'';
   document.getElementById('bResponsable').value= '';
+  // evidencia de pago (PDF / foto)
+  ST._balEvidenciaFile = null;
+  document.getElementById('bEvidencia').value = '';
+  ST._balEvidenciaExisting = null;
+  const evCur=document.getElementById('bEvidenciaCurrent');
+  evCur.style.display='none'; evCur.innerHTML='';
   // populate cliente select
   const cSel=document.getElementById('bCliente');
   cSel.innerHTML='<option value="">— Sin cliente —</option>'+Object.values(ST.clientes).map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
@@ -4401,6 +4420,18 @@ function openBalEdit(id){
   document.getElementById('bAfectaCaja').value = b.afectaCaja||'TRUE';
   document.getElementById('bObs').value        = b.obs||'';
   document.getElementById('bResponsable').value= b.responsable||'';
+  // evidencia de pago (PDF / foto) existente
+  ST._balEvidenciaFile = null;
+  document.getElementById('bEvidencia').value = '';
+  ST._balEvidenciaExisting = { pdf:b.pdf||'', foto:b.foto||'' };
+  const evCur=document.getElementById('bEvidenciaCurrent');
+  const evLink=b.pdf||b.foto;
+  if(evLink){
+    evCur.style.display='block';
+    evCur.innerHTML=`<a href="${esc(evLink)}" target="_blank" rel="noopener" style="color:var(--blue)">📎 Ver evidencia actual</a> <button type="button" class="btn-icon" title="Quitar evidencia" onclick="clearBEvidencia()" style="color:var(--text3);margin-left:6px">✕</button>`;
+  } else {
+    evCur.style.display='none'; evCur.innerHTML='';
+  }
   const cSel=document.getElementById('bCliente');
   cSel.innerHTML='<option value="">— Sin cliente —</option>'+Object.values(ST.clientes).map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
   cSel.value=b.cliente||'';
@@ -4412,6 +4443,29 @@ function openBalEdit(id){
 
 function closeBalModal(){ document.getElementById('balModal').classList.remove('open'); ST.balEditId=null; ST.balFacRef=null; }
 
+function onBEvidenciaSelected(input){
+  const f=input.files[0];
+  ST._balEvidenciaFile = f||null;
+  const evCur=document.getElementById('bEvidenciaCurrent');
+  if(f){
+    evCur.style.display='block';
+    evCur.innerHTML=`📎 ${esc(f.name)} <span style="color:var(--text3)">(se subirá al guardar)</span>`;
+  } else if(ST._balEvidenciaExisting && (ST._balEvidenciaExisting.pdf||ST._balEvidenciaExisting.foto)){
+    const evLink=ST._balEvidenciaExisting.pdf||ST._balEvidenciaExisting.foto;
+    evCur.style.display='block';
+    evCur.innerHTML=`<a href="${esc(evLink)}" target="_blank" rel="noopener" style="color:var(--blue)">📎 Ver evidencia actual</a> <button type="button" class="btn-icon" title="Quitar evidencia" onclick="clearBEvidencia()" style="color:var(--text3);margin-left:6px">✕</button>`;
+  } else {
+    evCur.style.display='none'; evCur.innerHTML='';
+  }
+}
+function clearBEvidencia(){
+  ST._balEvidenciaFile = null;
+  if(ST._balEvidenciaExisting) ST._balEvidenciaExisting = { pdf:'', foto:'' };
+  document.getElementById('bEvidencia').value='';
+  const evCur=document.getElementById('bEvidenciaCurrent');
+  evCur.style.display='none'; evCur.innerHTML='';
+}
+
 async function saveBalEntry(){
   const btn=document.getElementById('balSaveBtn');
   const fecha    = document.getElementById('bFecha').value;
@@ -4419,6 +4473,19 @@ async function saveBalEntry(){
   const monto    = parseFloat(document.getElementById('bMonto').value)||0;
   if(!fecha||!concepto||!monto){ toast('err','Fecha, concepto y monto son requeridos.'); return; }
   btn.disabled=true; btn.textContent='Guardando…';
+  // Evidencia de pago: si hay un archivo nuevo, subirlo a Drive; si no, conservar el link existente (o vacío si se quitó)
+  let pdfLink = ST._balEvidenciaExisting?.pdf || '';
+  let fotoLink = ST._balEvidenciaExisting?.foto || '';
+  try{
+    if(ST._balEvidenciaFile){
+      if(!ST.token){ toast('err','Conecta tu cuenta de Google primero para subir la evidencia.'); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
+      btn.textContent='Subiendo evidencia…';
+      const isPdf = ST._balEvidenciaFile.type==='application/pdf' || /\.pdf$/i.test(ST._balEvidenciaFile.name);
+      const link = await driveUploadFile(ST._balEvidenciaFile, 'Balance/Evidencias', `EVID_${concepto}_${Date.now()}`.slice(0,80));
+      if(isPdf){ pdfLink=link; } else { fotoLink=link; }
+      btn.textContent='Guardando…';
+    }
+  } catch(e){ toast('err','Error al subir la evidencia: '+(e.message||e)); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
   const row=[
     ST.balEditId || genBalId(),
     fecha,
@@ -4436,7 +4503,7 @@ async function saveBalEntry(){
     '', // Proyecto (N)
     document.getElementById('bResponsable').value,
     document.getElementById('bObs').value,
-    '', '', // Pdf, Foto
+    pdfLink, fotoLink,
   ];
   try{
     if(ST.balEditId){
@@ -4465,6 +4532,7 @@ async function delBalEntry(id,row){
     await sheetsClear(`Balance!A${row}:R${row}`);
     ST.balance=ST.balance.filter(b=>b.id!==id);
     applyIngFilter(); applyGasFilter();
+    renderDashboard();
     toast('ok','Movimiento eliminado.');
   } catch(e){ toast('err','Error al eliminar: '+(e.result?.error?.message||e.message)); }
 }
@@ -4494,15 +4562,20 @@ function destroyChart(id){ if(ST._charts[id]){ ST._charts[id].destroy(); delete 
 
 function renderDashboard(){
   if(document.getElementById('balDash')?.classList.contains('active')===false) return;
-  const year=parseInt(document.getElementById('dashYear')?.value)||new Date().getFullYear();
-  // Populate year selector if empty
+  // Populate / refrescar el selector de año (por si llegan años nuevos tras cargar datos)
   const ySel=document.getElementById('dashYear');
-  if(ySel&&!ySel.options.length){
+  if(ySel){
     const years=[...new Set(ST.balance.map(b=>b.fecha?.slice(0,4)).filter(Boolean))].sort().reverse();
     if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
-    years.forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y; ySel.appendChild(o); });
-    ySel.value=String(new Date().getFullYear());
+    const existing=new Set([...ySel.options].map(o=>o.value));
+    if(years.some(y=>!existing.has(y))){
+      const prevVal=ySel.value;
+      ySel.innerHTML='';
+      years.forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y; ySel.appendChild(o); });
+      ySel.value = existing.size && years.includes(prevVal) ? prevVal : String(new Date().getFullYear());
+    }
   }
+  const year=parseInt(ySel?.value)||new Date().getFullYear();
 
   const ing=ST.balance.filter(b=>b.tipo==='Ingreso'&&b.fecha?.startsWith(year));
   const gas=ST.balance.filter(b=>b.tipo==='Gasto'&&b.fecha?.startsWith(year));
@@ -4550,6 +4623,16 @@ function renderDashboard(){
     type:'line',
     data:{labels:meses,datasets:[{label:'Balance acumulado',data:balAcum,borderColor:'#63b3ed',backgroundColor:'rgba(99,179,237,.1)',fill:true,tension:.35,pointRadius:3}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor},ticks:{callback:v=>'$'+v.toLocaleString('es-MX')}}}}
+  });
+
+  // Pastel: Entradas vs Salidas (comparación total del año, Pagado + Pendiente + Vencido)
+  const totalIng = ing.reduce((s,b)=>s+b.monto,0);
+  const totalGas = gas.reduce((s,b)=>s+b.monto,0);
+  destroyChart('pieComp');
+  ST._charts['pieComp']=new Chart(document.getElementById('chartPieComp'),{
+    type:'pie',
+    data:{labels:['Entradas (Ingresos)','Salidas (Gastos)'],datasets:[{data:[totalIng,totalGas],backgroundColor:['rgba(72,187,120,.8)','rgba(229,62,62,.75)'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtMXNBal(ctx.raw)}}}}
   });
 
   // Donut ingresos por estado
