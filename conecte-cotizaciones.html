@@ -4226,7 +4226,10 @@ function applyIngFilter(){
   let rows=ST.balance.filter(b=>b.tipo==='Ingreso');
   if(ST.ingFilter!=='all') rows=rows.filter(b=>b.estado===ST.ingFilter);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
-  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha)||(b._row-a._row));
+  rows.sort((a,b)=>{
+    const da=a.fechaPago||a.fecha||'', db=b.fechaPago||b.fecha||'';
+    return db.localeCompare(da)||(b._row-a._row);
+  });
   ST.ingFiltered=rows;
   document.getElementById('ingCount').textContent=rows.length;
   renderIngTable();
@@ -4301,7 +4304,10 @@ function applyGasFilter(){
   let rows=ST.balance.filter(b=>b.tipo==='Gasto');
   if(ST.gasFilter!=='all') rows=rows.filter(b=>b.estado===ST.gasFilter);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
-  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha)||(b._row-a._row));
+  rows.sort((a,b)=>{
+    const da=a.fechaPago||a.fecha||'', db=b.fechaPago||b.fecha||'';
+    return db.localeCompare(da)||(b._row-a._row);
+  });
   ST.gasFiltered=rows;
   document.getElementById('gasCount').textContent=rows.length;
   renderGasTable();
@@ -5376,4 +5382,3 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
-
