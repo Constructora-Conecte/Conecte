@@ -348,6 +348,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r12);
   box-shadow:0 24px 80px rgba(0,0,0,.6);animation:mIn .22s ease both;
   width:460px;max-width:96vw;padding:24px;
+  max-height:90vh;overflow-y:auto;
 }
 @keyframes mIn{from{opacity:0;transform:scale(.93) translateY(-8px)}to{opacity:1;transform:scale(1)}}
 .modal-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:6px}
@@ -360,6 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r12);
   box-shadow:0 24px 80px rgba(0,0,0,.6);animation:mIn .22s ease both;
   width:720px;max-width:97vw;max-height:94vh;display:flex;flex-direction:column;
+  overflow:hidden;
 }
 .mlg-head{
   padding:16px 22px;border-bottom:1px solid var(--border);
@@ -367,7 +369,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 }
 .mlg-title{font-size:14px;font-weight:600;color:var(--white)}
 .mlg-sub{font-size:11.5px;color:var(--text3);margin-top:2px}
-.mlg-body{padding:18px 22px;overflow-y:auto;flex:1}
+.mlg-body{padding:18px 22px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;}
 .mlg-foot{
   padding:13px 22px;border-top:1px solid var(--border);
   display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;
@@ -507,9 +509,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <span style="font-size:14px;font-weight:700;color:var(--white);">CONECTE</span>
     </div>
     <span class="topbar-sep">›</span>
-    <span class="topbar-page">Comercial</span>
+    <span class="topbar-page" id="bcSection">Comercial</span>
     <span class="topbar-sep">›</span>
-    <span class="topbar-page" style="color:var(--text);font-weight:600;">Cotizaciones</span>
+    <span class="topbar-page" id="bcPage" style="color:var(--text);font-weight:600;">Cotizaciones</span>
 
     <!-- ── BUSCADOR GLOBAL (clientes, OC, facturas, cotizaciones) ── -->
     <div id="globalSearchWrap" style="position:relative;flex:1;max-width:380px;margin:0 16px;">
@@ -557,23 +559,31 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     ⚠️ <strong>Error 401:</strong> Agrega <strong id="currentOrigin"></strong> en Google Cloud Console → APIs &amp; Services → Credentials → OAuth 2.0 Client → Authorized JavaScript origins
   </div>
 
-  <!-- TABS NAV -->
-  <nav class="tabs-nav">
-    <button class="tab-btn active" id="tabCotBtn" onclick="switchTab('cot')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
-      Cotizaciones
+  <!-- SECCIÓN: COMERCIAL / BALANCE -->
+  <nav class="tabs-nav" id="sectionNav">
+    <button class="tab-btn active" id="navComercialBtn" onclick="switchSection('comercial')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>
+      Comercial
+    </button>
+    <button class="tab-btn" id="navBalanceBtn" onclick="switchSection('balance')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h3V7H2zM6.5 12h3V4h-3zM11 12h3V9h-3z"/></svg>
+      Balance
+    </button>
+  </nav>
+
+  <!-- SUB-TABS DE COMERCIAL: OC, Facturas, Cotizaciones -->
+  <nav class="tabs-nav" id="comercialSubNav">
+    <button class="tab-btn" id="tabOCBtn" onclick="switchTab('oc')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>
+      OC Clientes
     </button>
     <button class="tab-btn" id="tabFacBtn" onclick="switchTab('fac')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 5.5h5M5 8h5M5 10.5h3"/><path d="M10 1.5v3H13"/></svg>
       Facturas
     </button>
-    <button class="tab-btn" id="tabOCBtn" onclick="switchTab('oc')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>
-      OC Clientes
-    </button>
-    <button class="tab-btn" id="tabBalBtn" onclick="switchTab('bal')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h3V7H2zM6.5 12h3V4h-3zM11 12h3V9h-3z"/></svg>
-      Balance
+    <button class="tab-btn active" id="tabCotBtn" onclick="switchTab('cot')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
+      Cotizaciones
     </button>
   </nav>
 
@@ -778,22 +788,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
       <!-- Sub-nav -->
       <nav class="bal-nav">
-        <button class="bal-tab active" id="balIngBtn" onclick="switchBalTab('ing')">
+        <button class="bal-tab active" id="balDashBtn" onclick="switchBalTab('dash')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
+          Dashboard
+        </button>
+        <button class="bal-tab" id="balIngBtn" onclick="switchBalTab('ing')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 13V3M4 7l4-4 4 4"/></svg>
           Ingresos
         </button>
         <button class="bal-tab" id="balGasBtn" onclick="switchBalTab('gas')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M4 9l4 4 4-4"/></svg>
-          Gastos
-        </button>
-        <button class="bal-tab" id="balDashBtn" onclick="switchBalTab('dash')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
-          Dashboard
+          Salidas
         </button>
       </nav>
 
       <!-- ── SUB-PANE: INGRESOS ── -->
-      <div class="bal-pane active" id="balIng">
+      <div class="bal-pane" id="balIng">
         <div class="stats" id="ingStats">
           <div class="stat cg"><div class="stat-lbl">Total Ingresos</div><div class="stat-val" id="sIngTotal">—</div><div class="stat-delta">Todos los registros</div></div>
           <div class="stat cg"><div class="stat-lbl">Pagados</div><div class="stat-val" id="sIngPag">—</div><div class="stat-delta" id="sIngPagMonto">—</div></div>
@@ -871,7 +881,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
 
       <!-- ── SUB-PANE: DASHBOARD ── -->
-      <div class="bal-pane" id="balDash">
+      <div class="bal-pane active" id="balDash">
         <!-- KPIs -->
         <div class="dash-kpi-grid" id="dashKpis">
           <div class="stat cg"><div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dKpiIng">—</div><div class="stat-delta">Pagados</div></div>
@@ -1573,6 +1583,13 @@ window.onload = () => {
    la página manualmente. */
 const AUTO_REFRESH_MS = 25000;
 let autoRefreshTimer = null;
+// Ventana de gracia: cuando se edita un campo inline de Facturas (estatus, método,
+// notas) no se vuelve a recargar todo desde Sheets sino hasta pasados estos ms,
+// para evitar que el auto-refresh "revierta" visualmente un cambio recién guardado
+// si la lectura llega antes de que la escritura se propague del todo en Sheets.
+const FAC_EDIT_GRACE_MS = 20000;
+let facEditingUntil = 0;
+function markFacEdited(){ facEditingUntil = Date.now() + FAC_EDIT_GRACE_MS; }
 function startAutoRefresh(){
   if(autoRefreshTimer) clearInterval(autoRefreshTimer);
   autoRefreshTimer = setInterval(async ()=>{
@@ -1583,6 +1600,8 @@ function startAutoRefresh(){
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
     const otherCaptureModals = ['addClienteModal','addContactoModal','newArticuloModal','facUploadModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
+    // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
+    if(Date.now() < facEditingUntil) return;
     try{
       await loadAll();
       flashSyncIndicator();
@@ -1623,6 +1642,7 @@ function handleAuthClick() {
   if (ST.token) {
     google.accounts.oauth2.revoke(ST.token, ()=>{});
     ST.token = null; ST.usuario = null;
+    if(tokenExpiryTimer) clearTimeout(tokenExpiryTimer);
     setGoogleUI(false);
     toast('inf', 'Sesión de Google desconectada.');
     return;
@@ -1649,6 +1669,7 @@ function handleAuthClick() {
       ST.token = resp.access_token;
       gapi.client.setToken({ access_token: ST.token });
       document.getElementById('oauthHint').style.display = 'none';
+      scheduleTokenExpiryWarning(resp.expires_in);
 
       // Get user info
       try {
@@ -1687,9 +1708,56 @@ function setGoogleUI(connected) {
 
 /* login() removed — auth now via Google button in topbar */
 
+/* ─── REQUIERE CONEXIÓN A GOOGLE ───
+   Punto único de verificación: cualquier acción que vaya a escribir en Sheets/Drive
+   debe llamar a esto primero. Si no hay sesión, avisa y NO abre el formulario,
+   para evitar que la persona llene campos que luego no podrá guardar. */
+function requireAuth(){
+  if(!ST.token){
+    toast('err','⚠️ Conéctate con Google primero (botón arriba) para poder editar y guardar cambios.');
+    return false;
+  }
+  return true;
+}
+
+/* ─── DETECCIÓN AUTOMÁTICA DE DESCONEXIÓN DE GOOGLE ───
+   1) Se programa un aviso justo cuando el token de acceso expira (Google indica
+      "expires_in" en segundos al conectar).
+   2) Como respaldo, si cualquier llamada a Sheets/Drive regresa 401 (token inválido
+      o revocado desde fuera de la app), se detecta y se cierra sesión también. */
+let tokenExpiryTimer = null;
+function scheduleTokenExpiryWarning(expiresInSec){
+  if(tokenExpiryTimer) clearTimeout(tokenExpiryTimer);
+  if(!expiresInSec) return;
+  // Avisamos un poco antes de que expire de verdad (30s de margen)
+  const ms = Math.max(5000, (expiresInSec*1000) - 30000);
+  tokenExpiryTimer = setTimeout(()=>{ handleGoogleDisconnected('Tu sesión de Google expiró. Conéctate de nuevo para seguir editando.'); }, ms);
+}
+function handleGoogleDisconnected(msg){
+  if(!ST.token) return; // ya estaba desconectado
+  ST.token = null; ST.usuario = null; ST.nombre = null;
+  if(tokenExpiryTimer) clearTimeout(tokenExpiryTimer);
+  setGoogleUI(false);
+  toast('err', msg || 'Se cerró tu sesión de Google. Conéctate de nuevo para poder editar.');
+}
+/* Envuelve cualquier llamada a la API de Google: si detecta error 401 (token
+   inválido/expirado/revocado), cierra sesión automáticamente y avisa. */
+async function withGoogleAuth(promise){
+  try{
+    return await promise;
+  }catch(e){
+    const status = e?.status || e?.result?.error?.code;
+    if(status===401){
+      handleGoogleDisconnected('Se perdió la conexión con Google (sesión expirada o revocada). Conéctate de nuevo.');
+    }
+    throw e;
+  }
+}
+
 function doLogout() {
   if (ST.token) google.accounts.oauth2.revoke(ST.token, ()=>{});
   ST.token = null; ST.usuario = null; ST.nombre = null;
+  if(tokenExpiryTimer) clearTimeout(tokenExpiryTimer);
   setGoogleUI(false);
   // Clear data
   ST.cotizaciones=[]; ST.filtered=[];
@@ -1740,7 +1808,7 @@ async function loadAll() {
     }));
 
     /* Oc_Client — cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo (PDF en base64), I=ID_Cotizacion (vínculo, agregado) */
-    ST.ocAll = (ocR||[]).filter(r=>r[0]).map((r,i)=>({
+    ST.ocAll = (ocR||[]).map((r,i)=>({
       _row:     i+2,
       id:       r[0]||'',
       numero:   r[1]||'',
@@ -1753,12 +1821,12 @@ async function loadAll() {
       id_cot:   r[8]||'',          // legacy: primer id (compat hacia atrás)
       cotIds:   parseIds(r[8]),    // vínculo(s) a Cotizaciones.id — ahora soporta varias
       obs:      '',
-    }));
+    })).filter(o=>o.id);
 
     /* Facturas — cols: A=ID, B=Folio, C=Cliente(RFC), D=Fecha, E=Concepto,
        F=Monto, G=Metodo, H=Estatus, I=Notas, J=OC, K=ID_Ingreso,
        L=Subida_efacto, M=Fecha_reg, N=PDF_link/b64, O=Folio_Num, P=XML */
-    ST.facturas = (facR||[]).filter(r=>r[0]).map((r,i)=>({
+    ST.facturas = (facR||[]).map((r,i)=>({
       _row:       i+2,
       id:         r[0]||'',
       folio:      r[1]||'',
@@ -1774,14 +1842,14 @@ async function loadAll() {
       id_ingreso: r[10]||'',         // K = ID del ingreso en Balance (si ya se registró)
       pdfB64:     r[13]||'',
       xmlContent: r[15]||'',
-    }));
+    })).filter(f=>f.id);
     applyFacFilter();
     updateFacStats();
 
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
        G=ItemsJSON, H=PDF, I=Descripcion, J=Notas, K=Creacion,
        L=ID_Usr, M=ID_Con, N=Vigencia, O=Estatus, P=OC */
-    ST.cotizaciones = (cotR||[]).filter(r=>r[0]).map((r,i)=>{
+    ST.cotizaciones = (cotR||[]).map((r,i)=>{
       let itemsArr = [];
       try { if(r[6]) itemsArr = JSON.parse(r[6]); } catch(e){}
       return {
@@ -1792,14 +1860,14 @@ async function loadAll() {
         desc: r[8]||'', notas: r[9]||'', id_usr: r[11]||'',
         id_con: r[12]||'', vigencia: r[13]||'', estatus: r[14]||'Pendiente',
       };
-    });
+    }).filter(c=>c.id);
 
     updateStats();
     applyFilter();
     populateClientes();
     renderOCClienteTable();
     // Balance
-    ST.balance = (balR||[]).filter(r=>r[0]).map((r,i)=>({
+    ST.balance = (balR||[]).map((r,i)=>({
       _row:       i+2,
       id:         r[0]||'',
       fecha:      r[1]||'',
@@ -1819,7 +1887,7 @@ async function loadAll() {
       obs:        r[15]||'',
       pdf:        r[16]||'',
       foto:       r[17]||'',
-    }));
+    })).filter(b=>b.id);
     applyIngFilter();
     applyGasFilter();
     updateIngStats();
@@ -1836,25 +1904,27 @@ async function loadAll() {
 
 /* ─── SHEETS HELPERS ─── */
 function sheetsGet(range) {
-  return gapi.client.sheets.spreadsheets.values.get({ spreadsheetId:SHEET_ID, range })
-    .then(r => r.result.values || []);
+  return withGoogleAuth(
+    gapi.client.sheets.spreadsheets.values.get({ spreadsheetId:SHEET_ID, range })
+      .then(r => r.result.values || [])
+  );
 }
 function sheetsAppend(range, values) {
-  return gapi.client.sheets.spreadsheets.values.append({
+  return withGoogleAuth(gapi.client.sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID, range,
     valueInputOption: 'USER_ENTERED', insertDataOption: 'INSERT_ROWS',
     resource: { values }
-  });
+  }));
 }
 function sheetsUpdate(range, values) {
-  return gapi.client.sheets.spreadsheets.values.update({
+  return withGoogleAuth(gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID, range,
     valueInputOption: 'USER_ENTERED',
     resource: { range, majorDimension:'ROWS', values }
-  });
+  }));
 }
 function sheetsClear(range) {
-  return gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId:SHEET_ID, range });
+  return withGoogleAuth(gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId:SHEET_ID, range }));
 }
 
 /* ─── STATS ─── */
@@ -2148,6 +2218,7 @@ function calcTotals() {
 
 /* ─── OPEN FORM ─── */
 function abrirNueva() {
+  if(!requireAuth()) return;
   ST.editId=null; ST.editRow=null;
   ST.formDirty=false;
   ST.items=[{ desc:'', cant:1, unidad:'', precio:0, imp:0 }];
@@ -2169,6 +2240,7 @@ function abrirNueva() {
 }
 
 function openEdit(id,rowNum) {
+  if(!requireAuth()) return;
   const r=ST.cotizaciones.find(c=>c.id===id);
   if(!r) return;
   ST.editId=id; ST.editRow=rowNum;
@@ -2270,7 +2342,7 @@ async function guardarCot() {
 }
 
 /* ─── DELETE ─── */
-function openDel(id,row){ ST.delId=id; ST.delRow=row; document.getElementById('delTarget').textContent=id; document.getElementById('delModal').classList.add('open'); }
+function openDel(id,row){ if(!requireAuth()) return; ST.delId=id; ST.delRow=row; document.getElementById('delTarget').textContent=id; document.getElementById('delModal').classList.add('open'); }
 function closeDel(){ document.getElementById('delModal').classList.remove('open'); ST.delId=null; ST.delRow=null; }
 async function confirmDel(){
   if(!ST.delRow) return;
@@ -2719,9 +2791,12 @@ function renderFacTable(){
 
 async function changeFacEstatus(row,val){
   const f=ST.facturas.find(x=>x._row===row); if(!f) return;
+  if(!requireAuth()) { renderFacTableFull(); return; }
+  const prev=f.estatus;
   try{
     await sheetsUpdate(`Facturas!H${row}`,[[val]]);
     f.estatus=val;
+    markFacEdited();
     updateFacStats();
     toast('ok','Estatus actualizado.');
     // Prompt to create ingreso if marked as Pagado and not yet linked
@@ -2729,18 +2804,22 @@ async function changeFacEstatus(row,val){
       setTimeout(()=>promptCrearIngreso(f), 400);
     }
   }
-  catch(e){ toast('err','Error al actualizar estatus: '+(e.result?.error?.message||e.message)); }
+  catch(e){ f.estatus=prev; renderFacTableFull(); toast('err','Error al actualizar estatus: '+(e.result?.error?.message||e.message)); }
 }
 async function changeFacMetodo(row,val){
   const f=ST.facturas.find(x=>x._row===row); if(!f) return;
-  try{ await sheetsUpdate(`Facturas!G${row}`,[[val]]); f.metodo=val; toast('ok','Método de pago actualizado.'); }
-  catch(e){ toast('err','Error al actualizar método de pago: '+(e.result?.error?.message||e.message)); }
+  if(!requireAuth()) { renderFacTableFull(); return; }
+  const prev=f.metodo;
+  try{ await sheetsUpdate(`Facturas!G${row}`,[[val]]); f.metodo=val; markFacEdited(); toast('ok','Método de pago actualizado.'); }
+  catch(e){ f.metodo=prev; renderFacTableFull(); toast('err','Error al actualizar método de pago: '+(e.result?.error?.message||e.message)); }
 }
 async function changeFacNotas(row,tipo,fecha){
   const f=ST.facturas.find(x=>x._row===row); if(!f) return;
+  if(!requireAuth()) { renderFacTableFull(); return; }
   const val=buildNotasEstado(tipo,fecha);
-  try{ await sheetsUpdate(`Facturas!I${row}`,[[val]]); f.notas=val; toast('ok','Notas (EPC/PPP) actualizadas.'); }
-  catch(e){ toast('err','Error al actualizar notas: '+(e.result?.error?.message||e.message)); }
+  const prev=f.notas;
+  try{ await sheetsUpdate(`Facturas!I${row}`,[[val]]); f.notas=val; markFacEdited(); toast('ok','Notas (EPC/PPP) actualizadas.'); }
+  catch(e){ f.notas=prev; renderFacTableFull(); toast('err','Error al actualizar notas: '+(e.result?.error?.message||e.message)); }
 }
 
 function renderFacPagi(){
@@ -2779,6 +2858,7 @@ function updateFacStats(){
 
 /* ─── SUBIR FACTURA (PDF + XML) ─── */
 function openFacUpload(){
+  if(!requireAuth()) return;
   document.getElementById('facXmlFile').value='';
   document.getElementById('facPdfFile').value='';
   document.getElementById('facExtractPreview').style.display='none';
@@ -2863,6 +2943,7 @@ function clearFacOCLink(){
 /* ── Vínculo rápido desde la tabla de Facturas ya existentes ── */
 let facOcQuickTargetId=null;
 function openFacOCLinkInline(facId){
+  if(!requireAuth()) return;
   facOcQuickTargetId=facId;
   document.getElementById('facOcQuickSearch').value='';
   document.getElementById('facOcQuickDropdown').style.display='none';
@@ -2901,6 +2982,7 @@ function filterOCForFacQuick(q){
   drop.style.display='block';
 }
 async function confirmFacOCQuickLink(ocId){
+  if(!requireAuth()) return;
   const fac=ST.facturas.find(f=>f.id===facOcQuickTargetId);
   const oc=ST.ocAll.find(o=>o.id===ocId);
   if(!fac||!oc) return;
@@ -2912,10 +2994,13 @@ async function confirmFacOCQuickLink(ocId){
       oc.estatus='Facturado';
       await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]);
     }
-    document.getElementById('facOcLinkModal').classList.remove('open');
+    // No cerramos el modal: una factura puede venir de varias OC juntas,
+    // así que dejamos seguir buscando y vinculando más sin tener que reabrir.
+    document.getElementById('facOcQuickSearch').value='';
+    filterOCForFacQuick('');
     applyFacFilter();
     renderOCClienteTable();
-    toast('ok',`Factura vinculada a OC ${oc.numero}.`);
+    toast('ok',`Factura vinculada a OC ${oc.numero}. Puedes vincular otra OC o cerrar.`);
   }catch(e){ toast('err','Error al vincular: '+(e.result?.error?.message||e.message)); }
 }
 
@@ -2988,7 +3073,7 @@ function openRelacionPanel(origenTipo, origenId){
         </div>
       </div>`;
       html+=`<div style="text-align:center;color:var(--text3);font-size:16px">↓</div>`;
-      // ── Eslabón 3: Factura(s) de esta OC ──
+      // ── Eslabón 3: Factura(s) de esta OC (pueden ser varias: a veces una OC se factura en partes) ──
       const facs=facsByOC[oc.id]||[];
       if(facs.length){
         facs.forEach(fac=>{
@@ -3006,6 +3091,10 @@ function openRelacionPanel(origenTipo, origenId){
             </div>
           </div>`;
         });
+        // Siempre se puede vincular otra factura más (una OC puede llegar a facturarse en varias partes)
+        html+=`<div style="text-align:center;margin-top:-2px">
+          <button class="btn btn-ghost btn-sm" onclick="openFacLinkForOC('${esc(oc.id)}')">+ Vincular otra factura a esta OC</button>
+        </div>`;
       } else {
         html+=`<div style="border:1px dashed var(--border2);border-radius:var(--r8);padding:12px;text-align:center;color:var(--text3);font-size:12px">
           Esta OC todavía no tiene factura vinculada.
@@ -3037,6 +3126,7 @@ function openAddOCForCot(cotId){
 /* Vincular una factura YA EXISTENTE a una OC fija (flujo inverso, desde el panel de relación) */
 let facLinkForOCTarget=null;
 function openFacLinkForOC(ocId){
+  if(!requireAuth()) return;
   facLinkForOCTarget=ocId;
   document.getElementById('relPanelModal').classList.remove('open');
   document.getElementById('facLinkForOCSearch').value='';
@@ -3079,6 +3169,7 @@ document.addEventListener('click', e=>{
   if(drop && inp && !inp.contains(e.target) && !drop.contains(e.target)) drop.style.display='none';
 });
 async function confirmFacLinkForOC(facId){
+  if(!requireAuth()) return;
   const fac=ST.facturas.find(f=>f.id===facId);
   const oc=ST.ocAll.find(o=>o.id===facLinkForOCTarget);
   if(!fac||!oc) return;
@@ -3090,11 +3181,13 @@ async function confirmFacLinkForOC(facId){
       oc.estatus='Facturado';
       await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]);
     }
-    document.getElementById('facLinkForOCModal').classList.remove('open');
+    // Dejamos el modal abierto: a veces una OC llega a facturarse en varias facturas distintas.
+    document.getElementById('facLinkForOCSearch').value='';
+    filterFacForOCLink('');
     applyFacFilter();
     renderOCClienteTable();
     renderTable();
-    toast('ok',`Factura ${fac.folio} vinculada a OC ${oc.numero}.`);
+    toast('ok',`Factura ${fac.folio} vinculada a OC ${oc.numero}. Puedes vincular otra factura o cerrar.`);
   }catch(e){ toast('err','Error al vincular: '+(e.result?.error?.message||e.message)); }
 }
 
@@ -3508,6 +3601,7 @@ function toast(type,msg){
 
 /* ─── ADD CLIENT ─── */
 function openAddCliente() {
+  if(!requireAuth()) return;
   ['ncRFC','ncNombre','ncTel','ncEmail'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('addClienteModal').classList.add('open');
 }
@@ -3535,6 +3629,7 @@ async function saveNewCliente() {
 
 /* ─── ADD CONTACT ─── */
 function openAddContacto() {
+  if(!requireAuth()) return;
   const cliId  = document.getElementById('fCliente').value;
   const cliNom = cliId ? (ST.clientes[cliId]?.nombre||cliId) : '— (selecciona un cliente primero) —';
   ['ncoId','ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
@@ -3621,11 +3716,11 @@ function toggleTheme(){
 
 /* ─── SWITCH TAB (única definición) ─── */
 function switchTab(tab){
-  const TABS = { cot:{pane:'tabCot', btn:'tabCotBtn'}, fac:{pane:'tabFac', btn:'tabFacBtn'}, oc:{pane:'tabOC', btn:'tabOCBtn'}, bal:{pane:'tabBal', btn:'tabBalBtn'} };
+  const TABS = { cot:{pane:'tabCot', btn:'tabCotBtn'}, fac:{pane:'tabFac', btn:'tabFacBtn'}, oc:{pane:'tabOC', btn:'tabOCBtn'}, bal:{pane:'tabBal', btn:null} };
 
   Object.values(TABS).forEach(({pane, btn}) => {
     const p = document.getElementById(pane);
-    const b = document.getElementById(btn);
+    const b = btn && document.getElementById(btn);
     if(p) p.classList.remove('active');
     if(b) b.classList.remove('active');
   });
@@ -3633,11 +3728,12 @@ function switchTab(tab){
   const target = TABS[tab];
   if(!target){ console.error('switchTab: unknown tab', tab); return; }
   const pane = document.getElementById(target.pane);
-  const btn  = document.getElementById(target.btn);
+  const btn  = target.btn && document.getElementById(target.btn);
   if(pane) pane.classList.add('active');
   if(btn)  btn.classList.add('active');
 
   ST.currentTab = tab;
+  if(tab!=='bal') ST.currentComercialTab = tab;
 
   const addTxt = document.getElementById('mainAddTxt');
   if(addTxt){
@@ -3645,9 +3741,27 @@ function switchTab(tab){
     addTxt.textContent = labels[tab] || '+ Agregar';
   }
 
+  // Breadcrumb (Comercial > Cotizaciones / Facturas / OC Clientes)
+  const bcPage = document.getElementById('bcPage');
+  if(bcPage && tab!=='bal'){
+    const pageLabels = {cot:'Cotizaciones', fac:'Facturas', oc:'OC Clientes'};
+    bcPage.textContent = pageLabels[tab] || '';
+  }
+
   if(tab==='oc') renderOCClienteTable();
   if(tab==='fac') renderFacTableFull();
-  if(tab==='bal'){ applyIngFilter(); applyGasFilter(); setTimeout(renderDashboard,100); }
+  if(tab==='bal'){ switchBalTab(ST.currentBalTab||'dash'); applyIngFilter(); applyGasFilter(); }
+
+  // Mantener sincronizada la sección superior (Comercial / Balance) sin importar
+  // desde dónde se llamó a switchTab (búsqueda global, panel de relación, etc.)
+  const isComercial = tab!=='bal';
+  document.getElementById('navComercialBtn')?.classList.toggle('active', isComercial);
+  document.getElementById('navBalanceBtn')?.classList.toggle('active', !isComercial);
+  const subNav=document.getElementById('comercialSubNav');
+  if(subNav) subNav.style.display = isComercial ? 'flex' : 'none';
+  const bcSection=document.getElementById('bcSection');
+  if(bcSection) bcSection.textContent = isComercial ? 'Comercial' : 'Balance';
+  ST.currentSection = isComercial ? 'comercial' : 'balance';
 }
 
 function mainAdd(){
@@ -3655,10 +3769,18 @@ function mainAdd(){
   if(tab==='cot') abrirNueva();
   else if(tab==='fac') openFacUpload();
   else if(tab==='oc') openNewOCCliente();
-  else if(tab==='bal') openBalModal(ST.currentBalTab||'ing');
+  else if(tab==='bal') openBalModal(ST.currentBalTab==='gas'?'gas':'ing');
 }
 
-/* ─── BALANCE SUB-TAB SWITCH ─── */
+/* ─── SECCIÓN: COMERCIAL ↔ BALANCE ───
+   "Comercial" agrupa Cotizaciones, Facturas y OC Clientes.
+   "Balance" es su propia sección con Dashboard, Ingresos y Salidas. */
+function switchSection(section){
+  if(section==='comercial') switchTab(ST.currentComercialTab || 'cot');
+  else switchTab('bal');
+}
+
+/* ─── BALANCE SUB-TAB SWITCH (orden: Dashboard, Ingresos, Salidas) ─── */
 function switchBalTab(sub){
   ['ing','gas','dash'].forEach(s=>{
     document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1))?.classList.remove('active');
@@ -3669,6 +3791,8 @@ function switchBalTab(sub){
   ST.currentBalTab = sub;
   const addTxt=document.getElementById('mainAddTxt');
   if(addTxt) addTxt.textContent = sub==='gas'?'+ Gasto':'+ Ingreso';
+  const bcPage=document.getElementById('bcPage');
+  if(bcPage) bcPage.textContent = {dash:'Dashboard', ing:'Ingresos', gas:'Salidas'}[sub] || 'Balance';
   if(sub==='dash') setTimeout(renderDashboard,80);
 }
 
@@ -3832,6 +3956,7 @@ function goGasPage(p){ const pages=Math.ceil(ST.gasFiltered.length/20)||1; ST.ga
 
 /* ─── MODAL BALANCE ─── */
 function openBalModal(tipo, prefill){
+  if(!requireAuth()) return;
   ST.balEditId=null;
   ST.balFacRef=prefill?.facRef||null;
   const isIng=(tipo==='ing'||tipo==='Ingreso');
@@ -3864,6 +3989,7 @@ function openBalModal(tipo, prefill){
 }
 
 function openBalEdit(id){
+  if(!requireAuth()) return;
   const b=ST.balance.find(x=>x.id===id); if(!b) return;
   ST.balEditId=id;
   ST.balFacRef=null;
@@ -4079,6 +4205,7 @@ function addCustomUnidad(val){
 
 /* ─── NUEVO ARTÍCULO ─── */
 function openNewArticulo(){
+  if(!requireAuth()) return;
   ['naName','naPrice','naUnit','naDesc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('naImpuesto').value='0.00%';
   document.getElementById('newArticuloModal').classList.add('open');
@@ -4108,6 +4235,7 @@ async function saveNewArticulo(){
 
 /* ─── OC MODAL (new full version) ─── */
 function openAddOC(){
+  if(!requireAuth()) return;
   // Called from cotización form: pre-vincula automáticamente la cotización abierta
   ST.ocFormDirty=false;
   document.getElementById('ocModalTitle').textContent='Agregar OC a esta Cotización';
@@ -4131,6 +4259,7 @@ function openAddOC(){
 }
 
 function openNewOCCliente(){
+  if(!requireAuth()) return;
   // Called from OC Clientes tab
   ST.ocFormDirty=false;
   document.getElementById('ocModalTitle').textContent='Nueva Orden de Compra';
@@ -4479,6 +4608,7 @@ function renderOCClienteTable(){
 }
 
 function editOCCliente(id){
+  if(!requireAuth()) return;
   const r=ST.ocAll.find(o=>o.id===id);
   if(!r) return;
   ST.ocFormDirty=false;
