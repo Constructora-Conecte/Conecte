@@ -682,7 +682,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
                 <th>Concepto</th>
                 <th style="text-align:right">Costo</th>
                 <th>Estatus</th>
-                <th>Días</th>
+                <th>Relación</th>
                 <th>Archivo</th>
                 <th></th>
               </tr>
@@ -769,7 +769,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="card-header" style="padding:10px 14px">
           <span class="card-title" style="font-size:12px">Órdenes de Compra Asociadas</span>
           <span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="ocCount">0 OC</span>
-          <button type="button" class="btn btn-ghost btn-sm" id="addOCBtn" onclick="openAddOC()" style="margin-left:auto;color:var(--red);border-color:rgba(229,62,62,.3)" disabled>
+          <button type="button" class="btn btn-ghost btn-sm" id="verRelacionBtn" onclick="openRelacionPanel('cot',ST.editId)" style="margin-left:auto" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
+            Ver relación
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm" id="addOCBtn" onclick="openAddOC()" style="color:var(--red);border-color:rgba(229,62,62,.3)" disabled>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
             Agregar OC
           </button>
@@ -966,13 +970,28 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <label class="form-label">Costo</label>
           <input type="number" class="form-input" id="ocMonto" placeholder="0.00" min="0" step="0.01">
         </div>
+        <div class="form-group" style="grid-column:1/-1;position:relative">
+          <label class="form-label">Vincular con Cotización <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional)</span></label>
+          <div style="display:flex;gap:6px">
+            <input type="text" class="form-input" id="ocCotSearch" placeholder="Buscar por folio, cliente o descripción…" oninput="filterCotForOC(this.value)" onfocus="filterCotForOC(this.value)" autocomplete="off" style="flex:1">
+            <button type="button" class="btn btn-ghost btn-sm" id="ocCotClearBtn" onclick="clearOCCotLink()" style="display:none" title="Quitar vínculo">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+            </button>
+          </div>
+          <div id="ocCotDropdown" class="art-dropdown" style="display:none"></div>
+          <div id="ocCotLinkedTag" style="display:none;margin-top:6px;padding:7px 10px;background:var(--blue-p);border-radius:var(--r4);font-size:11.5px;color:var(--blue)"></div>
+          <input type="hidden" id="ocCotId" value="">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Vinculada a Factura</label>
+          <div id="ocFacLinkedTag" style="padding:7px 10px;background:var(--bg3);border-radius:var(--r4);font-size:11.5px;color:var(--text3)">Sin factura vinculada todavía</div>
+        </div>
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Archivo (PDF de la OC)</label>
           <input type="file" class="form-input" id="ocPdfFile" accept=".pdf,application/pdf">
           <span style="font-size:10.5px;color:var(--text3)">Se guarda como base64 en la hoja. Podrás verlo desde la tabla de OC.</span>
         </div>
       </div>
-      <input type="hidden" id="ocCotId" value="">
       <input type="hidden" id="ocObs" value="">
       <input type="hidden" id="ocEditId">
       <input type="hidden" id="ocEditRow">
@@ -1003,6 +1022,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <input type="file" class="form-input" id="facPdfFile" accept=".pdf,application/pdf">
       </div>
       <div id="facExtractPreview" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);padding:10px;font-size:11.5px;color:var(--text2);line-height:1.6"></div>
+      <div class="form-group" style="position:relative">
+        <label class="form-label">Vincular con Orden de Compra <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional)</span></label>
+        <div style="display:flex;gap:6px">
+          <input type="text" class="form-input" id="facOcSearch" placeholder="Buscar por folio de OC o cliente…" oninput="filterOCForFac(this.value)" onfocus="filterOCForFac(this.value)" autocomplete="off" style="flex:1">
+          <button type="button" class="btn btn-ghost btn-sm" id="facOcClearBtn" onclick="clearFacOCLink()" style="display:none" title="Quitar vínculo">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div id="facOcDropdown" class="art-dropdown" style="display:none"></div>
+        <div id="facOcLinkedTag" style="display:none;margin-top:6px;padding:7px 10px;background:var(--blue-p);border-radius:var(--r4);font-size:11.5px;color:var(--blue)"></div>
+        <input type="hidden" id="facOcId" value="">
+      </div>
     </div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('facUploadModal').classList.remove('open')">Cancelar</button>
@@ -1081,6 +1112,47 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pdfViewerModal').classList.remove('open')">Cerrar</button>
     </div>
     <iframe id="pdfViewerFrame" style="flex:1;border:none;min-height:600px" src="about:blank"></iframe>
+  </div>
+</div>
+
+<!-- ══ VINCULAR FACTURA ↔ OC (rápido, desde la tabla) ══ -->
+<div class="modal-bg" id="facOcLinkModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-title">Vincular factura con Orden de Compra</div>
+    <div style="margin-top:14px;margin-bottom:18px;position:relative">
+      <label class="form-label">Buscar OC por folio, cliente o concepto</label>
+      <input type="text" class="form-input" id="facOcQuickSearch" placeholder="Ej. 4509900932, Bachoco…" oninput="filterOCForFacQuick(this.value)" onfocus="filterOCForFacQuick(this.value)" autocomplete="off">
+      <div id="facOcQuickDropdown" class="art-dropdown" style="display:none;top:62px"></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('facOcLinkModal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PANEL DE RELACIÓN: Cotización ↔ OC ↔ Factura ══ -->
+<div class="modal-bg" id="relPanelModal">
+  <div class="modal" style="width:560px">
+    <div class="modal-title" id="relPanelTitle">Relación del registro</div>
+    <div id="relPanelBody" style="margin-top:16px;margin-bottom:18px;display:flex;flex-direction:column;gap:10px"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('relPanelModal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VINCULAR FACTURA EXISTENTE A UNA OC ESPECÍFICA (desde el panel de relación) ══ -->
+<div class="modal-bg" id="facLinkForOCModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-title">Vincular factura existente</div>
+    <div style="margin-top:14px;margin-bottom:18px;position:relative">
+      <label class="form-label">Buscar factura por folio o cliente</label>
+      <input type="text" class="form-input" id="facLinkForOCSearch" placeholder="Ej. CONE 760, Bachoco…" oninput="filterFacForOCLink(this.value)" onfocus="filterFacForOCLink(this.value)" autocomplete="off">
+      <div id="facLinkForOCDropdown" class="art-dropdown" style="display:none;top:62px"></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('facLinkForOCModal').classList.remove('open')">Cerrar</button>
+    </div>
   </div>
 </div>
 
@@ -1298,7 +1370,7 @@ async function loadAll() {
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
       sheetsGet('Articulos!A2:F'),
-      sheetsGet('Oc_Client!A2:H'),   // 8 cols reales
+      sheetsGet('Oc_Client!A2:I'),   // 9 cols: + I=ID_Cotizacion (vínculo)
       sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
     ]);
 
@@ -1327,7 +1399,7 @@ async function loadAll() {
       unidad: r[5]||'pza',
     }));
 
-    /* Oc_Client — cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo (PDF en base64) */
+    /* Oc_Client — cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo (PDF en base64), I=ID_Cotizacion (vínculo, agregado) */
     ST.ocAll = (ocR||[]).filter(r=>r[0]).map((r,i)=>({
       _row:     i+2,
       id:       r[0]||'',
@@ -1338,7 +1410,7 @@ async function loadAll() {
       fecha:    r[5]||'',
       estatus:  r[6]||'Pendiente',
       pdfB64:   r[7]||'',
-      id_cot:   '',   // no existe vínculo directo a cotización en esta hoja
+      id_cot:   r[8]||'',   // vínculo a Cotizaciones.id
       obs:      '',
     }));
 
@@ -1498,7 +1570,17 @@ function renderTable() {
       <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
       <td><span class="pill ${pClass}">${esc(r.estatus)}</span></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
-      <td style="font-size:11.5px;color:var(--text3)">${(() => { const ocs = ST.ocAll.filter(o=>o.id_cot===r.id); return ocs.length ? `<span style="font-family:var(--mono);color:var(--blue)">${ocs.map(o=>esc(o.numero)).join(', ')}</span>` : '<span style="color:var(--text3)">—</span>'; })()}</td>
+      <td style="font-size:11.5px;color:var(--text3)">${(() => {
+        const ocs = ST.ocAll.filter(o=>o.id_cot===r.id);
+        if(!ocs.length) return `<button type="button" class="btn-icon" title="Vincular OC" onclick="openRelacionPanel('cot','${esc(r.id)}')" style="color:var(--text3)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
+        </button>`;
+        const facCount = ocs.filter(o=>ST.facturas.some(f=>f.oc===o.id)).length;
+        return `<button type="button" style="background:none;border:none;cursor:pointer;text-align:left;padding:0" onclick="openRelacionPanel('cot','${esc(r.id)}')" title="Ver relación completa">
+          <span style="font-family:var(--mono);color:var(--blue)">${ocs.map(o=>esc(o.numero)).join(', ')}</span>
+          ${facCount?`<span style="color:var(--green);margin-left:4px">🧾×${facCount}</span>`:''}
+        </button>`;
+      })()}</td>
       <td>
         <div class="row-acts">
           <button class="btn-icon" title="Editar" onclick="openEdit('${esc(r.id)}',${r._row})">
@@ -2294,8 +2376,300 @@ function openFacUpload(){
   document.getElementById('facXmlFile').value='';
   document.getElementById('facPdfFile').value='';
   document.getElementById('facExtractPreview').style.display='none';
+  clearFacOCLink();
   ST.facExtract=null;
   document.getElementById('facUploadModal').classList.add('open');
+}
+
+/* ── Vínculo Factura ↔ OC: buscador tipo "partida" (muestra OC_folio, guarda Oc_id) ── */
+function filterOCForFac(q){
+  const drop=document.getElementById('facOcDropdown');
+  const query=(q||'').toLowerCase().trim();
+  let list=ST.ocAll;
+  if(query){
+    list=list.filter(o=>{
+      const cli=ST.clientes[o.id_cli]||{};
+      return (o.numero||'').toLowerCase().includes(query) ||
+        (cli.nombre||'').toLowerCase().includes(query) ||
+        (o.concepto||'').toLowerCase().includes(query);
+    });
+  }
+  list=list.slice(0,30);
+  if(!list.length){
+    drop.innerHTML='<div class="art-no-results">Sin órdenes de compra que coincidan</div>';
+  } else {
+    drop.innerHTML=list.map(o=>{
+      const cli=ST.clientes[o.id_cli]||{};
+      return `<div class="art-option" onclick="setFacOCLink('${esc(o.id)}')">
+        <div>
+          <div class="art-opt-name">${esc(o.numero)}</div>
+          <div class="art-opt-meta">${esc(cli.nombre||o.id_cli)} · ${esc((o.concepto||'').slice(0,40))}</div>
+        </div>
+        <span class="art-opt-price">${o.monto?fmtMXN(o.monto):'—'}</span>
+      </div>`;
+    }).join('');
+  }
+  drop.style.display='block';
+}
+document.addEventListener('click', e=>{
+  const drop=document.getElementById('facOcDropdown');
+  const inp=document.getElementById('facOcSearch');
+  if(drop && inp && !inp.contains(e.target) && !drop.contains(e.target)) drop.style.display='none';
+  const drop2=document.getElementById('facOcQuickDropdown');
+  const inp2=document.getElementById('facOcQuickSearch');
+  if(drop2 && inp2 && !inp2.contains(e.target) && !drop2.contains(e.target)) drop2.style.display='none';
+});
+function setFacOCLink(ocId){
+  const o=ST.ocAll.find(x=>x.id===ocId);
+  document.getElementById('facOcId').value=ocId;
+  document.getElementById('facOcSearch').value='';
+  document.getElementById('facOcDropdown').style.display='none';
+  const tag=document.getElementById('facOcLinkedTag');
+  if(o){
+    const cli=ST.clientes[o.id_cli]||{};
+    tag.innerHTML=`Vinculada a OC <b>${esc(o.numero)}</b> — ${esc(cli.nombre||o.id_cli)}`;
+  } else {
+    tag.innerHTML=`Vinculada a OC <b>${esc(ocId)}</b>`;
+  }
+  tag.style.display='block';
+  document.getElementById('facOcClearBtn').style.display='inline-flex';
+}
+function clearFacOCLink(){
+  document.getElementById('facOcId').value='';
+  document.getElementById('facOcSearch').value='';
+  document.getElementById('facOcDropdown').style.display='none';
+  document.getElementById('facOcLinkedTag').style.display='none';
+  document.getElementById('facOcClearBtn').style.display='none';
+}
+
+/* ── Vínculo rápido desde la tabla de Facturas ya existentes ── */
+let facOcQuickTargetId=null;
+function openFacOCLinkInline(facId){
+  facOcQuickTargetId=facId;
+  document.getElementById('facOcQuickSearch').value='';
+  document.getElementById('facOcQuickDropdown').style.display='none';
+  document.getElementById('facOcLinkModal').classList.add('open');
+  setTimeout(()=>document.getElementById('facOcQuickSearch').focus(),80);
+}
+function filterOCForFacQuick(q){
+  const drop=document.getElementById('facOcQuickDropdown');
+  const query=(q||'').toLowerCase().trim();
+  let list=ST.ocAll;
+  if(query){
+    list=list.filter(o=>{
+      const cli=ST.clientes[o.id_cli]||{};
+      return (o.numero||'').toLowerCase().includes(query) ||
+        (cli.nombre||'').toLowerCase().includes(query) ||
+        (o.concepto||'').toLowerCase().includes(query);
+    });
+  }
+  list=list.slice(0,30);
+  if(!list.length){
+    drop.innerHTML='<div class="art-no-results">Sin órdenes de compra que coincidan</div>';
+  } else {
+    drop.innerHTML=list.map(o=>{
+      const cli=ST.clientes[o.id_cli]||{};
+      return `<div class="art-option" onclick="confirmFacOCQuickLink('${esc(o.id)}')">
+        <div>
+          <div class="art-opt-name">${esc(o.numero)}</div>
+          <div class="art-opt-meta">${esc(cli.nombre||o.id_cli)} · ${esc((o.concepto||'').slice(0,40))}</div>
+        </div>
+        <span class="art-opt-price">${o.monto?fmtMXN(o.monto):'—'}</span>
+      </div>`;
+    }).join('');
+  }
+  drop.style.display='block';
+}
+async function confirmFacOCQuickLink(ocId){
+  const fac=ST.facturas.find(f=>f.id===facOcQuickTargetId);
+  const oc=ST.ocAll.find(o=>o.id===ocId);
+  if(!fac||!oc) return;
+  try{
+    await sheetsUpdate(`Facturas!J${fac._row}`,[[ocId]]);
+    fac.oc=ocId;
+    if(oc.estatus!=='Facturado'){
+      oc.estatus='Facturado';
+      await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]);
+    }
+    document.getElementById('facOcLinkModal').classList.remove('open');
+    applyFacFilter();
+    renderOCClienteTable();
+    toast('ok',`Factura vinculada a OC ${oc.numero}.`);
+  }catch(e){ toast('err','Error al vincular: '+(e.result?.error?.message||e.message)); }
+}
+
+/* ════════════════ PANEL UNIVERSAL DE RELACIÓN ════════════════
+   Muestra la cadena Cotización → OC → Factura desde cualquiera de las 3 vistas,
+   con el estatus de cada eslabón y acciones para vincular lo que falte. */
+function openRelacionPanel(origenTipo, origenId){
+  const body=document.getElementById('relPanelBody');
+  const title=document.getElementById('relPanelTitle');
+
+  let cot=null, ocs=[], facsByOC={};
+  if(origenTipo==='cot'){
+    cot = ST.cotizaciones.find(c=>c.id===origenId);
+    ocs = ST.ocAll.filter(o=>o.id_cot===origenId);
+  } else if(origenTipo==='oc'){
+    const oc0 = ST.ocAll.find(o=>o.id===origenId);
+    ocs = oc0 ? [oc0] : [];
+    cot = oc0 && oc0.id_cot ? ST.cotizaciones.find(c=>c.id===oc0.id_cot) : null;
+  } else if(origenTipo==='fac'){
+    const fac0 = ST.facturas.find(f=>f.id===origenId);
+    const oc0 = fac0 ? ST.ocAll.find(o=>o.id===fac0.oc) : null;
+    ocs = oc0 ? [oc0] : [];
+    cot = oc0 && oc0.id_cot ? ST.cotizaciones.find(c=>c.id===oc0.id_cot) : null;
+  }
+  ocs.forEach(o=>{ facsByOC[o.id] = ST.facturas.filter(f=>f.oc===o.id); });
+
+  title.textContent = cot ? `Relación de ${cot.id}` : (ocs[0]?`Relación de OC ${ocs[0].numero}`:'Relación');
+
+  let html='';
+
+  // ── Eslabón 1: Cotización ──
+  if(cot){
+    const cli=ST.clientes[cot.id_cli]||{};
+    html+=`<div style="border:1px solid var(--border2);border-radius:var(--r8);padding:12px;background:var(--bg3)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase">Cotización</span>
+        <span class="pill ${pillClass(cot.estatus)}">${esc(cot.estatus)}</span>
+      </div>
+      <div style="font-family:var(--mono);font-weight:600;color:var(--white);font-size:13px">${esc(cot.id)}</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(cli.nombre||cot.id_cli)} · ${fmtMXN(cot.total)}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('relPanelModal').classList.remove('open');openEdit('${esc(cot.id)}',${cot._row})">Abrir cotización</button>
+    </div>`;
+  } else {
+    html+=`<div style="border:1px dashed var(--border2);border-radius:var(--r8);padding:12px;text-align:center;color:var(--text3);font-size:12px">
+      Sin cotización vinculada todavía.
+    </div>`;
+  }
+
+  html+=`<div style="text-align:center;color:var(--text3);font-size:16px">↓</div>`;
+
+  // ── Eslabón 2: OC(s) ──
+  if(ocs.length){
+    ocs.forEach(oc=>{
+      const cli=ST.clientes[oc.id_cli]||{};
+      const stClass={Pendiente:'pill-pend',Facturado:'pill-acep',Cancelado:'pill-rech'}[oc.estatus]||'pill-pend';
+      html+=`<div style="border:1px solid var(--border2);border-radius:var(--r8);padding:12px;background:var(--bg3)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase">Orden de Compra</span>
+          <span class="pill ${stClass}">${esc(oc.estatus)}</span>
+        </div>
+        <div style="font-family:var(--mono);font-weight:600;color:var(--white);font-size:13px">${esc(oc.numero)}</div>
+        <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(cli.nombre||oc.id_cli)} · ${oc.monto?fmtMXN(oc.monto):'—'}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('relPanelModal').classList.remove('open');editOCCliente('${esc(oc.id)}')">Abrir / Editar OC</button>
+          ${oc.pdfB64?`<button class="btn btn-ghost btn-sm" onclick="openPDFViewer('${esc(oc.id)}','OC: '+encodeURIComponent('${esc(oc.numero)}'))">Ver archivo</button>`:''}
+        </div>
+      </div>`;
+      html+=`<div style="text-align:center;color:var(--text3);font-size:16px">↓</div>`;
+      // ── Eslabón 3: Factura(s) de esta OC ──
+      const facs=facsByOC[oc.id]||[];
+      if(facs.length){
+        facs.forEach(fac=>{
+          const stClass2={Pagado:'pill-acep',Pendiente:'pill-pend',Cancelado:'pill-rech'}[fac.estatus]||'pill-pend';
+          html+=`<div style="border:1px solid var(--border2);border-radius:var(--r8);padding:12px;background:var(--bg3)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase">Factura</span>
+              <span class="pill ${stClass2}">${esc(fac.estatus)}</span>
+            </div>
+            <div style="font-family:var(--mono);font-weight:600;color:var(--white);font-size:13px">${esc(fac.folio)}</div>
+            <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${fmtMXN(fac.total)}</div>
+            <div style="display:flex;gap:6px;margin-top:8px">
+              ${fac.pdfB64?`<button class="btn btn-ghost btn-sm" onclick="openFacPDF('${esc(fac.id)}')">Ver PDF</button>`:''}
+              ${fac.xmlContent?`<button class="btn btn-ghost btn-sm" onclick="openFacXML('${esc(fac.id)}')">Ver XML</button>`:''}
+            </div>
+          </div>`;
+        });
+      } else {
+        html+=`<div style="border:1px dashed var(--border2);border-radius:var(--r8);padding:12px;text-align:center;color:var(--text3);font-size:12px">
+          Esta OC todavía no tiene factura vinculada.
+          <div style="margin-top:8px">
+            <button class="btn btn-red btn-sm" onclick="openFacLinkForOC('${esc(oc.id)}')">Vincular factura existente</button>
+          </div>
+        </div>`;
+      }
+    });
+  } else {
+    html+=`<div style="border:1px dashed var(--border2);border-radius:var(--r8);padding:12px;text-align:center;color:var(--text3);font-size:12px">
+      Sin Orden de Compra vinculada todavía.
+      ${cot?`<div style="margin-top:8px"><button class="btn btn-red btn-sm" onclick="document.getElementById('relPanelModal').classList.remove('open');openAddOCForCot('${esc(cot.id)}')">Buscar / crear OC</button></div>`:''}
+    </div>`;
+  }
+
+  body.innerHTML=html;
+  document.getElementById('relPanelModal').classList.add('open');
+}
+
+/* Abrir el modal de OC pre-vinculado a una cotización específica desde el panel de relación */
+function openAddOCForCot(cotId){
+  const prevEditId=ST.editId;
+  ST.editId=cotId; // truco temporal para que openAddOC tome el vínculo correcto
+  openAddOC();
+  ST.editId=prevEditId;
+}
+
+/* Vincular una factura YA EXISTENTE a una OC fija (flujo inverso, desde el panel de relación) */
+let facLinkForOCTarget=null;
+function openFacLinkForOC(ocId){
+  facLinkForOCTarget=ocId;
+  document.getElementById('relPanelModal').classList.remove('open');
+  document.getElementById('facLinkForOCSearch').value='';
+  document.getElementById('facLinkForOCDropdown').style.display='none';
+  document.getElementById('facLinkForOCModal').classList.add('open');
+  setTimeout(()=>document.getElementById('facLinkForOCSearch').focus(),80);
+}
+function filterFacForOCLink(q){
+  const drop=document.getElementById('facLinkForOCDropdown');
+  const query=(q||'').toLowerCase().trim();
+  let list=ST.facturas.filter(f=>!f.oc); // solo facturas sin OC vinculada todavía
+  if(query){
+    list=list.filter(f=>{
+      const cli=ST.clientes[f.id_cli]||{};
+      return (f.folio||'').toLowerCase().includes(query) ||
+        (cli.nombre||'').toLowerCase().includes(query) ||
+        (f.concepto||'').toLowerCase().includes(query);
+    });
+  }
+  list=list.slice(0,30);
+  if(!list.length){
+    drop.innerHTML='<div class="art-no-results">Sin facturas disponibles que coincidan</div>';
+  } else {
+    drop.innerHTML=list.map(f=>{
+      const cli=ST.clientes[f.id_cli]||{};
+      return `<div class="art-option" onclick="confirmFacLinkForOC('${esc(f.id)}')">
+        <div>
+          <div class="art-opt-name">${esc(f.folio)}</div>
+          <div class="art-opt-meta">${esc(cli.nombre||f.id_cli)} · ${esc((f.concepto||'').slice(0,40))}</div>
+        </div>
+        <span class="art-opt-price">${fmtMXN(f.total)}</span>
+      </div>`;
+    }).join('');
+  }
+  drop.style.display='block';
+}
+document.addEventListener('click', e=>{
+  const drop=document.getElementById('facLinkForOCDropdown');
+  const inp=document.getElementById('facLinkForOCSearch');
+  if(drop && inp && !inp.contains(e.target) && !drop.contains(e.target)) drop.style.display='none';
+});
+async function confirmFacLinkForOC(facId){
+  const fac=ST.facturas.find(f=>f.id===facId);
+  const oc=ST.ocAll.find(o=>o.id===facLinkForOCTarget);
+  if(!fac||!oc) return;
+  try{
+    await sheetsUpdate(`Facturas!J${fac._row}`,[[oc.id]]);
+    fac.oc=oc.id;
+    if(oc.estatus!=='Facturado'){
+      oc.estatus='Facturado';
+      await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]);
+    }
+    document.getElementById('facLinkForOCModal').classList.remove('open');
+    applyFacFilter();
+    renderOCClienteTable();
+    renderTable();
+    toast('ok',`Factura ${fac.folio} vinculada a OC ${oc.numero}.`);
+  }catch(e){ toast('err','Error al vincular: '+(e.result?.error?.message||e.message)); }
 }
 
 function onFacXmlSelected(input){
@@ -2368,28 +2742,47 @@ async function procesarFacturaUpload(){
   if(!xmlFile){ toast('err','Selecciona el archivo XML.'); return; }
   if(!pdfFile){ toast('err','Selecciona el archivo PDF.'); return; }
   if(!ST.facExtract){ toast('err','No se pudieron extraer datos del XML.'); return; }
+  const ocId = document.getElementById('facOcId').value.trim();
   const btn=document.getElementById('saveFacUploadBtn');
-  btn.disabled=true; btn.textContent='Subiendo…';
+  btn.disabled=true; btn.textContent='Procesando…';
   try{
-    const pdfLink = await driveUploadFile(pdfFile);
-    const xmlLink = await driveUploadFile(xmlFile);
     const ex = ST.facExtract;
-    const id = 'FAC-'+Date.now();
-    const row = [
-      id, ex.folio||id, ex.rfcCli||ex.cliente||'', ex.fecha, ex.concepto,
-      ex.total, '', 'Pendiente', '', '', '', '', todayISO(),
-      pdfLink+(xmlLink?' | XML: '+xmlLink:''), ex.folio||''
-    ];
-    await sheetsAppend('Facturas!A2:O', [row]);
-    ST.facturas.push({
-      _row: ST.facturas.length+2, id, folio: row[1], id_cli: row[2], fecha: ex.fecha,
-      concepto: ex.concepto, total: ex.total, metodo:'', estatus:'Pendiente', notas:'', oc:''
+    const xmlText = await xmlFile.text();
+    const pdfB64 = await new Promise((res,rej)=>{
+      const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej;
+      r.readAsDataURL(pdfFile);
     });
+    const id = 'FAC'+Date.now().toString(36).toUpperCase();
+    // Facturas cols reales: A=ID,B=Folio,C=Cliente(RFC),D=Fecha,E=Concepto,F=Monto,
+    // G=Metodo,H=Estatus,I=Notas,J=Orden_compra(Oc_id),K..M=(sin uso),N=PDF_B64,O=Folio_Num,P=XML
+    const row = [
+      id, ex.folio||id, ex.rfcCli||ex.cliente||'', sheetDate(ex.fecha), ex.concepto,
+      ex.total, '', 'Pendiente', '', ocId, '', '', sheetDate(todayISO()),
+      pdfB64, ex.folio||'', xmlText
+    ];
+    await sheetsAppend('Facturas!A2:P', [row]);
+    const newFac={
+      _row: ST.facturas.length+2, id, folio: row[1], id_cli: row[2], fecha: sheetDate(ex.fecha),
+      concepto: ex.concepto, total: ex.total, metodo:'', estatus:'Pendiente', notas:'',
+      oc: ocId, pdfB64, xmlContent: xmlText
+    };
+    ST.facturas.push(newFac);
     if(ex.rfcCli && ex.cliente && !ST.clientes[ex.rfcCli]) ST.clientes[ex.rfcCli]={id:ex.rfcCli,nombre:ex.cliente};
-    ST.facFiltered=[...ST.facturas];
-    renderFacTableFull(); updateFacStats();
+
+    // Propagar relación: si se vinculó a una OC, marcarla como Facturado
+    if(ocId){
+      const oc=ST.ocAll.find(o=>o.id===ocId);
+      if(oc && oc.estatus!=='Facturado'){
+        oc.estatus='Facturado';
+        try{ await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]); }
+        catch(e){ console.warn('No se pudo actualizar estatus de OC vinculada:',e); }
+      }
+    }
+
+    applyFacFilter(); updateFacStats();
+    renderOCClienteTable();
     document.getElementById('facUploadModal').classList.remove('open');
-    toast('ok','Factura "'+(row[1])+'" agregada correctamente.');
+    toast('ok','Factura "'+(row[1])+'" agregada correctamente.'+(ocId?' OC vinculada y marcada como Facturado.':''));
   }catch(e){
     toast('err','Error al procesar la factura: '+(e.message||e));
   }
@@ -2399,18 +2792,21 @@ async function procesarFacturaUpload(){
 /* ─── OC SECTION ─── */
 function renderOCSection(hasId) {
   const btn = document.getElementById('addOCBtn');
+  const relBtn = document.getElementById('verRelacionBtn');
   const emptyMsg = document.getElementById('ocEmptyMsg');
   const ocListEl = document.getElementById('ocList');
   const ocCountEl = document.getElementById('ocCount');
 
   if (!hasId) {
     btn.disabled = true;
+    relBtn.disabled = true;
     emptyMsg.style.display = '';
     ocListEl.innerHTML = '';
     ocCountEl.textContent = '0 OC';
     return;
   }
   btn.disabled = false;
+  relBtn.disabled = false;
   const ocs = ST.ocList;
   ocCountEl.textContent = ocs.length + (ocs.length === 1 ? ' OC' : ' OC');
   if (!ocs.length) {
@@ -2844,20 +3240,24 @@ async function saveNewArticulo(){
 
 /* ─── OC MODAL (new full version) ─── */
 function openAddOC(){
-  // Called from cotización form
+  // Called from cotización form: pre-vincula automáticamente la cotización abierta
   ST.ocFormDirty=false;
   document.getElementById('ocModalTitle').textContent='Agregar OC a esta Cotización';
   ['ocNumero','ocConcepto','ocObs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ocFecha').value=todayISO();
   document.getElementById('ocEstatus').value='Pendiente';
   document.getElementById('ocMonto').value='';
-  document.getElementById('ocCotId').value=ST.editId||'';
-  document.getElementById('ocCotId').readOnly = !!(ST.editId);
   document.getElementById('ocEditId').value='';
   document.getElementById('ocEditRow').value='';
   document.getElementById('ocContext').value='form';
   populateOCClienteSel(ST.editId ? document.getElementById('fCliente').value : '');
   document.getElementById('ocPdfFile').value='';
+  if(ST.editId){
+    setOCCotLink(ST.editId);
+  } else {
+    clearOCCotLink();
+  }
+  setOCFacTag('');
   document.getElementById('ocModal').classList.add('open');
   setTimeout(()=>{ ST.ocFormDirty=false; },100);
 }
@@ -2866,18 +3266,101 @@ function openNewOCCliente(){
   // Called from OC Clientes tab
   ST.ocFormDirty=false;
   document.getElementById('ocModalTitle').textContent='Nueva Orden de Compra';
-  ['ocNumero','ocConcepto','ocObs','ocCotId'].forEach(id=>document.getElementById(id).value='');
+  ['ocNumero','ocConcepto','ocObs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ocFecha').value=todayISO();
   document.getElementById('ocEstatus').value='Pendiente';
   document.getElementById('ocMonto').value='';
-  document.getElementById('ocCotId').readOnly=false;
   document.getElementById('ocEditId').value='';
   document.getElementById('ocEditRow').value='';
   document.getElementById('ocContext').value='tab';
   populateOCClienteSel('');
   document.getElementById('ocPdfFile').value='';
+  clearOCCotLink();
+  setOCFacTag('');
   document.getElementById('ocModal').classList.add('open');
   setTimeout(()=>{ ST.ocFormDirty=false; },100);
+}
+
+/* ── Vínculo OC ↔ Cotización: buscador tipo "partida" ── */
+function filterCotForOC(q){
+  const drop=document.getElementById('ocCotDropdown');
+  const query=(q||'').toLowerCase().trim();
+  let list=ST.cotizaciones;
+  if(query){
+    list=list.filter(c=>{
+      const cli=ST.clientes[c.id_cli]||{};
+      return c.id.toLowerCase().includes(query) ||
+        (c.desc||'').toLowerCase().includes(query) ||
+        (cli.nombre||'').toLowerCase().includes(query) ||
+        (c.id_cli||'').toLowerCase().includes(query);
+    });
+  }
+  list=list.slice(0,30); // limitar resultados visibles
+  if(!list.length){
+    drop.innerHTML='<div class="art-no-results">Sin cotizaciones que coincidan</div>';
+  } else {
+    drop.innerHTML=list.map(c=>{
+      const cli=ST.clientes[c.id_cli]||{};
+      return `<div class="art-option" onclick="setOCCotLink('${esc(c.id)}')">
+        <div>
+          <div class="art-opt-name">${esc(c.id)}</div>
+          <div class="art-opt-meta">${esc(cli.nombre||c.id_cli)} · ${esc((c.desc||'').slice(0,40))}</div>
+        </div>
+        <span class="art-opt-price">${fmtMXN(c.total)}</span>
+      </div>`;
+    }).join('');
+  }
+  drop.style.display='block';
+}
+document.addEventListener('click', e=>{
+  const drop=document.getElementById('ocCotDropdown');
+  const inp=document.getElementById('ocCotSearch');
+  if(drop && inp && !inp.contains(e.target) && !drop.contains(e.target)) drop.style.display='none';
+});
+
+function setOCCotLink(cotId){
+  const c=ST.cotizaciones.find(x=>x.id===cotId);
+  document.getElementById('ocCotId').value=cotId;
+  document.getElementById('ocCotSearch').value='';
+  document.getElementById('ocCotDropdown').style.display='none';
+  const tag=document.getElementById('ocCotLinkedTag');
+  if(c){
+    const cli=ST.clientes[c.id_cli]||{};
+    tag.innerHTML=`Vinculada a <b>${esc(c.id)}</b> — ${esc(cli.nombre||c.id_cli)}`;
+  } else {
+    tag.innerHTML=`Vinculada a <b>${esc(cotId)}</b>`;
+  }
+  tag.style.display='block';
+  document.getElementById('ocCotClearBtn').style.display='inline-flex';
+  ST.ocFormDirty=true;
+  // Buscar si esa cotización ya tiene factura para mostrarla también
+  refreshOCFacTagFromCot(cotId);
+}
+function clearOCCotLink(){
+  document.getElementById('ocCotId').value='';
+  document.getElementById('ocCotSearch').value='';
+  document.getElementById('ocCotDropdown').style.display='none';
+  document.getElementById('ocCotLinkedTag').style.display='none';
+  document.getElementById('ocCotClearBtn').style.display='none';
+  setOCFacTag('');
+  ST.ocFormDirty=true;
+}
+function setOCFacTag(facFolio){
+  const tag=document.getElementById('ocFacLinkedTag');
+  if(facFolio){
+    tag.style.background='var(--green-p)'; tag.style.color='var(--green)';
+    tag.innerHTML=`Facturada en <b>${esc(facFolio)}</b>`;
+  } else {
+    tag.style.background='var(--bg3)'; tag.style.color='var(--text3)';
+    tag.textContent='Sin factura vinculada todavía';
+  }
+}
+function refreshOCFacTagFromCot(cotId){
+  // Una factura puede traer el Oc_id en su columna "Orden_compra"; buscamos OC de esta cotización
+  // y vemos si alguna factura las referencia.
+  const ocsDeEstaCot=ST.ocAll.filter(o=>o.id_cot===cotId);
+  const fac=ST.facturas.find(f=>ocsDeEstaCot.some(o=>o.id===f.oc));
+  setOCFacTag(fac?fac.folio:'');
 }
 
 function populateOCClienteSel(preselect){
@@ -2935,13 +3418,13 @@ async function saveOC(){
       const existing=ST.ocAll.find(o=>o.id===editId);
       if(existing) pdfB64=existing.pdfB64||'';
     }
-    // Oc_Client cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo
-    const row=[id, numero, cliente, concepto, monto, sheetDate(fecha), estatus, pdfB64];
+    // Oc_Client cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo, I=ID_Cotizacion
+    const row=[id, numero, cliente, concepto, monto, sheetDate(fecha), estatus, pdfB64, cot];
     if(editRow){
-      await sheetsUpdate(`Oc_Client!A${editRow}:H${editRow}`,[row]);
+      await sheetsUpdate(`Oc_Client!A${editRow}:I${editRow}`,[row]);
       toast('ok','OC actualizada.');
     } else {
-      await sheetsAppend('Oc_Client!A2:H',[row]);
+      await sheetsAppend('Oc_Client!A2:I',[row]);
       toast('ok',`OC ${numero} guardada.`);
     }
     // Add to local state
@@ -2953,12 +3436,15 @@ async function saveOC(){
       ST.ocAll.push(newOC);
     }
     closeOCModal(true);
-    if(ctx==='form' && ST.editId){
+    // Refrescar ambas vistas siempre: el vínculo puede afectar tanto la sección OC
+    // dentro del formulario de cotización como la tabla general de OC.
+    if(ST.editId){
       ST.ocList=ST.ocAll.filter(o=>o.id_cot===ST.editId);
       renderOCSection(true);
     }
-    if(ctx==='tab') renderOCClienteTable();
-    renderTable(); // refresh OC column in cot table
+    renderOCClienteTable();
+    renderTable(); // refresh OC/Factura columns in cot table
+    applyFacFilter(); // refresh Orden_compra display in facturas table
   }catch(e){ toast('err','Error al guardar OC: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false;
   btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar OC';
@@ -3045,30 +3531,40 @@ function renderOCClienteTable(){
     const cliNom=ST.clientes[r.id_cli]?.nombre||r.id_cli||'—';
     const stClass={Pendiente:'pill-pend',Facturado:'pill-acep',Cancelado:'pill-rech'}[r.estatus]||'pill-pend';
     const hasPDF=!!r.pdfB64;
-    // Días transcurridos desde la fecha de recibido (solo relevante si sigue pendiente)
-    let diasHtml='<span style="color:var(--text3);font-size:11px">—</span>';
+    // Días transcurridos desde la fecha de recibido (para tooltip)
+    let diasTitle='';
     const fDt=new Date(isoDate(r.fecha)+'T12:00:00');
     if(!isNaN(fDt)){
       const dias=Math.floor((hoy-fDt)/86400000);
-      if(r.estatus==='Pendiente' && dias>0){
-        const warn = dias>30 ? 'var(--red)' : dias>14 ? 'var(--yellow)' : 'var(--text3)';
-        diasHtml=`<span style="font-family:var(--mono);font-size:11px;color:${warn};font-weight:${dias>30?'700':'500'}">${dias}d</span>`;
-      } else if(r.estatus!=='Pendiente'){
-        diasHtml=`<span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${dias}d</span>`;
-      }
+      diasTitle=`Recibida hace ${dias} día(s)`;
+    }
+    // Relación: cotización vinculada (si existe) + factura vinculada (si existe)
+    const cotLinked = r.id_cot ? ST.cotizaciones.find(c=>c.id===r.id_cot) : null;
+    const facLinked = ST.facturas.find(f=>f.oc===r.id);
+    let relHtml='';
+    if(cotLinked){
+      relHtml+=`<div style="font-size:10.5px;color:var(--blue);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" title="Cotización: ${esc(cotLinked.id)}">📄 ${esc(cotLinked.id)}</div>`;
+    }
+    if(facLinked){
+      relHtml+=`<div style="font-size:10.5px;color:var(--green);font-family:var(--mono);white-space:nowrap" title="Factura: ${esc(facLinked.folio)}">🧾 ${esc(facLinked.folio)}</div>`;
+    }
+    if(!relHtml){
+      relHtml=`<button type="button" class="btn-icon" title="Vincular con cotización" onclick="editOCCliente('${esc(r.id)}')" style="color:var(--text3)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
+      </button>`;
     }
     return groupHeader + `<tr>
       <td>
         ${hasPDF
-          ?`<button class="folio" style="cursor:pointer;background:none;border:none;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue);text-decoration:underline;padding:0" onclick="openPDFViewer('${r.id}','OC: '+encodeURIComponent('${esc(r.numero)}'))" title="Ver archivo">${esc(r.numero)}</button>`
-          :`<span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)">${esc(r.numero)}</span>`}
+          ?`<button class="folio" style="cursor:pointer;background:none;border:none;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue);text-decoration:underline;padding:0" onclick="openPDFViewer('${r.id}','OC: '+encodeURIComponent('${esc(r.numero)}'))" title="${diasTitle} — Ver archivo">${esc(r.numero)}</button>`
+          :`<span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue)" title="${diasTitle}">${esc(r.numero)}</span>`}
       </td>
       <td style="font-size:12.5px;font-weight:500">${esc(cliNom)}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
       <td style="font-size:12px;color:var(--text2);max-width:160px" title="${esc(r.concepto)}">${esc((r.concepto||'—').slice(0,40))+(r.concepto.length>40?'…':'')}</td>
       <td style="font-family:var(--mono);font-size:12px;text-align:right">${r.monto?fmtMXN(r.monto):'—'}</td>
       <td><span class="pill ${stClass}">${esc(r.estatus)}</span></td>
-      <td>${diasHtml}</td>
+      <td>${relHtml}</td>
       <td>
         ${hasPDF
           ?`<button class="btn btn-ghost btn-sm" onclick="openPDFViewer('${r.id}','OC: '+encodeURIComponent('${esc(r.numero)}'))" style="gap:4px;font-size:11px">
@@ -3079,6 +3575,9 @@ function renderOCClienteTable(){
       </td>
       <td>
         <div class="row-acts" style="opacity:1">
+          <button class="btn-icon" title="Ver relación" onclick="openRelacionPanel('oc','${esc(r.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
+          </button>
           <button class="btn-icon" title="Editar" onclick="editOCCliente('${esc(r.id)}')">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
           </button>
@@ -3098,13 +3597,15 @@ function editOCCliente(id){
   document.getElementById('ocEstatus').value=r.estatus||'Pendiente';
   document.getElementById('ocConcepto').value=r.concepto||'';
   document.getElementById('ocMonto').value=r.monto||'';
-  document.getElementById('ocCotId').value=r.id_cot||'';
   document.getElementById('ocObs').value=r.obs||'';
   document.getElementById('ocEditId').value=r.id;
   document.getElementById('ocEditRow').value=r._row||'';
   document.getElementById('ocContext').value='tab';
   document.getElementById('ocPdfFile').value='';
   populateOCClienteSel(r.id_cli||'');
+  if(r.id_cot){ setOCCotLink(r.id_cot); } else { clearOCCotLink(); }
+  const fac=ST.facturas.find(f=>f.oc===r.id);
+  setOCFacTag(fac?fac.folio:'');
   document.getElementById('ocModal').classList.add('open');
   setTimeout(()=>{ ST.ocFormDirty=false; },100);
 }
@@ -3187,7 +3688,7 @@ function renderFacTableFull(){
     const hasPDF=!!r.pdfB64;
     const hasXML=!!r.xmlContent;
     return groupHeader + `<tr>
-      <td><span class="folio" style="cursor:default">${esc(r.folio||r.id)}</span></td>
+      <td><button class="folio" onclick="openRelacionPanel('fac','${esc(r.id)}')" title="Ver relación">${esc(r.folio||r.id)}</button></td>
       <td>
         <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
         <div style="font-size:10.5px;color:var(--text3);font-family:var(--mono)">${esc(r.id_cli)}</div>
@@ -3205,7 +3706,17 @@ function renderFacTableFull(){
         </select>
       </td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
-      <td style="font-size:11.5px;color:var(--blue);font-family:var(--mono)">${esc(r.oc||'—')}</td>
+      <td>
+        ${(()=>{
+          const ocLinked=ST.ocAll.find(o=>o.id===r.oc);
+          if(ocLinked){
+            return `<button type="button" style="background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--blue);text-decoration:underline;padding:0" onclick="openPDFViewer('${esc(ocLinked.id)}','OC: '+encodeURIComponent('${esc(ocLinked.numero)}'))" title="Ver OC vinculada">${esc(ocLinked.numero)}</button>`;
+          }
+          return `<button type="button" class="btn-icon" title="Vincular con OC" onclick="openFacOCLinkInline('${esc(r.id)}')" style="color:var(--text3)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
+          </button>`;
+        })()}
+      </td>
       <td>
         <div style="display:flex;gap:3px;align-items:center">
           <select class="form-select" style="height:24px;font-size:10.5px;padding:0 2px;width:58px" onchange="changeFacNotas(${r._row},this.value,this.closest('div').querySelector('input').value)">
