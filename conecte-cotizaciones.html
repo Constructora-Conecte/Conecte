@@ -943,10 +943,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <table class="bal-table">
               <thead><tr>
                 <th>Fecha</th><th>Concepto</th><th>Prioridad</th>
-                <th>Cuenta</th><th>Estado</th><th>Fecha Límite</th>
+                <th>Cuenta</th><th>Estado</th><th>Fecha Límite</th><th>Fecha Pago</th>
                 <th style="text-align:right">Monto</th><th>Deuda</th><th></th>
               </tr></thead>
-              <tbody id="gasTbody"><tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div> Cargando…</td></tr></tbody>
+              <tbody id="gasTbody"><tr class="loading-row"><td colspan="10"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div> Cargando…</td></tr></tbody>
             </table>
           </div>
           <div class="pagi"><span class="pagi-info" id="gasPagiInfo">—</span><div class="pagi-btns" id="gasPagiBtns"></div></div>
@@ -4255,7 +4255,7 @@ function renderIngTable(){
     const cli=ST.clientes[b.cliente]?.nombre||b.cliente||'—';
     const facsLink=ST.facturas.filter(f=>f.id_ingreso===b.id);
     const facCell = facsLink.length
-      ? facsLink.map(f=>`<button type="button" class="btn-icon" style="color:var(--blue);font-size:11px;font-weight:600;white-space:nowrap" title="Ver factura ${esc(f.folio||f.id)}" onclick="openFacPDF('${esc(f.id)}')">🧾 ${esc(f.folio||f.id)}</button>`).join('<br>')
+      ? `<button type="button" class="btn-icon" style="color:var(--blue);font-size:10.5px;font-weight:600;white-space:nowrap" onmouseenter="showFacRelPopover(this,'${esc(b.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopover(this,'${esc(b.id)}')">🧾 Ver facturas relacionadas (${facsLink.length})</button>`
       : '<span style="color:var(--text3);font-size:11px">— Sin factura —</span>';
     return `<tr>
       <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
@@ -4281,6 +4281,48 @@ function renderIngTable(){
   }).join('');
   renderIngPagi();
 }
+
+/* ─── POPOVER: facturas relacionadas a un ingreso ─── */
+function showFacRelPopover(el, ingId){
+  clearTimeout(ST._facRelHideTimer);
+  let pop=document.getElementById('facRelPopover');
+  if(!pop){
+    pop=document.createElement('div');
+    pop.id='facRelPopover';
+    pop.style.cssText='position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:11.5px;min-width:200px;max-width:280px;max-height:260px;overflow-y:auto';
+    pop.onmouseenter=()=>clearTimeout(ST._facRelHideTimer);
+    pop.onmouseleave=()=>scheduleHideFacRelPopover();
+    document.body.appendChild(pop);
+  }
+  const facs=ST.facturas.filter(f=>f.id_ingreso===ingId);
+  pop.innerHTML = facs.length
+    ? facs.map(f=>{
+        const stClass={Pagado:'pagado',Pendiente:'pendiente',Cancelado:'cancelado'}[f.estatus]||'pendiente';
+        return `<div style="padding:6px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''" onclick="openFacPDF('${esc(f.id)}')">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+            <span style="font-family:var(--mono);font-weight:700;color:var(--white)">${esc(f.folio||f.id)}</span>
+            <span class="bal-badge ${stClass}" style="font-size:9.5px">${esc(f.estatus||'—')}</span>
+          </div>
+          <div style="color:var(--text3);margin-top:2px">${fmtMXNBal(f.total)} · ${esc(f.fecha||'—')}</div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text3);padding:4px">Sin facturas vinculadas</div>';
+  const rect=el.getBoundingClientRect();
+  const popW=280;
+  let left=Math.min(rect.left, window.innerWidth-popW-10);
+  if(left<10) left=10;
+  pop.style.left=left+'px';
+  pop.style.top=(rect.bottom+4)+'px';
+  pop.style.display='block';
+}
+function scheduleHideFacRelPopover(){
+  clearTimeout(ST._facRelHideTimer);
+  ST._facRelHideTimer=setTimeout(()=>{ document.getElementById('facRelPopover')?.remove(); },180);
+}
+document.addEventListener('click',(e)=>{
+  const pop=document.getElementById('facRelPopover');
+  if(pop && !pop.contains(e.target) && !e.target.closest('[onclick^="showFacRelPopover"]')) pop.remove();
+});
 function renderIngPagi(){
   const total=ST.ingFiltered.length,pages=Math.ceil(total/20)||1;
   const info=document.getElementById('ingPagiInfo'),wrap=document.getElementById('ingPagiBtns');
@@ -4332,7 +4374,7 @@ function updateGasStats(){
 function renderGasTable(){
   const tbody=document.getElementById('gasTbody');
   const PAGE=20, start=(ST.gasPage-1)*PAGE, slice=ST.gasFiltered.slice(start,start+PAGE);
-  if(!slice.length){ tbody.innerHTML=`<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin gastos registrados</td></tr>`; renderGasPagi(); return; }
+  if(!slice.length){ tbody.innerHTML=`<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin gastos registrados</td></tr>`; renderGasPagi(); return; }
   tbody.innerHTML=slice.map(b=>`<tr>
     <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
     <td style="max-width:220px">${b.concepto||'—'}<br><span style="font-size:10.5px;color:var(--text3)">${b.obs||''}</span></td>
@@ -4340,6 +4382,7 @@ function renderGasTable(){
     <td><span class="bal-cuenta">${b.cuenta||'—'}</span></td>
     <td>${badgeBal(b.estado)}</td>
     <td style="font-size:11.5px;color:var(--text2)">${b.fechaLim||'—'}</td>
+    <td style="font-size:11.5px;color:var(--text2)">${b.fechaPago||'—'}</td>
     <td style="text-align:right"><span class="bal-monto-gas">${fmtMXNBal(b.monto)}</span></td>
     <td style="text-align:center;font-size:11px;color:${b.esDeuda==='TRUE'?'var(--red)':'var(--text3)'}">${b.esDeuda==='TRUE'?'Sí':'No'}</td>
     <td>
