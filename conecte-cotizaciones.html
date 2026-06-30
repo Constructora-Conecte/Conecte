@@ -1792,6 +1792,7 @@ function renderItems() {
         oninput="ST.items[${i}].cant=parseFloat(this.value)||0;recalcItem(${i})"></td>
       <td>
         <input class="item-inp" list="unidadesList" value="${esc(it.unidad)}" placeholder="pza"
+          onfocus="this.select()"
           oninput="ST.items[${i}].unidad=this.value;addCustomUnidad(this.value)">
       </td>
       <td><input class="item-inp num" type="number" min="0" step="0.01" value="${it.precio}"
@@ -1963,9 +1964,8 @@ async function confirmDel(){
   btn.disabled=false; btn.textContent='Sí, eliminar';
 }
 
-/* ─── NÚMERO A LETRAS (ES) ─── */
-function numberToWordsES(n){
-  if(!n||n===0) return 'CERO PESOS';
+/* ─── NÚMERO A LETRAS (ES) — exacto, incluye centavos ─── */
+function numberToWordsES(monto){
   const u=['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
            'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS',
            'DIECISIETE','DIECIOCHO','DIECINUEVE'];
@@ -1979,11 +1979,24 @@ function numberToWordsES(n){
     if(n===100) return 'CIEN';
     const r=n%100; return c[Math.floor(n/100)]+(r?' '+chunk(r):'');
   }
-  let s='';
-  if(n>=1000000){ const m=Math.floor(n/1000000); s+=(m===1?'UN MILLÓN':chunk(m)+' MILLONES')+' '; n%=1000000; }
-  if(n>=1000){ const m=Math.floor(n/1000); s+=(m===1?'MIL':chunk(m)+' MIL')+' '; n%=1000; }
-  if(n>0) s+=chunk(n);
-  return s.trim()+' PESOS';
+  function entero(n){
+    if(n===0) return 'CERO';
+    let s='';
+    if(n>=1000000){ const m=Math.floor(n/1000000); s+=(m===1?'UN MILLÓN':chunk(m)+' MILLONES')+' '; n%=1000000; }
+    if(n>=1000){ const m=Math.floor(n/1000); s+=(m===1?'MIL':chunk(m)+' MIL')+' '; n%=1000; }
+    if(n>0) s+=chunk(n);
+    return s.trim();
+  }
+  const negativo = monto<0;
+  monto = Math.abs(monto);
+  // evitar errores de punto flotante al separar pesos y centavos
+  const totalCent = Math.round(monto*100);
+  const pesos = Math.floor(totalCent/100);
+  const centavos = totalCent%100;
+
+  let s = entero(pesos) + (pesos===1?' PESO':' PESOS');
+  s += ' CON ' + (centavos===0?'CERO':entero(centavos)) + (centavos===1?' CENTAVO':' CENTAVOS');
+  return (negativo?'MENOS ':'')+s;
 }
 
 /* ─── PDF ─── */
@@ -2224,7 +2237,7 @@ function generarPDF(id, itemsOverride) {
   y+=9;
 
   // En letras
-  const words=numberToWordsES(Math.round(tot));
+  const words=numberToWordsES(tot);
   setF('italic',7.8,C.sub);
   const wl=doc.splitTextToSize('Son: '+words+' M.N.',CW);
   doc.text(wl,ML,y);
