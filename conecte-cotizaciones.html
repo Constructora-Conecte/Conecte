@@ -270,7 +270,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .group-row.g-pend td{ background:var(--yellow-p); color:var(--yellow); }
 .group-row.g-acep td{ background:var(--green-p); color:var(--green); }
 .group-row.g-rech td{ background:var(--red-p); color:var(--red); }
+.group-row.g-blue td{ background:var(--blue-p); color:var(--blue); }
+.group-row.g-orange td{ background:var(--orange-p); color:var(--orange); }
 .group-row .g-sum{ font-weight:500; opacity:.75; margin-left:8px; font-size:10.5px; }
+
+/* ── BUSCADOR GLOBAL ── */
+.gs-filter{
+  font-size:10.5px; font-weight:600; padding:4px 8px; border-radius:var(--r4);
+  border:1px solid var(--border); background:var(--bg3); color:var(--text3); cursor:pointer;
+}
+.gs-filter.on{ background:var(--red-p); color:var(--red); border-color:rgba(229,62,62,.3); }
+.gs-result-group-title{ font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); padding:8px 8px 4px; }
+.gs-result-item{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:7px 8px; border-radius:var(--r4); cursor:pointer; font-size:12px;
+}
+.gs-result-item:hover{ background:var(--bg3); }
+.gs-result-empty{ padding:18px 10px; text-align:center; color:var(--text3); font-size:11.5px; }
 
 /* ── COTIZACIONES TABLE ── */
 .cot-table-wrap{overflow-x:auto}
@@ -458,6 +474,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <span class="topbar-page">Comercial</span>
     <span class="topbar-sep">›</span>
     <span class="topbar-page" style="color:var(--text);font-weight:600;">Cotizaciones</span>
+
+    <!-- ── BUSCADOR GLOBAL (clientes, OC, facturas, cotizaciones) ── -->
+    <div id="globalSearchWrap" style="position:relative;flex:1;max-width:380px;margin:0 16px;">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:rgba(255,255,255,.55);pointer-events:none"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5"/></svg>
+      <input type="text" id="globalSearchInput" placeholder="Buscar cliente, OC, factura, cotización…" autocomplete="off"
+        oninput="onGlobalSearch(this.value)" onfocus="onGlobalSearch(this.value)"
+        style="width:100%;height:30px;padding:0 10px 0 28px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:var(--r4);color:#fff;font-family:var(--font);font-size:12px;outline:none;">
+      <div id="globalSearchPanel" style="display:none;position:absolute;top:36px;left:0;width:340px;max-height:420px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r8);box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:200;color:var(--text)">
+        <div style="display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+          <button type="button" class="gs-filter on" data-k="cli" onclick="toggleGSFilter('cli',this)">Clientes</button>
+          <button type="button" class="gs-filter on" data-k="cot" onclick="toggleGSFilter('cot',this)">Cotizaciones</button>
+          <button type="button" class="gs-filter on" data-k="oc" onclick="toggleGSFilter('oc',this)">OC</button>
+          <button type="button" class="gs-filter on" data-k="fac" onclick="toggleGSFilter('fac',this)">Facturas</button>
+        </div>
+        <div id="globalSearchResults" style="padding:6px"></div>
+      </div>
+    </div>
     <div class="topbar-right">
       <!-- Google Connect Button -->
       <button class="btn-google" id="googleAuthBtn" onclick="handleAuthClick()">
@@ -529,6 +562,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <span class="fsep"></span>
         <input type="text" id="searchBar" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar…" oninput="onSearch(this.value)">
         <select class="fsort" onchange="setSort(this.value)">
+          <option value="agrupado">Agrupado por estatus</option>
           <option value="fecha-desc">Fecha ↓</option>
           <option value="fecha-asc">Fecha ↑</option>
           <option value="monto-desc">Monto ↓</option>
@@ -971,15 +1005,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <input type="number" class="form-input" id="ocMonto" placeholder="0.00" min="0" step="0.01">
         </div>
         <div class="form-group" style="grid-column:1/-1;position:relative">
-          <label class="form-label">Vincular con Cotización <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional)</span></label>
+          <label class="form-label">Vincular con Cotización(es) <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional, puedes agregar varias)</span></label>
           <div style="display:flex;gap:6px">
             <input type="text" class="form-input" id="ocCotSearch" placeholder="Buscar por folio, cliente o descripción…" oninput="filterCotForOC(this.value)" onfocus="filterCotForOC(this.value)" autocomplete="off" style="flex:1">
-            <button type="button" class="btn btn-ghost btn-sm" id="ocCotClearBtn" onclick="clearOCCotLink()" style="display:none" title="Quitar vínculo">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
-            </button>
           </div>
           <div id="ocCotDropdown" class="art-dropdown" style="display:none"></div>
-          <div id="ocCotLinkedTag" style="display:none;margin-top:6px;padding:7px 10px;background:var(--blue-p);border-radius:var(--r4);font-size:11.5px;color:var(--blue)"></div>
+          <div id="ocCotLinkedList" style="display:flex;flex-direction:column;gap:5px;margin-top:6px"></div>
           <input type="hidden" id="ocCotId" value="">
         </div>
         <div class="form-group" style="grid-column:1/-1">
@@ -1023,15 +1054,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div id="facExtractPreview" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);padding:10px;font-size:11.5px;color:var(--text2);line-height:1.6"></div>
       <div class="form-group" style="position:relative">
-        <label class="form-label">Vincular con Orden de Compra <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional)</span></label>
+        <label class="form-label">Vincular con Orden(es) de Compra <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional, puedes agregar varias)</span></label>
         <div style="display:flex;gap:6px">
           <input type="text" class="form-input" id="facOcSearch" placeholder="Buscar por folio de OC o cliente…" oninput="filterOCForFac(this.value)" onfocus="filterOCForFac(this.value)" autocomplete="off" style="flex:1">
-          <button type="button" class="btn btn-ghost btn-sm" id="facOcClearBtn" onclick="clearFacOCLink()" style="display:none" title="Quitar vínculo">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
-          </button>
         </div>
         <div id="facOcDropdown" class="art-dropdown" style="display:none"></div>
-        <div id="facOcLinkedTag" style="display:none;margin-top:6px;padding:7px 10px;background:var(--blue-p);border-radius:var(--r4);font-size:11.5px;color:var(--blue)"></div>
+        <div id="facOcLinkedList" style="display:flex;flex-direction:column;gap:5px;margin-top:6px"></div>
         <input type="hidden" id="facOcId" value="">
       </div>
     </div>
@@ -1192,7 +1220,7 @@ const ST = {
   cotizaciones: [],
   filtered: [],
   filter: 'all',
-  sort: 'fecha-desc',
+  sort: 'agrupado',
   search: '',
   page: 1,
   PAGE: 15,
@@ -1211,7 +1239,25 @@ const ST = {
   facPage: 1,
   formDirty: false,   // true si hay cambios sin guardar en el modal de cotización
   ocFormDirty: false, // true si hay cambios sin guardar en el modal de OC
+  ocCotLinks: [],      // [{id, numero/folio}] cotizaciones vinculadas a la OC en edición (multi)
+  facOcLinks: [],       // [{id, numero}] OCs vinculadas a la factura en edición (multi)
+  driveFolders: {},     // cache de carpetas de Drive ya creadas/encontradas: {nombre: folderId}
+  globalSearch: '',     // buscador global del topbar
+  globalSearchFilters: { cli:true, oc:true, fac:true, cot:true }, // filtros activos
 };
+
+/* ─── CARPETA RAÍZ EN DRIVE ───
+   Todos los archivos que suba la app (PDFs de OC, PDFs/XML de facturas, etc.)
+   se organizan dentro de esta carpeta de Drive en subcarpetas por tipo. */
+const DRIVE_ROOT_FOLDER_ID = '1sE1-x5jOMOzh1LPSrHfZu3as5p5O3EPN'; // ConecteApp
+
+/* ─── HELPERS DE MULTI-VÍNCULO (IDs separados por coma en una sola celda) ─── */
+function parseIds(str){
+  return String(str||'').split(',').map(s=>s.trim()).filter(Boolean);
+}
+function joinIds(arr){
+  return Array.from(new Set((arr||[]).filter(Boolean))).join(',');
+}
 
 /* ─── GOOGLE INIT ─── */
 window.onload = () => {
@@ -1296,7 +1342,7 @@ function handleAuthClick() {
 
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
-    scope: "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file",
+    scope: "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive",
     callback: async (resp) => {
       btn.disabled = false;
       if (resp.error) {
@@ -1410,7 +1456,8 @@ async function loadAll() {
       fecha:    r[5]||'',
       estatus:  r[6]||'Pendiente',
       pdfB64:   r[7]||'',
-      id_cot:   r[8]||'',   // vínculo a Cotizaciones.id
+      id_cot:   r[8]||'',          // legacy: primer id (compat hacia atrás)
+      cotIds:   parseIds(r[8]),    // vínculo(s) a Cotizaciones.id — ahora soporta varias
       obs:      '',
     }));
 
@@ -1428,7 +1475,8 @@ async function loadAll() {
       metodo:     r[6]||'',
       estatus:    r[7]||'',
       notas:      r[8]||'',
-      oc:         r[9]||'',
+      oc:         r[9]||'',           // legacy: primer id (compat hacia atrás)
+      ocIds:      parseIds(r[9]),     // vínculo(s) a Oc_Client.id — ahora soporta varias
       pdfB64:     r[13]||'',
       xmlContent: r[15]||'',
     }));
@@ -1525,13 +1573,19 @@ function applyFilter() {
         r.estatus.toLowerCase().includes(q);
     });
   }
+  const cotEstatusOrder={Pendiente:0,Enviado:1,'Seguimiento 1':2,'Seguimiento 2':3,Aceptado:4,Rechazado:5};
   rows.sort((a,b)=>{
     switch(ST.sort){
       case 'fecha-asc':  return cmpDate(a.fecha,b.fecha);
       case 'fecha-desc': return cmpDate(b.fecha,a.fecha);
       case 'monto-desc': return b.total-a.total;
       case 'monto-asc':  return a.total-b.total;
-      default: return cmpDate(b.fecha,a.fecha);
+      default:
+        // Agrupado: Pendiente -> Enviado -> Seguimiento -> Aceptado -> Rechazado,
+        // y dentro de cada grupo, más reciente primero.
+        const oa=cotEstatusOrder[a.estatus]??6, ob=cotEstatusOrder[b.estatus]??6;
+        if(oa!==ob) return oa-ob;
+        return cmpDate(b.fecha,a.fecha);
     }
   });
   ST.filtered=rows;
@@ -1553,13 +1607,31 @@ function renderTable() {
     return;
   }
 
+  const groupedView = !ST.sort || ST.sort==='agrupado';
+  const cotGroupMeta={
+    Pendiente:{label:'PENDIENTE',cls:'g-pend'},
+    Enviado:{label:'ENVIADO',cls:'g-blue'},
+    'Seguimiento 1':{label:'SEGUIMIENTO 1',cls:'g-orange'},
+    'Seguimiento 2':{label:'SEGUIMIENTO 2',cls:'g-orange'},
+    Aceptado:{label:'ACEPTADO',cls:'g-acep'},
+    Rechazado:{label:'RECHAZADO',cls:'g-rech'},
+  };
+  let lastGroup=null;
+
   tbody.innerHTML=slice.map(r=>{
+    let groupHeader='';
+    if(groupedView && r.estatus!==lastGroup){
+      lastGroup=r.estatus;
+      const meta=cotGroupMeta[r.estatus]||{label:(r.estatus||'OTRO').toUpperCase(),cls:'g-pend'};
+      const sum=ST.filtered.filter(x=>x.estatus===r.estatus).reduce((s,x)=>s+x.total,0);
+      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="9">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
+    }
     const cli=ST.clientes[r.id_cli]||{};
     const pClass=pillClass(r.estatus);
     const fmtTot='$'+r.total.toLocaleString('es-MX',{minimumFractionDigits:2});
     const fmtSub='$'+r.sub.toLocaleString('es-MX',{minimumFractionDigits:2});
     const desc=(r.desc||'—').slice(0,40)+(r.desc.length>40?'…':'');
-    return `<tr data-id="${esc(r.id)}">
+    return groupHeader + `<tr data-id="${esc(r.id)}">
       <td><button class="folio" onclick="openEdit('${esc(r.id)}',${r._row})">${esc(r.id)}</button></td>
       <td>
         <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
@@ -1571,11 +1643,11 @@ function renderTable() {
       <td><span class="pill ${pClass}">${esc(r.estatus)}</span></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
       <td style="font-size:11.5px;color:var(--text3)">${(() => {
-        const ocs = ST.ocAll.filter(o=>o.id_cot===r.id);
+        const ocs = ST.ocAll.filter(o=>o.cotIds.includes(r.id));
         if(!ocs.length) return `<button type="button" class="btn-icon" title="Vincular OC" onclick="openRelacionPanel('cot','${esc(r.id)}')" style="color:var(--text3)">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
         </button>`;
-        const facCount = ocs.filter(o=>ST.facturas.some(f=>f.oc===o.id)).length;
+        const facCount = ocs.filter(o=>ST.facturas.some(f=>f.ocIds.includes(o.id))).length;
         return `<button type="button" style="background:none;border:none;cursor:pointer;text-align:left;padding:0" onclick="openRelacionPanel('cot','${esc(r.id)}')" title="Ver relación completa">
           <span style="font-family:var(--mono);color:var(--blue)">${ocs.map(o=>esc(o.numero)).join(', ')}</span>
           ${facCount?`<span style="color:var(--green);margin-left:4px">🧾×${facCount}</span>`:''}
@@ -1806,7 +1878,7 @@ function openEdit(id,rowNum) {
   document.getElementById('fNotas').value=r.notas;
   document.getElementById('fEstatus').value=r.estatus;
   document.getElementById('artSearch').value='';
-  ST.ocList = ST.ocAll.filter(o => o.id_cot === id);
+  ST.ocList = ST.ocAll.filter(o => o.cotIds.includes(id));
   renderOCSection(true);
   renderItems();
   document.getElementById('formModal').classList.add('open');
@@ -1941,7 +2013,7 @@ function generarPDF(id, itemsOverride) {
   const rawItems = itemsOverride||(r&&r.items&&r.items.length?r.items:null)||ST.items||[];
   const items    = rawItems.length ? rawItems : [{desc:desc||'—',cant:1,unidad:'',precio:0,imp:0}];
   // OC asociadas
-  const ocList   = ST.ocAll.filter(o=>o.id_cot===folio).map(o=>o.numero).join(' · ')||'';
+  const ocList   = ST.ocAll.filter(o=>o.cotIds.includes(folio)).map(o=>o.numero).join(' · ')||'';
 
   try {
   // ── DATES ──
@@ -2233,7 +2305,7 @@ function applyFacFilter(){
       const cli=ST.clientes[r.id_cli]||{};
       return r.folio.toLowerCase().includes(q)||r.concepto.toLowerCase().includes(q)||
         (cli.nombre||'').toLowerCase().includes(q)||r.id_cli.toLowerCase().includes(q)||
-        r.estatus.toLowerCase().includes(q)||r.oc.toLowerCase().includes(q);
+        r.estatus.toLowerCase().includes(q)||(r.ocIds||[]).join(',').toLowerCase().includes(q);
     });
   }
   const facEstatusOrder={Pendiente:0,Pagado:1,Cancelado:2};
@@ -2381,11 +2453,11 @@ function openFacUpload(){
   document.getElementById('facUploadModal').classList.add('open');
 }
 
-/* ── Vínculo Factura ↔ OC: buscador tipo "partida" (muestra OC_folio, guarda Oc_id) ── */
+/* ── Vínculo Factura ↔ OC: buscador tipo "partida", multi-selección (muestra OC_folio, guarda Oc_id) ── */
 function filterOCForFac(q){
   const drop=document.getElementById('facOcDropdown');
   const query=(q||'').toLowerCase().trim();
-  let list=ST.ocAll;
+  let list=ST.ocAll.filter(o=>!ST.facOcLinks.some(l=>l.id===o.id));
   if(query){
     list=list.filter(o=>{
       const cli=ST.clientes[o.id_cli]||{};
@@ -2400,7 +2472,7 @@ function filterOCForFac(q){
   } else {
     drop.innerHTML=list.map(o=>{
       const cli=ST.clientes[o.id_cli]||{};
-      return `<div class="art-option" onclick="setFacOCLink('${esc(o.id)}')">
+      return `<div class="art-option" onclick="addFacOCLink('${esc(o.id)}')">
         <div>
           <div class="art-opt-name">${esc(o.numero)}</div>
           <div class="art-opt-meta">${esc(cli.nombre||o.id_cli)} · ${esc((o.concepto||'').slice(0,40))}</div>
@@ -2419,27 +2491,39 @@ document.addEventListener('click', e=>{
   const inp2=document.getElementById('facOcQuickSearch');
   if(drop2 && inp2 && !inp2.contains(e.target) && !drop2.contains(e.target)) drop2.style.display='none';
 });
-function setFacOCLink(ocId){
-  const o=ST.ocAll.find(x=>x.id===ocId);
-  document.getElementById('facOcId').value=ocId;
-  document.getElementById('facOcSearch').value='';
-  document.getElementById('facOcDropdown').style.display='none';
-  const tag=document.getElementById('facOcLinkedTag');
-  if(o){
-    const cli=ST.clientes[o.id_cli]||{};
-    tag.innerHTML=`Vinculada a OC <b>${esc(o.numero)}</b> — ${esc(cli.nombre||o.id_cli)}`;
-  } else {
-    tag.innerHTML=`Vinculada a OC <b>${esc(ocId)}</b>`;
-  }
-  tag.style.display='block';
-  document.getElementById('facOcClearBtn').style.display='inline-flex';
+function renderFacOCLinkedList(){
+  const wrap=document.getElementById('facOcLinkedList');
+  if(!wrap) return;
+  document.getElementById('facOcId').value=joinIds(ST.facOcLinks.map(l=>l.id));
+  if(!ST.facOcLinks.length){ wrap.innerHTML=''; return; }
+  wrap.innerHTML=ST.facOcLinks.map(l=>{
+    const o=ST.ocAll.find(x=>x.id===l.id);
+    const cli=o?(ST.clientes[o.id_cli]||{}):{};
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 9px;background:var(--blue-p);border-radius:var(--r4);font-size:11.5px;color:var(--blue)">
+      <span style="flex:1;min-width:0">Vinculada a OC <b>${esc(o?o.numero:l.id)}</b>${o?` — ${esc(cli.nombre||o.id_cli)}`:''}</span>
+      <button type="button" class="btn-icon" title="Quitar vínculo" onclick="removeFacOCLink('${esc(l.id)}')" style="color:var(--blue)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>`;
+  }).join('');
 }
-function clearFacOCLink(){
-  document.getElementById('facOcId').value='';
+function addFacOCLink(ocId){
+  if(ST.facOcLinks.some(l=>l.id===ocId)) return;
+  ST.facOcLinks.push({id:ocId});
   document.getElementById('facOcSearch').value='';
   document.getElementById('facOcDropdown').style.display='none';
-  document.getElementById('facOcLinkedTag').style.display='none';
-  document.getElementById('facOcClearBtn').style.display='none';
+  renderFacOCLinkedList();
+}
+function removeFacOCLink(ocId){
+  ST.facOcLinks=ST.facOcLinks.filter(l=>l.id!==ocId);
+  renderFacOCLinkedList();
+}
+function setFacOCLink(ocId){ addFacOCLink(ocId); } // compat: vínculo rápido individual sigue funcionando, ahora suma a la lista
+function clearFacOCLink(){
+  ST.facOcLinks=[];
+  document.getElementById('facOcSearch').value='';
+  document.getElementById('facOcDropdown').style.display='none';
+  renderFacOCLinkedList();
 }
 
 /* ── Vínculo rápido desde la tabla de Facturas ya existentes ── */
@@ -2450,11 +2534,13 @@ function openFacOCLinkInline(facId){
   document.getElementById('facOcQuickDropdown').style.display='none';
   document.getElementById('facOcLinkModal').classList.add('open');
   setTimeout(()=>document.getElementById('facOcQuickSearch').focus(),80);
+
 }
 function filterOCForFacQuick(q){
   const drop=document.getElementById('facOcQuickDropdown');
   const query=(q||'').toLowerCase().trim();
-  let list=ST.ocAll;
+  const targetFac=ST.facturas.find(f=>f.id===facOcQuickTargetId);
+  let list=ST.ocAll.filter(o=>!targetFac || !targetFac.ocIds.includes(o.id));
   if(query){
     list=list.filter(o=>{
       const cli=ST.clientes[o.id_cli]||{};
@@ -2485,8 +2571,9 @@ async function confirmFacOCQuickLink(ocId){
   const oc=ST.ocAll.find(o=>o.id===ocId);
   if(!fac||!oc) return;
   try{
-    await sheetsUpdate(`Facturas!J${fac._row}`,[[ocId]]);
-    fac.oc=ocId;
+    const newIds=Array.from(new Set([...(fac.ocIds||[]), ocId]));
+    await sheetsUpdate(`Facturas!J${fac._row}`,[[joinIds(newIds)]]);
+    fac.ocIds=newIds; fac.oc=newIds[0]||'';
     if(oc.estatus!=='Facturado'){
       oc.estatus='Facturado';
       await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]);
@@ -2505,38 +2592,42 @@ function openRelacionPanel(origenTipo, origenId){
   const body=document.getElementById('relPanelBody');
   const title=document.getElementById('relPanelTitle');
 
-  let cot=null, ocs=[], facsByOC={};
+  let cots=[], ocs=[], facsByOC={};
   if(origenTipo==='cot'){
-    cot = ST.cotizaciones.find(c=>c.id===origenId);
-    ocs = ST.ocAll.filter(o=>o.id_cot===origenId);
+    const c=ST.cotizaciones.find(c=>c.id===origenId);
+    cots = c ? [c] : [];
+    ocs = ST.ocAll.filter(o=>o.cotIds.includes(origenId));
   } else if(origenTipo==='oc'){
     const oc0 = ST.ocAll.find(o=>o.id===origenId);
     ocs = oc0 ? [oc0] : [];
-    cot = oc0 && oc0.id_cot ? ST.cotizaciones.find(c=>c.id===oc0.id_cot) : null;
+    cots = oc0 ? ST.cotizaciones.filter(c=>oc0.cotIds.includes(c.id)) : [];
   } else if(origenTipo==='fac'){
     const fac0 = ST.facturas.find(f=>f.id===origenId);
-    const oc0 = fac0 ? ST.ocAll.find(o=>o.id===fac0.oc) : null;
-    ocs = oc0 ? [oc0] : [];
-    cot = oc0 && oc0.id_cot ? ST.cotizaciones.find(c=>c.id===oc0.id_cot) : null;
+    ocs = fac0 ? ST.ocAll.filter(o=>fac0.ocIds.includes(o.id)) : [];
+    const cotIdSet=new Set();
+    ocs.forEach(o=>o.cotIds.forEach(id=>cotIdSet.add(id)));
+    cots = ST.cotizaciones.filter(c=>cotIdSet.has(c.id));
   }
-  ocs.forEach(o=>{ facsByOC[o.id] = ST.facturas.filter(f=>f.oc===o.id); });
+  ocs.forEach(o=>{ facsByOC[o.id] = ST.facturas.filter(f=>f.ocIds.includes(o.id)); });
 
-  title.textContent = cot ? `Relación de ${cot.id}` : (ocs[0]?`Relación de OC ${ocs[0].numero}`:'Relación');
+  title.textContent = cots.length ? `Relación de ${cots.map(c=>c.id).join(', ')}` : (ocs[0]?`Relación de OC ${ocs[0].numero}`:'Relación');
 
   let html='';
 
-  // ── Eslabón 1: Cotización ──
-  if(cot){
-    const cli=ST.clientes[cot.id_cli]||{};
-    html+=`<div style="border:1px solid var(--border2);border-radius:var(--r8);padding:12px;background:var(--bg3)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase">Cotización</span>
-        <span class="pill ${pillClass(cot.estatus)}">${esc(cot.estatus)}</span>
-      </div>
-      <div style="font-family:var(--mono);font-weight:600;color:var(--white);font-size:13px">${esc(cot.id)}</div>
-      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(cli.nombre||cot.id_cli)} · ${fmtMXN(cot.total)}</div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('relPanelModal').classList.remove('open');openEdit('${esc(cot.id)}',${cot._row})">Abrir cotización</button>
-    </div>`;
+  // ── Eslabón 1: Cotización(es) ──
+  if(cots.length){
+    cots.forEach(cot=>{
+      const cli=ST.clientes[cot.id_cli]||{};
+      html+=`<div style="border:1px solid var(--border2);border-radius:var(--r8);padding:12px;background:var(--bg3)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--text3);text-transform:uppercase">Cotización</span>
+          <span class="pill ${pillClass(cot.estatus)}">${esc(cot.estatus)}</span>
+        </div>
+        <div style="font-family:var(--mono);font-weight:600;color:var(--white);font-size:13px">${esc(cot.id)}</div>
+        <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(cli.nombre||cot.id_cli)} · ${fmtMXN(cot.total)}</div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('relPanelModal').classList.remove('open');openEdit('${esc(cot.id)}',${cot._row})">Abrir cotización</button>
+      </div>`;
+    });
   } else {
     html+=`<div style="border:1px dashed var(--border2);border-radius:var(--r8);padding:12px;text-align:center;color:var(--text3);font-size:12px">
       Sin cotización vinculada todavía.
@@ -2593,7 +2684,7 @@ function openRelacionPanel(origenTipo, origenId){
   } else {
     html+=`<div style="border:1px dashed var(--border2);border-radius:var(--r8);padding:12px;text-align:center;color:var(--text3);font-size:12px">
       Sin Orden de Compra vinculada todavía.
-      ${cot?`<div style="margin-top:8px"><button class="btn btn-red btn-sm" onclick="document.getElementById('relPanelModal').classList.remove('open');openAddOCForCot('${esc(cot.id)}')">Buscar / crear OC</button></div>`:''}
+      ${cots.length?`<div style="margin-top:8px"><button class="btn btn-red btn-sm" onclick="document.getElementById('relPanelModal').classList.remove('open');openAddOCForCot('${esc(cots[0].id)}')">Buscar / crear OC</button></div>`:''}
     </div>`;
   }
 
@@ -2622,7 +2713,7 @@ function openFacLinkForOC(ocId){
 function filterFacForOCLink(q){
   const drop=document.getElementById('facLinkForOCDropdown');
   const query=(q||'').toLowerCase().trim();
-  let list=ST.facturas.filter(f=>!f.oc); // solo facturas sin OC vinculada todavía
+  let list=ST.facturas.filter(f=>!f.ocIds.includes(facLinkForOCTarget)); // excluir las ya vinculadas a esta misma OC
   if(query){
     list=list.filter(f=>{
       const cli=ST.clientes[f.id_cli]||{};
@@ -2658,8 +2749,9 @@ async function confirmFacLinkForOC(facId){
   const oc=ST.ocAll.find(o=>o.id===facLinkForOCTarget);
   if(!fac||!oc) return;
   try{
-    await sheetsUpdate(`Facturas!J${fac._row}`,[[oc.id]]);
-    fac.oc=oc.id;
+    const newIds=Array.from(new Set([...(fac.ocIds||[]), oc.id]));
+    await sheetsUpdate(`Facturas!J${fac._row}`,[[joinIds(newIds)]]);
+    fac.ocIds=newIds; fac.oc=newIds[0]||'';
     if(oc.estatus!=='Facturado'){
       oc.estatus='Facturado';
       await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]);
@@ -2708,6 +2800,37 @@ function onFacXmlSelected(input){
   reader.readAsText(file);
 }
 
+/* ─── Carpetas de Drive: obtiene o crea la subcarpeta dentro de ConecteApp ───
+   Estructura resultante en Drive:
+     ConecteApp/
+       Órdenes de Compra/
+       Facturas/
+       Facturas/XML/
+       Cotizaciones PDF/ */
+async function getOrCreateSubfolder(name, parentId){
+  parentId = parentId || DRIVE_ROOT_FOLDER_ID;
+  const cacheKey = parentId+'::'+name;
+  if(ST.driveFolders[cacheKey]) return ST.driveFolders[cacheKey];
+  const q = `mimeType='application/vnd.google-apps.folder' and name='${name.replace(/'/g,"\\'")}' and '${parentId}' in parents and trashed=false`;
+  const listResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`,{
+    headers:{ Authorization:'Bearer '+ST.token }
+  });
+  const listData = await listResp.json();
+  if(listResp.ok && listData.files && listData.files.length){
+    ST.driveFolders[cacheKey]=listData.files[0].id;
+    return listData.files[0].id;
+  }
+  const createResp = await fetch('https://www.googleapis.com/drive/v3/files?fields=id',{
+    method:'POST',
+    headers:{ Authorization:'Bearer '+ST.token, 'Content-Type':'application/json' },
+    body: JSON.stringify({ name, mimeType:'application/vnd.google-apps.folder', parents:[parentId] })
+  });
+  const createData = await createResp.json();
+  if(!createResp.ok) throw new Error(createData.error?.message||'No se pudo crear la carpeta "'+name+'" en Drive');
+  ST.driveFolders[cacheKey]=createData.id;
+  return createData.id;
+}
+
 function fileToBase64(file){
   return new Promise((res,rej)=>{
     const r=new FileReader();
@@ -2717,9 +2840,21 @@ function fileToBase64(file){
   });
 }
 
-async function driveUploadFile(file){
+/* Sube un archivo a Drive dentro de ConecteApp/<subfolderPath>, devuelve un link
+   de vista ("…/view") que se guarda en la hoja en vez del archivo completo en base64
+   (lo cual antes rompía el límite de 50,000 caracteres por celda de Sheets). */
+async function driveUploadFile(file, subfolderPath, displayName){
   const base64 = await fileToBase64(file);
-  const metadata = { name: file.name };
+  // subfolderPath puede ser "Facturas/XML" → crea carpetas anidadas si hace falta
+  let parentId = DRIVE_ROOT_FOLDER_ID;
+  if(subfolderPath){
+    for(const part of subfolderPath.split('/').filter(Boolean)){
+      parentId = await getOrCreateSubfolder(part, parentId);
+    }
+  }
+  const ext = (file.name.match(/\.[a-zA-Z0-9]+$/)||[''])[0];
+  const finalName = (displayName ? displayName.replace(/[\\/:*?"<>|]/g,'_') : file.name) + (displayName && ext ? ext : '');
+  const metadata = { name: finalName, parents:[parentId] };
   const boundary='conecte_boundary_'+Math.random().toString(36).slice(2);
   const body =
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
@@ -2742,19 +2877,22 @@ async function procesarFacturaUpload(){
   if(!xmlFile){ toast('err','Selecciona el archivo XML.'); return; }
   if(!pdfFile){ toast('err','Selecciona el archivo PDF.'); return; }
   if(!ST.facExtract){ toast('err','No se pudieron extraer datos del XML.'); return; }
-  const ocId = document.getElementById('facOcId').value.trim();
+  const ocIds = ST.facOcLinks.map(l=>l.id);
+  const ocId  = joinIds(ocIds);
   const btn=document.getElementById('saveFacUploadBtn');
   btn.disabled=true; btn.textContent='Procesando…';
   try{
     const ex = ST.facExtract;
     const xmlText = await xmlFile.text();
-    const pdfB64 = await new Promise((res,rej)=>{
-      const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej;
-      r.readAsDataURL(pdfFile);
-    });
+    // El PDF se sube a Drive (ConecteApp/Facturas) y solo se guarda el link en la hoja;
+    // antes se guardaba el PDF completo en base64 directo en la celda (rompía el límite
+    // de 50,000 caracteres de Sheets con cualquier archivo de tamaño normal).
+    btn.textContent='Subiendo archivo…';
+    const pdfB64 = await driveUploadFile(pdfFile, 'Facturas', `FAC_${ex.folio||Date.now()}`);
+    btn.textContent='Procesando…';
     const id = 'FAC'+Date.now().toString(36).toUpperCase();
     // Facturas cols reales: A=ID,B=Folio,C=Cliente(RFC),D=Fecha,E=Concepto,F=Monto,
-    // G=Metodo,H=Estatus,I=Notas,J=Orden_compra(Oc_id),K..M=(sin uso),N=PDF_B64,O=Folio_Num,P=XML
+    // G=Metodo,H=Estatus,I=Notas,J=Orden(es)_compra(Oc_id), separadas por coma,K..M=(sin uso),N=PDF_link,O=Folio_Num,P=XML
     const row = [
       id, ex.folio||id, ex.rfcCli||ex.cliente||'', sheetDate(ex.fecha), ex.concepto,
       ex.total, '', 'Pendiente', '', ocId, '', '', sheetDate(todayISO()),
@@ -2764,14 +2902,14 @@ async function procesarFacturaUpload(){
     const newFac={
       _row: ST.facturas.length+2, id, folio: row[1], id_cli: row[2], fecha: sheetDate(ex.fecha),
       concepto: ex.concepto, total: ex.total, metodo:'', estatus:'Pendiente', notas:'',
-      oc: ocId, pdfB64, xmlContent: xmlText
+      oc: ocIds[0]||'', ocIds, pdfB64, xmlContent: xmlText
     };
     ST.facturas.push(newFac);
     if(ex.rfcCli && ex.cliente && !ST.clientes[ex.rfcCli]) ST.clientes[ex.rfcCli]={id:ex.rfcCli,nombre:ex.cliente};
 
-    // Propagar relación: si se vinculó a una OC, marcarla como Facturado
-    if(ocId){
-      const oc=ST.ocAll.find(o=>o.id===ocId);
+    // Propagar relación: si se vinculó a una o más OC, marcarlas como Facturado
+    for(const linkedId of ocIds){
+      const oc=ST.ocAll.find(o=>o.id===linkedId);
       if(oc && oc.estatus!=='Facturado'){
         oc.estatus='Facturado';
         try{ await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Facturado']]); }
@@ -2782,6 +2920,7 @@ async function procesarFacturaUpload(){
     applyFacFilter(); updateFacStats();
     renderOCClienteTable();
     document.getElementById('facUploadModal').classList.remove('open');
+
     toast('ok','Factura "'+(row[1])+'" agregada correctamente.'+(ocId?' OC vinculada y marcada como Facturado.':''));
   }catch(e){
     toast('err','Error al procesar la factura: '+(e.message||e));
@@ -3253,7 +3392,7 @@ function openAddOC(){
   populateOCClienteSel(ST.editId ? document.getElementById('fCliente').value : '');
   document.getElementById('ocPdfFile').value='';
   if(ST.editId){
-    setOCCotLink(ST.editId);
+    setOCCotLinks([ST.editId]);
   } else {
     clearOCCotLink();
   }
@@ -3281,11 +3420,11 @@ function openNewOCCliente(){
   setTimeout(()=>{ ST.ocFormDirty=false; },100);
 }
 
-/* ── Vínculo OC ↔ Cotización: buscador tipo "partida" ── */
+/* ── Vínculo OC ↔ Cotización(es): buscador tipo "partida", multi-selección ── */
 function filterCotForOC(q){
   const drop=document.getElementById('ocCotDropdown');
   const query=(q||'').toLowerCase().trim();
-  let list=ST.cotizaciones;
+  let list=ST.cotizaciones.filter(c=>!ST.ocCotLinks.some(l=>l.id===c.id));
   if(query){
     list=list.filter(c=>{
       const cli=ST.clientes[c.id_cli]||{};
@@ -3301,7 +3440,7 @@ function filterCotForOC(q){
   } else {
     drop.innerHTML=list.map(c=>{
       const cli=ST.clientes[c.id_cli]||{};
-      return `<div class="art-option" onclick="setOCCotLink('${esc(c.id)}')">
+      return `<div class="art-option" onclick="addOCCotLink('${esc(c.id)}')">
         <div>
           <div class="art-opt-name">${esc(c.id)}</div>
           <div class="art-opt-meta">${esc(cli.nombre||c.id_cli)} · ${esc((c.desc||'').slice(0,40))}</div>
@@ -3318,30 +3457,45 @@ document.addEventListener('click', e=>{
   if(drop && inp && !inp.contains(e.target) && !drop.contains(e.target)) drop.style.display='none';
 });
 
-function setOCCotLink(cotId){
-  const c=ST.cotizaciones.find(x=>x.id===cotId);
-  document.getElementById('ocCotId').value=cotId;
+function renderOCCotLinkedList(){
+  const wrap=document.getElementById('ocCotLinkedList');
+  if(!wrap) return;
+  document.getElementById('ocCotId').value=joinIds(ST.ocCotLinks.map(l=>l.id));
+  if(!ST.ocCotLinks.length){ wrap.innerHTML=''; return; }
+  wrap.innerHTML=ST.ocCotLinks.map(l=>{
+    const c=ST.cotizaciones.find(x=>x.id===l.id);
+    const cli=c?(ST.clientes[c.id_cli]||{}):{};
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 9px;background:var(--blue-p);border-radius:var(--r4);font-size:11.5px;color:var(--blue)">
+      <span style="flex:1;min-width:0"><b>${esc(l.id)}</b>${c?` — ${esc(cli.nombre||c.id_cli)}`:''}</span>
+      <button type="button" class="btn-icon" title="Quitar vínculo" onclick="removeOCCotLink('${esc(l.id)}')" style="color:var(--blue)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+function addOCCotLink(cotId){
+  if(ST.ocCotLinks.some(l=>l.id===cotId)) return;
+  ST.ocCotLinks.push({id:cotId});
   document.getElementById('ocCotSearch').value='';
   document.getElementById('ocCotDropdown').style.display='none';
-  const tag=document.getElementById('ocCotLinkedTag');
-  if(c){
-    const cli=ST.clientes[c.id_cli]||{};
-    tag.innerHTML=`Vinculada a <b>${esc(c.id)}</b> — ${esc(cli.nombre||c.id_cli)}`;
-  } else {
-    tag.innerHTML=`Vinculada a <b>${esc(cotId)}</b>`;
-  }
-  tag.style.display='block';
-  document.getElementById('ocCotClearBtn').style.display='inline-flex';
+  renderOCCotLinkedList();
   ST.ocFormDirty=true;
-  // Buscar si esa cotización ya tiene factura para mostrarla también
   refreshOCFacTagFromCot(cotId);
 }
+function removeOCCotLink(cotId){
+  ST.ocCotLinks=ST.ocCotLinks.filter(l=>l.id!==cotId);
+  renderOCCotLinkedList();
+  ST.ocFormDirty=true;
+}
+function setOCCotLinks(ids){
+  ST.ocCotLinks=(ids||[]).filter(Boolean).map(id=>({id}));
+  renderOCCotLinkedList();
+}
 function clearOCCotLink(){
-  document.getElementById('ocCotId').value='';
+  ST.ocCotLinks=[];
   document.getElementById('ocCotSearch').value='';
   document.getElementById('ocCotDropdown').style.display='none';
-  document.getElementById('ocCotLinkedTag').style.display='none';
-  document.getElementById('ocCotClearBtn').style.display='none';
+  renderOCCotLinkedList();
   setOCFacTag('');
   ST.ocFormDirty=true;
 }
@@ -3356,10 +3510,10 @@ function setOCFacTag(facFolio){
   }
 }
 function refreshOCFacTagFromCot(cotId){
-  // Una factura puede traer el Oc_id en su columna "Orden_compra"; buscamos OC de esta cotización
+  // Una factura puede traer el/los Oc_id en su columna "Orden_compra"; buscamos OC de esta cotización
   // y vemos si alguna factura las referencia.
-  const ocsDeEstaCot=ST.ocAll.filter(o=>o.id_cot===cotId);
-  const fac=ST.facturas.find(f=>ocsDeEstaCot.some(o=>o.id===f.oc));
+  const ocsDeEstaCot=ST.ocAll.filter(o=>o.cotIds.includes(cotId));
+  const fac=ST.facturas.find(f=>ocsDeEstaCot.some(o=>f.ocIds.includes(o.id)));
   setOCFacTag(fac?fac.folio:'');
 }
 
@@ -3388,7 +3542,8 @@ async function saveOC(){
   const estatus = document.getElementById('ocEstatus').value;
   const concepto= document.getElementById('ocConcepto').value.trim();
   const monto   = parseFloat(document.getElementById('ocMonto').value)||0;
-  const cot     = document.getElementById('ocCotId').value.trim();
+  const cotIds  = ST.ocCotLinks.map(l=>l.id);
+  const cot     = joinIds(cotIds); // string "COT1,COT2" guardado en la celda
   const obs     = document.getElementById('ocObs').value.trim();
   const ctx     = document.getElementById('ocContext').value;
   const editId  = document.getElementById('ocEditId').value;
@@ -3400,16 +3555,22 @@ async function saveOC(){
   const btn=document.getElementById('saveOCBtn');
   btn.disabled=true; btn.textContent='Guardando…';
 
-  // Handle PDF file → base64
+  // Handle PDF file → se sube a Google Drive (carpeta ConecteApp/Órdenes de Compra)
+  // y solo se guarda el LINK en la celda. Antes se guardaba el PDF completo en base64
+  // directo en la celda, lo que producía el error "supera 50000 caracteres" con
+  // cualquier archivo de tamaño normal.
   let pdfB64='';
   const pdfFile=document.getElementById('ocPdfFile').files[0];
-  if(pdfFile){
-    pdfB64 = await new Promise((res,rej)=>{
-      const r=new FileReader();
-      r.onload=()=>res(r.result); r.onerror=rej;
-      r.readAsDataURL(pdfFile);
-    });
+  try{
+    if(pdfFile){
+      btn.textContent='Subiendo archivo…';
+      pdfB64 = await driveUploadFile(pdfFile, 'Órdenes de Compra', `OC_${numero}`);
+    }
+  }catch(e){
+    btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar OC';
+    toast('err','Error al subir el PDF a Drive: '+e.message); return;
   }
+  btn.textContent='Guardando…';
 
   try{
     const id = editId || ('OC'+Date.now().toString(36).toUpperCase());
@@ -3418,7 +3579,7 @@ async function saveOC(){
       const existing=ST.ocAll.find(o=>o.id===editId);
       if(existing) pdfB64=existing.pdfB64||'';
     }
-    // Oc_Client cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo, I=ID_Cotizacion
+    // Oc_Client cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo (link de Drive), I=ID_Cotizacion(es), separadas por coma
     const row=[id, numero, cliente, concepto, monto, sheetDate(fecha), estatus, pdfB64, cot];
     if(editRow){
       await sheetsUpdate(`Oc_Client!A${editRow}:I${editRow}`,[row]);
@@ -3428,7 +3589,7 @@ async function saveOC(){
       toast('ok',`OC ${numero} guardada.`);
     }
     // Add to local state
-    const newOC={id,numero,fecha:sheetDate(fecha),estatus,id_cli:cliente,concepto,monto,pdfB64,id_cot:cot,obs};
+    const newOC={id,numero,fecha:sheetDate(fecha),estatus,id_cli:cliente,concepto,monto,pdfB64,id_cot:cotIds[0]||'',cotIds,obs};
     if(editRow){
       const idx=ST.ocAll.findIndex(o=>o.id===editId);
       if(idx>=0) ST.ocAll[idx]=newOC;
@@ -3439,8 +3600,9 @@ async function saveOC(){
     // Refrescar ambas vistas siempre: el vínculo puede afectar tanto la sección OC
     // dentro del formulario de cotización como la tabla general de OC.
     if(ST.editId){
-      ST.ocList=ST.ocAll.filter(o=>o.id_cot===ST.editId);
+      ST.ocList=ST.ocAll.filter(o=>o.cotIds.includes(ST.editId));
       renderOCSection(true);
+
     }
     renderOCClienteTable();
     renderTable(); // refresh OC/Factura columns in cot table
@@ -3465,7 +3627,7 @@ function onOCSearch(q){ ocClientSearch=q.toLowerCase(); renderOCClienteTable(); 
 function getOCClientes(){
   // Oc_Client real: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo
   return ST.ocAll.map(o=>({
-    id:o.id, id_cot:o.id_cot||'', numero:o.numero||'', fecha:o.fecha||'',
+    id:o.id, id_cot:o.id_cot||'', cotIds:o.cotIds||[], numero:o.numero||'', fecha:o.fecha||'',
     estatus:o.estatus||'Pendiente', id_cli:o.id_cli||'', concepto:o.concepto||'',
     monto:parseFloat(o.monto)||0, pdfB64:o.pdfB64||'', obs:o.obs||'', _row:o._row
   }));
@@ -3478,7 +3640,7 @@ function renderOCClienteTable(){
     r.numero.toLowerCase().includes(ocClientSearch)||
     (ST.clientes[r.id_cli]?.nombre||'').toLowerCase().includes(ocClientSearch)||
     r.concepto.toLowerCase().includes(ocClientSearch)||
-    r.id_cot.toLowerCase().includes(ocClientSearch)
+    r.cotIds.join(',').toLowerCase().includes(ocClientSearch)
   );
 
   // Agrupado: Pendiente -> Facturado -> Cancelado, y dentro de cada grupo, más antiguo a más nuevo
@@ -3538,12 +3700,12 @@ function renderOCClienteTable(){
       const dias=Math.floor((hoy-fDt)/86400000);
       diasTitle=`Recibida hace ${dias} día(s)`;
     }
-    // Relación: cotización vinculada (si existe) + factura vinculada (si existe)
-    const cotLinked = r.id_cot ? ST.cotizaciones.find(c=>c.id===r.id_cot) : null;
-    const facLinked = ST.facturas.find(f=>f.oc===r.id);
+    // Relación: cotización(es) vinculada(s) (si existen) + factura vinculada (si existe)
+    const cotsLinked = (r.cotIds||[]).map(id=>ST.cotizaciones.find(c=>c.id===id)).filter(Boolean);
+    const facLinked = ST.facturas.find(f=>f.ocIds.includes(r.id));
     let relHtml='';
-    if(cotLinked){
-      relHtml+=`<div style="font-size:10.5px;color:var(--blue);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" title="Cotización: ${esc(cotLinked.id)}">📄 ${esc(cotLinked.id)}</div>`;
+    if(cotsLinked.length){
+      relHtml+=cotsLinked.map(cotLinked=>`<div style="font-size:10.5px;color:var(--blue);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" title="Cotización: ${esc(cotLinked.id)}">📄 ${esc(cotLinked.id)}</div>`).join('');
     }
     if(facLinked){
       relHtml+=`<div style="font-size:10.5px;color:var(--green);font-family:var(--mono);white-space:nowrap" title="Factura: ${esc(facLinked.folio)}">🧾 ${esc(facLinked.folio)}</div>`;
@@ -3603,8 +3765,8 @@ function editOCCliente(id){
   document.getElementById('ocContext').value='tab';
   document.getElementById('ocPdfFile').value='';
   populateOCClienteSel(r.id_cli||'');
-  if(r.id_cot){ setOCCotLink(r.id_cot); } else { clearOCCotLink(); }
-  const fac=ST.facturas.find(f=>f.oc===r.id);
+  if(r.cotIds && r.cotIds.length){ setOCCotLinks(r.cotIds); } else { clearOCCotLink(); }
+  const fac=ST.facturas.find(f=>f.ocIds.includes(r.id));
   setOCFacTag(fac?fac.folio:'');
   document.getElementById('ocModal').classList.add('open');
   setTimeout(()=>{ ST.ocFormDirty=false; },100);
@@ -3614,15 +3776,20 @@ function editOCCliente(id){
 function openPDFViewer(ocId, label){
   const oc=ST.ocAll.find(o=>o.id===ocId);
   if(!oc||!oc.pdfB64){ toast('err','No hay PDF disponible.'); return; }
-  // pdfB64 is a data URL like data:application/pdf;base64,...
   const title=decodeURIComponent(label)||'PDF';
   document.getElementById('pdfViewerTitle').textContent=title;
   const frame=document.getElementById('pdfViewerFrame');
-  frame.src=oc.pdfB64;
-  // Also set download link
   const dl=document.getElementById('pdfDownloadLink');
-  dl.href=oc.pdfB64;
-  dl.download=(oc.numero||'oc')+'.pdf';
+  if(oc.pdfB64.startsWith('data:')){
+    // Compat: archivos antiguos guardados como base64 directo en la celda
+    frame.src=oc.pdfB64;
+    dl.href=oc.pdfB64; dl.download=(oc.numero||'oc')+'.pdf'; dl.removeAttribute('target');
+  } else {
+    // Archivo subido a Drive: usamos el link de "preview" para incrustarlo en el iframe
+    const idMatch=oc.pdfB64.match(/\/d\/([^/]+)/);
+    frame.src = idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/preview` : oc.pdfB64;
+    dl.href=oc.pdfB64; dl.removeAttribute('download'); dl.target='_blank';
+  }
   dl.style.display='inline';
   document.getElementById('pdfViewerModal').classList.add('open');
 }
@@ -3632,9 +3799,17 @@ function openFacPDF(facId){
   if(!f){ toast('err','No se encontró la factura.'); return; }
   if(f.pdfB64){
     document.getElementById('pdfViewerTitle').textContent='Factura '+f.folio;
-    document.getElementById('pdfViewerFrame').src=f.pdfB64;
+    const frame=document.getElementById('pdfViewerFrame');
     const dl=document.getElementById('pdfDownloadLink');
-    dl.href=f.pdfB64; dl.download=f.folio+'.pdf'; dl.style.display='inline';
+    if(f.pdfB64.startsWith('data:')){
+      frame.src=f.pdfB64;
+      dl.href=f.pdfB64; dl.download=f.folio+'.pdf'; dl.removeAttribute('target');
+    } else {
+      const idMatch=f.pdfB64.match(/\/d\/([^/]+)/);
+      frame.src = idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/preview` : f.pdfB64;
+      dl.href=f.pdfB64; dl.removeAttribute('download'); dl.target='_blank';
+    }
+    dl.style.display='inline';
     document.getElementById('pdfViewerModal').classList.add('open');
   } else {
     toast('err','No hay PDF cargado para esta factura.');
@@ -3708,9 +3883,12 @@ function renderFacTableFull(){
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
       <td>
         ${(()=>{
-          const ocLinked=ST.ocAll.find(o=>o.id===r.oc);
-          if(ocLinked){
-            return `<button type="button" style="background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--blue);text-decoration:underline;padding:0" onclick="openPDFViewer('${esc(ocLinked.id)}','OC: '+encodeURIComponent('${esc(ocLinked.numero)}'))" title="Ver OC vinculada">${esc(ocLinked.numero)}</button>`;
+          const ocsLinked=(r.ocIds||[]).map(id=>ST.ocAll.find(o=>o.id===id)).filter(Boolean);
+          if(ocsLinked.length){
+            return ocsLinked.map(ocLinked=>`<button type="button" style="background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--blue);text-decoration:underline;padding:0;display:block" onclick="openPDFViewer('${esc(ocLinked.id)}','OC: '+encodeURIComponent('${esc(ocLinked.numero)}'))" title="Ver OC vinculada">${esc(ocLinked.numero)}</button>`).join('')
+              + `<button type="button" class="btn-icon" title="Vincular otra OC" onclick="openFacOCLinkInline('${esc(r.id)}')" style="color:var(--text3);margin-top:2px">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
+              </button>`;
           }
           return `<button type="button" class="btn-icon" title="Vincular con OC" onclick="openFacOCLinkInline('${esc(r.id)}')" style="color:var(--text3)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
@@ -3741,6 +3919,106 @@ function renderFacTableFull(){
   });
   tbody.innerHTML=rowsHtml.join('');
   renderFacPagi();
+}
+
+/* ════════════════ BUSCADOR GLOBAL (topbar) ════════════════
+   Busca simultáneamente en Clientes, Cotizaciones, OC y Facturas,
+   con filtros por tipo. Al hacer clic en un resultado, navega
+   al tab correspondiente y abre/filtra el registro. */
+function toggleGSFilter(k, el){
+  ST.globalSearchFilters[k] = !ST.globalSearchFilters[k];
+  el.classList.toggle('on', ST.globalSearchFilters[k]);
+  renderGlobalSearch();
+}
+function onGlobalSearch(q){
+  ST.globalSearch = (q||'').trim().toLowerCase();
+  document.getElementById('globalSearchPanel').style.display = 'block';
+  renderGlobalSearch();
+}
+document.addEventListener('click', e=>{
+  const wrap=document.getElementById('globalSearchWrap');
+  if(wrap && !wrap.contains(e.target)) document.getElementById('globalSearchPanel').style.display='none';
+});
+function gsItem(icon, title, subtitle, onclickJs){
+  return `<div class="gs-result-item" onclick="${onclickJs}">
+    <div style="min-width:0">
+      <div style="font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${icon} ${title}</div>
+      <div style="font-size:10.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${subtitle}</div>
+    </div>
+  </div>`;
+}
+function renderGlobalSearch(){
+  const wrap=document.getElementById('globalSearchResults');
+  const q=ST.globalSearch;
+  const f=ST.globalSearchFilters;
+  let html='';
+  let totalFound=0;
+  const LIMIT=6;
+
+  if(f.cli){
+    const clientes=Object.values(ST.clientes).filter(c=>!q ||
+      (c.nombre||'').toLowerCase().includes(q) || (c.id||'').toLowerCase().includes(q));
+    if(clientes.length){
+      totalFound+=clientes.length;
+      html+=`<div class="gs-result-group-title">Clientes (${clientes.length})</div>`;
+      html+=clientes.slice(0,LIMIT).map(c=>gsItem('👤',esc(c.nombre||c.id),esc(c.id),
+        `closeGlobalSearch();switchTab('cot');document.getElementById('searchBar').value='${esc(c.nombre||c.id)}';onSearch('${esc((c.nombre||c.id).toLowerCase())}')`)).join('');
+    }
+  }
+  if(f.cot){
+    const cots=ST.cotizaciones.filter(c=>!q ||
+      c.id.toLowerCase().includes(q) || (c.desc||'').toLowerCase().includes(q) ||
+      (ST.clientes[c.id_cli]?.nombre||'').toLowerCase().includes(q));
+    if(cots.length){
+      totalFound+=cots.length;
+      html+=`<div class="gs-result-group-title">Cotizaciones (${cots.length})</div>`;
+      html+=cots.slice(0,LIMIT).map(c=>{
+        const cli=ST.clientes[c.id_cli]||{};
+        return gsItem('📄',esc(c.id),`${esc(cli.nombre||c.id_cli)} · ${esc(c.estatus)} · ${fmtMXN(c.total)}`,
+          `closeGlobalSearch();switchTab('cot');openEdit('${esc(c.id)}',${c._row})`);
+      }).join('');
+    }
+  }
+  if(f.oc){
+    const ocs=ST.ocAll.filter(o=>!q ||
+      (o.numero||'').toLowerCase().includes(q) || (o.concepto||'').toLowerCase().includes(q) ||
+      (ST.clientes[o.id_cli]?.nombre||'').toLowerCase().includes(q));
+    if(ocs.length){
+      totalFound+=ocs.length;
+      html+=`<div class="gs-result-group-title">Órdenes de Compra (${ocs.length})</div>`;
+      html+=ocs.slice(0,LIMIT).map(o=>{
+        const cli=ST.clientes[o.id_cli]||{};
+        return gsItem('🧾',esc(o.numero),`${esc(cli.nombre||o.id_cli)} · ${esc(o.estatus)} · ${o.monto?fmtMXN(o.monto):'—'}`,
+          `closeGlobalSearch();switchTab('oc');editOCCliente('${esc(o.id)}')`);
+      }).join('');
+    }
+  }
+  if(f.fac){
+    const facs=ST.facturas.filter(fa=>!q ||
+      (fa.folio||'').toLowerCase().includes(q) || (fa.concepto||'').toLowerCase().includes(q) ||
+      (ST.clientes[fa.id_cli]?.nombre||'').toLowerCase().includes(q));
+    if(facs.length){
+      totalFound+=facs.length;
+      html+=`<div class="gs-result-group-title">Facturas (${facs.length})</div>`;
+      html+=facs.slice(0,LIMIT).map(fa=>{
+        const cli=ST.clientes[fa.id_cli]||{};
+        return gsItem('💵',esc(fa.folio),`${esc(cli.nombre||fa.id_cli)} · ${esc(fa.estatus)} · ${fmtMXN(fa.total)}`,
+          `closeGlobalSearch();switchTab('fac');openRelacionPanel('fac','${esc(fa.id)}')`);
+      }).join('');
+    }
+  }
+
+  if(!totalFound){
+    html = q
+      ? `<div class="gs-result-empty">Sin resultados para "${esc(q)}"</div>`
+      : `<div class="gs-result-empty">Escribe para buscar en clientes, cotizaciones, OC y facturas…</div>`;
+  }
+  wrap.innerHTML=html;
+}
+function closeGlobalSearch(){
+  document.getElementById('globalSearchPanel').style.display='none';
+  document.getElementById('globalSearchInput').value='';
+  ST.globalSearch='';
 }
 
 /* Init currentTab */
