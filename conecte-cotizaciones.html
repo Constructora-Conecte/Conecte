@@ -7,6 +7,7 @@
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════
@@ -433,7 +434,42 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .fac-table tr:last-child td{border-bottom:none}
 .fac-table tr:hover td{background:rgba(255,255,255,.02)}
 
-/* RESPONSIVE */
+/* ── BALANCE SUB-TABS ── */
+.bal-nav{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px;padding:0 2px}
+.bal-tab{padding:0 16px;height:36px;border:none;background:transparent;font-family:var(--font);
+  font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;position:relative;
+  display:flex;align-items:center;gap:6px;transition:color .15s;white-space:nowrap}
+.bal-tab:hover{color:var(--text)}
+.bal-tab.active{color:var(--white)}
+.bal-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);border-radius:2px 2px 0 0}
+.bal-tab svg{width:12px;height:12px;flex-shrink:0}
+.bal-pane{display:none}
+.bal-pane.active{display:block}
+
+/* ── BALANCE TABLE ── */
+.bal-table{width:100%;border-collapse:collapse}
+.bal-table th{padding:7px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.bal-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;font-size:12.5px}
+.bal-table tr:last-child td{border-bottom:none}
+.bal-table tr:hover td{background:rgba(255,255,255,.02)}
+.bal-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:600;white-space:nowrap}
+.bal-badge.pagado{background:var(--green-p);color:var(--green)}
+.bal-badge.pendiente{background:var(--yellow-p);color:var(--yellow)}
+.bal-badge.vencido{background:var(--red-p);color:var(--red)}
+.bal-badge.cancelado{background:var(--bg3);color:var(--text3)}
+.bal-cuenta{font-size:10.5px;color:var(--text3);font-family:var(--mono)}
+.bal-monto-ing{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green)}
+.bal-monto-gas{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--red)}
+
+/* ── DASHBOARD CHARTS ── */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+.dash-grid-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.dash-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:16px}
+.dash-card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:14px}
+.dash-chart-wrap{position:relative;height:220px}
+.dash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:900px){.dash-grid,.dash-grid-3{grid-template-columns:1fr}.dash-kpi-grid{grid-template-columns:1fr 1fr}}
+
 @media(max-width:900px){
   .stats{grid-template-columns:1fr 1fr}
   .content{padding:14px 14px 50px}
@@ -534,6 +570,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button class="tab-btn" id="tabOCBtn" onclick="switchTab('oc')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>
       OC Clientes
+    </button>
+    <button class="tab-btn" id="tabBalBtn" onclick="switchTab('bal')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h3V7H2zM6.5 12h3V4h-3zM11 12h3V9h-3z"/></svg>
+      Balance
     </button>
   </nav>
 
@@ -733,6 +773,143 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div><!-- /tabOC -->
 
+    <!-- ══ TAB: BALANCE ══ -->
+    <div id="tabBal" class="tab-pane">
+
+      <!-- Sub-nav -->
+      <nav class="bal-nav">
+        <button class="bal-tab active" id="balIngBtn" onclick="switchBalTab('ing')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 13V3M4 7l4-4 4 4"/></svg>
+          Ingresos
+        </button>
+        <button class="bal-tab" id="balGasBtn" onclick="switchBalTab('gas')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M4 9l4 4 4-4"/></svg>
+          Gastos
+        </button>
+        <button class="bal-tab" id="balDashBtn" onclick="switchBalTab('dash')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
+          Dashboard
+        </button>
+      </nav>
+
+      <!-- ── SUB-PANE: INGRESOS ── -->
+      <div class="bal-pane active" id="balIng">
+        <div class="stats" id="ingStats">
+          <div class="stat cg"><div class="stat-lbl">Total Ingresos</div><div class="stat-val" id="sIngTotal">—</div><div class="stat-delta">Todos los registros</div></div>
+          <div class="stat cg"><div class="stat-lbl">Pagados</div><div class="stat-val" id="sIngPag">—</div><div class="stat-delta" id="sIngPagMonto">—</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="sIngPend">—</div><div class="stat-delta" id="sIngPendMonto">—</div></div>
+          <div class="stat cr"><div class="stat-lbl">Vencidos</div><div class="stat-val" id="sIngVenc">—</div><div class="stat-delta" id="sIngVencMonto">—</div></div>
+        </div>
+        <div class="filter-bar">
+          <button class="fchip on" onclick="setIngFilter('all',this)">Todos</button>
+          <button class="fchip" onclick="setIngFilter('Pagado',this)">Pagado</button>
+          <button class="fchip" onclick="setIngFilter('Pendiente',this)">Pendiente</button>
+          <button class="fchip" onclick="setIngFilter('Vencido',this)">Vencido</button>
+          <span class="fsep"></span>
+          <input type="text" id="ingSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍 Buscar ingreso…" oninput="applyIngFilter()">
+          <button class="btn btn-red btn-sm" onclick="openBalModal('ing')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
+            Nuevo Ingreso
+          </button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Registro de Ingresos</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="ingCount">0</span>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="bal-table">
+              <thead><tr>
+                <th>Fecha</th><th>Concepto</th><th>Cliente</th>
+                <th>Cuenta</th><th>Estado</th><th>Fecha Pago</th>
+                <th style="text-align:right">Monto</th><th>Factura</th><th></th>
+              </tr></thead>
+              <tbody id="ingTbody"><tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div> Cargando…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="pagi"><span class="pagi-info" id="ingPagiInfo">—</span><div class="pagi-btns" id="ingPagiBtns"></div></div>
+        </div>
+      </div>
+
+      <!-- ── SUB-PANE: GASTOS ── -->
+      <div class="bal-pane" id="balGas">
+        <div class="stats" id="gasStats">
+          <div class="stat cr"><div class="stat-lbl">Total Gastos</div><div class="stat-val" id="sGasTotal">—</div><div class="stat-delta">Todos los registros</div></div>
+          <div class="stat cr"><div class="stat-lbl">Pagados</div><div class="stat-val" id="sGasPag">—</div><div class="stat-delta" id="sGasPagMonto">—</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="sGasPend">—</div><div class="stat-delta" id="sGasPendMonto">—</div></div>
+          <div class="stat cb"><div class="stat-lbl">Es Deuda</div><div class="stat-val" id="sGasDeuda">—</div><div class="stat-delta" id="sGasDeudaMonto">—</div></div>
+        </div>
+        <div class="filter-bar">
+          <button class="fchip on" onclick="setGasFilter('all',this)">Todos</button>
+          <button class="fchip" onclick="setGasFilter('Pagado',this)">Pagado</button>
+          <button class="fchip" onclick="setGasFilter('Pendiente',this)">Pendiente</button>
+          <button class="fchip" onclick="setGasFilter('Vencido',this)">Vencido</button>
+          <span class="fsep"></span>
+          <input type="text" id="gasSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍 Buscar gasto…" oninput="applyGasFilter()">
+          <button class="btn btn-red btn-sm" onclick="openBalModal('gas')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
+            Nuevo Gasto
+          </button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Registro de Gastos</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="gasCount">0</span>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="bal-table">
+              <thead><tr>
+                <th>Fecha</th><th>Concepto</th><th>Prioridad</th>
+                <th>Cuenta</th><th>Estado</th><th>Fecha Límite</th>
+                <th style="text-align:right">Monto</th><th>Deuda</th><th></th>
+              </tr></thead>
+              <tbody id="gasTbody"><tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div> Cargando…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="pagi"><span class="pagi-info" id="gasPagiInfo">—</span><div class="pagi-btns" id="gasPagiBtns"></div></div>
+        </div>
+      </div>
+
+      <!-- ── SUB-PANE: DASHBOARD ── -->
+      <div class="bal-pane" id="balDash">
+        <!-- KPIs -->
+        <div class="dash-kpi-grid" id="dashKpis">
+          <div class="stat cg"><div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dKpiIng">—</div><div class="stat-delta">Pagados</div></div>
+          <div class="stat cr"><div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dKpiGas">—</div><div class="stat-delta">Pagados</div></div>
+          <div class="stat cb"><div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dKpiBal">—</div><div class="stat-delta">Ingresos − Gastos</div></div>
+          <div class="stat cy"><div class="stat-lbl">Por Cobrar</div><div class="stat-val" id="dKpiPend">—</div><div class="stat-delta">Ingresos pendientes</div></div>
+        </div>
+        <!-- Filtro año -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:11.5px;color:var(--text3)">Año:</span>
+          <select id="dashYear" onchange="renderDashboard()" style="height:28px;padding:0 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text2);outline:none;"></select>
+        </div>
+        <!-- Charts row 1 -->
+        <div class="dash-grid" style="margin-bottom:14px">
+          <div class="dash-card">
+            <div class="dash-card-title">Ingresos vs Gastos por Mes</div>
+            <div class="dash-chart-wrap"><canvas id="chartBarMes"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Balance Acumulado</div>
+            <div class="dash-chart-wrap"><canvas id="chartLineBal"></canvas></div>
+          </div>
+        </div>
+        <!-- Charts row 2 -->
+        <div class="dash-grid">
+          <div class="dash-card">
+            <div class="dash-card-title">Estado de Ingresos</div>
+            <div class="dash-chart-wrap"><canvas id="chartDonutIng"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Estado de Gastos</div>
+            <div class="dash-chart-wrap"><canvas id="chartDonutGas"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tabBal -->
+
   </div><!-- /content -->
 </div><!-- /appScreen -->
 
@@ -881,6 +1058,110 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </button>
       <button class="btn btn-red" id="saveBtn" onclick="guardarCot()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BALANCE MODAL (Ingreso / Gasto) ══ -->
+<div class="modal-bg" id="balModal">
+  <div class="modal-lg" style="width:580px">
+    <div class="mlg-head">
+      <div>
+        <div class="mlg-title" id="balModalTitle">Nuevo Ingreso</div>
+        <div class="mlg-sub" id="balModalSub">Registra el movimiento en la hoja Balance</div>
+      </div>
+      <button class="close-x" onclick="closeBalModal()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="mlg-body">
+      <div class="form-grid" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input type="date" class="form-input" id="bFecha">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cuenta / Forma de pago *</label>
+          <select class="form-select" id="bCuenta">
+            <option value="Transferencia">Transferencia</option>
+            <option value="Factoraje">Factoraje</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Tarjeta">Tarjeta</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Concepto *</label>
+          <input type="text" class="form-input" id="bConcepto" placeholder="Descripción del movimiento">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto *</label>
+          <input type="number" class="form-input" id="bMonto" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="bEstado">
+            <option value="Pagado">Pagado</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Vencido">Vencido</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de Pago</label>
+          <input type="date" class="form-input" id="bFechaPago">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha Límite</label>
+          <input type="date" class="form-input" id="bFechaLimite">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prioridad</label>
+          <select class="form-select" id="bPrioridad">
+            <option value="Media">Media</option>
+            <option value="Alta">Alta</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <select class="form-select" id="bCliente"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Responsable</label>
+          <input type="text" class="form-input" id="bResponsable" placeholder="Nombre del responsable">
+        </div>
+        <div class="form-group" id="bFacGrp" style="display:none">
+          <label class="form-label">Factura vinculada</label>
+          <input type="text" class="form-input" id="bFactura" readonly style="color:var(--text2)">
+        </div>
+        <div class="form-group" id="bDeudaGrp">
+          <label class="form-label">¿Es Deuda?</label>
+          <select class="form-select" id="bEsDeuda">
+            <option value="FALSE">No</option>
+            <option value="TRUE">Sí</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Afecta Caja</label>
+          <select class="form-select" id="bAfectaCaja">
+            <option value="TRUE">Sí</option>
+            <option value="FALSE">No</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Proyecto / Observaciones</label>
+          <textarea class="form-textarea" id="bObs" rows="2" placeholder="Notas adicionales…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="mlg-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeBalModal()">Cancelar</button>
+      <button class="btn btn-red btn-sm" id="balSaveBtn" onclick="saveBalEntry()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
         Guardar
       </button>
     </div>
@@ -1244,6 +1525,18 @@ const ST = {
   driveFolders: {},     // cache de carpetas de Drive ya creadas/encontradas: {nombre: folderId}
   globalSearch: '',     // buscador global del topbar
   globalSearchFilters: { cli:true, oc:true, fac:true, cot:true }, // filtros activos
+  balance: [],          // movimientos de Balance sheet
+  ingFiltered: [],
+  gasFiltered: [],
+  ingFilter: 'all',
+  gasFilter: 'all',
+  ingPage: 1,
+  gasPage: 1,
+  currentBalTab: 'ing',
+  balEditId: null,
+  balFacRef: null,
+  _balTipo: 'Ingreso',
+  _charts: {},
 };
 
 /* ─── CARPETA RAÍZ EN DRIVE ───
@@ -1411,13 +1704,14 @@ function doLogout() {
 async function loadAll() {
   setLoading(true);
   try {
-    const [cotR, cliR, conR, artR, ocR, facR] = await Promise.all([
+    const [cotR, cliR, conR, artR, ocR, facR, balR] = await Promise.all([
       sheetsGet('Cotizaciones!A2:P'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
       sheetsGet('Articulos!A2:F'),
       sheetsGet('Oc_Client!A2:I'),   // 9 cols: + I=ID_Cotizacion (vínculo)
       sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
+      sheetsGet('Balance!A2:R'),     // 18 cols: balance movements
     ]);
 
     /* Clientes */
@@ -1477,6 +1771,7 @@ async function loadAll() {
       notas:      r[8]||'',
       oc:         r[9]||'',           // legacy: primer id (compat hacia atrás)
       ocIds:      parseIds(r[9]),     // vínculo(s) a Oc_Client.id — ahora soporta varias
+      id_ingreso: r[10]||'',         // K = ID del ingreso en Balance (si ya se registró)
       pdfB64:     r[13]||'',
       xmlContent: r[15]||'',
     }));
@@ -1503,6 +1798,32 @@ async function loadAll() {
     applyFilter();
     populateClientes();
     renderOCClienteTable();
+    // Balance
+    ST.balance = (balR||[]).filter(r=>r[0]).map((r,i)=>({
+      _row:       i+2,
+      id:         r[0]||'',
+      fecha:      r[1]||'',
+      tipo:       r[2]||'',         // Ingreso / Gasto
+      concepto:   r[3]||'',
+      monto:      parseFloat((r[4]||'').toString().replace(/[$,]/g,''))||0,
+      cuenta:     r[5]||'',
+      afectaCaja: r[6]||'TRUE',
+      estado:     r[7]||'Pendiente',
+      fechaLim:   r[8]||'',
+      fechaPago:  r[9]||'',
+      esDeuda:    r[10]||'FALSE',
+      prioridad:  r[11]||'Media',
+      cliente:    r[12]||'',
+      proyecto:   r[13]||'',
+      responsable:r[14]||'',
+      obs:        r[15]||'',
+      pdf:        r[16]||'',
+      foto:       r[17]||'',
+    }));
+    applyIngFilter();
+    applyGasFilter();
+    updateIngStats();
+    updateGasStats();
     document.getElementById('lastUpd').textContent = 'Act. ' +
       new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
 
@@ -2398,7 +2719,16 @@ function renderFacTable(){
 
 async function changeFacEstatus(row,val){
   const f=ST.facturas.find(x=>x._row===row); if(!f) return;
-  try{ await sheetsUpdate(`Facturas!H${row}`,[[val]]); f.estatus=val; updateFacStats(); toast('ok','Estatus actualizado.'); }
+  try{
+    await sheetsUpdate(`Facturas!H${row}`,[[val]]);
+    f.estatus=val;
+    updateFacStats();
+    toast('ok','Estatus actualizado.');
+    // Prompt to create ingreso if marked as Pagado and not yet linked
+    if(val==='Pagado' && !f.id_ingreso){
+      setTimeout(()=>promptCrearIngreso(f), 400);
+    }
+  }
   catch(e){ toast('err','Error al actualizar estatus: '+(e.result?.error?.message||e.message)); }
 }
 async function changeFacMetodo(row,val){
@@ -3291,10 +3621,8 @@ function toggleTheme(){
 
 /* ─── SWITCH TAB (única definición) ─── */
 function switchTab(tab){
-  // Exact IDs in HTML: tabCot, tabFac, tabOC  /  tabCotBtn, tabFacBtn, tabOCBtn
-  const TABS = { cot:{pane:'tabCot', btn:'tabCotBtn'}, fac:{pane:'tabFac', btn:'tabFacBtn'}, oc:{pane:'tabOC', btn:'tabOCBtn'} };
+  const TABS = { cot:{pane:'tabCot', btn:'tabCotBtn'}, fac:{pane:'tabFac', btn:'tabFacBtn'}, oc:{pane:'tabOC', btn:'tabOCBtn'}, bal:{pane:'tabBal', btn:'tabBalBtn'} };
 
-  // Hide all panes, deactivate all buttons
   Object.values(TABS).forEach(({pane, btn}) => {
     const p = document.getElementById(pane);
     const b = document.getElementById(btn);
@@ -3302,7 +3630,6 @@ function switchTab(tab){
     if(b) b.classList.remove('active');
   });
 
-  // Show requested tab
   const target = TABS[tab];
   if(!target){ console.error('switchTab: unknown tab', tab); return; }
   const pane = document.getElementById(target.pane);
@@ -3312,16 +3639,15 @@ function switchTab(tab){
 
   ST.currentTab = tab;
 
-  // Update + button label
   const addTxt = document.getElementById('mainAddTxt');
   if(addTxt){
-    const labels = {cot:'+ Cotización', fac:'+ Factura', oc:'+ OC'};
+    const labels = {cot:'+ Cotización', fac:'+ Factura', oc:'+ OC', bal:'+ Movimiento'};
     addTxt.textContent = labels[tab] || '+ Agregar';
   }
 
-  // Lazy render
   if(tab==='oc') renderOCClienteTable();
   if(tab==='fac') renderFacTableFull();
+  if(tab==='bal'){ applyIngFilter(); applyGasFilter(); setTimeout(renderDashboard,100); }
 }
 
 function mainAdd(){
@@ -3329,7 +3655,406 @@ function mainAdd(){
   if(tab==='cot') abrirNueva();
   else if(tab==='fac') openFacUpload();
   else if(tab==='oc') openNewOCCliente();
+  else if(tab==='bal') openBalModal(ST.currentBalTab||'ing');
 }
+
+/* ─── BALANCE SUB-TAB SWITCH ─── */
+function switchBalTab(sub){
+  ['ing','gas','dash'].forEach(s=>{
+    document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1))?.classList.remove('active');
+    document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1)+'Btn')?.classList.remove('active');
+  });
+  document.getElementById('bal'+sub.charAt(0).toUpperCase()+sub.slice(1))?.classList.add('active');
+  document.getElementById('bal'+sub.charAt(0).toUpperCase()+sub.slice(1)+'Btn')?.classList.add('active');
+  ST.currentBalTab = sub;
+  const addTxt=document.getElementById('mainAddTxt');
+  if(addTxt) addTxt.textContent = sub==='gas'?'+ Gasto':'+ Ingreso';
+  if(sub==='dash') setTimeout(renderDashboard,80);
+}
+
+/* ─── HELPERS ─── */
+function fmtMXNBal(n){ return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function todayISOBal(){ return new Date().toISOString().slice(0,10); }
+function badgeBal(estado){
+  const map={Pagado:'pagado',Pendiente:'pendiente',Vencido:'vencido',Cancelado:'cancelado'};
+  return `<span class="bal-badge ${map[estado]||'pendiente'}">${estado||'Pendiente'}</span>`;
+}
+function prioBadge(p){
+  const col={Alta:'var(--red)',Media:'var(--yellow)',Baja:'var(--blue)'};
+  return `<span style="font-size:10.5px;font-weight:600;color:${col[p]||'var(--text3)'}">${p||'—'}</span>`;
+}
+function genBalId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+
+/* ─── INGRESOS ─── */
+function setIngFilter(f,el){
+  ST.ingFilter=f; ST.ingPage=1;
+  document.querySelectorAll('#balIng .fchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  applyIngFilter();
+}
+function applyIngFilter(){
+  const q=(document.getElementById('ingSearch')?.value||'').toLowerCase();
+  let rows=ST.balance.filter(b=>b.tipo==='Ingreso');
+  if(ST.ingFilter!=='all') rows=rows.filter(b=>b.estado===ST.ingFilter);
+  if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
+  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  ST.ingFiltered=rows;
+  document.getElementById('ingCount').textContent=rows.length;
+  renderIngTable();
+  updateIngStats();
+}
+function updateIngStats(){
+  const ing=ST.balance.filter(b=>b.tipo==='Ingreso');
+  const pag=ing.filter(b=>b.estado==='Pagado'), pen=ing.filter(b=>b.estado==='Pendiente'), vec=ing.filter(b=>b.estado==='Vencido');
+  const s=(arr)=>arr.reduce((s,b)=>s+b.monto,0);
+  document.getElementById('sIngTotal').textContent=ing.length;
+  document.getElementById('sIngPag').textContent=pag.length;
+  document.getElementById('sIngPagMonto').textContent=fmtMXNBal(s(pag));
+  document.getElementById('sIngPend').textContent=pen.length;
+  document.getElementById('sIngPendMonto').textContent=fmtMXNBal(s(pen));
+  document.getElementById('sIngVenc').textContent=vec.length;
+  document.getElementById('sIngVencMonto').textContent=fmtMXNBal(s(vec));
+}
+function renderIngTable(){
+  const tbody=document.getElementById('ingTbody');
+  const PAGE=20, start=(ST.ingPage-1)*PAGE, slice=ST.ingFiltered.slice(start,start+PAGE);
+  if(!slice.length){ tbody.innerHTML=`<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin ingresos registrados</td></tr>`; renderIngPagi(); return; }
+  tbody.innerHTML=slice.map(b=>{
+    const cli=ST.clientes[b.cliente]?.nombre||b.cliente||'—';
+    return `<tr>
+      <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
+      <td style="max-width:220px">${b.concepto||'—'}<br><span style="font-size:10.5px;color:var(--text3)">${b.proyecto||''}</span></td>
+      <td style="font-size:12px">${cli}</td>
+      <td><span class="bal-cuenta">${b.cuenta||'—'}</span></td>
+      <td>${badgeBal(b.estado)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${b.fechaPago||'—'}</td>
+      <td style="text-align:right"><span class="bal-monto-ing">${fmtMXNBal(b.monto)}</span></td>
+      <td style="font-size:10.5px;color:var(--text3)">${b.obs||'—'}</td>
+      <td>
+        <div class="row-acts" style="opacity:1">
+          <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+          </button>
+          <button class="btn-icon del" onclick="delBalEntry('${b.id}',${b._row})" title="Eliminar">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  renderIngPagi();
+}
+function renderIngPagi(){
+  const total=ST.ingFiltered.length,pages=Math.ceil(total/20)||1;
+  const info=document.getElementById('ingPagiInfo'),wrap=document.getElementById('ingPagiBtns');
+  if(!info||!wrap) return;
+  info.textContent=`Pág ${ST.ingPage}/${pages} · ${total} registros`;
+  let h=`<button class="pbtn" onclick="goIngPage(${ST.ingPage-1})" ${ST.ingPage===1?'disabled':''}>‹</button>`;
+  for(let i=1;i<=pages;i++){
+    if(pages>7&&Math.abs(i-ST.ingPage)>2&&i!==1&&i!==pages){ if(i===2||i===pages-1) h+=`<button class="pbtn" disabled>…</button>`; continue; }
+    h+=`<button class="pbtn ${i===ST.ingPage?'on':''}" onclick="goIngPage(${i})">${i}</button>`;
+  }
+  h+=`<button class="pbtn" onclick="goIngPage(${ST.ingPage+1})" ${ST.ingPage===pages?'disabled':''}>›</button>`;
+  wrap.innerHTML=h;
+}
+function goIngPage(p){ const pages=Math.ceil(ST.ingFiltered.length/20)||1; ST.ingPage=Math.max(1,Math.min(p,pages)); renderIngTable(); }
+
+/* ─── GASTOS ─── */
+function setGasFilter(f,el){
+  ST.gasFilter=f; ST.gasPage=1;
+  document.querySelectorAll('#balGas .fchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  applyGasFilter();
+}
+function applyGasFilter(){
+  const q=(document.getElementById('gasSearch')?.value||'').toLowerCase();
+  let rows=ST.balance.filter(b=>b.tipo==='Gasto');
+  if(ST.gasFilter!=='all') rows=rows.filter(b=>b.estado===ST.gasFilter);
+  if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
+  rows.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  ST.gasFiltered=rows;
+  document.getElementById('gasCount').textContent=rows.length;
+  renderGasTable();
+  updateGasStats();
+}
+function updateGasStats(){
+  const gas=ST.balance.filter(b=>b.tipo==='Gasto');
+  const pag=gas.filter(b=>b.estado==='Pagado'), pen=gas.filter(b=>b.estado==='Pendiente'), deu=gas.filter(b=>b.esDeuda==='TRUE');
+  const s=(arr)=>arr.reduce((s,b)=>s+b.monto,0);
+  document.getElementById('sGasTotal').textContent=gas.length;
+  document.getElementById('sGasPag').textContent=pag.length;
+  document.getElementById('sGasPagMonto').textContent=fmtMXNBal(s(pag));
+  document.getElementById('sGasPend').textContent=pen.length;
+  document.getElementById('sGasPendMonto').textContent=fmtMXNBal(s(pen));
+  document.getElementById('sGasDeuda').textContent=deu.length;
+  document.getElementById('sGasDeudaMonto').textContent=fmtMXNBal(s(deu));
+}
+function renderGasTable(){
+  const tbody=document.getElementById('gasTbody');
+  const PAGE=20, start=(ST.gasPage-1)*PAGE, slice=ST.gasFiltered.slice(start,start+PAGE);
+  if(!slice.length){ tbody.innerHTML=`<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin gastos registrados</td></tr>`; renderGasPagi(); return; }
+  tbody.innerHTML=slice.map(b=>`<tr>
+    <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
+    <td style="max-width:220px">${b.concepto||'—'}<br><span style="font-size:10.5px;color:var(--text3)">${b.obs||''}</span></td>
+    <td>${prioBadge(b.prioridad)}</td>
+    <td><span class="bal-cuenta">${b.cuenta||'—'}</span></td>
+    <td>${badgeBal(b.estado)}</td>
+    <td style="font-size:11.5px;color:var(--text2)">${b.fechaLim||'—'}</td>
+    <td style="text-align:right"><span class="bal-monto-gas">${fmtMXNBal(b.monto)}</span></td>
+    <td style="text-align:center;font-size:11px;color:${b.esDeuda==='TRUE'?'var(--red)':'var(--text3)'}">${b.esDeuda==='TRUE'?'Sí':'No'}</td>
+    <td>
+      <div class="row-acts" style="opacity:1">
+        <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+        </button>
+        <button class="btn-icon del" onclick="delBalEntry('${b.id}',${b._row})" title="Eliminar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>`).join('');
+  renderGasPagi();
+}
+function renderGasPagi(){
+  const total=ST.gasFiltered.length,pages=Math.ceil(total/20)||1;
+  const info=document.getElementById('gasPagiInfo'),wrap=document.getElementById('gasPagiBtns');
+  if(!info||!wrap) return;
+  info.textContent=`Pág ${ST.gasPage}/${pages} · ${total} registros`;
+  let h=`<button class="pbtn" onclick="goGasPage(${ST.gasPage-1})" ${ST.gasPage===1?'disabled':''}>‹</button>`;
+  for(let i=1;i<=pages;i++){
+    if(pages>7&&Math.abs(i-ST.gasPage)>2&&i!==1&&i!==pages){ if(i===2||i===pages-1) h+=`<button class="pbtn" disabled>…</button>`; continue; }
+    h+=`<button class="pbtn ${i===ST.gasPage?'on':''}" onclick="goGasPage(${i})">${i}</button>`;
+  }
+  h+=`<button class="pbtn" onclick="goGasPage(${ST.gasPage+1})" ${ST.gasPage===pages?'disabled':''}>›</button>`;
+  wrap.innerHTML=h;
+}
+function goGasPage(p){ const pages=Math.ceil(ST.gasFiltered.length/20)||1; ST.gasPage=Math.max(1,Math.min(p,pages)); renderGasTable(); }
+
+/* ─── MODAL BALANCE ─── */
+function openBalModal(tipo, prefill){
+  ST.balEditId=null;
+  ST.balFacRef=prefill?.facRef||null;
+  const isIng=(tipo==='ing'||tipo==='Ingreso');
+  document.getElementById('balModalTitle').textContent = isIng?'Nuevo Ingreso':'Nuevo Gasto';
+  document.getElementById('balModalSub').textContent   = isIng?'Registrar un ingreso en el Balance':'Registrar un gasto en el Balance';
+  document.getElementById('bFecha').value     = prefill?.fecha || todayISOBal();
+  document.getElementById('bConcepto').value  = prefill?.concepto||'';
+  document.getElementById('bMonto').value     = prefill?.monto||'';
+  document.getElementById('bCuenta').value    = prefill?.cuenta||'Transferencia';
+  document.getElementById('bEstado').value    = prefill?.estado||'Pendiente';
+  document.getElementById('bFechaPago').value = prefill?.fechaPago||'';
+  document.getElementById('bFechaLimite').value= '';
+  document.getElementById('bPrioridad').value = 'Media';
+  document.getElementById('bEsDeuda').value   = 'FALSE';
+  document.getElementById('bAfectaCaja').value= 'TRUE';
+  document.getElementById('bObs').value       = prefill?.obs||'';
+  document.getElementById('bResponsable').value= '';
+  // populate cliente select
+  const cSel=document.getElementById('bCliente');
+  cSel.innerHTML='<option value="">— Sin cliente —</option>'+Object.values(ST.clientes).map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
+  if(prefill?.cliente) cSel.value=prefill.cliente;
+  // factura link
+  const facGrp=document.getElementById('bFacGrp');
+  if(ST.balFacRef){ facGrp.style.display=''; document.getElementById('bFactura').value=ST.balFacRef.folio||ST.balFacRef.id; }
+  else { facGrp.style.display='none'; }
+  // hide deuda field for ingresos
+  document.getElementById('bDeudaGrp').style.display = isIng?'none':'';
+  document.getElementById('balModal').classList.add('open');
+  ST._balTipo = isIng?'Ingreso':'Gasto';
+}
+
+function openBalEdit(id){
+  const b=ST.balance.find(x=>x.id===id); if(!b) return;
+  ST.balEditId=id;
+  ST.balFacRef=null;
+  const isIng=b.tipo==='Ingreso';
+  document.getElementById('balModalTitle').textContent = isIng?'Editar Ingreso':'Editar Gasto';
+  document.getElementById('balModalSub').textContent   = `ID: ${id}`;
+  document.getElementById('bFecha').value      = b.fecha||'';
+  document.getElementById('bConcepto').value   = b.concepto||'';
+  document.getElementById('bMonto').value      = b.monto||'';
+  document.getElementById('bCuenta').value     = b.cuenta||'Transferencia';
+  document.getElementById('bEstado').value     = b.estado||'Pendiente';
+  document.getElementById('bFechaPago').value  = b.fechaPago||'';
+  document.getElementById('bFechaLimite').value= b.fechaLim||'';
+  document.getElementById('bPrioridad').value  = b.prioridad||'Media';
+  document.getElementById('bEsDeuda').value    = b.esDeuda||'FALSE';
+  document.getElementById('bAfectaCaja').value = b.afectaCaja||'TRUE';
+  document.getElementById('bObs').value        = b.obs||'';
+  document.getElementById('bResponsable').value= b.responsable||'';
+  const cSel=document.getElementById('bCliente');
+  cSel.innerHTML='<option value="">— Sin cliente —</option>'+Object.values(ST.clientes).map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
+  cSel.value=b.cliente||'';
+  document.getElementById('bFacGrp').style.display='none';
+  document.getElementById('bDeudaGrp').style.display=isIng?'none':'';
+  document.getElementById('balModal').classList.add('open');
+  ST._balTipo=b.tipo;
+}
+
+function closeBalModal(){ document.getElementById('balModal').classList.remove('open'); ST.balEditId=null; ST.balFacRef=null; }
+
+async function saveBalEntry(){
+  const btn=document.getElementById('balSaveBtn');
+  const fecha    = document.getElementById('bFecha').value;
+  const concepto = document.getElementById('bConcepto').value.trim();
+  const monto    = parseFloat(document.getElementById('bMonto').value)||0;
+  if(!fecha||!concepto||!monto){ toast('err','Fecha, concepto y monto son requeridos.'); return; }
+  btn.disabled=true; btn.textContent='Guardando…';
+  const row=[
+    ST.balEditId || genBalId(),
+    fecha,
+    ST._balTipo||'Ingreso',
+    concepto,
+    monto,
+    document.getElementById('bCuenta').value,
+    document.getElementById('bAfectaCaja').value,
+    document.getElementById('bEstado').value,
+    document.getElementById('bFechaLimite').value,
+    document.getElementById('bFechaPago').value,
+    document.getElementById('bEsDeuda').value,
+    document.getElementById('bPrioridad').value,
+    document.getElementById('bCliente').value,
+    '', // Proyecto (N)
+    document.getElementById('bResponsable').value,
+    document.getElementById('bObs').value,
+    '', '', // Pdf, Foto
+  ];
+  try{
+    if(ST.balEditId){
+      const b=ST.balance.find(x=>x.id===ST.balEditId);
+      if(b) await sheetsUpdate(`Balance!A${b._row}:R${b._row}`,[row]);
+    } else {
+      await sheetsAppend('Balance!A2:R',[row]);
+      // If from a factura, write ingreso id back to Facturas!K
+      if(ST.balFacRef){
+        const f=ST.facturas.find(x=>x.id===ST.balFacRef.id);
+        if(f){ await sheetsUpdate(`Facturas!K${f._row}`,[[row[0]]]); f.id_ingreso=row[0]; }
+      }
+    }
+    toast('ok','Movimiento guardado.');
+    closeBalModal();
+    await loadAll();
+    switchBalTab(ST._balTipo==='Ingreso'?'ing':'gas');
+  } catch(e){ toast('err','Error al guardar: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
+}
+
+async function delBalEntry(id,row){
+  if(!confirm('¿Eliminar este movimiento?')) return;
+  try{
+    await sheetsClear(`Balance!A${row}:R${row}`);
+    ST.balance=ST.balance.filter(b=>b.id!==id);
+    applyIngFilter(); applyGasFilter();
+    toast('ok','Movimiento eliminado.');
+  } catch(e){ toast('err','Error al eliminar: '+(e.result?.error?.message||e.message)); }
+}
+
+/* ─── PROMPT CREAR INGRESO DESDE FACTURA PAGADA ─── */
+function promptCrearIngreso(f){
+  const cli=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
+  const si=confirm(`¿Deseas registrar el ingreso de la factura ${f.folio||f.id} por ${fmtMXNBal(f.total)} (${cli}) en el Balance?`);
+  if(!si) return;
+  openBalModal('ing',{
+    fecha: todayISOBal(),
+    concepto: `Pago ${f.folio||f.id} — ${f.concepto||''}`.trim().slice(0,120),
+    monto: f.total,
+    cuenta: f.metodo||'Transferencia',
+    estado: 'Pagado',
+    fechaPago: todayISOBal(),
+    cliente: f.id_cli,
+    obs: `Factura ${f.folio||f.id}`,
+    facRef: { id:f.id, folio:f.folio, _row:f._row },
+  });
+  switchTab('bal');
+}
+
+/* ─── DASHBOARD ─── */
+ST._charts={};
+function destroyChart(id){ if(ST._charts[id]){ ST._charts[id].destroy(); delete ST._charts[id]; } }
+
+function renderDashboard(){
+  if(document.getElementById('balDash')?.classList.contains('active')===false) return;
+  const year=parseInt(document.getElementById('dashYear')?.value)||new Date().getFullYear();
+  // Populate year selector if empty
+  const ySel=document.getElementById('dashYear');
+  if(ySel&&!ySel.options.length){
+    const years=[...new Set(ST.balance.map(b=>b.fecha?.slice(0,4)).filter(Boolean))].sort().reverse();
+    if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
+    years.forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y; ySel.appendChild(o); });
+    ySel.value=String(new Date().getFullYear());
+  }
+
+  const ing=ST.balance.filter(b=>b.tipo==='Ingreso'&&b.fecha?.startsWith(year));
+  const gas=ST.balance.filter(b=>b.tipo==='Gasto'&&b.fecha?.startsWith(year));
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  function sumByMonth(arr){ return meses.map((_,mi)=>arr.filter(b=>parseInt(b.fecha?.slice(5,7))===mi+1).reduce((s,b)=>s+b.monto,0)); }
+  const ingM=sumByMonth(ing), gasM=sumByMonth(gas);
+
+  // KPIs
+  const ingPag=ing.filter(b=>b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
+  const gasPag=gas.filter(b=>b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
+  const ingPend=ing.filter(b=>b.estado!=='Pagado').reduce((s,b)=>s+b.monto,0);
+  document.getElementById('dKpiIng').textContent=fmtMXNBal(ingPag);
+  document.getElementById('dKpiGas').textContent=fmtMXNBal(gasPag);
+  const net=ingPag-gasPag;
+  const netEl=document.getElementById('dKpiBal');
+  netEl.textContent=fmtMXNBal(net);
+  netEl.style.color=net>=0?'var(--green)':'var(--red)';
+  document.getElementById('dKpiPend').textContent=fmtMXNBal(ingPend);
+
+  const isDark=!document.body.classList.contains('light');
+  const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
+  const textColor=isDark?'#888':'#999';
+  Chart.defaults.color=textColor;
+
+  // Bar chart: Ingresos vs Gastos por mes
+  destroyChart('bar');
+  ST._charts['bar']=new Chart(document.getElementById('chartBarMes'),{
+    type:'bar',
+    data:{
+      labels:meses,
+      datasets:[
+        {label:'Ingresos',data:ingM,backgroundColor:'rgba(72,187,120,.7)',borderRadius:3},
+        {label:'Gastos',data:gasM,backgroundColor:'rgba(229,62,62,.65)',borderRadius:3}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor},ticks:{callback:v=>'$'+v.toLocaleString('es-MX')}}}}
+  });
+
+  // Line chart: balance acumulado
+  let acum=0;
+  const balAcum=meses.map((_,mi)=>{ acum+=(ingM[mi]||0)-(gasM[mi]||0); return acum; });
+  destroyChart('line');
+  ST._charts['line']=new Chart(document.getElementById('chartLineBal'),{
+    type:'line',
+    data:{labels:meses,datasets:[{label:'Balance acumulado',data:balAcum,borderColor:'#63b3ed',backgroundColor:'rgba(99,179,237,.1)',fill:true,tension:.35,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor},ticks:{callback:v=>'$'+v.toLocaleString('es-MX')}}}}
+  });
+
+  // Donut ingresos por estado
+  const iEst={Pagado:0,Pendiente:0,Vencido:0,Cancelado:0};
+  ing.forEach(b=>{ if(iEst[b.estado]!==undefined) iEst[b.estado]+=b.monto; else iEst['Pendiente']+=b.monto; });
+  destroyChart('dIng');
+  ST._charts['dIng']=new Chart(document.getElementById('chartDonutIng'),{
+    type:'doughnut',
+    data:{labels:Object.keys(iEst),datasets:[{data:Object.values(iEst),backgroundColor:['rgba(72,187,120,.8)','rgba(236,201,75,.8)','rgba(229,62,62,.8)','rgba(100,100,100,.5)'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXNBal(ctx.raw)}}}}
+  });
+
+  // Donut gastos por estado
+  const gEst={Pagado:0,Pendiente:0,Vencido:0,Cancelado:0};
+  gas.forEach(b=>{ if(gEst[b.estado]!==undefined) gEst[b.estado]+=b.monto; else gEst['Pendiente']+=b.monto; });
+  destroyChart('dGas');
+  ST._charts['dGas']=new Chart(document.getElementById('chartDonutGas'),{
+    type:'doughnut',
+    data:{labels:Object.keys(gEst),datasets:[{data:Object.values(gEst),backgroundColor:['rgba(72,187,120,.8)','rgba(236,201,75,.8)','rgba(229,62,62,.8)','rgba(100,100,100,.5)'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXNBal(ctx.raw)}}}}
+  });
+}
+
+/* ─── BALANCE — end ─── */
 
 /* ─── UNIDADES CUSTOM ─── */
 function addCustomUnidad(val){
