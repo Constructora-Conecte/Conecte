@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Conecte — Cotizaciones</title>
+<title>Conecte App</title>
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png">
+<link rel="shortcut icon" type="image/png" href="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png">
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -675,6 +678,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <button class="fchip" onclick="setFacFilter('Pendiente',this)">Pendiente</button>
         <button class="fchip" onclick="setFacFilter('Cancelado',this)">Cancelado</button>
         <span class="fsep"></span>
+        <select class="fsort" id="facYearFilter" onchange="setFacYearFilter(this.value)" style="height:28px">
+          <option value="">Todos los años</option>
+        </select>
+        <select class="fsort" id="facMonthFilter" onchange="setFacMonthFilter(this.value)" style="height:28px">
+          <option value="">Todos los meses</option>
+          <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+          <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+          <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+          <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+        <select class="fsort" id="facClienteFilter" onchange="setFacClienteFilter(this.value)" style="height:28px;max-width:170px">
+          <option value="">Todos los clientes</option>
+        </select>
+        <span class="fsep"></span>
         <input type="text" id="facSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar factura…" oninput="onFacSearch(this.value)">
         <select class="fsort" id="facSort" onchange="setFacSort(this.value)">
           <option value="agrupado" selected>Agrupado por Estatus</option>
@@ -707,11 +724,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
                 <th>Fecha</th>
                 <th>OC / Ref</th>
                 <th>Notas</th>
+                <th>Ingreso</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="facTbody">
               <tr class="loading-row">
-                <td colspan="9">
+                <td colspan="11">
                   <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
                   &nbsp;Cargando facturas…
                 </td>
@@ -1364,6 +1383,79 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ══ EDITAR FACTURA / VOLVER A SUBIR PDF + XML ══ -->
+<div class="modal-bg" id="facEditModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">Editar Factura</div>
+    <p style="font-size:11px;color:var(--text3);margin:-4px 0 14px">Corrige los datos y, si lo necesitas, vuelve a subir el PDF y/o el XML (por ejemplo, documentos antiguos cargados desde AppSheet).</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Folio *</label>
+          <input type="text" class="form-input" id="feFolio" placeholder="Folio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input type="date" class="form-input" id="feFecha">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente *</label>
+        <select class="form-select" id="feCliente"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Concepto</label>
+        <textarea class="form-textarea" id="feConcepto" style="min-height:52px"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto Total *</label>
+        <input type="number" class="form-input" id="feMonto" min="0" step="0.01">
+      </div>
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+      <div class="form-group">
+        <label class="form-label">Reemplazar archivo XML (CFDI) <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional)</span></label>
+        <input type="file" class="form-input" id="feXmlFile" accept=".xml,text/xml" onchange="onFacEditXmlSelected(this)">
+        <span style="font-size:10.5px;color:var(--text3)" id="feXmlStatus">Si no seleccionas un archivo, se conserva el XML actual.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reemplazar archivo PDF <span style="font-weight:400;text-transform:none;color:var(--text3)">(opcional)</span></label>
+        <input type="file" class="form-input" id="fePdfFile" accept=".pdf,application/pdf">
+        <span style="font-size:10.5px;color:var(--text3)" id="fePdfStatus">Si no seleccionas un archivo, se conserva el PDF actual.</span>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('facEditModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-red" id="saveFacEditBtn" onclick="saveFacEdit()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VINCULAR / CREAR INGRESO PARA UNA FACTURA ══ -->
+<div class="modal-bg" id="facIngLinkModal">
+  <div class="modal" style="width:460px">
+    <div class="modal-title">Relacionar Ingreso</div>
+    <div id="facIngCurrentWrap" style="display:none;margin-top:10px;padding:10px;background:var(--bg3);border-radius:var(--r4);font-size:11.5px;color:var(--text2);display:flex;align-items:center;gap:8px">
+      <span style="flex:1" id="facIngCurrentLabel"></span>
+      <button class="btn btn-ghost btn-sm" onclick="unlinkFacIngreso()">Quitar vínculo</button>
+    </div>
+    <div style="margin-top:14px;margin-bottom:10px;position:relative">
+      <label class="form-label">Buscar ingreso existente por concepto, cliente o monto</label>
+      <input type="text" class="form-input" id="facIngSearch" placeholder="Ej. Pago, Bachoco, 15000…" oninput="filterIngForFacLink(this.value)" onfocus="filterIngForFacLink(this.value)" autocomplete="off">
+      <div id="facIngDropdown" class="art-dropdown" style="display:none;top:62px"></div>
+    </div>
+    <div style="text-align:center;font-size:10.5px;color:var(--text3);margin:10px 0">— o —</div>
+    <div class="modal-acts" style="justify-content:center">
+      <button class="btn btn-ghost" onclick="newIngresoFromFacLink()">+ Crear nuevo ingreso para esta factura</button>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('facIngLinkModal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOASTS -->
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -1527,7 +1619,13 @@ const ST = {
   facFilter: 'all',
   facSort: 'agrupado',
   facSearch: '',
+  facYear: '',
+  facMonth: '',
+  facCliente: '',
   facPage: 1,
+  facEditId: null,
+  facEditExtract: null,
+  facIngLinkTargetId: null,
   formDirty: false,   // true si hay cambios sin guardar en el modal de cotización
   ocFormDirty: false, // true si hay cambios sin guardar en el modal de OC
   ocCotLinks: [],      // [{id, numero/folio}] cotizaciones vinculadas a la OC en edición (multi)
@@ -1845,6 +1943,7 @@ async function loadAll() {
     })).filter(f=>f.id);
     applyFacFilter();
     updateFacStats();
+    populateFacFilters();
 
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
        G=ItemsJSON, H=PDF, I=Descripcion, J=Notas, K=Creacion,
@@ -2692,10 +2791,38 @@ function setFacFilter(f,el){
 }
 function setFacSort(v){ ST.facSort=v; ST.facPage=1; applyFacFilter(); }
 function onFacSearch(q){ ST.facSearch=q.toLowerCase(); ST.facPage=1; applyFacFilter(); }
+function setFacYearFilter(v){ ST.facYear=v; ST.facPage=1; applyFacFilter(); }
+function setFacMonthFilter(v){ ST.facMonth=v; ST.facPage=1; applyFacFilter(); }
+function setFacClienteFilter(v){ ST.facCliente=v; ST.facPage=1; applyFacFilter(); }
+
+/* Refresca las opciones de los selects de Año / Cliente del filtro de Facturas
+   (se llama cada vez que se recargan los datos), conservando la selección actual. */
+function populateFacFilters(){
+  const yearSel=document.getElementById('facYearFilter');
+  if(yearSel){
+    const years=Array.from(new Set(ST.facturas.map(f=>isoDate(f.fecha).slice(0,4)).filter(y=>y && y!=='NaN'))).sort((a,b)=>b.localeCompare(a));
+    const cur=yearSel.value;
+    yearSel.innerHTML='<option value="">Todos los años</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    if(years.includes(cur)) yearSel.value=cur;
+  }
+  const cliSel=document.getElementById('facClienteFilter');
+  if(cliSel){
+    const cur=cliSel.value;
+    const clientesConFactura=Array.from(new Set(ST.facturas.map(f=>f.id_cli).filter(Boolean)));
+    const opts=clientesConFactura
+      .map(id=>({ id, nombre: ST.clientes[id]?.nombre||id }))
+      .sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    cliSel.innerHTML='<option value="">Todos los clientes</option>'+opts.map(c=>`<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+    if(clientesConFactura.includes(cur)) cliSel.value=cur;
+  }
+}
 
 function applyFacFilter(){
   let rows=[...ST.facturas];
   if(ST.facFilter!=='all') rows=rows.filter(r=>r.estatus===ST.facFilter);
+  if(ST.facYear)  rows=rows.filter(r=>isoDate(r.fecha).slice(0,4)===ST.facYear);
+  if(ST.facMonth) rows=rows.filter(r=>isoDate(r.fecha).slice(5,7)===ST.facMonth);
+  if(ST.facCliente) rows=rows.filter(r=>r.id_cli===ST.facCliente);
   if(ST.facSearch){
     const q=ST.facSearch;
     rows=rows.filter(r=>{
@@ -3344,7 +3471,7 @@ async function procesarFacturaUpload(){
       }
     }
 
-    applyFacFilter(); updateFacStats();
+    applyFacFilter(); updateFacStats(); populateFacFilters();
     renderOCClienteTable();
     document.getElementById('facUploadModal').classList.remove('open');
 
@@ -3353,6 +3480,197 @@ async function procesarFacturaUpload(){
     toast('err','Error al procesar la factura: '+(e.message||e));
   }
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Procesar y Guardar';
+}
+
+/* ─── EDITAR FACTURA / VOLVER A SUBIR PDF + XML (para documentos antiguos cargados desde AppSheet) ─── */
+function openFacEdit(id){
+  if(!requireAuth()) return;
+  const f=ST.facturas.find(x=>x.id===id);
+  if(!f){ toast('err','No se encontró la factura.'); return; }
+  ST.facEditId=id;
+  ST.facEditExtract=null;
+  document.getElementById('feFolio').value=f.folio||'';
+  document.getElementById('feFecha').value=isoDate(f.fecha);
+  document.getElementById('feConcepto').value=f.concepto||'';
+  document.getElementById('feMonto').value=f.total||'';
+  const cSel=document.getElementById('feCliente');
+  cSel.innerHTML=Object.values(ST.clientes).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''))
+    .map(c=>`<option value="${esc(c.id)}">${esc(c.nombre||c.id)}</option>`).join('');
+  if(f.id_cli && !ST.clientes[f.id_cli]) cSel.insertAdjacentHTML('afterbegin', `<option value="${esc(f.id_cli)}">${esc(f.id_cli)}</option>`);
+  cSel.value=f.id_cli||'';
+  document.getElementById('feXmlFile').value='';
+  document.getElementById('fePdfFile').value='';
+  const xmlSt=document.getElementById('feXmlStatus');
+  xmlSt.textContent = f.xmlContent ? 'Ya hay un XML cargado. Si no seleccionas uno nuevo, se conserva.' : 'Esta factura no tiene XML cargado todavía.';
+  xmlSt.style.color='var(--text3)';
+  const pdfSt=document.getElementById('fePdfStatus');
+  pdfSt.textContent = f.pdfB64 ? 'Ya hay un PDF cargado. Si no seleccionas uno nuevo, se conserva.' : 'Esta factura no tiene PDF cargado todavía.';
+  pdfSt.style.color='var(--text3)';
+  document.getElementById('facEditModal').classList.add('open');
+}
+
+function onFacEditXmlSelected(input){
+  const file=input.files[0];
+  const status=document.getElementById('feXmlStatus');
+  if(!file){ ST.facEditExtract=null; return; }
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const xml=new DOMParser().parseFromString(reader.result,'text/xml');
+      if(xml.querySelector('parsererror')) throw new Error('XML inválido');
+      const comp = xml.querySelector('*|Comprobante') || xml.documentElement;
+      const recep = xml.querySelector('*|Receptor');
+      const conceptos = Array.from(xml.querySelectorAll('*|Conceptos > *|Concepto'));
+      const folio = (comp.getAttribute('Folio')||comp.getAttribute('folio')||'');
+      const serie = (comp.getAttribute('Serie')||comp.getAttribute('serie')||'');
+      const fechaRaw = comp.getAttribute('Fecha')||comp.getAttribute('fecha')||'';
+      const total = parseFloat(comp.getAttribute('Total')||comp.getAttribute('total')||'0')||0;
+      const cliente = recep ? (recep.getAttribute('Nombre')||recep.getAttribute('nombre')||'') : '';
+      const rfcCli = recep ? (recep.getAttribute('Rfc')||recep.getAttribute('rfc')||'') : '';
+      const concepto = conceptos.map(c=>c.getAttribute('Descripcion')||c.getAttribute('descripcion')||'').filter(Boolean).join(' / ');
+      const fecha = fechaRaw ? fechaRaw.split('T')[0] : '';
+      ST.facEditExtract = { folio:(serie?serie+'-':'')+folio, cliente, rfcCli, concepto, total, fecha, xmlText: reader.result };
+      // Autorellena el formulario con los datos del nuevo XML (útil para corregir documentos antiguos)
+      if(ST.facEditExtract.folio) document.getElementById('feFolio').value=ST.facEditExtract.folio;
+      if(fecha) document.getElementById('feFecha').value=fecha;
+      if(concepto) document.getElementById('feConcepto').value=concepto;
+      if(total) document.getElementById('feMonto').value=total;
+      if(rfcCli){
+        const cSel=document.getElementById('feCliente');
+        if(!ST.clientes[rfcCli]){
+          ST.clientes[rfcCli]={id:rfcCli,nombre:cliente||rfcCli};
+          cSel.insertAdjacentHTML('beforeend', `<option value="${esc(rfcCli)}">${esc(cliente||rfcCli)}</option>`);
+        }
+        cSel.value=rfcCli;
+      }
+      status.textContent='Nuevo XML leído correctamente — datos del formulario actualizados.';
+      status.style.color='var(--green)';
+    }catch(e){
+      ST.facEditExtract=null;
+      status.textContent='No se pudo leer el XML: '+e.message;
+      status.style.color='var(--red)';
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function saveFacEdit(){
+  if(!ST.token){ toast('err','Conecta tu cuenta de Google primero (botón arriba).'); return; }
+  const f=ST.facturas.find(x=>x.id===ST.facEditId);
+  if(!f){ toast('err','No se encontró la factura.'); return; }
+  const folio=document.getElementById('feFolio').value.trim();
+  const fecha=document.getElementById('feFecha').value;
+  const id_cli=document.getElementById('feCliente').value;
+  const concepto=document.getElementById('feConcepto').value.trim();
+  const monto=parseFloat(document.getElementById('feMonto').value)||0;
+  if(!folio||!fecha||!id_cli||!monto){ toast('err','Folio, fecha, cliente y monto son requeridos.'); return; }
+  const btn=document.getElementById('saveFacEditBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    let pdfLink=f.pdfB64;
+    let xmlText=f.xmlContent;
+    const pdfFile=document.getElementById('fePdfFile').files[0];
+    const xmlFile=document.getElementById('feXmlFile').files[0];
+    if(pdfFile){
+      btn.textContent='Subiendo PDF…';
+      pdfLink=await driveUploadFile(pdfFile,'Facturas',`FAC_${folio||f.id}`);
+    }
+    if(xmlFile){
+      btn.textContent='Leyendo XML…';
+      xmlText = ST.facEditExtract?.xmlText || await xmlFile.text();
+    }
+    btn.textContent='Guardando…';
+    const sheetFecha=sheetDate(fecha);
+    await sheetsUpdate(`Facturas!B${f._row}:F${f._row}`,[[folio, id_cli, sheetFecha, concepto, monto]]);
+    await sheetsUpdate(`Facturas!N${f._row}`,[[pdfLink||'']]);
+    await sheetsUpdate(`Facturas!O${f._row}`,[[folio]]);
+    await sheetsUpdate(`Facturas!P${f._row}`,[[xmlText||'']]);
+    f.folio=folio; f.id_cli=id_cli; f.fecha=sheetFecha; f.concepto=concepto; f.total=monto;
+    f.pdfB64=pdfLink; f.xmlContent=xmlText;
+    if(id_cli && !ST.clientes[id_cli]) ST.clientes[id_cli]={id:id_cli,nombre:id_cli};
+    applyFacFilter(); updateFacStats(); populateFacFilters();
+    document.getElementById('facEditModal').classList.remove('open');
+    toast('ok','Factura "'+folio+'" actualizada correctamente.');
+  }catch(e){
+    toast('err','Error al actualizar la factura: '+(e.result?.error?.message||e.message));
+  }
+  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+}
+
+/* ─── RELACIONAR FACTURA ↔ INGRESO (buscar existente, vincular o crear uno nuevo) ─── */
+function openFacIngLink(facId){
+  if(!requireAuth()) return;
+  const f=ST.facturas.find(x=>x.id===facId); if(!f) return;
+  ST.facIngLinkTargetId=facId;
+  document.getElementById('facIngSearch').value='';
+  document.getElementById('facIngDropdown').style.display='none';
+  document.getElementById('facIngDropdown').innerHTML='';
+  const wrap=document.getElementById('facIngCurrentWrap');
+  if(f.id_ingreso){
+    const ing=ST.balance.find(b=>b.id===f.id_ingreso);
+    wrap.style.display='flex';
+    document.getElementById('facIngCurrentLabel').innerHTML = ing
+      ? `Ingreso vinculado: <b>${esc(ing.concepto||ing.id)}</b> — ${fmtMXNBal(ing.monto)} (${esc(ing.fecha||'')})`
+      : `Ingreso vinculado: <b>${esc(f.id_ingreso)}</b>`;
+  } else {
+    wrap.style.display='none';
+  }
+  document.getElementById('facIngLinkModal').classList.add('open');
+}
+
+function filterIngForFacLink(q){
+  q=(q||'').trim().toLowerCase();
+  const drop=document.getElementById('facIngDropdown');
+  const list=ST.balance.filter(b=>b.tipo==='Ingreso' && (!q ||
+    (b.concepto||'').toLowerCase().includes(q) ||
+    (ST.clientes[b.cliente]?.nombre||'').toLowerCase().includes(q) ||
+    String(b.monto||'').includes(q) || (b.id||'').toLowerCase().includes(q)
+  )).slice(0,30);
+  if(!list.length){ drop.innerHTML='<div class="art-no-results">Sin ingresos disponibles que coincidan</div>'; drop.style.display='block'; return; }
+  drop.innerHTML=list.map(b=>`<div class="art-option" onclick="selectIngForFacLink('${esc(b.id)}')">
+    <div style="font-weight:500">${esc(b.concepto||b.id)}</div>
+    <div style="font-size:10.5px;color:var(--text3)">${esc(ST.clientes[b.cliente]?.nombre||b.cliente||'—')} · ${fmtMXNBal(b.monto)} · ${esc(b.fecha||'')}</div>
+  </div>`).join('');
+  drop.style.display='block';
+}
+
+async function selectIngForFacLink(ingId){
+  const f=ST.facturas.find(x=>x.id===ST.facIngLinkTargetId); if(!f) return;
+  try{
+    await sheetsUpdate(`Facturas!K${f._row}`,[[ingId]]);
+    f.id_ingreso=ingId;
+    document.getElementById('facIngLinkModal').classList.remove('open');
+    applyFacFilter();
+    toast('ok','Ingreso vinculado a la factura.');
+  }catch(e){ toast('err','Error al vincular el ingreso: '+(e.result?.error?.message||e.message)); }
+}
+
+async function unlinkFacIngreso(){
+  const f=ST.facturas.find(x=>x.id===ST.facIngLinkTargetId); if(!f) return;
+  try{
+    await sheetsUpdate(`Facturas!K${f._row}`,[['']]);
+    f.id_ingreso='';
+    document.getElementById('facIngLinkModal').classList.remove('open');
+    applyFacFilter();
+    toast('ok','Vínculo de ingreso eliminado.');
+  }catch(e){ toast('err','Error al quitar el vínculo: '+(e.result?.error?.message||e.message)); }
+}
+
+function newIngresoFromFacLink(){
+  const f=ST.facturas.find(x=>x.id===ST.facIngLinkTargetId); if(!f) return;
+  document.getElementById('facIngLinkModal').classList.remove('open');
+  openBalModal('ing',{
+    fecha: todayISOBal(),
+    concepto: `Pago ${f.folio||f.id} — ${f.concepto||''}`.trim().slice(0,120),
+    monto: f.total,
+    cuenta: f.metodo||'Transferencia',
+    estado: f.estatus==='Pagado'?'Pagado':'Pendiente',
+    fechaPago: f.estatus==='Pagado'?todayISOBal():'',
+    cliente: f.id_cli,
+    obs: `Factura ${f.folio||f.id}`,
+    facRef: { id:f.id, folio:f.folio, _row:f._row },
+  });
+  switchTab('bal');
 }
 
 /* ─── OC SECTION ─── */
@@ -4693,7 +5011,7 @@ function renderFacTableFull(){
   if(!tbody) return;
   document.getElementById('facCount').textContent=(ST.facFiltered||[]).length+' registros';
   if(!ST.facFiltered||!ST.facFiltered.length){
-    tbody.innerHTML='<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3)">Sin facturas registradas</td></tr>';
+    tbody.innerHTML='<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3)">Sin facturas registradas</td></tr>';
     renderFacPagi(); return;
   }
   const start=((ST.facPage||1)-1)*ST.PAGE;
@@ -4713,7 +5031,7 @@ function renderFacTableFull(){
       lastGroup=r.estatus;
       const meta=groupMeta[r.estatus]||{label:(r.estatus||'OTRO').toUpperCase(),cls:'g-pend'};
       const sum=ST.facFiltered.filter(x=>x.estatus===r.estatus).reduce((s,x)=>s+x.total,0);
-      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="10">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
+      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="11">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
     }
     const cli=ST.clientes[r.id_cli]||{};
     const fmtTot='$'+r.total.toLocaleString('es-MX',{minimumFractionDigits:2});
@@ -4765,6 +5083,19 @@ function renderFacTableFull(){
         </div>
       </td>
       <td>
+        ${(()=>{
+          if(r.id_ingreso){
+            const ing=ST.balance.find(b=>b.id===r.id_ingreso);
+            return `<button type="button" class="btn-icon" title="Ingreso vinculado${ing?': '+esc(ing.concepto||''):''} — clic para cambiar" onclick="openFacIngLink('${esc(r.id)}')" style="color:var(--green)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 6.5h2.7a1.3 1.3 0 0 1 0 2.6H6m0 0h2.7a1.3 1.3 0 0 1 0 2.6H6"/></svg>
+            </button>`;
+          }
+          return `<button type="button" class="btn-icon" title="Vincular o crear ingreso" onclick="openFacIngLink('${esc(r.id)}')" style="color:var(--text3)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="8" r="6"/><path d="M8 5.5v5M5.8 6.6h2.6a1.1 1.1 0 0 1 0 2.2H6m0 0h2.6a1.1 1.1 0 0 1 0 2.2H5.8" stroke-dasharray="2 2"/></svg>
+          </button>`;
+        })()}
+      </td>
+      <td>
         <div style="display:flex;gap:3px">
           ${hasPDF?`<button class="btn-icon" title="Ver PDF" onclick="openFacPDF('${esc(r.id)}')">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/></svg>
@@ -4772,6 +5103,9 @@ function renderFacTableFull(){
           ${hasXML?`<button class="btn-icon" title="Ver XML" onclick="openFacXML('${esc(r.id)}')" style="color:var(--green)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5l-3 3 3 3M12 5l3 3-3 3M9 3l-2 10"/></svg>
           </button>`:''}
+          <button class="btn-icon" title="Editar factura / volver a subir PDF y XML" onclick="openFacEdit('${esc(r.id)}')" style="color:var(--blue)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+          </button>
         </div>
       </td>
     </tr>`;
