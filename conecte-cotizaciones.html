@@ -2039,7 +2039,7 @@ async function loadAll() {
       _row:       i+2,
       id:         r[0]||'',
       fecha:      r[1]||'',
-      tipo:       r[2]||'',         // Ingreso / Gasto
+      tipo:       (r[2]||'').toString().trim(),         // Ingreso / Gasto
       concepto:   r[3]||'',
       monto:      parseFloat((r[4]||'').toString().replace(/[$,]/g,''))||0,
       cuenta:     r[5]||'',
