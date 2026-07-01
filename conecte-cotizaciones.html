@@ -502,6 +502,47 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .bal-monto-ing{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green)}
 .bal-monto-gas{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--red)}
 
+/* ── FACTURAS RELACIONADAS: chip en la tabla de Ingresos ── */
+.fac-rel-chip{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 9px 4px 8px;
+  border-radius:999px;border:1px solid rgba(99,179,237,.3);background:var(--blue-p);
+  color:var(--blue);font-family:var(--font);font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.fac-rel-chip:hover{background:rgba(99,179,237,.22);border-color:rgba(99,179,237,.5)}
+.fac-rel-chip svg{width:12px;height:12px;flex-shrink:0}
+.fac-rel-chip .cnt{
+  background:var(--blue);color:#fff;font-size:10px;font-weight:700;
+  min-width:16px;height:16px;border-radius:999px;padding:0 4px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.fac-rel-none{color:var(--text3);font-size:11px}
+
+/* ── FACTURAS RELACIONADAS: sección dentro del modal de editar Ingreso ── */
+.bal-fac-rel{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.bal-fac-rel-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bal-fac-rel-title .form-label{margin:0}
+.bal-fac-rel-hint{font-size:10.5px;color:var(--text3);font-family:var(--mono)}
+.bal-fac-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.bal-fac-chip{
+  display:flex;align-items:center;gap:7px;padding:5px 6px 5px 10px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:999px;font-size:11.5px;
+}
+.bal-fac-chip b{font-family:var(--mono);font-weight:600;color:var(--text)}
+.bal-fac-chip .amt{color:var(--green);font-family:var(--mono)}
+.bal-fac-chip button{
+  width:16px;height:16px;border:none;border-radius:999px;background:var(--bg4);
+  color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;
+}
+.bal-fac-chip button:hover{background:var(--red);color:#fff}
+.bal-fac-empty{font-size:11.5px;color:var(--text3);padding:4px 0}
+
+/* ── Card de detalle de una factura relacionada ── */
+.fac-card-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.fac-card-row:last-child{border-bottom:none}
+.fac-card-row span:first-child{color:var(--text3)}
+.fac-card-row span:last-child{color:var(--text);font-weight:500;text-align:right}
+
 /* ── DASHBOARD CHARTS ── */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
 .dash-grid-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:14px}
@@ -1253,6 +1294,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <textarea class="form-textarea" id="bObs" rows="2" placeholder="Notas adicionales…"></textarea>
         </div>
       </div>
+
+      <div class="bal-fac-rel" id="bFacRelSection" style="display:none">
+        <div class="bal-fac-rel-title">
+          <label class="form-label">Facturas relacionadas</label>
+          <span class="bal-fac-rel-hint" id="bFacRelCount">0 relacionadas</span>
+        </div>
+        <div style="position:relative">
+          <input type="text" class="form-input" id="bFacRelSearch" placeholder="Buscar factura por folio, cliente o concepto…" oninput="filterFacForBalLink(this.value)" onfocus="filterFacForBalLink(this.value)" autocomplete="off">
+          <div id="bFacRelDropdown" class="art-dropdown" style="display:none;top:38px"></div>
+        </div>
+        <div class="bal-fac-chips" id="bFacRelChips"></div>
+      </div>
+      <div class="bal-fac-rel" id="bFacRelHintNew" style="display:none">
+        <label class="form-label">Facturas relacionadas</label>
+        <div class="bal-fac-empty">Guarda el ingreso primero para poder relacionar facturas existentes.</div>
+      </div>
     </div>
     <div class="mlg-foot">
       <button class="btn btn-ghost btn-sm" onclick="closeBalModal()">Cancelar</button>
@@ -1519,6 +1576,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     </div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('facIngLinkModal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CARD DETALLE DE FACTURA RELACIONADA ══ -->
+<div class="modal-bg" id="facRelCardModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-title" id="facRelCardTitle">Factura</div>
+    <div class="modal-body" id="facRelCardBody" style="margin-top:6px;margin-bottom:14px"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('facRelCardModal').classList.remove('open')">Cerrar</button>
+      <button class="btn btn-ghost" id="facRelCardXmlBtn" onclick="facRelCardOpenXML()" style="color:var(--green);border-color:rgba(72,187,120,.3)">Ver XML</button>
+      <button class="btn btn-red" id="facRelCardPdfBtn" onclick="facRelCardOpenPDF()">Ver PDF</button>
     </div>
   </div>
 </div>
@@ -4255,8 +4325,11 @@ function renderIngTable(){
     const cli=ST.clientes[b.cliente]?.nombre||b.cliente||'—';
     const facsLink=ST.facturas.filter(f=>f.id_ingreso===b.id);
     const facCell = facsLink.length
-      ? `<button type="button" class="btn-icon" style="color:var(--blue);font-size:10.5px;font-weight:600;white-space:nowrap" onmouseenter="showFacRelPopover(this,'${esc(b.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopover(this,'${esc(b.id)}')">🧾 Ver facturas relacionadas (${facsLink.length})</button>`
-      : '<span style="color:var(--text3);font-size:11px">— Sin factura —</span>';
+      ? `<button type="button" class="fac-rel-chip" onmouseenter="showFacRelPopover(this,'${esc(b.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopover(this,'${esc(b.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h6l3 3v9H4V2z"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>
+          Facturas relacionadas <span class="cnt">${facsLink.length}</span>
+        </button>`
+      : '<span class="fac-rel-none">— Sin factura —</span>';
     return `<tr>
       <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
       <td style="max-width:220px">${b.concepto||'—'}<br><span style="font-size:10.5px;color:var(--text3)">${b.obs||''}</span></td>
@@ -4298,7 +4371,7 @@ function showFacRelPopover(el, ingId){
   pop.innerHTML = facs.length
     ? facs.map(f=>{
         const stClass={Pagado:'pagado',Pendiente:'pendiente',Cancelado:'cancelado'}[f.estatus]||'pendiente';
-        return `<div style="padding:6px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''" onclick="openFacPDF('${esc(f.id)}')">
+        return `<div style="padding:6px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''" onclick="openFacRelCard('${esc(f.id)}')">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
             <span style="font-family:var(--mono);font-weight:700;color:var(--white)">${esc(f.folio||f.id)}</span>
             <span class="bal-badge ${stClass}" style="font-size:9.5px">${esc(f.estatus||'—')}</span>
@@ -4323,6 +4396,28 @@ document.addEventListener('click',(e)=>{
   const pop=document.getElementById('facRelPopover');
   if(pop && !pop.contains(e.target) && !e.target.closest('[onclick^="showFacRelPopover"]')) pop.remove();
 });
+
+/* ─── CARD: detalle de una factura relacionada (al hacer clic dentro del popover) ─── */
+function openFacRelCard(facId){
+  document.getElementById('facRelPopover')?.remove();
+  const f=ST.facturas.find(x=>x.id===facId); if(!f){ toast('err','No se encontró la factura.'); return; }
+  const cli=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
+  document.getElementById('facRelCardTitle').textContent = f.folio||f.id;
+  document.getElementById('facRelCardBody').innerHTML = `
+    <div class="fac-card-row"><span>Cliente</span><span>${esc(cli)}</span></div>
+    <div class="fac-card-row"><span>Concepto</span><span>${esc(f.concepto||'—')}</span></div>
+    <div class="fac-card-row"><span>Monto</span><span>${fmtMXNBal(f.total)}</span></div>
+    <div class="fac-card-row"><span>Estatus</span><span>${badgeBal(f.estatus)}</span></div>
+    <div class="fac-card-row"><span>Fecha</span><span>${esc(f.fecha||'—')}</span></div>
+  `;
+  document.getElementById('facRelCardPdfBtn').style.display = f.pdfB64 ? '' : 'none';
+  document.getElementById('facRelCardXmlBtn').style.display = f.xmlContent ? '' : 'none';
+  ST._facRelCardId = f.id;
+  document.getElementById('facRelCardModal').classList.add('open');
+}
+function facRelCardOpenPDF(){ if(ST._facRelCardId) openFacPDF(ST._facRelCardId); }
+function facRelCardOpenXML(){ if(ST._facRelCardId) openFacXML(ST._facRelCardId); }
+
 function renderIngPagi(){
   const total=ST.ingFiltered.length,pages=Math.ceil(total/20)||1;
   const info=document.getElementById('ingPagiInfo'),wrap=document.getElementById('ingPagiBtns');
@@ -4452,6 +4547,7 @@ function openBalModal(tipo, prefill){
   document.getElementById('bDeudaGrp').style.display = isIng?'none':'';
   document.getElementById('balModal').classList.add('open');
   ST._balTipo = isIng?'Ingreso':'Gasto';
+  renderBalFacRelSection();
 }
 
 function openBalEdit(id){
@@ -4493,9 +4589,72 @@ function openBalEdit(id){
   document.getElementById('bDeudaGrp').style.display=isIng?'none':'';
   document.getElementById('balModal').classList.add('open');
   ST._balTipo=b.tipo;
+  renderBalFacRelSection();
 }
 
 function closeBalModal(){ document.getElementById('balModal').classList.remove('open'); ST.balEditId=null; ST.balFacRef=null; }
+
+/* ─── RELACIONAR FACTURAS ↔ INGRESO desde el propio modal — permite varias ─── */
+function renderBalFacRelSection(){
+  const secEdit=document.getElementById('bFacRelSection');
+  const secNew=document.getElementById('bFacRelHintNew');
+  if(!ST.balEditId){
+    secEdit.style.display='none';
+    secNew.style.display='';
+    return;
+  }
+  secNew.style.display='none';
+  secEdit.style.display='';
+  document.getElementById('bFacRelSearch').value='';
+  document.getElementById('bFacRelDropdown').style.display='none';
+  renderBalFacRelChips();
+}
+function renderBalFacRelChips(){
+  const facs=ST.facturas.filter(f=>f.id_ingreso===ST.balEditId);
+  document.getElementById('bFacRelCount').textContent = facs.length+(facs.length===1?' relacionada':' relacionadas');
+  const wrap=document.getElementById('bFacRelChips');
+  wrap.innerHTML = facs.length
+    ? facs.map(f=>`<span class="bal-fac-chip"><b>${esc(f.folio||f.id)}</b><span class="amt">${fmtMXNBal(f.total)}</span><button type="button" title="Quitar" onclick="removeFacFromBalEntry('${esc(f.id)}')">✕</button></span>`).join('')
+    : '<div class="bal-fac-empty">Aún no hay facturas relacionadas. Búscalas arriba para agregarlas.</div>';
+}
+function filterFacForBalLink(q){
+  if(!ST.balEditId) return;
+  q=(q||'').trim().toLowerCase();
+  const drop=document.getElementById('bFacRelDropdown');
+  const list=ST.facturas.filter(f=>f.id_ingreso!==ST.balEditId && (!q ||
+    (f.folio||'').toLowerCase().includes(q) ||
+    (f.concepto||'').toLowerCase().includes(q) ||
+    (ST.clientes[f.id_cli]?.nombre||'').toLowerCase().includes(q)
+  )).slice(0,30);
+  if(!list.length){ drop.innerHTML='<div class="art-no-results">Sin facturas disponibles que coincidan</div>'; drop.style.display='block'; return; }
+  drop.innerHTML=list.map(f=>`<div class="art-option" onclick="addFacToBalEntry('${esc(f.id)}')">
+    <div style="font-weight:500">${esc(f.folio||f.id)} <span style="color:var(--text3);font-weight:400">— ${esc(ST.clientes[f.id_cli]?.nombre||f.id_cli||'—')}</span></div>
+    <div style="font-size:10.5px;color:var(--text3);margin-left:auto">${fmtMXNBal(f.total)} · ${esc(f.estatus||'—')}</div>
+  </div>`).join('');
+  drop.style.display='block';
+}
+async function addFacToBalEntry(facId){
+  const f=ST.facturas.find(x=>x.id===facId); if(!f||!ST.balEditId) return;
+  try{
+    await sheetsUpdate(`Facturas!K${f._row}`,[[ST.balEditId]]);
+    f.id_ingreso=ST.balEditId;
+    document.getElementById('bFacRelSearch').value='';
+    document.getElementById('bFacRelDropdown').style.display='none';
+    renderBalFacRelChips();
+    applyIngFilter();
+    toast('ok','Factura relacionada al ingreso.');
+  }catch(e){ toast('err','Error al relacionar la factura: '+(e.result?.error?.message||e.message)); }
+}
+async function removeFacFromBalEntry(facId){
+  const f=ST.facturas.find(x=>x.id===facId); if(!f) return;
+  try{
+    await sheetsUpdate(`Facturas!K${f._row}`,[['']]);
+    f.id_ingreso='';
+    renderBalFacRelChips();
+    applyIngFilter();
+    toast('ok','Factura desvinculada del ingreso.');
+  }catch(e){ toast('err','Error al quitar la relación: '+(e.result?.error?.message||e.message)); }
+}
 
 function onBEvidenciaSelected(input){
   const f=input.files[0];
