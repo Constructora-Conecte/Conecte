@@ -3,92 +3,208 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Enrolar Rostro - Admin</title>
+<title>Enrolar Rostro - Conecte Admin</title>
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f172a; --panel:#16213a; --accent:#38bdf8; --accent2:#22c55e;
-    --text:#e5e9f0; --muted:#8b95ab; --danger:#f87171; --radius:14px;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:var(--bg); color:var(--text); min-height:100vh;
-    display:flex; align-items:center; justify-content:center; padding:20px;
-  }
-  .card{
-    background:var(--panel); border-radius:var(--radius); padding:28px;
-    max-width:440px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.4);
-  }
-  h1{font-size:1.3rem; margin:0 0 4px; letter-spacing:.3px;}
-  p.sub{color:var(--muted); margin:0 0 20px; font-size:.9rem;}
-  select{
-    width:100%; padding:12px; border-radius:10px; border:1px solid #2a3654;
-    background:#0d1526; color:var(--text); font-size:1rem; margin-bottom:16px;
-  }
-  .video-wrap{
-    position:relative; width:100%; aspect-ratio:1/1; border-radius:var(--radius);
-    overflow:hidden; background:#000; margin-bottom:16px; border:2px solid #2a3654;
-  }
-  video, canvas{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;}
-  .status{
-    text-align:center; font-size:.95rem; padding:10px; border-radius:10px;
-    background:#0d1526; margin-bottom:16px; min-height:20px;
-  }
-  .status.ok{color:var(--accent2);}
-  .status.err{color:var(--danger);}
-  .status.wait{color:var(--accent);}
-  button{
-    width:100%; padding:14px; border:none; border-radius:10px; font-size:1rem;
-    font-weight:600; cursor:pointer; transition:opacity .2s;
-  }
-  button:disabled{opacity:.4; cursor:not-allowed;}
-  .btn-main{background:var(--accent); color:#0f172a;}
-  .btn-main:active{opacity:.8;}
-  .logo{font-size:.75rem; color:var(--muted); text-align:center; margin-top:16px;}
+:root{
+  --bg:      #141414;
+  --bg2:     #1c1c1c;
+  --bg3:     #252525;
+  --bg4:     #2e2e2e;
+  --border:  rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text:    #e4e4e4;
+  --text2:   #999;
+  --text3:   #555;
+  --white:   #fff;
+  --red:     #e53e3e;
+  --red-d:   #c53030;
+  --green:   #48bb78;
+  --yellow:  #ecc94b;
+  --blue:    #63b3ed;
+  --orange:  #ed8936;
+  --font:'Inter',sans-serif;
+  --r4:4px; --r8:8px; --r12:12px; --r16:16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+header{
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:14px 20px; display:flex; align-items:center; gap:10px; flex-shrink:0;
+}
+header img{height:30px; object-fit:contain}
+#brandFallback{display:none; align-items:center; gap:8px}
+#brandFallback .box{width:28px;height:28px;background:var(--red);border-radius:6px;display:flex;align-items:center;justify-content:center}
+header .titulo{font-size:14px; font-weight:700; color:var(--white)}
+header .sub{font-size:11.5px; color:var(--text2); margin-left:auto}
+
+main{ flex:1; display:flex; justify-content:center; padding:24px 16px 40px; }
+.layout{ width:100%; max-width:900px; display:flex; flex-direction:column; gap:20px; }
+
+.card{ background:var(--bg2); border:1px solid var(--border); border-radius:var(--r16); padding:22px; }
+.card h2{ font-size:1rem; margin:0 0 4px; }
+.card p.sub{ color:var(--text2); font-size:.85rem; margin:0 0 16px; }
+
+select{
+  width:100%; padding:12px; border-radius:var(--r8); border:1px solid var(--border2);
+  background:var(--bg3); color:var(--text); font-size:.95rem; margin-bottom:14px; font-family:var(--font);
+}
+.video-wrap{
+  position:relative; width:100%; max-width:340px; aspect-ratio:1/1; border-radius:var(--r16);
+  overflow:hidden; background:#000; margin:0 auto 14px; border:1px solid var(--border2);
+}
+video, canvas{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover}
+
+.status{
+  text-align:center; font-size:.9rem; padding:10px; border-radius:var(--r8);
+  background:var(--bg3); margin-bottom:14px; min-height:20px; border:1px solid var(--border);
+}
+.status.ok{color:var(--green)} .status.err{color:var(--red)} .status.wait{color:var(--blue)}
+
+button.principal{
+  width:100%; padding:14px; border:none; border-radius:var(--r8); font-size:.95rem;
+  font-weight:700; cursor:pointer; background:var(--red); color:#fff; font-family:var(--font);
+}
+button.principal:hover{background:var(--red-d)}
+button.principal:disabled{opacity:.4; cursor:not-allowed}
+
+/* ── Panel de avisos en vivo ── */
+.feed-head{ display:flex; align-items:center; gap:8px; }
+.dot-live{ width:8px;height:8px;border-radius:50%;background:var(--green); animation:pulse 1.6s infinite; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.feed-list{ display:flex; flex-direction:column; gap:8px; max-height:420px; overflow-y:auto; }
+.feed-item{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg3);
+  border-radius:var(--r8); border:1px solid var(--border); font-size:.85rem;
+  animation:slideIn .3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.feed-item .hora{ font-weight:700; color:var(--text2); font-variant-numeric:tabular-nums; flex-shrink:0; }
+.feed-item .nombre{ font-weight:700; color:var(--text); }
+.feed-item .tipo{ color:var(--text2); }
+.feed-item .badge{ margin-left:auto; font-size:.72rem; padding:2px 8px; border-radius:20px; flex-shrink:0; }
+.feed-item .badge.dentro{ background:rgba(72,187,120,.15); color:var(--green); }
+.feed-item .badge.fuera{ background:rgba(236,201,75,.15); color:var(--yellow); }
+.feed-empty{ text-align:center; color:var(--text3); padding:20px; font-size:.85rem; }
+
+/* ── Toast admin ── */
+#toast{
+  position:fixed; top:-140px; left:50%; transform:translateX(-50%);
+  width:min(92vw,380px); background:var(--bg2); border:1px solid var(--green); color:var(--text);
+  border-radius:var(--r12); padding:14px 18px; z-index:999; display:flex; align-items:center; gap:10px;
+  box-shadow:0 20px 50px rgba(0,0,0,.5); transition:top .35s cubic-bezier(.34,1.56,.64,1);
+}
+#toast.show{top:16px}
+#toast .icon{font-size:1.4rem}
+#toast .txt b{color:var(--green)}
+
+/* ── RESPONSIVE: escritorio en 2 columnas ── */
+@media (min-width:820px){
+  .layout{ flex-direction:row; align-items:flex-start; max-width:1000px; }
+  .col-enrolar{ flex:0 0 380px; }
+  .col-feed{ flex:1; }
+}
 </style>
 </head>
 <body>
 
-<div class="card">
-  <h1>🧑‍💼 Enrolamiento de rostro</h1>
-  <p class="sub">Selecciona al empleado, encuadra su rostro y captura.</p>
+<header>
+  <img src="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png" alt="Conecte"
+       onerror="this.style.display='none';document.getElementById('brandFallback').style.display='flex'">
+  <div id="brandFallback"><div class="box">🏗️</div><span class="titulo">CONECTE</span></div>
+  <span class="titulo">Panel administrativo</span>
+  <span class="sub">Marcaje biométrico</span>
+</header>
 
-  <select id="selectEmpleado">
-    <option value="">Cargando empleados...</option>
-  </select>
+<main>
+  <div class="layout">
+    <div class="col-enrolar">
+      <div class="card">
+        <h2>🧑‍💼 Enrolar rostro</h2>
+        <p class="sub">Selecciona al empleado, encuadra su rostro y captura.</p>
 
-  <div class="video-wrap">
-    <video id="video" autoplay muted playsinline></video>
-    <canvas id="overlay"></canvas>
+        <select id="selectEmpleado"><option value="">Cargando empleados...</option></select>
+
+        <div class="video-wrap">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="overlay"></canvas>
+        </div>
+
+        <div id="status" class="status wait">Cargando modelos de reconocimiento facial...</div>
+        <button id="btnCapturar" class="principal" disabled>Capturar y guardar rostro</button>
+      </div>
+    </div>
+
+    <div class="col-feed">
+      <div class="card">
+        <div class="feed-head">
+          <span class="dot-live"></span>
+          <h2>Marcajes de hoy en vivo</h2>
+        </div>
+        <p class="sub">Se actualiza automáticamente cada 10 segundos.</p>
+        <div id="feedList" class="feed-list">
+          <div class="feed-empty">Cargando...</div>
+        </div>
+      </div>
+    </div>
   </div>
+</main>
 
-  <div id="status" class="status wait">Cargando modelos de reconocimiento facial...</div>
-
-  <button id="btnCapturar" class="btn-main" disabled>Capturar y guardar rostro</button>
-
-  <div class="logo">Sistema de Marcaje Biométrico</div>
+<div id="toast">
+  <div class="icon">🔔</div>
+  <div class="txt" id="toastTxt"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 // ================== CONFIGURA ESTO ==================
-const API_URL = 'https://script.google.com/macros/s/AKfycbznliiqt_hVpVlJCojqZMGtRimo6ULks9h6Nq8aQXJhM3LPGCDqV0f3vOMS_dTEvKkpXA/exec';
+const API_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
 // ======================================================
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+
+const ETIQUETAS = {
+  Entrada: 'Entrada', Salida: 'Salida',
+  Salida_Comida: 'Salida a comer', Regreso_Comida: 'Regreso de comer',
+  Llegada_Area_Trabajo: 'Llegada a área de trabajo'
+};
 
 const video = document.getElementById('video');
 const overlay = document.getElementById('overlay');
 const statusEl = document.getElementById('status');
 const btnCapturar = document.getElementById('btnCapturar');
 const selectEmpleado = document.getElementById('selectEmpleado');
+const feedList = document.getElementById('feedList');
+const toastEl = document.getElementById('toast');
+const toastTxt = document.getElementById('toastTxt');
 
 let modelosListos = false;
+let ultimaClaveVista = null; // para detectar registros nuevos entre polls
 
-function setStatus(msg, tipo){
-  statusEl.textContent = msg;
-  statusEl.className = 'status ' + (tipo || 'wait');
+function setStatus(msg, tipo){ statusEl.textContent = msg; statusEl.className = 'status ' + (tipo||'wait'); }
+
+function pitido(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 660;
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    osc.start(); osc.stop(ctx.currentTime + 0.15);
+  } catch(e){}
 }
+
+function mostrarToastAdmin(nombre, tipo){
+  toastTxt.innerHTML = `<b>${nombre}</b> registró ${ETIQUETAS[tipo] || tipo}`;
+  toastEl.classList.add('show');
+  pitido();
+  setTimeout(() => toastEl.classList.remove('show'), 3500);
+}
+
+// ---------- Modelos y cámara ----------
 
 async function cargarModelos(){
   await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
@@ -109,9 +225,7 @@ async function cargarEmpleados(){
   selectEmpleado.innerHTML = '<option value="">Selecciona un empleado...</option>';
   empleados.forEach(emp => {
     const opt = document.createElement('option');
-    opt.value = emp.id;
-    opt.textContent = emp.nombre;
-    opt.dataset.nombre = emp.nombre;
+    opt.value = emp.id; opt.textContent = emp.nombre; opt.dataset.nombre = emp.nombre;
     selectEmpleado.appendChild(opt);
   });
 }
@@ -123,14 +237,11 @@ function loopDeteccion(){
 
   setInterval(async () => {
     if (!modelosListos) return;
-    const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks();
-
+    const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
     ctx.clearRect(0, 0, overlay.width, overlay.height);
     if (deteccion) {
       const box = deteccion.detection.box;
-      ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#48bb78'; ctx.lineWidth = 3;
       ctx.strokeRect(box.x, box.y, box.width, box.height);
       btnCapturar.disabled = !selectEmpleado.value;
       if (selectEmpleado.value) setStatus('Rostro detectado. Listo para capturar.', 'ok');
@@ -146,8 +257,7 @@ btnCapturar.addEventListener('click', async () => {
   setStatus('Procesando rostro...', 'wait');
 
   const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-    .withFaceLandmarks()
-    .withFaceDescriptor();
+    .withFaceLandmarks().withFaceDescriptor();
 
   if (!deteccion) {
     setStatus('No se pudo capturar el rostro, intenta de nuevo.', 'err');
@@ -156,12 +266,7 @@ btnCapturar.addEventListener('click', async () => {
   }
 
   const opt = selectEmpleado.selectedOptions[0];
-  const payload = {
-    action: 'enrolar',
-    id: selectEmpleado.value,
-    nombre: opt.dataset.nombre,
-    vector: Array.from(deteccion.descriptor)
-  };
+  const payload = { action: 'enrolar', id: selectEmpleado.value, nombre: opt.dataset.nombre, vector: Array.from(deteccion.descriptor) };
 
   try {
     await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
@@ -172,6 +277,40 @@ btnCapturar.addEventListener('click', async () => {
   btnCapturar.disabled = false;
 });
 
+// ---------- Panel de avisos en vivo ----------
+
+function badgeUbicacion(reg){
+  if (reg.dentro === 'Sí' || reg.dentro === true) return `<span class="badge dentro">📍 ${reg.ubicacion || 'Zona autorizada'}</span>`;
+  return `<span class="badge fuera">⚠️ Fuera de zona</span>`;
+}
+
+function renderFeed(registros){
+  if (!registros.length){ feedList.innerHTML = '<div class="feed-empty">Aún no hay marcajes hoy.</div>'; return; }
+  feedList.innerHTML = registros.map(r => `
+    <div class="feed-item">
+      <span class="hora">${r.hora}</span>
+      <span class="nombre">${r.nombre}</span>
+      <span class="tipo">· ${ETIQUETAS[r.tipo] || r.tipo}</span>
+      ${badgeUbicacion(r)}
+    </div>`).join('');
+}
+
+async function pollRegistros(){
+  try {
+    const res = await fetch(`${API_URL}?action=getRegistrosRecientes`);
+    const registros = await res.json();
+    renderFeed(registros);
+
+    if (registros.length){
+      const claveTope = registros[0].fecha + registros[0].hora + registros[0].id + registros[0].tipo;
+      if (ultimaClaveVista && claveTope !== ultimaClaveVista){
+        mostrarToastAdmin(registros[0].nombre, registros[0].tipo);
+      }
+      ultimaClaveVista = claveTope;
+    }
+  } catch(e) { /* silencioso, se reintenta en el próximo ciclo */ }
+}
+
 (async function init(){
   try {
     setStatus('Cargando modelos de reconocimiento facial...', 'wait');
@@ -181,6 +320,9 @@ btnCapturar.addEventListener('click', async () => {
   } catch (err) {
     setStatus('Error al iniciar: ' + err.message, 'err');
   }
+
+  pollRegistros();
+  setInterval(pollRegistros, 10000);
 })();
 </script>
 </body>
