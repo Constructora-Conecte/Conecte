@@ -3,116 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marcaje de Asistencia</title>
+<title>Asistencia - Conecte</title>
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f172a; --panel:#16213a; --accent:#38bdf8; --accent2:#22c55e;
-    --text:#e5e9f0; --muted:#8b95ab; --danger:#f87171; --warn:#fbbf24; --radius:14px;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:var(--bg); color:var(--text); min-height:100vh;
-    display:flex; align-items:center; justify-content:center; padding:16px;
-  }
-  .card{
-    background:var(--panel); border-radius:var(--radius); padding:24px;
-    max-width:440px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.4);
-  }
-  h1{font-size:1.25rem; margin:0 0 4px; text-align:center;}
-  p.sub{color:var(--muted); margin:0 0 18px; font-size:.88rem; text-align:center;}
-  .video-wrap{
-    position:relative; width:100%; aspect-ratio:1/1; border-radius:var(--radius);
-    overflow:hidden; background:#000; margin-bottom:14px; border:2px solid #2a3654;
-  }
-  video, canvas{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;}
-  .identidad{
-    text-align:center; padding:14px; border-radius:10px; background:#0d1526;
-    margin-bottom:14px; min-height:26px;
-  }
-  .identidad .nombre{font-size:1.15rem; font-weight:700; color:var(--accent2);}
-  .identidad .sinid{color:var(--danger); font-weight:600;}
-  .ubic{
-    text-align:center; font-size:.85rem; color:var(--muted); margin-bottom:16px;
-    padding:8px; border-radius:8px; background:#0d1526;
-  }
-  .ubic.dentro{color:var(--accent2);}
-  .ubic.fuera{color:var(--warn);}
-  .grid{
-    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;
-  }
-  button{
-    padding:16px 10px; border:none; border-radius:10px; font-size:.92rem;
-    font-weight:600; cursor:pointer; color:#0f172a;
-  }
-  button:disabled{opacity:.35; cursor:not-allowed;}
-  .b-entrada{background:var(--accent2);}
-  .b-salida{background:var(--danger); color:#fff;}
-  .b-comida{background:var(--warn);}
-  .b-area{background:var(--accent);}
-  .status{
-    text-align:center; font-size:.9rem; padding:10px; border-radius:10px;
-    background:#0d1526; margin-top:6px; min-height:20px;
-  }
-  .status.ok{color:var(--accent2);} .status.err{color:var(--danger);} .status.wait{color:var(--accent);}
-  .logo{font-size:.72rem; color:var(--muted); text-align:center; margin-top:14px;}
+:root{
+  --bg:      #141414;
+  --bg2:     #1c1c1c;
+  --bg3:     #252525;
+  --bg4:     #2e2e2e;
+  --border:  rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text:    #e4e4e4;
+  --text2:   #999;
+  --text3:   #555;
+  --white:   #fff;
+  --red:     #e53e3e;
+  --red-d:   #c53030;
+  --green:   #48bb78;
+  --yellow:  #ecc94b;
+  --blue:    #63b3ed;
+  --orange:  #ed8936;
+  --font:'Inter',sans-serif;
+  --r4:4px; --r8:8px; --r12:12px; --r16:16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  min-height:100vh; display:flex; flex-direction:column;
+}
+
+/* ── HEADER ── */
+header{
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:14px 20px; display:flex; align-items:center; gap:10px; flex-shrink:0;
+}
+header img{height:30px; object-fit:contain}
+#brandFallback{display:none; align-items:center; gap:8px}
+#brandFallback .box{width:28px;height:28px;background:var(--red);border-radius:6px;display:flex;align-items:center;justify-content:center}
+header .titulo{font-size:14px; font-weight:700; color:var(--white)}
+header .sub{font-size:11.5px; color:var(--text2); margin-left:auto}
+
+/* ── LAYOUT ── */
+main{
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:20px 16px 40px;
+}
+.wrap{
+  width:100%; max-width:420px; display:flex; flex-direction:column; gap:14px;
+}
+
+.video-wrap{
+  position:relative; width:100%; aspect-ratio:1/1; border-radius:var(--r16);
+  overflow:hidden; background:#000; border:1px solid var(--border2);
+}
+video, canvas{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover}
+
+.identidad{
+  text-align:center; padding:14px; border-radius:var(--r12); background:var(--bg2);
+  border:1px solid var(--border); min-height:26px;
+}
+.identidad .nombre{font-size:1.15rem; font-weight:800; color:var(--green)}
+.identidad .sinid{color:var(--text2); font-weight:600; font-size:.92rem}
+
+.ubic{
+  text-align:center; font-size:.85rem; padding:9px; border-radius:var(--r8);
+  background:var(--bg2); border:1px solid var(--border);
+}
+.ubic.dentro{color:var(--green)}
+.ubic.fuera{color:var(--yellow)}
+
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+button.marc{
+  padding:16px 10px; border:none; border-radius:var(--r8); font-size:.9rem;
+  font-weight:700; cursor:pointer; color:#fff; font-family:var(--font);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  transition:opacity .15s, transform .1s;
+}
+button.marc:active{transform:scale(.97)}
+button.marc:disabled{opacity:.35; cursor:not-allowed; transform:none}
+button.marc.hecho{ background:var(--bg3) !important; color:var(--text3); border:1px solid var(--border2) }
+.b-entrada{background:var(--green)}
+.b-salida{background:var(--red)}
+.b-comida{background:var(--orange)}
+.b-area{background:var(--blue); color:#0f172a}
+
+.status{
+  text-align:center; font-size:.87rem; padding:10px; border-radius:var(--r8);
+  background:var(--bg2); border:1px solid var(--border); min-height:20px;
+}
+.status.ok{color:var(--green)} .status.err{color:var(--red)} .status.wait{color:var(--blue)}
+
+footer{font-size:.7rem; color:var(--text3); text-align:center; margin-top:16px}
+
+/* ── TOAST DE CONFIRMACIÓN ── */
+#toast{
+  position:fixed; top:-140px; left:50%; transform:translateX(-50%);
+  width:min(92vw,420px); background:var(--green); color:#0f172a;
+  border-radius:var(--r16); padding:20px; text-align:center; z-index:999;
+  box-shadow:0 20px 50px rgba(0,0,0,.5); transition:top .35s cubic-bezier(.34,1.56,.64,1);
+}
+#toast.show{top:16px}
+#toast .check{font-size:2.4rem; line-height:1}
+#toast .titulo{font-size:1.05rem; font-weight:800; margin-top:4px}
+#toast .detalle{font-size:.85rem; font-weight:500; opacity:.85; margin-top:2px}
+#toast.err{background:var(--red); color:#fff}
+
+/* ── RESPONSIVE: escritorio en 2 columnas ── */
+@media (min-width:760px){
+  .wrap{max-width:880px; flex-direction:row; align-items:flex-start; gap:24px}
+  .col-video{flex:0 0 360px}
+  .col-info{flex:1; display:flex; flex-direction:column; gap:14px}
+}
 </style>
 </head>
 <body>
 
-<div class="card">
-  <h1>📍 Marcaje de asistencia</h1>
-  <p class="sub">Colócate frente a la cámara para identificarte</p>
+<header>
+  <img src="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png" alt="Conecte"
+       onerror="this.style.display='none';document.getElementById('brandFallback').style.display='flex'">
+  <div id="brandFallback"><div class="box">🏗️</div><span class="titulo">CONECTE</span></div>
+  <span class="titulo">Asistencia</span>
+  <span class="sub">Marcaje biométrico</span>
+</header>
 
-  <div class="video-wrap">
-    <video id="video" autoplay muted playsinline></video>
-    <canvas id="overlay"></canvas>
+<main>
+  <div class="wrap">
+    <div class="col-video">
+      <div class="video-wrap">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
+      </div>
+    </div>
+
+    <div class="col-info">
+      <div id="identidad" class="identidad"><span class="sinid">Buscando rostro...</span></div>
+      <div id="ubicacion" class="ubic">Obteniendo ubicación GPS...</div>
+
+      <div class="grid">
+        <button id="btnEntrada" class="marc b-entrada" disabled>🟢<span>Entrada</span></button>
+        <button id="btnSalida" class="marc b-salida" disabled>🔴<span>Salida</span></button>
+        <button id="btnSalidaComida" class="marc b-comida" disabled>🍽️<span>Salida a comer</span></button>
+        <button id="btnRegresoComida" class="marc b-comida" disabled>🍽️<span>Regreso de comer</span></button>
+      </div>
+      <button id="btnArea" class="marc b-area" disabled style="width:100%">📌<span>Llegada a área de trabajo</span></button>
+
+      <div id="status" class="status wait">Cargando sistema...</div>
+    </div>
   </div>
+  <footer>Sistema de Marcaje Biométrico · Conecte</footer>
+</main>
 
-  <div id="identidad" class="identidad"><span class="sinid">Buscando rostro...</span></div>
-  <div id="ubicacion" class="ubic">Obteniendo ubicación GPS...</div>
-
-  <div class="grid">
-    <button id="btnEntrada" class="b-entrada" disabled>🟢 Entrada</button>
-    <button id="btnSalida" class="b-salida" disabled>🔴 Salida</button>
-    <button id="btnSalidaComida" class="b-comida" disabled>🍽️ Salida a comer</button>
-    <button id="btnRegresoComida" class="b-comida" disabled>🍽️ Regreso de comer</button>
-  </div>
-  <button id="btnArea" class="b-area" disabled style="width:100%; margin-top:4px;">📌 Llegada a área de trabajo</button>
-
-  <div id="status" class="status wait">Cargando sistema...</div>
-
-  <div class="logo">Sistema de Marcaje Biométrico</div>
+<div id="toast">
+  <div class="check">✅</div>
+  <div class="titulo" id="toastTitulo">Registrado</div>
+  <div class="detalle" id="toastDetalle"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 // ================== CONFIGURA ESTO ==================
-const API_URL = 'https://script.google.com/macros/s/AKfycbznliiqt_hVpVlJCojqZMGtRimo6ULks9h6Nq8aQXJhM3LPGCDqV0f3vOMS_dTEvKkpXA/exec';
+const API_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
 const UMBRAL_RECONOCIMIENTO = 0.5; // más bajo = más estricto
 // ======================================================
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+
+const ETIQUETAS = {
+  Entrada: 'Entrada', Salida: 'Salida',
+  Salida_Comida: 'Salida a comer', Regreso_Comida: 'Regreso de comer',
+  Llegada_Area_Trabajo: 'Llegada a área de trabajo'
+};
 
 const video = document.getElementById('video');
 const overlay = document.getElementById('overlay');
 const statusEl = document.getElementById('status');
 const identidadEl = document.getElementById('identidad');
 const ubicacionEl = document.getElementById('ubicacion');
-const botones = ['btnEntrada','btnSalida','btnSalidaComida','btnRegresoComida','btnArea']
-  .map(id => document.getElementById(id));
+const btnMap = {
+  Entrada: document.getElementById('btnEntrada'),
+  Salida: document.getElementById('btnSalida'),
+  Salida_Comida: document.getElementById('btnSalidaComida'),
+  Regreso_Comida: document.getElementById('btnRegresoComida'),
+  Llegada_Area_Trabajo: document.getElementById('btnArea')
+};
+const toastEl = document.getElementById('toast');
+const toastTitulo = document.getElementById('toastTitulo');
+const toastDetalle = document.getElementById('toastDetalle');
 
-let rostrosConocidos = [];   // [{id, nombre, vector}]
-let ubicaciones = [];        // [{nombre, lat, lng, radio}]
-let empleadoActual = null;   // {id, nombre}
-let posicionActual = null;   // {lat, lng}
-let ubicacionDetectada = null; // {nombre, dentro}
+let rostrosConocidos = [];
+let ubicaciones = [];
+let empleadoActual = null;
+let posicionActual = null;
+let ubicacionDetectada = null;
+let tiposHoyPorEmpleado = {}; // cache: {id: [tipos ya marcados hoy]}
+let enviando = false;
 
 function setStatus(msg, tipo){ statusEl.textContent = msg; statusEl.className = 'status ' + (tipo||'wait'); }
 
-function actualizarBotones(){
-  const listo = !!empleadoActual && !!posicionActual;
-  botones.forEach(b => b.disabled = !listo);
+function pitido(ok){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = ok ? 880 : 300;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    osc.start(); osc.stop(ctx.currentTime + 0.18);
+  } catch(e){}
+}
+
+function mostrarToast(ok, titulo, detalle){
+  toastEl.classList.toggle('err', !ok);
+  toastTitulo.textContent = titulo;
+  toastDetalle.textContent = detalle;
+  toastEl.querySelector('.check').textContent = ok ? '✅' : '⚠️';
+  toastEl.classList.add('show');
+  pitido(ok);
+  setTimeout(() => toastEl.classList.remove('show'), 3200);
+}
+
+function actualizarBotonesEstado(){
+  const yaHoy = empleadoActual ? (tiposHoyPorEmpleado[empleadoActual.id] || []) : [];
+  Object.entries(btnMap).forEach(([tipo, btn]) => {
+    const hecho = yaHoy.includes(tipo);
+    btn.classList.toggle('hecho', hecho);
+    btn.querySelector('span').textContent = hecho ? ETIQUETAS[tipo] + ' ✔' : ETIQUETAS[tipo];
+    const listo = !!empleadoActual && !!posicionActual && !hecho && !enviando;
+    btn.disabled = !listo;
+  });
 }
 
 // ---------- Carga inicial ----------
@@ -136,6 +256,12 @@ async function cargarDatos(){
   ]);
   rostrosConocidos = await resRostros.json();
   ubicaciones = await resUbic.json();
+}
+
+async function cargarRegistrosHoy(id){
+  if (tiposHoyPorEmpleado[id]) return;
+  const res = await fetch(`${API_URL}?action=getRegistrosHoy&id=${encodeURIComponent(id)}`);
+  tiposHoyPorEmpleado[id] = await res.json();
 }
 
 // ---------- Geolocalización ----------
@@ -168,7 +294,7 @@ function iniciarGPS(){
       ubicacionEl.textContent = '⚠️ Fuera de puntos registrados (se marcará igual)';
       ubicacionEl.className = 'ubic fuera';
     }
-    actualizarBotones();
+    actualizarBotonesEstado();
   }, err => {
     ubicacionEl.textContent = 'No se pudo obtener el GPS: ' + err.message;
     ubicacionEl.className = 'ubic fuera';
@@ -190,6 +316,7 @@ function loopReconocimiento(){
     : null;
 
   setInterval(async () => {
+    if (enviando) return;
     const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
       .withFaceDescriptor();
@@ -199,7 +326,7 @@ function loopReconocimiento(){
     if (!deteccion){
       empleadoActual = null;
       identidadEl.innerHTML = '<span class="sinid">Buscando rostro...</span>';
-      actualizarBotones();
+      actualizarBotonesEstado();
       return;
     }
 
@@ -208,9 +335,9 @@ function loopReconocimiento(){
     if (!matcher){
       empleadoActual = null;
       identidadEl.innerHTML = '<span class="sinid">No hay rostros registrados aún</span>';
-      ctx.strokeStyle = '#f87171';
+      ctx.strokeStyle = '#e53e3e';
       ctx.strokeRect(box.x, box.y, box.width, box.height);
-      actualizarBotones();
+      actualizarBotonesEstado();
       return;
     }
 
@@ -219,24 +346,27 @@ function loopReconocimiento(){
     if (match.label === 'unknown'){
       empleadoActual = null;
       identidadEl.innerHTML = '<span class="sinid">Persona no identificada</span>';
-      ctx.strokeStyle = '#f87171';
+      ctx.strokeStyle = '#e53e3e';
     } else {
       const emp = rostrosConocidos.find(r => r.id === match.label);
+      const cambio = !empleadoActual || empleadoActual.id !== emp.id;
       empleadoActual = { id: emp.id, nombre: emp.nombre };
       identidadEl.innerHTML = `<span class="nombre">✅ ${emp.nombre}</span>`;
-      ctx.strokeStyle = '#22c55e';
+      ctx.strokeStyle = '#48bb78';
+      if (cambio) { await cargarRegistrosHoy(emp.id); actualizarBotonesEstado(); }
     }
     ctx.lineWidth = 3;
     ctx.strokeRect(box.x, box.y, box.width, box.height);
-    actualizarBotones();
+    actualizarBotonesEstado();
   }, 400);
 }
 
 // ---------- Registrar marca ----------
 
 async function marcar(tipo){
-  if (!empleadoActual || !posicionActual) return;
-  botones.forEach(b => b.disabled = true);
+  if (!empleadoActual || !posicionActual || enviando) return;
+  enviando = true;
+  actualizarBotonesEstado();
   setStatus('Guardando marca...', 'wait');
 
   const payload = {
@@ -251,12 +381,23 @@ async function marcar(tipo){
   };
 
   try {
-    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-    setStatus(`✅ ${tipo} registrada para ${empleadoActual.nombre}`, 'ok');
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.ok){
+      const horaTxt = data.hora ? ` · ${data.hora}` : '';
+      setStatus(`✅ ${ETIQUETAS[tipo]} registrada para ${empleadoActual.nombre}`, 'ok');
+      mostrarToast(true, `${ETIQUETAS[tipo]} registrada`, `${empleadoActual.nombre}${horaTxt}`);
+      tiposHoyPorEmpleado[empleadoActual.id] = [...(tiposHoyPorEmpleado[empleadoActual.id]||[]), tipo];
+    } else {
+      setStatus('⚠️ ' + (data.error || 'No se pudo registrar'), 'err');
+      mostrarToast(false, 'No se pudo registrar', data.error || '');
+    }
   } catch (err) {
     setStatus('Error al guardar: ' + err.message, 'err');
+    mostrarToast(false, 'Error de conexión', err.message);
   }
-  setTimeout(actualizarBotones, 1500);
+  enviando = false;
+  actualizarBotonesEstado();
 }
 
 document.getElementById('btnEntrada').onclick = () => marcar('Entrada');
