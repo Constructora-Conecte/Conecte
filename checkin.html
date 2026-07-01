@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcaje de Asistencia</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#16213a; --accent:#38bdf8; --accent2:#22c55e;
+    --text:#e5e9f0; --muted:#8b95ab; --danger:#f87171; --warn:#fbbf24; --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .card{
+    background:var(--panel); border-radius:var(--radius); padding:24px;
+    max-width:440px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.4);
+  }
+  h1{font-size:1.25rem; margin:0 0 4px; text-align:center;}
+  p.sub{color:var(--muted); margin:0 0 18px; font-size:.88rem; text-align:center;}
+  .video-wrap{
+    position:relative; width:100%; aspect-ratio:1/1; border-radius:var(--radius);
+    overflow:hidden; background:#000; margin-bottom:14px; border:2px solid #2a3654;
+  }
+  video, canvas{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;}
+  .identidad{
+    text-align:center; padding:14px; border-radius:10px; background:#0d1526;
+    margin-bottom:14px; min-height:26px;
+  }
+  .identidad .nombre{font-size:1.15rem; font-weight:700; color:var(--accent2);}
+  .identidad .sinid{color:var(--danger); font-weight:600;}
+  .ubic{
+    text-align:center; font-size:.85rem; color:var(--muted); margin-bottom:16px;
+    padding:8px; border-radius:8px; background:#0d1526;
+  }
+  .ubic.dentro{color:var(--accent2);}
+  .ubic.fuera{color:var(--warn);}
+  .grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;
+  }
+  button{
+    padding:16px 10px; border:none; border-radius:10px; font-size:.92rem;
+    font-weight:600; cursor:pointer; color:#0f172a;
+  }
+  button:disabled{opacity:.35; cursor:not-allowed;}
+  .b-entrada{background:var(--accent2);}
+  .b-salida{background:var(--danger); color:#fff;}
+  .b-comida{background:var(--warn);}
+  .b-area{background:var(--accent);}
+  .status{
+    text-align:center; font-size:.9rem; padding:10px; border-radius:10px;
+    background:#0d1526; margin-top:6px; min-height:20px;
+  }
+  .status.ok{color:var(--accent2);} .status.err{color:var(--danger);} .status.wait{color:var(--accent);}
+  .logo{font-size:.72rem; color:var(--muted); text-align:center; margin-top:14px;}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>📍 Marcaje de asistencia</h1>
+  <p class="sub">Colócate frente a la cámara para identificarte</p>
+
+  <div class="video-wrap">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="overlay"></canvas>
+  </div>
+
+  <div id="identidad" class="identidad"><span class="sinid">Buscando rostro...</span></div>
+  <div id="ubicacion" class="ubic">Obteniendo ubicación GPS...</div>
+
+  <div class="grid">
+    <button id="btnEntrada" class="b-entrada" disabled>🟢 Entrada</button>
+    <button id="btnSalida" class="b-salida" disabled>🔴 Salida</button>
+    <button id="btnSalidaComida" class="b-comida" disabled>🍽️ Salida a comer</button>
+    <button id="btnRegresoComida" class="b-comida" disabled>🍽️ Regreso de comer</button>
+  </div>
+  <button id="btnArea" class="b-area" disabled style="width:100%; margin-top:4px;">📌 Llegada a área de trabajo</button>
+
+  <div id="status" class="status wait">Cargando sistema...</div>
+
+  <div class="logo">Sistema de Marcaje Biométrico</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+// ================== CONFIGURA ESTO ==================
+const API_URL = 'https://script.google.com/macros/s/AKfycbznliiqt_hVpVlJCojqZMGtRimo6ULks9h6Nq8aQXJhM3LPGCDqV0f3vOMS_dTEvKkpXA/exec';
+const UMBRAL_RECONOCIMIENTO = 0.5; // más bajo = más estricto
+// ======================================================
+
+const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay');
+const statusEl = document.getElementById('status');
+const identidadEl = document.getElementById('identidad');
+const ubicacionEl = document.getElementById('ubicacion');
+const botones = ['btnEntrada','btnSalida','btnSalidaComida','btnRegresoComida','btnArea']
+  .map(id => document.getElementById(id));
+
+let rostrosConocidos = [];   // [{id, nombre, vector}]
+let ubicaciones = [];        // [{nombre, lat, lng, radio}]
+let empleadoActual = null;   // {id, nombre}
+let posicionActual = null;   // {lat, lng}
+let ubicacionDetectada = null; // {nombre, dentro}
+
+function setStatus(msg, tipo){ statusEl.textContent = msg; statusEl.className = 'status ' + (tipo||'wait'); }
+
+function actualizarBotones(){
+  const listo = !!empleadoActual && !!posicionActual;
+  botones.forEach(b => b.disabled = !listo);
+}
+
+// ---------- Carga inicial ----------
+
+async function cargarModelos(){
+  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+}
+
+async function iniciarCamara(){
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+  video.srcObject = stream;
+  return new Promise(resolve => video.onloadedmetadata = resolve);
+}
+
+async function cargarDatos(){
+  const [resRostros, resUbic] = await Promise.all([
+    fetch(`${API_URL}?action=getRostros`),
+    fetch(`${API_URL}?action=getUbicaciones`)
+  ]);
+  rostrosConocidos = await resRostros.json();
+  ubicaciones = await resUbic.json();
+}
+
+// ---------- Geolocalización ----------
+
+function distanciaMetros(lat1, lng1, lat2, lng2){
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function evaluarUbicacion(lat, lng){
+  for (const punto of ubicaciones){
+    const d = distanciaMetros(lat, lng, punto.lat, punto.lng);
+    if (d <= punto.radio) return { nombre: punto.nombre, dentro: true };
+  }
+  return { nombre: null, dentro: false };
+}
+
+function iniciarGPS(){
+  navigator.geolocation.watchPosition(pos => {
+    posicionActual = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    ubicacionDetectada = evaluarUbicacion(posicionActual.lat, posicionActual.lng);
+    if (ubicacionDetectada.dentro){
+      ubicacionEl.textContent = `📍 Dentro de: ${ubicacionDetectada.nombre}`;
+      ubicacionEl.className = 'ubic dentro';
+    } else {
+      ubicacionEl.textContent = '⚠️ Fuera de puntos registrados (se marcará igual)';
+      ubicacionEl.className = 'ubic fuera';
+    }
+    actualizarBotones();
+  }, err => {
+    ubicacionEl.textContent = 'No se pudo obtener el GPS: ' + err.message;
+    ubicacionEl.className = 'ubic fuera';
+  }, { enableHighAccuracy: true, maximumAge: 5000 });
+}
+
+// ---------- Reconocimiento facial ----------
+
+function loopReconocimiento(){
+  overlay.width = video.videoWidth;
+  overlay.height = video.videoHeight;
+  const ctx = overlay.getContext('2d');
+
+  const matcher = rostrosConocidos.length
+    ? new faceapi.FaceMatcher(
+        rostrosConocidos.map(r => new faceapi.LabeledFaceDescriptors(r.id, [new Float32Array(r.vector)])),
+        UMBRAL_RECONOCIMIENTO
+      )
+    : null;
+
+  setInterval(async () => {
+    const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+    if (!deteccion){
+      empleadoActual = null;
+      identidadEl.innerHTML = '<span class="sinid">Buscando rostro...</span>';
+      actualizarBotones();
+      return;
+    }
+
+    const box = deteccion.detection.box;
+
+    if (!matcher){
+      empleadoActual = null;
+      identidadEl.innerHTML = '<span class="sinid">No hay rostros registrados aún</span>';
+      ctx.strokeStyle = '#f87171';
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+      actualizarBotones();
+      return;
+    }
+
+    const match = matcher.findBestMatch(deteccion.descriptor);
+
+    if (match.label === 'unknown'){
+      empleadoActual = null;
+      identidadEl.innerHTML = '<span class="sinid">Persona no identificada</span>';
+      ctx.strokeStyle = '#f87171';
+    } else {
+      const emp = rostrosConocidos.find(r => r.id === match.label);
+      empleadoActual = { id: emp.id, nombre: emp.nombre };
+      identidadEl.innerHTML = `<span class="nombre">✅ ${emp.nombre}</span>`;
+      ctx.strokeStyle = '#22c55e';
+    }
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box.x, box.y, box.width, box.height);
+    actualizarBotones();
+  }, 400);
+}
+
+// ---------- Registrar marca ----------
+
+async function marcar(tipo){
+  if (!empleadoActual || !posicionActual) return;
+  botones.forEach(b => b.disabled = true);
+  setStatus('Guardando marca...', 'wait');
+
+  const payload = {
+    action: 'marcar',
+    id: empleadoActual.id,
+    nombre: empleadoActual.nombre,
+    tipo: tipo,
+    lat: posicionActual.lat,
+    lng: posicionActual.lng,
+    ubicacion: ubicacionDetectada ? ubicacionDetectada.nombre : null,
+    dentro: ubicacionDetectada ? ubicacionDetectada.dentro : false
+  };
+
+  try {
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+    setStatus(`✅ ${tipo} registrada para ${empleadoActual.nombre}`, 'ok');
+  } catch (err) {
+    setStatus('Error al guardar: ' + err.message, 'err');
+  }
+  setTimeout(actualizarBotones, 1500);
+}
+
+document.getElementById('btnEntrada').onclick = () => marcar('Entrada');
+document.getElementById('btnSalida').onclick = () => marcar('Salida');
+document.getElementById('btnSalidaComida').onclick = () => marcar('Salida_Comida');
+document.getElementById('btnRegresoComida').onclick = () => marcar('Regreso_Comida');
+document.getElementById('btnArea').onclick = () => marcar('Llegada_Area_Trabajo');
+
+(async function init(){
+  try {
+    setStatus('Cargando modelos de reconocimiento facial...', 'wait');
+    await cargarModelos();
+    setStatus('Cargando datos de empleados y ubicaciones...', 'wait');
+    await Promise.all([cargarDatos(), iniciarCamara()]);
+    iniciarGPS();
+    loopReconocimiento();
+    setStatus('Listo. Colócate frente a la cámara.', 'ok');
+  } catch (err) {
+    setStatus('Error al iniciar: ' + err.message, 'err');
+  }
+})();
+</script>
+</body>
+</html>
