@@ -658,6 +658,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h3V7H2zM6.5 12h3V4h-3zM11 12h3V9h-3z"/></svg>
           <span>Balance</span>
         </button>
+        <button class="sidebar-item" id="navDocBtn" onclick="switchSection('doc')" title="Documentación">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h5.5L13 5v9.5H4V1.5z"/><path d="M9.5 1.5V5H13"/><path d="M6 8h4M6 10.5h4M6 13h2.5"/></svg>
+          <span>Documentación</span>
+        </button>
+        <button class="sidebar-item" id="navNomBtn" onclick="switchSection('nom')" title="Nóminas">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M11 8.5c1.8.3 3 1.8 3 3.3"/></svg>
+          <span>Nóminas</span>
+        </button>
+        <button class="sidebar-item" id="navAsisBtn" onclick="switchSection('asis')" title="Asistencia">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>
+          <span>Asistencia</span>
+        </button>
       </nav>
       <div class="sidebar-foot">
         <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Contraer / expandir menú">
@@ -1037,6 +1049,39 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </div>
 
     </div><!-- /tabBal -->
+
+    <!-- ══ TAB: DOCUMENTACIÓN (vacía, próximamente) ══ -->
+    <div id="tabDoc" class="tab-pane">
+      <div class="card">
+        <div class="card-body" style="padding:60px 24px;text-align:center;color:var(--text3)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" width="42" height="42" style="margin:0 auto 14px;opacity:.5"><path d="M6 2h8l5 5v13H6V2z"/><path d="M14 2v5h5"/><path d="M9 12h6M9 15.5h6M9 19h3.5"/></svg>
+          <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px">Documentación</div>
+          <div style="font-size:12.5px">Esta sección está en construcción. Muy pronto podrás gestionar aquí tu documentación.</div>
+        </div>
+      </div>
+    </div><!-- /tabDoc -->
+
+    <!-- ══ TAB: NÓMINAS (vacía, próximamente) ══ -->
+    <div id="tabNom" class="tab-pane">
+      <div class="card">
+        <div class="card-body" style="padding:60px 24px;text-align:center;color:var(--text3)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" width="42" height="42" style="margin:0 auto 14px;opacity:.5"><circle cx="12" cy="8" r="3.5"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5"/><path d="M16 13c2.6.5 4.5 2.6 4.5 5"/></svg>
+          <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px">Nóminas</div>
+          <div style="font-size:12.5px">Esta sección está en construcción. Muy pronto podrás gestionar aquí las nóminas.</div>
+        </div>
+      </div>
+    </div><!-- /tabNom -->
+
+    <!-- ══ TAB: ASISTENCIA (vacía, próximamente) ══ -->
+    <div id="tabAsis" class="tab-pane">
+      <div class="card">
+        <div class="card-body" style="padding:60px 24px;text-align:center;color:var(--text3)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" width="42" height="42" style="margin:0 auto 14px;opacity:.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px">Asistencia</div>
+          <div style="font-size:12.5px">Esta sección está en construcción. Muy pronto podrás gestionar aquí la asistencia.</div>
+        </div>
+      </div>
+    </div><!-- /tabAsis -->
 
   </div><!-- /content -->
   </div><!-- /main-scroll -->
@@ -4173,6 +4218,32 @@ function toggleTheme(){
 
 /* ─── SWITCH TAB (única definición) ─── */
 function switchTab(tab){
+  // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
+  const SIMPLE_TABS = { doc:{pane:'tabDoc', label:'Documentación', navBtn:'navDocBtn'}, nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'} };
+  if(SIMPLE_TABS[tab]){
+    ['tabCot','tabFac','tabOC','tabBal','tabDoc','tabNom','tabAsis'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
+    document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+    document.getElementById(SIMPLE_TABS[tab].navBtn)?.classList.add('active');
+    ST.currentTab = tab;
+    ST.currentSection = tab;
+    const addTxt = document.getElementById('mainAddTxt');
+    const addBtn = document.getElementById('mainAddBtn');
+    if(addBtn) addBtn.style.display='none';
+    if(addTxt) addTxt.textContent='+ Agregar';
+    const bcPage = document.getElementById('bcPage');
+    if(bcPage) bcPage.textContent = SIMPLE_TABS[tab].label;
+    const bcSection = document.getElementById('bcSection');
+    if(bcSection) bcSection.textContent = SIMPLE_TABS[tab].label;
+    const comSubNav=document.getElementById('comercialSubNav');
+    const balSubNav=document.getElementById('balanceSubNav');
+    if(comSubNav) comSubNav.style.display='none';
+    if(balSubNav) balSubNav.style.display='none';
+    return;
+  }
+  document.getElementById('mainAddBtn').style.display='';
+
   const TABS = { cot:{pane:'tabCot', btn:'tabCotBtn'}, fac:{pane:'tabFac', btn:'tabFacBtn'}, oc:{pane:'tabOC', btn:'tabOCBtn'}, bal:{pane:'tabBal', btn:null} };
 
   Object.values(TABS).forEach(({pane, btn}) => {
@@ -4236,7 +4307,8 @@ function mainAdd(){
    "Balance" es su propia sección con Dashboard, Ingresos y Salidas. */
 function switchSection(section){
   if(section==='comercial') switchTab(ST.currentComercialTab || 'cot');
-  else switchTab('bal');
+  else if(section==='balance') switchTab('bal');
+  else switchTab(section); // 'doc' | 'nom' | 'asis' — vistas nuevas, aún sin funcionalidad
 }
 
 /* ─── MENÚ LATERAL RETRÁCTIL (solo iconos cuando está contraído) ─── */
@@ -4391,6 +4463,40 @@ function showFacRelPopover(el, ingId){
 function scheduleHideFacRelPopover(){
   clearTimeout(ST._facRelHideTimer);
   ST._facRelHideTimer=setTimeout(()=>{ document.getElementById('facRelPopover')?.remove(); },180);
+}
+
+/* ─── POPOVER: facturas relacionadas a una OC Cliente (mismo patrón que en Ingresos) ─── */
+function showFacRelPopoverOC(el, ocId){
+  clearTimeout(ST._facRelHideTimer);
+  let pop=document.getElementById('facRelPopover');
+  if(!pop){
+    pop=document.createElement('div');
+    pop.id='facRelPopover';
+    pop.style.cssText='position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:11.5px;min-width:200px;max-width:280px;max-height:260px;overflow-y:auto';
+    pop.onmouseenter=()=>clearTimeout(ST._facRelHideTimer);
+    pop.onmouseleave=()=>scheduleHideFacRelPopover();
+    document.body.appendChild(pop);
+  }
+  const facs=ST.facturas.filter(f=>(f.ocIds||[]).includes(ocId));
+  pop.innerHTML = facs.length
+    ? facs.map(f=>{
+        const stClass={Pagado:'pagado',Pendiente:'pendiente',Cancelado:'cancelado'}[f.estatus]||'pendiente';
+        return `<div style="padding:6px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''" onclick="openFacRelCard('${esc(f.id)}')">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+            <span style="font-family:var(--mono);font-weight:700;color:var(--white)">${esc(f.folio||f.id)}</span>
+            <span class="bal-badge ${stClass}" style="font-size:9.5px">${esc(f.estatus||'—')}</span>
+          </div>
+          <div style="color:var(--text3);margin-top:2px">${fmtMXNBal(f.total)} · ${esc(f.fecha||'—')}</div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text3);padding:4px">Sin facturas vinculadas</div>';
+  const rect=el.getBoundingClientRect();
+  const popW=280;
+  let left=Math.min(rect.left, window.innerWidth-popW-10);
+  if(left<10) left=10;
+  pop.style.left=left+'px';
+  pop.style.top=(rect.bottom+4)+'px';
+  pop.style.display='block';
 }
 document.addEventListener('click',(e)=>{
   const pop=document.getElementById('facRelPopover');
@@ -5245,15 +5351,18 @@ function renderOCClienteTable(){
       const dias=Math.floor((hoy-fDt)/86400000);
       diasTitle=`Recibida hace ${dias} día(s)`;
     }
-    // Relación: cotización(es) vinculada(s) (si existen) + factura vinculada (si existe)
+    // Relación: cotización(es) vinculada(s) (si existen) + facturas vinculadas (pueden ser varias)
     const cotsLinked = (r.cotIds||[]).map(id=>ST.cotizaciones.find(c=>c.id===id)).filter(Boolean);
-    const facLinked = ST.facturas.find(f=>f.ocIds.includes(r.id));
+    const facsLinkedOC = ST.facturas.filter(f=>(f.ocIds||[]).includes(r.id));
     let relHtml='';
     if(cotsLinked.length){
       relHtml+=cotsLinked.map(cotLinked=>`<div style="font-size:10.5px;color:var(--blue);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" title="Cotización: ${esc(cotLinked.id)}">📄 ${esc(cotLinked.id)}</div>`).join('');
     }
-    if(facLinked){
-      relHtml+=`<div style="font-size:10.5px;color:var(--green);font-family:var(--mono);white-space:nowrap" title="Factura: ${esc(facLinked.folio)}">🧾 ${esc(facLinked.folio)}</div>`;
+    if(facsLinkedOC.length){
+      relHtml+=`<button type="button" class="fac-rel-chip" style="margin-top:2px" onmouseenter="showFacRelPopoverOC(this,'${esc(r.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopoverOC(this,'${esc(r.id)}')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h6l3 3v9H4V2z"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>
+        Facturas relacionadas <span class="cnt">${facsLinkedOC.length}</span>
+      </button>`;
     }
     if(!relHtml){
       relHtml=`<button type="button" class="btn-icon" title="Vincular con cotización" onclick="editOCCliente('${esc(r.id)}')" style="color:var(--text3)">
