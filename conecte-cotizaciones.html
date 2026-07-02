@@ -1184,11 +1184,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:11.5px;color:var(--text3)" id="asisCount">0 registros</span>
         </div>
-        <a href="https://constructora-conecte.github.io/Conecte/checkin.html" target="_blank" rel="noopener" class="btn btn-red btn-sm">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg>
-          Ir a registrar rostros (Check-in)
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
-        </a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="https://constructora-conecte.github.io/Conecte/enroll.html" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg>
+            Registro de rostros (Enroll)
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
+          </a>
+          <a href="https://constructora-conecte.github.io/Conecte/checkin.html" target="_blank" rel="noopener" class="btn btn-red btn-sm">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M3 8l3.5 3.5L13 5"/></svg>
+            Registrar asistencia (Check-in)
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
+          </a>
+        </div>
       </div>
       <div id="asisWeeksWrap"><div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Cargando asistencia…</div></div>
     </div><!-- /tabAsis -->
@@ -5449,6 +5456,23 @@ function setEmpFilter(val, btn){
 }
 function onEmpSearch(v){ ST.empSearch = v; renderEmpleados(); }
 
+/* ─── FOTOS DE EMPLEADOS ───
+   Un link de "Compartir" de Google Drive (drive.google.com/file/d/ID/view…
+   o …/open?id=ID) NO sirve como src de una <img>: Drive muestra una página
+   de vista previa, no la imagen directa, así que el navegador la rechaza y
+   la miniatura se queda en blanco. Esta función detecta ese tipo de link y
+   lo convierte al formato de imagen directa. Cualquier otro link (Sheets,
+   imgur, etc.) se deja igual. */
+function normalizePhotoUrl(url){
+  if(!url) return '';
+  const s = url.toString().trim();
+  let m = s.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if(m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+  m = s.match(/drive\.google\.com\/(?:open|uc)\?.*[?&]id=([^&]+)/);
+  if(m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+  return s;
+}
+
 function renderEmpleados(){
   const tbody = document.getElementById('empTbody');
   if(!tbody) return; // la vista aún no está montada en el DOM
@@ -5506,9 +5530,13 @@ function renderEmpleados(){
       inactivosHeaderShown = true;
       htmlOut += `<tr><td colspan="9" style="padding:8px 10px;background:var(--bg3);color:var(--text3);font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Inactivos</td></tr>`;
     }
+    const inicial = esc((p.nombre||'?').charAt(0).toUpperCase());
     const avatar = p.fotografia
-      ? `<img src="${esc(p.fotografia)}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">`
-      : `<div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700;cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">${esc((p.nombre||'?').charAt(0).toUpperCase())}</div>`;
+      ? `<div style="position:relative;width:30px;height:30px;cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">
+           <div style="position:absolute;inset:0;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700">${inicial}</div>
+           <img src="${esc(normalizePhotoUrl(p.fotografia))}" style="position:absolute;inset:0;width:30px;height:30px;border-radius:50%;object-fit:cover" onerror="this.remove()">
+         </div>`
+      : `<div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700;cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">${inicial}</div>`;
     const estColor = esActivo ? 'var(--green,#38a169)' : 'var(--text3)';
     htmlOut += `<tr>
       <td>${avatar}</td>
@@ -5534,9 +5562,13 @@ function openEmpCard(idEmpleado){
       <span style="color:var(--text3);font-size:11.5px">${esc(label)}</span>
       <span style="font-size:12.5px;font-weight:600;text-align:right;user-select:text">${esc(value||'—')}</span>
     </div>`;
+  const inicialBig = esc((p.nombre||'?').charAt(0).toUpperCase());
   const avatarBig = p.fotografia
-    ? `<img src="${esc(p.fotografia)}" style="width:76px;height:76px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`
-    : `<div style="width:76px;height:76px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:26px;font-weight:700">${esc((p.nombre||'?').charAt(0).toUpperCase())}</div>`;
+    ? `<div style="position:relative;width:76px;height:76px">
+         <div style="position:absolute;inset:0;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:26px;font-weight:700">${inicialBig}</div>
+         <img src="${esc(normalizePhotoUrl(p.fotografia))}" style="position:absolute;inset:0;width:76px;height:76px;border-radius:50%;object-fit:cover" onerror="this.remove()">
+       </div>`
+    : `<div style="width:76px;height:76px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:26px;font-weight:700">${inicialBig}</div>`;
   const body = document.getElementById('empCardBody');
   body.innerHTML = `
     <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
@@ -5595,7 +5627,7 @@ function openEmpModal(idEmpleado){
   const preview = document.getElementById('empFotoPreview');
   const placeholder = document.getElementById('empFotoPlaceholder');
   if(existente && existente.fotografia){
-    preview.src = existente.fotografia;
+    preview.src = normalizePhotoUrl(existente.fotografia);
     preview.style.display = '';
     placeholder.style.display = 'none';
   } else {
