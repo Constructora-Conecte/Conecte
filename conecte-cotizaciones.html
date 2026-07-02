@@ -5940,7 +5940,45 @@ function toggleTheme(){
 })();
 
 /* ─── SWITCH TAB (única definición) ─── */
+/* ─── LIMPIEZA OBLIGATORIA AL CAMBIAR DE VISTA ───
+   Se ejecuta SIEMPRE, como primer paso, antes de montar cualquier vista nueva.
+   No cambia nada visual: solo garantiza que nada de la vista anterior quede
+   vivo (visible, flotando fuera del contenedor, o con listeners/timers activos)
+   cuando se monta la vista nueva. */
+function resetViewTransitionState(){
+  // 1) Apagar explícitamente TODAS las tab-pane activas, sin importar cuál sea.
+  //    No depende de una lista fija de ids: nunca puede quedar más de una vista
+  //    montada como "activa" al mismo tiempo.
+  document.querySelectorAll('.tab-pane.active').forEach(p=>p.classList.remove('active'));
+
+  // 2) Eliminar del DOM cualquier popover flotante que viva fuera del
+  //    contenedor de vistas (se insertan sobre <body> con position:fixed),
+  //    para que nunca queden pegados en pantalla al cambiar de vista.
+  clearTimeout(ST._facRelHideTimer);
+  document.getElementById('facRelPopover')?.remove();
+
+  // 3) Cerrar el buscador global y cualquier dropdown de autocompletado que
+  //    haya quedado abierto en la vista anterior.
+  const gsPanel=document.getElementById('globalSearchPanel');
+  if(gsPanel) gsPanel.style.display='none';
+  document.querySelectorAll('.art-dropdown').forEach(d=>{ d.style.display='none'; });
+  const facIngDD=document.getElementById('facIngDropdown');
+  if(facIngDD){ facIngDD.style.display='none'; facIngDD.innerHTML=''; }
+
+  // 4) Reiniciar el scroll del contenedor principal: la vista nueva siempre
+  //    empieza arriba, nunca hereda la posición de scroll de la anterior.
+  const scrollEl=document.querySelector('.main-scroll');
+  if(scrollEl) scrollEl.scrollTop=0;
+
+  // 5) Quitar el foco de cualquier campo que haya quedado activo, para que
+  //    ningún listener (blur/change) de la vista anterior siga disparándose.
+  if(document.activeElement && typeof document.activeElement.blur==='function' && document.activeElement!==document.body){
+    document.activeElement.blur();
+  }
+}
+
 function switchTab(tab){
+  resetViewTransitionState();
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
   const SIMPLE_TABS = { doc:{pane:'tabDoc', label:'Documentación', navBtn:'navDocBtn'}, nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'} };
   if(SIMPLE_TABS[tab]){
@@ -6211,6 +6249,7 @@ function toggleSidebar(force){
 
 /* ─── BALANCE SUB-TAB SWITCH (orden: Dashboard, Ingresos, Salidas) ─── */
 function switchBalTab(sub){
+  resetViewTransitionState();
   ['ing','gas','dash'].forEach(s=>{
     document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1))?.classList.remove('active');
     document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1)+'Btn')?.classList.remove('active');
