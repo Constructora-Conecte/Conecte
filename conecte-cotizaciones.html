@@ -699,6 +699,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>
           <span>Asistencia</span>
         </button>
+        <button class="sidebar-item" id="navEmpBtn" onclick="switchSection('emp')" title="Empleados">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.3"/><path d="M1.8 13c0-2.4 1.6-4 3.7-4s3.7 1.6 3.7 4"/><circle cx="11.5" cy="6" r="1.8"/><path d="M9.7 9.3c1.7.2 3 1.5 3.3 3.2"/></svg>
+          <span>Empleados</span>
+        </button>
       </nav>
       <div class="sidebar-foot">
         <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Contraer / expandir menú">
@@ -1112,6 +1116,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar por empleado o folio…" oninput="onNomSearch(this.value)">
         <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openParametrosModal()" title="Editar salario mínimo, vales, factor de faltas y días laborales">⚙ Parámetros</button>
       </div>
+      <div id="nomSemanasWarning" style="display:none;margin-bottom:10px;font-size:11.5px;color:var(--orange);background:rgba(237,137,54,.1);border:1px solid rgba(237,137,54,.25);border-radius:var(--r4);padding:8px 12px">
+        ⚠️ No se pudo leer la hoja <strong>Semanas</strong>, así que no podrás concluir semanas ni generar los movimientos globales en Salidas todavía. Crea una hoja llamada exactamente <strong>Semanas</strong> con las columnas A:H (FechaInicio, FechaFin, SemanaAnio, Estado, FechaConclusion, ID_Salida_Fiscal, ID_Salida_Vales, ID_Salida_Efectivo).
+      </div>
 
       <div class="card" style="margin-bottom:16px">
         <div class="card-header">
@@ -1185,6 +1192,170 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </div>
       <div id="asisWeeksWrap"><div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Cargando asistencia…</div></div>
     </div><!-- /tabAsis -->
+
+    <!-- ══ TAB: EMPLEADOS (panel administrativo sobre la hoja Personal) ══ -->
+    <div id="tabEmp" class="tab-pane">
+      <div class="stats stats-5" style="margin-bottom:16px">
+        <div class="stat cy"><div class="stat-lbl">Total en Personal</div><div class="stat-val" id="empTotal">—</div><div class="stat-delta">Todos los registros</div></div>
+        <div class="stat cg"><div class="stat-lbl">Activos</div><div class="stat-val" id="empActivos">—</div><div class="stat-delta">Estado = Activo</div></div>
+        <div class="stat cr"><div class="stat-lbl">Bajas</div><div class="stat-val" id="empBajas">—</div><div class="stat-delta">Ya no activos</div></div>
+        <div class="stat" style="border-color:var(--blue)"><div class="stat-lbl" style="color:var(--blue)">Reciben vales</div><div class="stat-val" id="empConVales" style="font-size:16px"></div><div class="stat-delta">Recibe_Vales = TRUE</div></div>
+        <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Sueldo total acordado</div><div class="stat-val" id="empSueldoTotal" style="font-size:16px"></div><div class="stat-delta">Suma de activos</div></div>
+      </div>
+
+      <div class="filter-bar" style="margin-bottom:12px">
+        <button class="fchip on" onclick="setEmpFilter('all',this)">Todos</button>
+        <button class="fchip" onclick="setEmpFilter('Activo',this)">Activos</button>
+        <button class="fchip" onclick="setEmpFilter('baja',this)">Bajas</button>
+        <span class="fsep"></span>
+        <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:220px;" placeholder="🔍  Buscar por nombre, puesto, correo…" oninput="onEmpSearch(this.value)">
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Personal — panel administrativo</span>
+          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="empCount">0</span>
+        </div>
+        <div class="cot-table-wrap">
+          <table class="fac-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Nombre</th>
+                <th>Puesto</th>
+                <th>Nivel</th>
+                <th style="text-align:right">Sueldo total</th>
+                <th style="text-align:center">Vales</th>
+                <th>Tipo de pago</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="empTbody">
+              <tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando personal…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tabEmp -->
+
+    <!-- ══ MODAL: EMPLEADO (alta / edición completa sobre la hoja Personal) ══ -->
+    <div class="modal-bg" id="empModal">
+      <div class="modal-lg" style="width:680px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title" id="empModalTitle">Nuevo Empleado</div>
+            <div class="mlg-sub">Conectado directamente a la hoja "Personal"</div>
+          </div>
+          <button class="close-x" onclick="closeEmpModal()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body">
+          <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">
+            <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:8px">
+              <img id="empFotoPreview" src="" alt="Fotografía"
+                   style="width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--bg3);border:1px solid var(--border2);display:none">
+              <div id="empFotoPlaceholder" style="width:84px;height:84px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text3)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" width="30" height="30"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              </div>
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+                📷 Subir / actualizar
+                <input type="file" accept="image/*" style="display:none" onchange="onEmpFotoSelected(this.files[0])">
+              </label>
+            </div>
+            <div class="form-grid" style="flex:1;margin-bottom:0">
+              <div class="form-group full">
+                <label class="form-label">Nombre *</label>
+                <input type="text" class="form-input" id="eNombre" placeholder="Nombre completo">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Correo</label>
+                <input type="email" class="form-input" id="eCorreo" placeholder="correo@ejemplo.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Teléfono</label>
+                <input type="text" class="form-input" id="eTelefono" placeholder="(999) 000-0000">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group">
+              <label class="form-label">CURP</label>
+              <input type="text" class="form-input" id="eCURP" style="text-transform:uppercase">
+            </div>
+            <div class="form-group">
+              <label class="form-label">RFC</label>
+              <input type="text" class="form-input" id="eRFC" style="text-transform:uppercase">
+            </div>
+            <div class="form-group">
+              <label class="form-label">NSS</label>
+              <input type="text" class="form-input" id="eNSS">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cuenta BBVA</label>
+              <input type="text" class="form-input" id="eCuentaBBVA">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nivel</label>
+              <input type="text" class="form-input" id="eNivel">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Puesto</label>
+              <input type="text" class="form-input" id="ePuesto">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sueldo total acordado</label>
+              <input type="number" class="form-input" id="eSueldoTotal" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Salario registrado fiscal</label>
+              <input type="number" class="form-input" id="eSalarioFiscal" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Compensación en efectivo</label>
+              <input type="number" class="form-input" id="eCompEfectivo" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo de pago</label>
+              <select class="form-select" id="eTipoPago">
+                <option value="">—</option>
+                <option value="Semanal">Semanal</option>
+                <option value="Quincenal">Quincenal</option>
+                <option value="Mensual">Mensual</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de ingreso</label>
+              <input type="date" class="form-input" id="eFechaIngreso">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de baja</label>
+              <input type="date" class="form-input" id="eFechaBaja">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="eEstado">
+                <option value="Activo">Activo</option>
+                <option value="Baja">Baja</option>
+              </select>
+            </div>
+            <div class="form-group full" style="display:flex;align-items:center;gap:8px;padding-top:4px">
+              <input type="checkbox" id="eRecibeVales" style="width:16px;height:16px">
+              <label class="form-label" for="eRecibeVales" style="margin:0;cursor:pointer">Recibe vales de despensa (monto semanal completo, nunca se descuenta por faltas)</label>
+            </div>
+          </div>
+        </div>
+        <div class="mlg-foot">
+          <button class="btn btn-ghost btn-sm" onclick="closeEmpModal()">Cancelar</button>
+          <button class="btn btn-red btn-sm" id="empSaveBtn" onclick="guardarEmpleado()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- ══ MODAL: DETALLE DE ASISTENCIA (empleado + día) ══ -->
     <div class="modal-bg" id="asisDetailModal">
@@ -2168,6 +2339,17 @@ const ST = {
   cfgFactorFaltas: 1.1667,     // configurable vía hoja Parametros (FACTOR_DESCUENTO_FALTAS)
   cfgDiasLaborales: 7,         // configurable vía hoja Parametros (DIAS_LABORALES)
   parametrosRows: {},          // {CLAVE: fila 1-based en la hoja Parametros} para poder editarla desde la app
+
+  /* ── SEMANAS (cierre de nómina semanal + Salidas agrupadas) ── */
+  semanas: {},            // hoja "Semanas" {fechaInicio: {...}} — control de semanas concluidas
+  semanasError: null,
+  semanaConcluyendo: null, // key de la semana que se está concluyendo (deshabilita el botón mientras corre)
+
+  /* ── EMPLEADOS (vista administrativa sobre la hoja Personal) ── */
+  empEditId: null,        // ID_Usuarios que se está editando, o null si es alta nueva
+  empFotoFile: null,      // File seleccionado en el modal, pendiente de subir a Drive
+  empSearch: '',
+  empFilterEstado: 'all',
 };
 
 /* ─── CARPETA RAÍZ EN DRIVE ───
@@ -2219,7 +2401,7 @@ function startAutoRefresh(){
     const ocOpen   = document.getElementById('ocModal').classList.contains('open');
     if((formOpen && ST.formDirty) || (ocOpen && ST.ocFormDirty)) return;
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
-    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal','asisDetailModal'];
+    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal','asisDetailModal','empModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
     // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
     if(Date.now() < facEditingUntil) return;
@@ -2484,6 +2666,35 @@ async function loadAll() {
       ST.personalError = perErr.result?.error?.message || perErr.message || String(perErr);
     }
 
+    /* Semanas — hoja "Semanas" (control de cierre semanal de nómina). Se carga en try/catch
+       propio para no romper el resto de la app si la hoja aún no existe.
+       Cols: A=FechaInicio (clave, = lunes de la semana), B=FechaFin, C=SemanaAnio,
+             D=Estado ("Abierta" | "Concluida"), E=FechaConclusion,
+             F=ID_Salida_Fiscal, G=ID_Salida_Vales, H=ID_Salida_Efectivo. */
+    ST.semanasError = null;
+    try{
+      const semR = await sheetsGet('Semanas!A2:H');
+      ST.semanas = {};
+      (semR||[]).forEach((r,i)=>{
+        if(!r[0]) return;
+        ST.semanas[r[0]] = {
+          _row: i+2,
+          fechaInicio: r[0],
+          fechaFin: r[1]||'',
+          semanaAnio: r[2]||'',
+          estado: r[3]||'Abierta',
+          fechaConclusion: r[4]||'',
+          idSalidaFiscal: r[5]||'',
+          idSalidaVales: r[6]||'',
+          idSalidaEfectivo: r[7]||'',
+        };
+      });
+    }catch(semErr){
+      console.warn('[Nóminas] No se pudo leer la hoja "Semanas" (créala para poder concluir semanas):', semErr);
+      ST.semanas = {};
+      ST.semanasError = semErr.result?.error?.message || semErr.message || String(semErr);
+    }
+
     /* Nominas — hoja "Nominas" (37 cols: A=ID_Nomina … AF=Fecha_Firma, AG:AK = campos nuevos).
        Columnas renombradas (solo etiqueta, misma posición) para eliminar la ambigüedad
        de "Descuento"/"Neto" repetidos en cada bloque:
@@ -2566,6 +2777,7 @@ async function loadAll() {
     }catch(e){ console.warn('[Nóminas] No se pudo leer la hoja "Parametros", se usan valores por defecto. Crea una hoja llamada "Parametros" con columnas Clave/Valor para poder editarlos desde la app.', e); }
 
     renderNominas();
+    renderEmpleados();
 
     /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email */
     ST.contactos = {};
@@ -4641,14 +4853,17 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
   const factorDia = diasDescontados/diasLaborales;
 
   const fiscalDescuento = +(fiscalBruto*factorDia).toFixed(2);       // Fiscal_Descuento_Faltas
-  const valesDescuento = recibeVales ? +(valesBruto*factorDia).toFixed(2) : 0; // Vales_Descuento_Faltas
+  // Vales_Descuento_Faltas: regla obligatoria — los vales de despensa NUNCA se descuentan
+  // por faltas, sin importar cuántas faltas tenga el empleado. Siempre es 0.
+  const valesDescuento = 0;
   const efectivoDescuento = +(efectivoBruto*factorDia).toFixed(2);   // Efectivo_Descuento_Faltas
 
   // Fiscal_Neto_Final: el descuento por faltas Y la retención manual (IMSS/ISR/SAT/etc.)
   // afectan ÚNICAMENTE lo fiscal. Nunca tocan vales ni efectivo.
   const fiscalNeto = +(fiscalBruto - fiscalDescuento - retencionExtra).toFixed(2);
-  // Vales_Neto_Final: si el empleado no recibe vales, siempre queda en 0.
-  const valesNeto = recibeVales ? +(valesBruto - valesDescuento).toFixed(2) : 0;
+  // Vales_Neto_Final: si Recibe_Vales = TRUE, siempre el monto semanal completo (nunca se
+  // prorratea ni se descuenta por faltas). Si Recibe_Vales = FALSE, siempre 0.
+  const valesNeto = recibeVales ? valesBruto : 0;
   // Efectivo_Neto_Final: el Extra_Efectivo (apoyos/bonos extraordinarios en mano) se suma
   // únicamente aquí, nunca afecta fiscal ni vales.
   const efectivoNeto = +(efectivoBruto - efectivoDescuento + extraEfectivo).toFixed(2);
@@ -4678,6 +4893,9 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
 function renderNominas(){
   const tbody = document.getElementById('nomTbody');
   if(!tbody) return; // la vista aún no está montada en el DOM
+
+  const semWarn = document.getElementById('nomSemanasWarning');
+  if(semWarn) semWarn.style.display = ST.semanasError ? '' : 'none';
 
   if(ST.personalError){
     tbody.innerHTML = `<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--red)">No se pudo leer la hoja "Personal": ${ST.personalError}. Verifica que la pestaña se llame exactamente "Personal" (y que exista la columna S "Recibe_Vales").</td></tr>`;
@@ -4733,11 +4951,26 @@ function renderNominas(){
         const totEfectivo = activos.reduce((s,n)=>s+n.efectivoRealEntregar,0);
         const totSemana = activos.reduce((s,n)=>s+n.totalFinal,0);
 
+        const semKey = key;
+        const semRec = ST.semanas[semKey];
+        const semConcluida = semRec && semRec.estado==='Concluida';
+        const busy = ST.semanaConcluyendo===semKey;
+        const semBadge = semConcluida
+          ? `<span style="font-size:10.5px;font-weight:700;color:var(--green,#38a169);background:rgba(56,161,105,.12);padding:2px 8px;border-radius:10px;margin-left:8px">✔ CONCLUIDA</span>`
+          : `<span style="font-size:10.5px;font-weight:700;color:var(--orange);background:rgba(237,137,54,.12);padding:2px 8px;border-radius:10px;margin-left:8px">ABIERTA</span>`;
+        const semBtn = ST.semanasError
+          ? `<span style="font-size:10.5px;color:var(--text3)">Crea la hoja "Semanas" para poder concluir</span>`
+          : semConcluida
+            ? `<button class="btn btn-ghost btn-sm" style="padding:3px 8px" ${busy?'disabled':''} onclick="reabrirSemana('${semKey}')" title="Reabrir semana para seguir editando nóminas">↺ Reabrir semana</button>`
+            : `<button class="btn btn-red btn-sm" style="padding:3px 10px" ${busy?'disabled':''} onclick="concluirSemana('${semKey}')" title="Generar los 3 movimientos globales en Salidas (Fiscal, Vales, Efectivo) para toda la semana">${busy?'Generando…':'Concluir semana →'}</button>`;
+
         const headerRow = `<tr style="background:var(--bg3)">
-          <td colspan="9" style="padding:8px 10px;font-weight:700;font-size:12px">
+          <td colspan="6" style="padding:8px 10px;font-weight:700;font-size:12px">
             ${nomFmtFechaLarga(primero.fechaInicio)} → ${nomFmtFechaLarga(primero.fechaFin)}
             <span style="font-weight:400;color:var(--text3);margin-left:6px">${primero.semanaAnio} · ${grupo.length} nómina(s)</span>
+            ${semBadge}
           </td>
+          <td colspan="3" style="padding:8px 10px;text-align:right">${semBtn}</td>
         </tr>`;
 
         const filas = grupo.map(n=>{
@@ -4933,15 +5166,9 @@ async function guardarNomina(){
     } else {
       await sheetsAppend('Nominas!A2:AK', [row]);
     }
-    // Movimiento espejo automático en la hoja "Salidas" (punto 11/12): crea o actualiza
-    // el gasto de caja correspondiente al efectivo real que sale por esta nómina.
-    try{
-      await sincronizarSalidaNomina({
-        idNomina, idSalidaExistente: existente ? existente.idSalida : '',
-        nombreEmpleado: empleado.nombre, semanaAnio, fFin,
-        monto: r.efectivoRealEntregar, estatus,
-      });
-    }catch(salErr){ console.warn('No se pudo sincronizar el movimiento en Salidas:', salErr); }
+    // NOTA: ya no se genera ningún movimiento individual en "Salidas" al guardar una nómina.
+    // Los movimientos de caja se generan únicamente cuando la semana completa se marca
+    // como CONCLUIDA (ver concluirSemana), como 3 registros globales agrupados.
 
     toast('ok','Nómina guardada: '+idNomina);
     closeNomModal();
@@ -4991,38 +5218,93 @@ async function guardarParametros(){
   btn.disabled = false;
 }
 
-/* ── Punto 11/12: cada nómina genera/actualiza automáticamente un movimiento en "Salidas" ──
-   Concepto: "Pago Nómina Semana XX - Nombre". Monto: Efectivo_Real_A_Entregar.
-   Si la nómina ya tenía un movimiento vinculado (ID_Salida), se actualiza en vez de duplicar. */
-async function sincronizarSalidaNomina({ idNomina, idSalidaExistente, nombreEmpleado, semanaAnio, fFin, monto, estatus }){
-  if(estatus==='Cancelado'){
-    // Si se cancela la nómina, se cancela también el movimiento de caja espejo (no se borra, para dejar rastro)
-    if(idSalidaExistente){
-      const b = ST.salidas.find(x=>x.id===idSalidaExistente);
-      if(b) await sheetsUpdate(`Salidas!F${b._row}`, [['Cancelado']]);
+/* ── CIERRE DE SEMANA: genera/actualiza los 3 movimientos GLOBALES en "Salidas" ──
+   Mientras una semana esté "Abierta" NO se genera ningún movimiento financiero.
+   Solo al concluir la semana (botón "Concluir semana" en Nóminas) se crean, agrupados por
+   TODA la semana (sumando a todos los empleados, nunca uno por trabajador):
+     1) "Nomina Fiscal Semana XX"    → suma de Fiscal_Neto_Final    → Transferencia
+     2) "Nomina Vales Semana XX"     → suma de Vales_Neto_Final     → Transferencia
+     3) "Nomina Efectivo Semana XX"  → suma de Efectivo_Real_A_Entregar → Efectivo
+   Si la semana ya estaba concluida (p.ej. se corrigió una nómina después), esta misma
+   función ACTUALIZA los 3 movimientos existentes en vez de duplicarlos. */
+async function concluirSemana(fechaInicio, opts){
+  opts = opts || {};
+  const grupo = ST.nominas.filter(n=>n.fechaInicio===fechaInicio);
+  if(!grupo.length){ if(!opts.silent) toast('err','No hay nóminas registradas para esa semana.'); return; }
+  const activos = grupo.filter(n=>n.estatus!=='Cancelado');
+  if(!opts.silent){
+    const pendientes = activos.filter(n=>n.estatus==='Pendiente');
+    if(pendientes.length){
+      if(!confirm(`Aún hay ${pendientes.length} nómina(s) en estatus "Pendiente" (no pagadas) en esta semana.\n\n¿Concluir la semana de todas formas? Se incluirán en los totales.`)) return;
+    } else {
+      if(!confirm('¿Concluir esta semana? Se generarán/actualizarán los 3 movimientos globales en Salidas (Fiscal, Vales, Efectivo) por el total de la semana. Esta acción se puede repetir si corriges una nómina después.')) return;
     }
-    return;
   }
-  const semanaNum = (String(semanaAnio||'').match(/W(\d+)/)||[])[1] || '';
-  const concepto = `Pago Nómina Semana ${semanaNum||semanaAnio} - ${nombreEmpleado}`;
-  const estadoSalida = estatus==='Pagado' ? 'Pagado' : 'Pendiente';
 
-  const existenteSalida = idSalidaExistente ? ST.salidas.find(x=>x.id===idSalidaExistente) : null;
-  const row = [
-    idSalidaExistente || genBalId(),
-    fFin, concepto, monto, 'Efectivo', estadoSalida,
-    '', estatus==='Pagado' ? fFin : '',
-    '', 'Nómina', '', '', 'FALSE', `Generado automáticamente desde Nóminas (${idNomina}).`,
-    '', '', '',
-  ];
-  if(existenteSalida){
-    await sheetsUpdate(`Salidas!A${existenteSalida._row}:Q${existenteSalida._row}`, [row]);
-  } else {
-    await sheetsAppend('Salidas!A2:Q', [row]);
-    // Guarda el folio de Salidas generado en la fila de la nómina para poder actualizarlo después
-    const nomActual = ST.nominas.find(n=>n.idNomina===idNomina);
-    const filaNom = nomActual ? nomActual._row : ST.nomEditRow;
-    if(filaNom) await sheetsUpdate(`Nominas!AJ${filaNom}`, [[row[0]]]);
+  const primero = grupo[0];
+  const semanaAnio = primero.semanaAnio;
+  const fFin = primero.fechaFin;
+  const semanaNum = (String(semanaAnio||'').match(/W(\d+)/)||[])[1] || semanaAnio;
+
+  const totFiscal = +activos.reduce((s,n)=>s+n.fiscalNeto,0).toFixed(2);
+  const totVales = +activos.reduce((s,n)=>s+n.valesNeto,0).toFixed(2);
+  const totEfectivo = +activos.reduce((s,n)=>s+n.efectivoRealEntregar,0).toFixed(2);
+
+  const semRec = ST.semanas[fechaInicio] || null;
+
+  async function upsertSalida(idExistente, concepto, monto, metodo){
+    const existente = idExistente ? ST.salidas.find(x=>x.id===idExistente) : null;
+    const row = [
+      idExistente || genBalId(),
+      fFin, concepto, monto, metodo, 'Pendiente',
+      '', '', '', 'Nómina', '', '', 'FALSE',
+      `Generado automáticamente al concluir la semana ${semanaAnio} (${grupo.length} nómina(s)).`,
+      '', '', '',
+    ];
+    if(existente){
+      await sheetsUpdate(`Salidas!A${existente._row}:Q${existente._row}`, [row]);
+    } else {
+      await sheetsAppend('Salidas!A2:Q', [row]);
+    }
+    return row[0];
+  }
+
+  ST.semanaConcluyendo = fechaInicio;
+  try{
+    const idFiscal = await upsertSalida(semRec?.idSalidaFiscal, `Nomina Fiscal Semana ${semanaNum}`, totFiscal, 'Transferencia');
+    const idVales = await upsertSalida(semRec?.idSalidaVales, `Nomina Vales Semana ${semanaNum}`, totVales, 'Transferencia');
+    const idEfectivo = await upsertSalida(semRec?.idSalidaEfectivo, `Nomina Efectivo Semana ${semanaNum}`, totEfectivo, 'Efectivo');
+
+    const semRow = [fechaInicio, fFin, semanaAnio, 'Concluida', new Date().toISOString(), idFiscal, idVales, idEfectivo];
+    if(semRec){
+      await sheetsUpdate(`Semanas!A${semRec._row}:H${semRec._row}`, [semRow]);
+    } else {
+      await sheetsAppend('Semanas!A2:H', [semRow]);
+    }
+
+    if(!opts.silent) toast('ok', `Semana concluida: se generaron/actualizaron los 3 movimientos globales en Salidas.`);
+    await loadAll();
+  }catch(e){
+    console.error(e);
+    if(!opts.silent) toast('err','Error al concluir la semana: '+(e.result?.error?.message||e.message||e)+'. Verifica que exista una hoja llamada "Semanas" con columnas A:H.');
+    else throw e;
+  }
+  ST.semanaConcluyendo = null;
+}
+
+/* Reabre una semana ya concluida: NO borra los movimientos de Salidas (para dejar rastro),
+   solo regresa el estado a "Abierta" para permitir seguir editando nóminas de esa semana.
+   Si luego se vuelve a concluir, los mismos 3 movimientos se actualizan (no se duplican). */
+async function reabrirSemana(fechaInicio){
+  const semRec = ST.semanas[fechaInicio];
+  if(!semRec) return;
+  if(!confirm('¿Reabrir esta semana? Los 3 movimientos ya generados en Salidas se mantienen (puedes editarlos ahí), pero la semana volverá a estar "Abierta" hasta que la concluyas de nuevo.')) return;
+  try{
+    await sheetsUpdate(`Semanas!D${semRec._row}`, [['Abierta']]);
+    toast('ok','Semana reabierta.');
+    await loadAll();
+  }catch(e){
+    toast('err','Error al reabrir la semana: '+(e.result?.error?.message||e.message||e));
   }
 }
 
@@ -5033,18 +5315,197 @@ async function cambiarEstatusNomina(idNomina, nuevoEstatus){
   try{
     await sheetsUpdate(`Nominas!G${n._row}`, [[nuevoEstatus]]);
     n.estatus = nuevoEstatus;
-    // El movimiento espejo en Salidas se actualiza automáticamente (punto 11)
-    try{
-      await sincronizarSalidaNomina({
-        idNomina, idSalidaExistente: n.idSalida, nombreEmpleado: n.nombreEmpleado,
-        semanaAnio: n.semanaAnio, fFin: n.fechaFin, monto: n.efectivoRealEntregar, estatus: nuevoEstatus,
-      });
-    }catch(salErr){ console.warn('No se pudo sincronizar el movimiento en Salidas:', salErr); }
+    // Ya no hay movimiento espejo individual en Salidas: si la semana de esta nómina ya
+    // estaba CONCLUIDA, sus 3 movimientos globales deben regenerarse para reflejar el cambio.
+    const semKey = n.fechaInicio;
+    const semRec = semKey ? ST.semanas[semKey] : null;
+    if(semRec && semRec.estado==='Concluida'){
+      try{ await concluirSemana(semKey, {silent:true}); }
+      catch(salErr){ console.warn('No se pudo actualizar los movimientos globales de Salidas de la semana:', salErr); }
+    }
     toast('ok', nuevoEstatus==='Pagado' ? 'Nómina marcada como pagada.' : 'Nómina cancelada.');
     renderNominas();
   }catch(e){
     toast('err','Error al actualizar estatus: '+(e.result?.error?.message||e.message||e));
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   VISTA: EMPLEADOS — panel administrativo completo sobre la hoja "Personal"
+   Editable: Nombre, Correo, Telefono, Fotografia, CURP, RFC, NSS, Cuenta_BBVA,
+   Nivel, Puesto, Sueldo_Total_Acordado, Salario_Registrado_Fiscal,
+   Compensacion_Efectivo, Tipo_Pago, Fecha_Ingreso, Fecha_Baja, Estado, Recibe_Vales.
+   ══════════════════════════════════════════════════════════════════ */
+function genEmpId(){ return 'EMP'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+
+function setEmpFilter(val, btn){
+  ST.empFilterEstado = val;
+  document.querySelectorAll('#tabEmp .fchip').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderEmpleados();
+}
+function onEmpSearch(v){ ST.empSearch = v; renderEmpleados(); }
+
+function renderEmpleados(){
+  const tbody = document.getElementById('empTbody');
+  if(!tbody) return; // la vista aún no está montada en el DOM
+
+  if(ST.personalError){
+    tbody.innerHTML = `<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--red)">No se pudo leer la hoja "Personal": ${ST.personalError}.</td></tr>`;
+    return;
+  }
+
+  const todos = Object.values(ST.personal||{});
+  const activos = todos.filter(p=>(p.estado||'').toLowerCase()==='activo');
+  const bajas = todos.filter(p=>(p.estado||'').toLowerCase()!=='activo');
+  const conVales = activos.filter(p=>p.recibeVales);
+  const sumaSueldo = activos.reduce((s,p)=>s+(p.sueldoTotalAcordado||0),0);
+
+  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+  set('empTotal', todos.length);
+  set('empActivos', activos.length);
+  set('empBajas', bajas.length);
+  set('empConVales', conVales.length+' / '+activos.length);
+  set('empSueldoTotal', fmtMXN(sumaSueldo));
+
+  let list = todos.slice();
+  if(ST.empFilterEstado==='Activo') list = list.filter(p=>(p.estado||'').toLowerCase()==='activo');
+  else if(ST.empFilterEstado==='baja') list = list.filter(p=>(p.estado||'').toLowerCase()!=='activo');
+  if(ST.empSearch){
+    const q = ST.empSearch.toLowerCase();
+    list = list.filter(p=> (p.nombre||'').toLowerCase().includes(q) || (p.puesto||'').toLowerCase().includes(q) || (p.correo||'').toLowerCase().includes(q));
+  }
+  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+
+  document.getElementById('empCount').textContent = list.length;
+
+  if(!list.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--text3)">Sin empleados que coincidan con el filtro.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(p=>{
+    const avatar = p.fotografia
+      ? `<img src="${esc(p.fotografia)}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;display:block" onerror="this.style.display='none'">`
+      : `<div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700">${esc((p.nombre||'?').charAt(0).toUpperCase())}</div>`;
+    const estColor = (p.estado||'').toLowerCase()==='activo' ? 'var(--green,#38a169)' : 'var(--text3)';
+    return `<tr>
+      <td>${avatar}</td>
+      <td>${esc(p.nombre||'—')}</td>
+      <td>${esc(p.puesto||'—')}</td>
+      <td>${esc(p.nivel||'—')}</td>
+      <td style="text-align:right">${fmtMXN(p.sueldoTotalAcordado||0)}</td>
+      <td style="text-align:center">${p.recibeVales ? '✅' : '—'}</td>
+      <td>${esc(p.tipoPago||'—')}</td>
+      <td><span style="color:${estColor};font-weight:600;font-size:11.5px">${esc(p.estado||'—')}</span></td>
+      <td><button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="openEmpModal('${p.id}')" title="Editar">✎ Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openEmpModal(idEmpleado){
+  const modal = document.getElementById('empModal');
+  if(!modal) return;
+  const existente = idEmpleado ? ST.personal[idEmpleado] : null;
+  ST.empEditId = existente ? existente.id : null;
+  ST.empFotoFile = null;
+
+  document.getElementById('empModalTitle').textContent = existente ? 'Editar Empleado' : 'Nuevo Empleado';
+
+  const fields = {
+    eNombre: existente?.nombre||'', eCorreo: existente?.correo||'', eTelefono: existente?.telefono||'',
+    eCURP: existente?.curp||'', eRFC: existente?.rfc||'', eNSS: existente?.nss||'',
+    eCuentaBBVA: existente?.cuentaBBVA||'', eNivel: existente?.nivel||'', ePuesto: existente?.puesto||'',
+    eSueldoTotal: existente?.sueldoTotalAcordado||0, eSalarioFiscal: existente?.salarioFiscal||0,
+    eCompEfectivo: existente?.compensacionEfectivo||0, eTipoPago: existente?.tipoPago||'',
+    eFechaIngreso: existente?.fechaIngreso||'', eFechaBaja: existente?.fechaBaja||'',
+    eEstado: existente?.estado||'Activo',
+  };
+  Object.entries(fields).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
+  document.getElementById('eRecibeVales').checked = existente ? !!existente.recibeVales : true;
+
+  const preview = document.getElementById('empFotoPreview');
+  const placeholder = document.getElementById('empFotoPlaceholder');
+  if(existente && existente.fotografia){
+    preview.src = existente.fotografia;
+    preview.style.display = '';
+    placeholder.style.display = 'none';
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+    placeholder.style.display = '';
+  }
+
+  modal.classList.add('open');
+}
+function closeEmpModal(){ document.getElementById('empModal').classList.remove('open'); ST.empFotoFile = null; }
+
+function onEmpFotoSelected(file){
+  if(!file) return;
+  ST.empFotoFile = file;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const preview = document.getElementById('empFotoPreview');
+    preview.src = reader.result;
+    preview.style.display = '';
+    document.getElementById('empFotoPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function guardarEmpleado(){
+  const nombre = document.getElementById('eNombre').value.trim();
+  if(!nombre){ toast('err','El nombre del empleado es obligatorio.'); return; }
+
+  const existente = ST.empEditId ? ST.personal[ST.empEditId] : null;
+  const id = existente ? existente.id : genEmpId();
+
+  const btn = document.getElementById('empSaveBtn');
+  btn.disabled = true;
+  try{
+    // Foto: si se seleccionó un archivo nuevo, se sube (o se reemplaza la existente) en Drive.
+    let fotoUrl = existente ? (existente.fotografia||'') : '';
+    if(ST.empFotoFile){
+      fotoUrl = await driveUpsertFile(fotoUrl, ST.empFotoFile, 'Personal/Fotos', `FOTO_${id}_${nombre}`.slice(0,80));
+    }
+
+    const row = [
+      id,
+      nombre,
+      document.getElementById('eCorreo').value.trim(),
+      document.getElementById('eTelefono').value.trim(),
+      fotoUrl,
+      document.getElementById('eCURP').value.trim().toUpperCase(),
+      document.getElementById('eRFC').value.trim().toUpperCase(),
+      document.getElementById('eNSS').value.trim(),
+      document.getElementById('eCuentaBBVA').value.trim(),
+      document.getElementById('eNivel').value.trim(),
+      document.getElementById('ePuesto').value.trim(),
+      parseFloat(document.getElementById('eSueldoTotal').value)||0,
+      parseFloat(document.getElementById('eSalarioFiscal').value)||0,
+      parseFloat(document.getElementById('eCompEfectivo').value)||0,
+      document.getElementById('eTipoPago').value,
+      document.getElementById('eFechaIngreso').value,
+      document.getElementById('eFechaBaja').value,
+      document.getElementById('eEstado').value,
+      document.getElementById('eRecibeVales').checked ? 'TRUE' : 'FALSE',
+    ];
+
+    if(existente){
+      await sheetsUpdate(`Personal!A${existente._row}:S${existente._row}`, [row]);
+    } else {
+      await sheetsAppend('Personal!A2:S', [row]);
+    }
+
+    toast('ok', existente ? 'Empleado actualizado.' : 'Empleado agregado a Personal.');
+    closeEmpModal();
+    await loadAll();
+    renderEmpleados();
+  }catch(e){
+    console.error(e);
+    toast('err','Error al guardar el empleado: '+(e.result?.error?.message||e.message||e));
+  }
+  btn.disabled = false;
 }
 
 /* ── PDF: Recibo de Nómina con línea de firma para el empleado ── */
@@ -5436,9 +5897,9 @@ function toggleTheme(){
 /* ─── SWITCH TAB (única definición) ─── */
 function switchTab(tab){
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { doc:{pane:'tabDoc', label:'Documentación', navBtn:'navDocBtn'}, nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'} };
+  const SIMPLE_TABS = { doc:{pane:'tabDoc', label:'Documentación', navBtn:'navDocBtn'}, nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'} };
   if(SIMPLE_TABS[tab]){
-    ['tabCot','tabFac','tabOC','tabBal','tabDoc','tabNom','tabAsis'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabDoc','tabNom','tabAsis','tabEmp'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -5459,6 +5920,7 @@ function switchTab(tab){
     if(balSubNav) balSubNav.style.display='none';
     if(tab==='asis') renderAsistencia();
     if(tab==='nom') renderNominas();
+    if(tab==='emp') renderEmpleados();
     return;
   }
   document.getElementById('mainAddBtn').style.display='';
@@ -5507,7 +5969,7 @@ function switchTab(tab){
   // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
   // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
   // porque el bloque de arriba solo toggle-a Comercial/Balance.
-  ['navDocBtn','navNomBtn','navAsisBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['navDocBtn','navNomBtn','navAsisBtn','navEmpBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   if(comSubNav) comSubNav.style.display = isComercial ? 'flex' : 'none';
@@ -5524,6 +5986,7 @@ function mainAdd(){
   else if(tab==='oc') openNewOCCliente();
   else if(tab==='bal') openBalModal(ST.currentBalTab==='gas'?'gas':'ing');
   else if(tab==='nom') openNomModal(null);
+  else if(tab==='emp') openEmpModal(null);
 }
 
 /* ─── SECCIÓN: COMERCIAL ↔ BALANCE ───
@@ -5532,7 +5995,7 @@ function mainAdd(){
 function switchSection(section){
   if(section==='comercial') switchTab(ST.currentComercialTab || 'cot');
   else if(section==='balance') switchTab('bal');
-  else switchTab(section); // 'doc' | 'nom' | 'asis' — vistas nuevas, aún sin funcionalidad
+  else switchTab(section); // 'doc' | 'nom' | 'asis' | 'emp'
 }
 
 /* ─── ASISTENCIA: agrupación semanal (lunes–domingo) / diaria + detalle con mapa ─── */
