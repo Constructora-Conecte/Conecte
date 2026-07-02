@@ -1240,6 +1240,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     </div><!-- /tabEmp -->
 
     <!-- ══ MODAL: EMPLEADO (alta / edición completa sobre la hoja Personal) ══ -->
+<div class="modal-bg" id="empCardModal">
+  <div class="modal-lg" style="width:640px">
+    <div class="mlg-head">
+      <div>
+        <div class="mlg-title">Ficha del empleado</div>
+        <div class="mlg-sub">Información completa — solo lectura</div>
+      </div>
+      <button class="close-x" onclick="closeEmpCard()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="mlg-body" id="empCardBody" style="padding:18px 22px"></div>
+  </div>
+</div>
+
     <div class="modal-bg" id="empModal">
       <div class="modal-lg" style="width:680px">
         <div class="mlg-head">
@@ -1448,6 +1463,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <option>Aceptado</option>
             <option>Rechazado</option>
           </select>
+          <input type="hidden" id="fFechaEnvio" value="">
         </div>
       </div>
 
@@ -2146,6 +2162,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   </div>
 </div>
 
+<!-- ══ MODAL OBLIGATORIO: Fecha de envío al marcar una cotización como ENVIADO ══
+     No tiene botón de cerrar (✕) ni se cierra al hacer click fuera:
+     el usuario está obligado a confirmar la fecha. -->
+<div class="modal-bg" id="fechaEnvioModal">
+  <div class="modal" style="width:360px">
+    <div class="modal-title">Fecha de envío</div>
+    <div class="modal-body" style="margin-top:6px;margin-bottom:14px">
+      ¿Cuándo se envió esta cotización al cliente?
+      <input type="date" class="form-input" id="fechaEnvioInput" style="margin-top:10px">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-red" onclick="confirmarFechaEnvio()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOASTS -->
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -2418,12 +2450,14 @@ function markFacEdited(){ facEditingUntil = Date.now() + FAC_EDIT_GRACE_MS; }
 function startAutoRefresh(){
   if(autoRefreshTimer) clearInterval(autoRefreshTimer);
   autoRefreshTimer = setInterval(async ()=>{
-    // No interrumpir si el usuario está editando algo sin guardar
+    // No interrumpir si hay un modal de edición abierto, tenga cambios sin
+    // guardar o no: recargar datos mientras está abierto reconstruye los
+    // <select> de Cliente/Contacto y borra la selección actual del usuario.
     const formOpen = document.getElementById('formModal').classList.contains('open');
     const ocOpen   = document.getElementById('ocModal').classList.contains('open');
-    if((formOpen && ST.formDirty) || (ocOpen && ST.ocFormDirty)) return;
+    if(formOpen || ocOpen) return;
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
-    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal','asisDetailModal','empModal'];
+    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal','asisDetailModal','empModal','empCardModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
     // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
     if(Date.now() < facEditingUntil) return;
@@ -2595,10 +2629,16 @@ function doLogout() {
 
 /* ─── LOAD ALL DATA ─── */
 async function loadAll() {
+  // Guardar la posición de scroll actual: setLoading(true) colapsa la tabla
+  // a una sola fila de "Cargando…" y eso hace que el navegador recorte el
+  // scroll hacia arriba. Se restaura al final para que guardar/editar un
+  // registro nunca saque al usuario de donde estaba trabajando.
+  const scrollEl = document.querySelector('.main-scroll');
+  const savedScrollTop = scrollEl ? scrollEl.scrollTop : 0;
   setLoading(true);
   try {
     const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR] = await Promise.all([
-      sheetsGet('Cotizaciones!A2:P'),
+      sheetsGet('Cotizaciones!A2:Q'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
       sheetsGet('Articulos!A2:F'),
@@ -2869,7 +2909,7 @@ async function loadAll() {
 
     /* Cotizaciones — cols: A=ID, B=Fecha, C=ID_Cli, D=Subtotal, E=IVA, F=Total,
        G=ItemsJSON, H=PDF, I=Descripcion, J=Notas, K=Creacion,
-       L=ID_Usr, M=ID_Con, N=Vigencia, O=Estatus, P=OC */
+       L=ID_Usr, M=ID_Con, N=Vigencia, O=Estatus, P=OC, Q=Fecha_Envio */
     ST.cotizaciones = (cotR||[]).map((r,i)=>{
       let itemsArr = [];
       try { if(r[6]) itemsArr = JSON.parse(r[6]); } catch(e){}
@@ -2880,6 +2920,7 @@ async function loadAll() {
         items: itemsArr,
         desc: r[8]||'', notas: r[9]||'', id_usr: r[11]||'',
         id_con: r[12]||'', vigencia: r[13]||'', estatus: r[14]||'Pendiente',
+        fechaEnvio: r[16]||'',
       };
     }).filter(c=>c.id);
 
@@ -2946,6 +2987,12 @@ async function loadAll() {
     toast('err', 'Error al cargar datos: ' + (e.result?.error?.message || e.message || e));
   }
   setLoading(false);
+  // Restaurar exactamente la posición de scroll que tenía el usuario antes
+  // de refrescar los datos (doble rAF para esperar a que el layout de las
+  // tablas recién renderizadas termine de calcularse).
+  if(scrollEl){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ scrollEl.scrollTop = savedScrollTop; }));
+  }
 }
 
 /* ─── SHEETS HELPERS ─── */
@@ -3137,14 +3184,17 @@ function goPage(p){ const pages=Math.ceil(ST.filtered.length/ST.PAGE)||1; if(p<1
 /* ─── POPULATE SELECTS ─── */
 function populateClientes() {
   const sel=document.getElementById('fCliente');
+  const prevVal=sel.value; // conservar selección si el select se reconstruye con un modal abierto
   sel.innerHTML='<option value="">— Seleccionar cliente —</option>';
   Object.values(ST.clientes).forEach(c=>{
     const o=document.createElement('option');
     o.value=c.id; o.textContent=c.nombre; sel.appendChild(o);
   });
+  if(prevVal && ST.clientes[prevVal]) sel.value=prevVal;
 }
 function populateContactos(id_cli) {
   const sel=document.getElementById('fContacto');
+  const prevVal=sel.value; // conservar selección si el select se reconstruye con un modal abierto
   sel.innerHTML='<option value="">— Seleccionar contacto —</option>';
   if(!id_cli) return;
   // Filter contacts by client: ST.contactosList holds full rows with id_cli
@@ -3156,6 +3206,7 @@ function populateContactos(id_cli) {
   // Add "new contact" option at bottom
   const addO=document.createElement('option');
   addO.value='__new__'; addO.textContent='+ Agregar nuevo contacto…'; sel.appendChild(addO);
+  if(prevVal && filtered.some(c=>c.id===prevVal)) sel.value=prevVal;
 }
 
 /* ─── ARTÍCULOS DROPDOWN ─── */
@@ -3277,6 +3328,7 @@ function abrirNueva() {
   document.getElementById('fDesc').value='';
   document.getElementById('fNotas').value='';
   document.getElementById('fEstatus').value='Pendiente';
+  document.getElementById('fFechaEnvio').value='';
   document.getElementById('artSearch').value='';
   ST.ocList = [];
   renderOCSection(false); // nueva cotización: no tiene ID aún
@@ -3311,12 +3363,13 @@ function openEdit(id,rowNum) {
   const cli=document.getElementById('fCliente');
   cli.value=r.id_cli;
   populateContactos(r.id_cli);
-  setTimeout(()=>{ document.getElementById('fContacto').value=r.id_con; },50);
+  document.getElementById('fContacto').value=r.id_con;
   document.getElementById('fFecha').value=isoDate(r.fecha);
   document.getElementById('fVigencia').value=r.vigencia||'30';
   document.getElementById('fDesc').value=r.desc;
   document.getElementById('fNotas').value=r.notas;
   document.getElementById('fEstatus').value=r.estatus;
+  document.getElementById('fFechaEnvio').value=r.fechaEnvio||'';
   document.getElementById('artSearch').value='';
   ST.ocList = ST.ocAll.filter(o => o.cotIds.includes(id));
   renderOCSection(true);
@@ -3346,6 +3399,8 @@ async function guardarCot() {
   const vigencia = document.getElementById('fVigencia').value||'30';
   const notas    = document.getElementById('fNotas').value;
   const estatus  = document.getElementById('fEstatus').value;
+  const fechaEnvio = document.getElementById('fFechaEnvio').value;
+  if(estatus==='Enviado' && !fechaEnvio){ toast('err','Confirma la fecha de envío.'); abrirModalFechaEnvio(); return; }
 
   const sub = ST.items.reduce((s,it)=>s+(it.imp||0),0);
   const iva = sub*0.16;
@@ -3359,7 +3414,8 @@ async function guardarCot() {
     newId, sheetDate(fecha), cliente,
     sub.toFixed(2), iva.toFixed(2), tot.toFixed(2),
     itemsJSON, '', desc, notas, sheetDate(todayISO()),
-    ST.usuario||'', contacto, vigencia, estatus, ''
+    ST.usuario||'', contacto, vigencia, estatus, '',
+    fechaEnvio ? sheetDate(fechaEnvio) : ''
   ];
 
   const btn=document.getElementById('saveBtn');
@@ -3367,10 +3423,10 @@ async function guardarCot() {
 
   try {
     if(ST.editId && ST.editRow){
-      await sheetsUpdate(`Cotizaciones!A${ST.editRow}:P${ST.editRow}`, [row]);
+      await sheetsUpdate(`Cotizaciones!A${ST.editRow}:Q${ST.editRow}`, [row]);
       toast('ok',`${newId} actualizada.`);
     } else {
-      await sheetsAppend('Cotizaciones!A2:P', [row]);
+      await sheetsAppend('Cotizaciones!A2:Q', [row]);
       ST.editId = newId;
       toast('ok',`${newId} creada.`);
     }
@@ -3395,7 +3451,7 @@ async function confirmDel(){
   const btn=document.getElementById('delConfBtn');
   btn.disabled=true; btn.textContent='Eliminando…';
   try{
-    await sheetsClear(`Cotizaciones!A${ST.delRow}:P${ST.delRow}`);
+    await sheetsClear(`Cotizaciones!A${ST.delRow}:Q${ST.delRow}`);
     ST.cotizaciones=ST.cotizaciones.filter(c=>c.id!==ST.delId);
     updateStats(); applyFilter(); closeDel();
     toast('ok',`${ST.delId} eliminada.`);
@@ -3446,6 +3502,11 @@ function generarPDF(id, itemsOverride) {
   }
   const cotId = id || ST.editId;
   let r = cotId ? ST.cotizaciones.find(c => c.id === cotId) : null;
+  // Si el formulario de captura está abierto, los campos en pantalla son la
+  // única fuente de verdad (pueden tener cambios que ST.cotizaciones todavía
+  // no refleja). Nunca usar el registro cacheado en ese caso, para que el
+  // PDF jamás muestre información vieja mientras se está editando.
+  if(document.getElementById('formModal')?.classList.contains('open')) r = null;
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
@@ -5417,7 +5478,14 @@ function renderEmpleados(){
     const q = ST.empSearch.toLowerCase();
     list = list.filter(p=> (p.nombre||'').toLowerCase().includes(q) || (p.puesto||'').toLowerCase().includes(q) || (p.correo||'').toLowerCase().includes(q));
   }
-  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  // Activos primero, Inactivos después — nunca mezclados. Dentro de cada
+  // grupo, orden alfabético por nombre (igual que antes).
+  list.sort((a,b)=>{
+    const aActivo=(a.estado||'').toLowerCase()==='activo' ? 0 : 1;
+    const bActivo=(b.estado||'').toLowerCase()==='activo' ? 0 : 1;
+    if(aActivo!==bActivo) return aActivo-bActivo;
+    return (a.nombre||'').localeCompare(b.nombre||'');
+  });
 
   document.getElementById('empCount').textContent = list.length;
 
@@ -5426,14 +5494,25 @@ function renderEmpleados(){
     return;
   }
 
-  tbody.innerHTML = list.map(p=>{
+  let htmlOut = '';
+  let inactivosHeaderShown = false;
+  const hayActivos = list.some(p=>(p.estado||'').toLowerCase()==='activo');
+  const hayInactivos = list.some(p=>(p.estado||'').toLowerCase()!=='activo');
+
+  list.forEach(p=>{
+    const esActivo = (p.estado||'').toLowerCase()==='activo';
+    // Separador de sección: solo se muestra si hay ambos grupos en la lista actual.
+    if(!esActivo && !inactivosHeaderShown && hayActivos && hayInactivos){
+      inactivosHeaderShown = true;
+      htmlOut += `<tr><td colspan="9" style="padding:8px 10px;background:var(--bg3);color:var(--text3);font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Inactivos</td></tr>`;
+    }
     const avatar = p.fotografia
-      ? `<img src="${esc(p.fotografia)}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;display:block" onerror="this.style.display='none'">`
-      : `<div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700">${esc((p.nombre||'?').charAt(0).toUpperCase())}</div>`;
-    const estColor = (p.estado||'').toLowerCase()==='activo' ? 'var(--green,#38a169)' : 'var(--text3)';
-    return `<tr>
+      ? `<img src="${esc(p.fotografia)}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;display:block;cursor:pointer" onerror="this.style.display='none'" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">`
+      : `<div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700;cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">${esc((p.nombre||'?').charAt(0).toUpperCase())}</div>`;
+    const estColor = esActivo ? 'var(--green,#38a169)' : 'var(--text3)';
+    htmlOut += `<tr>
       <td>${avatar}</td>
-      <td>${esc(p.nombre||'—')}</td>
+      <td><span style="cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">${esc(p.nombre||'—')}</span></td>
       <td>${esc(p.puesto||'—')}</td>
       <td>${esc(p.nivel||'—')}</td>
       <td style="text-align:right">${fmtMXN(p.sueldoTotalAcordado||0)}</td>
@@ -5442,8 +5521,53 @@ function renderEmpleados(){
       <td><span style="color:${estColor};font-weight:600;font-size:11.5px">${esc(p.estado||'—')}</span></td>
       <td><button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="openEmpModal('${p.id}')" title="Editar">✎ Editar</button></td>
     </tr>`;
-  }).join('');
+  });
+  tbody.innerHTML = htmlOut;
 }
+
+function openEmpCard(idEmpleado){
+  const p = ST.personal[idEmpleado];
+  if(!p) return;
+  const esActivo = (p.estado||'').toLowerCase()==='activo';
+  const row = (label,value)=>`
+    <div style="display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--text3);font-size:11.5px">${esc(label)}</span>
+      <span style="font-size:12.5px;font-weight:600;text-align:right;user-select:text">${esc(value||'—')}</span>
+    </div>`;
+  const avatarBig = p.fotografia
+    ? `<img src="${esc(p.fotografia)}" style="width:76px;height:76px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`
+    : `<div style="width:76px;height:76px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:26px;font-weight:700">${esc((p.nombre||'?').charAt(0).toUpperCase())}</div>`;
+  const body = document.getElementById('empCardBody');
+  body.innerHTML = `
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
+      ${avatarBig}
+      <div>
+        <div style="font-size:16px;font-weight:700;user-select:text">${esc(p.nombre||'—')}</div>
+        <div style="font-size:12px;color:var(--text3)">${esc(p.puesto||'—')}</div>
+        <div style="margin-top:4px;font-size:11px;font-weight:700;color:${esActivo?'var(--green,#38a169)':'var(--text3)'}">${esc(p.estado||'—')}</div>
+      </div>
+    </div>
+    ${row('Correo', p.correo)}
+    ${row('Teléfono', p.telefono)}
+    ${row('CURP', p.curp)}
+    ${row('RFC', p.rfc)}
+    ${row('NSS', p.nss)}
+    ${row('Cuenta BBVA', p.cuentaBBVA)}
+    ${row('Nivel', p.nivel)}
+    ${row('Puesto', p.puesto)}
+    ${row('Sueldo total acordado', fmtMXN(p.sueldoTotalAcordado||0))}
+    ${row('Salario registrado fiscal', fmtMXN(p.salarioFiscal||0))}
+    ${row('Compensación en efectivo', fmtMXN(p.compensacionEfectivo||0))}
+    ${row('Tipo de pago', p.tipoPago)}
+    ${row('Fecha de ingreso', p.fechaIngreso)}
+    ${row('Fecha de baja', p.fechaBaja)}
+    ${row('Estado', p.estado)}
+    ${row('Recibe vales', p.recibeVales?'Sí':'No')}
+    ${row('Recibe fiscal', p.recibeFiscal?'Sí':'No')}
+  `;
+  document.getElementById('empCardModal').classList.add('open');
+}
+function closeEmpCard(){ document.getElementById('empCardModal').classList.remove('open'); }
 
 function openEmpModal(idEmpleado){
   if(!requireAuth()) return;
@@ -5920,6 +6044,25 @@ document.getElementById('fContacto').addEventListener('change',function(){
     this.value='';
     openAddContacto();
   }
+});
+
+/* Estatus → Enviado: pedir Fecha de envío con modal obligatorio ──
+   "Enviado" significa que ya se mandó la cotización por correo, así que se
+   necesita registrar cuándo. Solo se dispara con un cambio real del usuario
+   (asignar .value por JS, como al abrir el formulario, no dispara 'change'). */
+function abrirModalFechaEnvio(){
+  const input=document.getElementById('fechaEnvioInput');
+  input.value = document.getElementById('fFechaEnvio').value || todayISO();
+  document.getElementById('fechaEnvioModal').classList.add('open');
+}
+function confirmarFechaEnvio(){
+  const val=document.getElementById('fechaEnvioInput').value;
+  if(!val){ toast('err','Elige la fecha de envío.'); return; }
+  document.getElementById('fFechaEnvio').value = val;
+  document.getElementById('fechaEnvioModal').classList.remove('open');
+}
+document.getElementById('fEstatus').addEventListener('change',function(){
+  if(this.value==='Enviado') abrirModalFechaEnvio();
 });
 
 /* ─── THEME TOGGLE ─── */
@@ -7140,26 +7283,18 @@ function renderDashboard(){
 
 /* ─── BALANCE — end ─── */
 
-/* ─── UNIDADES CUSTOM ─── */
-function addCustomUnidad(val){
-  if(!val||!val.trim()) return;
-  const dl = document.getElementById('unidadesList');
-  const existing = [...dl.options].map(o=>o.value.toLowerCase());
-  if(!existing.includes(val.trim().toLowerCase())){
-    const opt = document.createElement('option');
-    opt.value = val.trim();
-    dl.appendChild(opt);
-    // persist to localStorage
-    const saved = JSON.parse(localStorage.getItem('customUnidades')||'[]');
-    if(!saved.includes(val.trim())){ saved.push(val.trim()); localStorage.setItem('customUnidades',JSON.stringify(saved)); }
-  }
-}
-// Load custom unidades on init
-(function(){
-  const saved = JSON.parse(localStorage.getItem('customUnidades')||'[]');
-  const dl = document.getElementById('unidadesList');
-  saved.forEach(u=>{ const o=document.createElement('option'); o.value=u; dl.appendChild(o); });
-})();
+/* ─── UNIDADES ───
+   Las únicas sugerencias válidas son las 12 definidas originalmente en el
+   datalist del HTML (Pza, Lote, Mts, Mts², Mts³, Kg, Día, Lts, Hrs, Tramo,
+   Juego, Servicio). Antes, cada tecla presionada en el campo "Unidad" de un
+   concepto manual guardaba ese texto parcial en localStorage para siempre,
+   por eso aparecían opciones basura como "H", "HDD", "pZa", "pZA" (fragmentos
+   de mientras se escribía "Hrs" o "Pza"). Ya no se guarda nada nuevo
+   automáticamente, y se purga cualquier valor incorrecto que haya quedado
+   guardado de antes; el campo sigue siendo de texto libre por partida, solo
+   que ya no ensucia las sugerencias para el resto del sistema. */
+localStorage.removeItem('customUnidades');
+function addCustomUnidad(val){ /* deshabilitado a propósito: ver comentario arriba */ }
 
 /* ─── NUEVO ARTÍCULO ─── */
 function openNewArticulo(){
