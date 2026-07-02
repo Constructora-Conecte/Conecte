@@ -177,6 +177,15 @@ const UMBRAL_RECONOCIMIENTO = 0.5; // más bajo = match más estricto
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
+// El navegador puede cachear respuestas GET de Apps Script y servir una
+// versión vieja (ej: "sin registros de hoy") aunque el servidor ya tenga
+// datos nuevos. fetchFresco() evita eso: pide siempre al servidor, nunca
+// al caché del navegador.
+function fetchFresco(url){
+  const sep = url.includes('?') ? '&' : '?';
+  return fetch(`${url}${sep}_=${Date.now()}`, { cache: 'no-store' });
+}
+
 const ETIQUETAS = {
   Entrada: 'Entrada', Salida: 'Salida',
   Salida_Comida: 'Salida a comer', Regreso_Comida: 'Regreso de comer',
@@ -258,8 +267,8 @@ async function iniciarCamara(){
 
 async function cargarDatos(){
   const [resRostros, resUbic] = await Promise.all([
-    fetch(`${API_URL}?action=getRostros`),
-    fetch(`${API_URL}?action=getUbicaciones`)
+    fetchFresco(`${API_URL}?action=getRostros`),
+    fetchFresco(`${API_URL}?action=getUbicaciones`)
   ]);
   rostrosConocidos = await resRostros.json();
   ubicaciones = await resUbic.json();
@@ -270,7 +279,7 @@ async function cargarDatos(){
 // identificado y en cada carga de página, así funciona igual entre
 // dispositivos distintos, refrescos, o sesiones nuevas.
 async function cargarRegistrosHoy(id){
-  const res = await fetch(`${API_URL}?action=getRegistrosHoy&id=${encodeURIComponent(id)}`);
+  const res = await fetchFresco(`${API_URL}?action=getRegistrosHoy&id=${encodeURIComponent(id)}`);
   tiposHoyPorEmpleado[id] = await res.json();
 }
 
