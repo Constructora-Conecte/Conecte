@@ -1930,6 +1930,7 @@ const ST = {
   salidas: [],           // hoja "Salidas"
   proveedores: {},       // hoja "Proveedores" {id:{id,nombre,direccion,contacto,correo}}
   registros: [],         // hoja "Registros" (asistencia / check-in)
+  registrosError: null,  // mensaje de error si la hoja "Registros" no se pudo leer
   asisOpenWeek: null,    // key de la semana expandida en Asistencia
   asisDetail: null,      // {fecha, idUsuario, nombre, movs:[...]}
   ingFiltered: [],
@@ -2173,7 +2174,7 @@ function doLogout() {
 async function loadAll() {
   setLoading(true);
   try {
-    const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR, regR] = await Promise.all([
+    const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR] = await Promise.all([
       sheetsGet('Cotizaciones!A2:P'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
@@ -2183,7 +2184,6 @@ async function loadAll() {
       sheetsGet('Ingresos!A2:N'),    // 14 cols: A=ID … N=Foto
       sheetsGet('Salidas!A2:Q'),     // 17 cols: A=ID … Q=XML_Content
       sheetsGet('Proveedores!A2:E'), // 5 cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo
-      sheetsGet('Registros!A2:I'),   // 9 cols: A=Fecha,B=Hora,C=ID_Usuario,D=Nombre,E=Tipo_Marca,F=Ubicacion_Detectada,G=Lat,H=Long,I=Dentro_Geofence
     ]);
 
     /* Clientes */
@@ -2194,20 +2194,31 @@ async function loadAll() {
     ST.proveedores = {};
     (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], direccion:r[2]||'', contacto:r[3]||'', correo:r[4]||'' }; });
 
-    /* Registros de asistencia — cols: A=Fecha,B=Hora,C=ID_Usuario,D=Nombre,E=Tipo_Marca,
-       F=Ubicacion_Detectada,G=Lat,H=Long,I=Dentro_Geofence */
-    ST.registros = (regR||[]).map((r,i)=>({
-      _row:      i+2,
-      fecha:     (r[0]||'').toString().trim(),
-      hora:      (r[1]||'').toString().trim(),
-      idUsuario: r[2]||'',
-      nombre:    r[3]||r[2]||'—',
-      tipoMarca: r[4]||'',
-      ubicacion: r[5]||'',
-      lat:       r[6]!==undefined && r[6]!=='' ? parseFloat(r[6]) : null,
-      lng:       r[7]!==undefined && r[7]!=='' ? parseFloat(r[7]) : null,
-      dentroGeofence: r[8]||'',
-    })).filter(r=>r.fecha);
+    /* Registros de asistencia — se carga aparte (try/catch propio) para que, si la hoja
+       "Registros" no existe o el nombre no coincide, NO se rompa la carga del resto de la app
+       y podamos mostrar el motivo exacto en la pestaña de Asistencia en vez de "sin registros". */
+    ST.registrosError = null;
+    try{
+      const regR = await sheetsGet('Registros!A2:I'); // A=Fecha,B=Hora,C=ID_Usuario,D=Nombre,E=Tipo_Marca,F=Ubicacion_Detectada,G=Lat,H=Long,I=Dentro_Geofence
+      console.log('[Asistencia] filas crudas recibidas de Registros!A2:I:', regR);
+      ST.registros = (regR||[]).map((r,i)=>({
+        _row:      i+2,
+        fecha:     (r[0]||'').toString().trim(),
+        hora:      (r[1]||'').toString().trim(),
+        idUsuario: r[2]||'',
+        nombre:    r[3]||r[2]||'—',
+        tipoMarca: r[4]||'',
+        ubicacion: r[5]||'',
+        lat:       r[6]!==undefined && r[6]!=='' ? parseFloat(r[6]) : null,
+        lng:       r[7]!==undefined && r[7]!=='' ? parseFloat(r[7]) : null,
+        dentroGeofence: r[8]||'',
+      })).filter(r=>r.fecha);
+      console.log('[Asistencia] registros parseados:', ST.registros.length, ST.registros.slice(0,3));
+    }catch(regErr){
+      console.error('[Asistencia] Error al cargar la hoja Registros:', regErr);
+      ST.registros = [];
+      ST.registrosError = regErr.result?.error?.message || regErr.message || String(regErr);
+    }
     renderAsistencia();
 
     /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email */
@@ -4488,6 +4499,10 @@ function switchTab(tab){
   const isComercial = tab!=='bal';
   document.getElementById('navComercialBtn')?.classList.toggle('active', isComercial);
   document.getElementById('navBalanceBtn')?.classList.toggle('active', !isComercial);
+  // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
+  // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
+  // porque el bloque de arriba solo toggle-a Comercial/Balance.
+  ['navDocBtn','navNomBtn','navAsisBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   if(comSubNav) comSubNav.style.display = isComercial ? 'flex' : 'none';
@@ -4517,9 +4532,15 @@ function switchSection(section){
 /* ─── ASISTENCIA: agrupación semanal (lunes–domingo) / diaria + detalle con mapa ─── */
 function pad2(n){ return String(n).padStart(2,'0'); }
 function parseAsisDate(fechaStr){
-  const s=(fechaStr||'').toString().trim().replace(/\//g,'-');
-  const [y,m,d]=s.split('-').map(n=>parseInt(n,10));
-  if(!y||!m||!d) return null;
+  const s=(fechaStr||'').toString().trim();
+  if(!s) return null;
+  // Acepta 'YYYY-MM-DD', 'YYYY/MM/DD' o 'DD/MM/YYYY' (según el formato de la celda en Sheets)
+  const parts=s.split(/[\/\-]/).map(p=>p.trim());
+  if(parts.length!==3) return null;
+  let y,m,d;
+  if(parts[0].length===4){ [y,m,d]=parts.map(n=>parseInt(n,10)); }
+  else { [d,m,y]=parts.map(n=>parseInt(n,10)); }
+  if(!y||!m||!d||m<1||m>12||d<1||d>31) return null;
   return new Date(y, m-1, d);
 }
 function asisMonday(date){
@@ -4542,8 +4563,15 @@ function renderAsistencia(){
   if(!wrap) return;
   const regs=ST.registros||[];
   if(countEl) countEl.textContent = regs.length+(regs.length===1?' registro':' registros');
+  if(ST.registrosError){
+    wrap.innerHTML=`<div style="padding:24px;text-align:center;color:var(--red);font-size:12.5px">
+      No se pudo cargar la hoja <b>Registros</b>: ${esc(ST.registrosError)}<br>
+      <span style="color:var(--text3);font-size:11px">Revisa que la pestaña se llame exactamente "Registros" y que tu cuenta de Google tenga acceso a esa hoja del spreadsheet.</span>
+    </div>`;
+    return;
+  }
   if(!regs.length){
-    wrap.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Sin registros de asistencia todavía.</div>';
+    wrap.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Sin registros de asistencia todavía. Si ya hay filas en la hoja "Registros", presiona "Recargar datos" (⟳) en la barra superior.</div>';
     return;
   }
   // Agrupar: semana(lunes) → día → empleado → movimientos
