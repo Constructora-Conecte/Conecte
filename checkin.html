@@ -110,11 +110,16 @@ footer{font-size:.7rem; color:var(--text3); text-align:center; margin-top:16px}
 #toast .detalle{font-size:.85rem; font-weight:500; opacity:.85; margin-top:2px}
 #toast.err{background:var(--red); color:#fff}
 
-/* ── RESPONSIVE: escritorio en 2 columnas ── */
+/* ── RESPONSIVE ── */
 @media (min-width:760px){
   .wrap{max-width:880px; flex-direction:row; align-items:flex-start; gap:24px}
   .col-video{flex:0 0 360px}
   .col-info{flex:1; display:flex; flex-direction:column; gap:14px}
+}
+@media (max-width:380px){
+  .grid{gap:8px}
+  button.marc{padding:13px 8px; font-size:.82rem}
+  .video-wrap{border-radius:var(--r12)}
 }
 </style>
 </head>
@@ -163,10 +168,12 @@ footer{font-size:.7rem; color:var(--text3); text-align:center; margin-top:16px}
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
-// ================== CONFIGURA ESTO ==================
+// ============================================================
+// ⚙️ CONFIG — edita aquí si algún día cambias de Apps Script
+// ============================================================
 const API_URL = 'https://script.google.com/macros/s/AKfycbwE7EQorfA2aQc_q7mZCgMGjSBoIoHs-mulwkliNKNC9bpQNPlJLLz4M5EGbh3XA4MTIA/exec';
-const UMBRAL_RECONOCIMIENTO = 0.5; // más bajo = más estricto
-// ======================================================
+const UMBRAL_RECONOCIMIENTO = 0.5; // más bajo = match más estricto
+// ============================================================
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
@@ -197,7 +204,7 @@ let ubicaciones = [];
 let empleadoActual = null;
 let posicionActual = null;
 let ubicacionDetectada = null;
-let tiposHoyPorEmpleado = {}; // cache: {id: [tipos ya marcados hoy]}
+let tiposHoyPorEmpleado = {}; // cache en memoria: {id: [tipos ya marcados hoy]} — se recarga siempre desde el servidor al cambiar de rostro o refrescar la página
 let enviando = false;
 
 function setStatus(msg, tipo){ statusEl.textContent = msg; statusEl.className = 'status ' + (tipo||'wait'); }
@@ -258,8 +265,11 @@ async function cargarDatos(){
   ubicaciones = await resUbic.json();
 }
 
+// Siempre consulta al servidor (nunca confía solo en el estado local) para
+// saber qué ya marcó el empleado hoy. Se llama cada vez que cambia el rostro
+// identificado y en cada carga de página, así funciona igual entre
+// dispositivos distintos, refrescos, o sesiones nuevas.
 async function cargarRegistrosHoy(id){
-  if (tiposHoyPorEmpleado[id]) return;
   const res = await fetch(`${API_URL}?action=getRegistrosHoy&id=${encodeURIComponent(id)}`);
   tiposHoyPorEmpleado[id] = await res.json();
 }
@@ -391,6 +401,10 @@ async function marcar(tipo){
     } else {
       setStatus('⚠️ ' + (data.error || 'No se pudo registrar'), 'err');
       mostrarToast(false, 'No se pudo registrar', data.error || '');
+      // Puede que ya exista un registro que el frontend no había visto aún
+      // (ej. lo marcaron desde otro dispositivo hace un momento). Volvemos a
+      // consultar al servidor para que el botón quede bloqueado correctamente.
+      await cargarRegistrosHoy(empleadoActual.id);
     }
   } catch (err) {
     setStatus('Error al guardar: ' + err.message, 'err');
