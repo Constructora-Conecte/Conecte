@@ -11,6 +11,14 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  // pdf.js necesita saber dónde está su worker (se usa para rasterizar PDFs y poder aplicarles OCR)
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════
@@ -630,10 +638,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <button class="btn btn-ghost btn-sm" title="Recargar datos" onclick="loadAll()" style="border-color:rgba(255,255,255,.2);color:#fff;">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8A5.5 5.5 0 112 8M13.5 8V5M13.5 8H10.5"/></svg>
       </button>
-      <button class="btn btn-ghost btn-sm" id="aiCotBtn" title="Crear cotización con IA (texto o voz)" onclick="openAiCotModal()" style="border-color:rgba(255,255,255,.2);color:#fff;display:none;">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5l1.1 2.9L12 5.5l-2.9 1.1L8 9.5l-1.1-2.9L4 5.5l2.9-1.1L8 1.5z"/><path d="M13 10l.6 1.5L15 12l-1.4.5L13 14l-.6-1.5L11 12l1.4-.5L13 10z"/></svg>
-        <span>Cotización con IA</span>
-      </button>
       <button class="btn btn-red btn-sm" id="mainAddBtn" onclick="mainAdd()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
         <span id="mainAddTxt">+ Cotización</span>
@@ -974,7 +978,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <!-- ── SUB-PANE: GASTOS ── -->
       <div class="bal-pane" id="balGas">
         <div class="stats" id="gasStats">
-          <div class="stat cr"><div class="stat-lbl">Total Salidas</div><div class="stat-val" id="sGasTotal">—</div><div class="stat-delta">Todos los registros</div></div>
+          <div class="stat cr"><div class="stat-lbl">Total Gastos</div><div class="stat-val" id="sGasTotal">—</div><div class="stat-delta">Todos los registros</div></div>
           <div class="stat cr"><div class="stat-lbl">Pagados</div><div class="stat-val" id="sGasPag">—</div><div class="stat-delta" id="sGasPagMonto">—</div></div>
           <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="sGasPend">—</div><div class="stat-delta" id="sGasPendMonto">—</div></div>
           <div class="stat cb"><div class="stat-lbl">Es Deuda</div><div class="stat-val" id="sGasDeuda">—</div><div class="stat-delta" id="sGasDeudaMonto">—</div></div>
@@ -988,22 +992,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <input type="text" id="gasSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍 Buscar gasto…" oninput="applyGasFilter()">
           <button class="btn btn-red btn-sm" onclick="openBalModal('gas')">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
-            Nueva Salida
+            Nuevo Gasto
           </button>
         </div>
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Registro de Salidas</span>
+            <span class="card-title">Registro de Gastos</span>
             <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="gasCount">0</span>
           </div>
           <div class="cot-table-wrap">
             <table class="bal-table">
               <thead><tr>
                 <th>Fecha</th><th>Concepto</th><th>Proveedor</th><th>Categoría</th>
-                <th>Cuenta</th><th>Estado</th><th>Fecha Pago</th>
+                <th>Cuenta</th><th>Estado</th><th>Fecha Límite</th><th>Fecha Pago</th>
                 <th style="text-align:right">Monto</th><th>Deuda</th><th></th>
               </tr></thead>
-              <tbody id="gasTbody"><tr class="loading-row"><td colspan="10"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div> Cargando…</td></tr></tbody>
+              <tbody id="gasTbody"><tr class="loading-row"><td colspan="11"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div> Cargando…</td></tr></tbody>
             </table>
           </div>
           <div class="pagi"><span class="pagi-info" id="gasPagiInfo">—</span><div class="pagi-btns" id="gasPagiBtns"></div></div>
@@ -1015,7 +1019,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <!-- KPIs -->
         <div class="dash-kpi-grid" id="dashKpis">
           <div class="stat cg"><div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dKpiIng">—</div><div class="stat-delta">Pagados</div></div>
-          <div class="stat cr"><div class="stat-lbl">Salidas Pagadas</div><div class="stat-val" id="dKpiGas">—</div><div class="stat-delta">Pagados</div></div>
+          <div class="stat cr"><div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dKpiGas">—</div><div class="stat-delta">Pagados</div></div>
           <div class="stat cb"><div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dKpiBal">—</div><div class="stat-delta">Ingresos − Gastos</div></div>
           <div class="stat cy"><div class="stat-lbl">Por Cobrar</div><div class="stat-val" id="dKpiPend">—</div><div class="stat-delta">Ingresos pendientes</div></div>
         </div>
@@ -1093,32 +1097,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   </div><!-- /app-shell -->
 </div><!-- /appScreen -->
 
-<!-- ══ COTIZACIÓN CON IA (texto o voz) ══ -->
-<div class="modal-bg" id="aiCotModal">
-  <div class="modal" style="width:520px">
-    <div class="modal-title">🤖 Cotización con IA</div>
-    <p style="font-size:11.5px;color:var(--text3);margin:-6px 0 12px">Escribe o dicta la cotización en lenguaje natural. La IA identifica cliente, conceptos, cantidades y precios, y llena el formulario por ti.</p>
-    <div class="form-group">
-      <textarea class="form-textarea" id="aiCotTexto" rows="6" placeholder="Ej. Esta cotización es para Pilgrims Noel. Concepto 1: instalación eléctrica, son 12 piezas de 550 pesos cada una. Concepto 2: mantenimiento, es un servicio de 2,333.56. Agrega una nota que diga realizado el día de hoy."></textarea>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin:8px 0 14px">
-      <button type="button" class="btn btn-ghost btn-sm" id="aiCotMicBtn" onclick="toggleAiDictado()" title="Dictar por voz">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="1.5" width="4" height="8" rx="2"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5v2"/></svg>
-        <span id="aiCotMicTxt">Dictar por voz</span>
-      </button>
-      <span id="aiCotMicStatus" style="font-size:11px;color:var(--text3)"></span>
-    </div>
-    <div id="aiCotStatus" style="display:none;font-size:11.5px;padding:10px;border-radius:8px;background:var(--bg3);color:var(--text2);margin-bottom:10px;line-height:1.5"></div>
-    <div class="modal-acts">
-      <button class="btn btn-ghost" onclick="document.getElementById('aiCotModal').classList.remove('open')">Cancelar</button>
-      <button class="btn btn-red" id="aiCotProcBtn" onclick="procesarCotizacionIA()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 1.5l1.1 2.9L12 5.5l-2.9 1.1L8 9.5l-1.1-2.9L4 5.5l2.9-1.1L8 1.5z"/></svg>
-        Procesar con IA
-      </button>
-    </div>
-  </div>
-</div>
-
 <!-- ══ FORM MODAL (Nueva / Editar) ══ -->
 <div class="modal-bg" id="formModal">
   <div class="modal-lg">
@@ -1132,9 +1110,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </button>
     </div>
     <div class="mlg-body">
-      <div id="fmAiBanner" style="display:none;font-size:11.5px;padding:9px 12px;border-radius:8px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);color:var(--text2);margin-bottom:14px;line-height:1.5">
-        🤖 Esta cotización fue generada con IA a partir de tu texto/voz. <b>Revisa los datos</b> antes de guardar.
-      </div>
       <!-- Datos generales -->
       <div class="form-grid" style="margin-bottom:16px">
         <div class="form-group">
@@ -1279,13 +1254,28 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     <div class="mlg-head">
       <div>
         <div class="mlg-title" id="balModalTitle">Nuevo Ingreso</div>
-        <div class="mlg-sub" id="balModalSub">Registra el movimiento en Ingresos o Salidas</div>
+        <div class="mlg-sub" id="balModalSub">Registra el movimiento en la hoja Balance</div>
       </div>
       <button class="close-x" onclick="closeBalModal()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
       </button>
     </div>
     <div class="mlg-body">
+
+      <!-- ── SOLO GASTOS: modo de captura ── -->
+      <div id="bGastoModoWrap" style="display:none;margin-bottom:14px">
+        <label class="form-label" style="margin-bottom:6px;display:block">Modo de captura</label>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button type="button" class="fchip on" id="bModoManualBtn" onclick="setGastoModo('manual')">✏️ Llenado manual</button>
+          <button type="button" class="fchip" id="bModoArchivoBtn" onclick="setGastoModo('archivo')">📎 Subir PDF / Imagen / XML</button>
+        </div>
+        <div id="bGastoArchivoWrap" style="display:none">
+          <input type="file" class="form-input" id="bGastoFile" accept=".pdf,application/pdf,image/*,.xml,text/xml,application/xml" onchange="onGastoFileSelected(this)">
+          <span style="font-size:10.5px;color:var(--text3)">Si subes un XML (CFDI), los datos se leen directamente. Si subes un PDF o una foto/imagen del comprobante, se usará OCR para extraer los datos automáticamente — revisa y corrige los campos antes de guardar.</span>
+          <div id="bGastoExtractPreview" style="display:none;margin-top:8px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-size:11.5px;line-height:1.6"></div>
+        </div>
+      </div>
+
       <div class="form-grid" style="margin-bottom:14px">
         <div class="form-group">
           <label class="form-label">Fecha *</label>
@@ -1327,56 +1317,37 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <label class="form-label">Fecha Límite</label>
           <input type="date" class="form-input" id="bFechaLimite">
         </div>
+        <div class="form-group" id="bCategoriaGrp" style="display:none">
+          <label class="form-label">Categoría del gasto</label>
+          <input type="text" class="form-input" id="bCategoria" list="bCategoriaList" placeholder="Ej. Materiales, Nómina, Renta…">
+          <datalist id="bCategoriaList">
+            <option value="Materiales"><option value="Mano de obra"><option value="Renta">
+            <option value="Nómina"><option value="Servicios"><option value="Transporte">
+            <option value="Impuestos"><option value="Otro">
+          </datalist>
+        </div>
+        <div class="form-group" id="bClienteGrp">
+          <label class="form-label">Cliente</label>
+          <select class="form-select" id="bCliente"></select>
+        </div>
+        <div class="form-group" id="bProveedorGrp" style="display:none">
+          <label class="form-label">Proveedor</label>
+          <div style="display:flex;gap:6px">
+            <select class="form-select" id="bProveedor" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Nuevo proveedor" onclick="openAddProveedor()" style="flex-shrink:0;padding:0 10px">+</button>
+          </div>
+        </div>
+        <div class="form-group" id="bProyectoGrp" style="display:none">
+          <label class="form-label">Proyecto</label>
+          <input type="text" class="form-input" id="bProyecto" placeholder="Proyecto relacionado (opcional)">
+        </div>
         <div class="form-group">
           <label class="form-label">Responsable</label>
           <input type="text" class="form-input" id="bResponsable" placeholder="Nombre del responsable">
         </div>
-
-        <!-- ── Campos exclusivos de INGRESO ── -->
-        <div class="form-group" id="bIngClienteGrp">
-          <label class="form-label">Cliente</label>
-          <div style="display:flex;gap:6px">
-            <select class="form-select" id="bCliente" style="flex:1"></select>
-            <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo cliente" onclick="openAddCliente()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">+</button>
-          </div>
-        </div>
         <div class="form-group" id="bFacGrp" style="display:none">
           <label class="form-label">Factura vinculada</label>
           <input type="text" class="form-input" id="bFactura" readonly style="color:var(--text2)">
-        </div>
-        <div class="form-group full" id="bIngEvidenciaGrp">
-          <label class="form-label">Evidencia de pago (PDF o fotografía)</label>
-          <input type="file" class="form-input" id="bEvidencia" accept=".pdf,application/pdf,image/*" onchange="onBEvidenciaSelected(this)">
-          <span style="font-size:10.5px;color:var(--text3)">Comprobante, ticket o captura del pago (opcional).</span>
-          <div id="bEvidenciaCurrent" style="display:none;margin-top:6px;font-size:11.5px"></div>
-        </div>
-
-        <!-- ── Campos exclusivos de SALIDA (gasto) ── -->
-        <div class="form-group" id="bSalProveedorGrp" style="display:none">
-          <label class="form-label">Proveedor</label>
-          <div style="display:flex;gap:6px">
-            <select class="form-select" id="bProveedor" style="flex:1"></select>
-            <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo proveedor" onclick="openAddProveedor()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">+</button>
-          </div>
-        </div>
-        <div class="form-group" id="bSalCategoriaGrp" style="display:none">
-          <label class="form-label">Categoría del gasto</label>
-          <input type="text" class="form-input" id="bCategoria" list="categoriaGastoList" placeholder="Ej. Materiales, Nómina, Renta…" onchange="addCustomCategoria(this.value)">
-          <datalist id="categoriaGastoList">
-            <option value="Materiales"></option>
-            <option value="Mano de obra"></option>
-            <option value="Nómina"></option>
-            <option value="Renta"></option>
-            <option value="Servicios"></option>
-            <option value="Combustible"></option>
-            <option value="Equipo/Herramienta"></option>
-            <option value="Impuestos"></option>
-            <option value="Otro"></option>
-          </datalist>
-        </div>
-        <div class="form-group" id="bSalProyectoGrp" style="display:none">
-          <label class="form-label">Proyecto</label>
-          <input type="text" class="form-input" id="bProyecto" placeholder="Proyecto relacionado (opcional)">
         </div>
         <div class="form-group" id="bDeudaGrp" style="display:none">
           <label class="form-label">¿Es Deuda?</label>
@@ -1385,15 +1356,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <option value="TRUE">Sí</option>
           </select>
         </div>
-        <div class="form-group full" id="bSalComprobanteGrp" style="display:none">
-          <label class="form-label">Comprobante — PDF, imagen o XML (CFDI)</label>
-          <input type="file" class="form-input" id="bSalArchivo" accept=".pdf,application/pdf,.xml,text/xml,image/*" onchange="onSalArchivoSelected(this)">
-          <span style="font-size:10.5px;color:var(--text3)">Si subes el <b>XML</b> del CFDI se extraen los datos automáticamente. Si subes un <b>PDF o foto</b>, se usa OCR para intentar leer proveedor, fecha y monto — revisa los datos antes de guardar.</span>
-          <div id="bSalExtractStatus" style="display:none;margin-top:6px;font-size:11px;padding:8px;border-radius:6px;background:var(--bg3);color:var(--text2);line-height:1.5"></div>
+        <div class="form-group full" id="bEvidenciaGrp">
+          <label class="form-label">Evidencia de pago (PDF o fotografía)</label>
+          <input type="file" class="form-input" id="bEvidencia" accept=".pdf,application/pdf,image/*" onchange="onBEvidenciaSelected(this)">
+          <span style="font-size:10.5px;color:var(--text3)">Comprobante, ticket o captura del pago (opcional).</span>
+          <div id="bEvidenciaCurrent" style="display:none;margin-top:6px;font-size:11.5px"></div>
         </div>
-
         <div class="form-group full">
-          <label class="form-label" id="bObsLabel">Proyecto / Observaciones</label>
+          <label class="form-label">Observaciones</label>
           <textarea class="form-textarea" id="bObs" rows="2" placeholder="Notas adicionales…"></textarea>
         </div>
       </div>
@@ -1468,30 +1438,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   </div>
 </div>
 
-<!-- ══ ADD PROVEEDOR MODAL ══ -->
+<!-- ══ ADD PROVEEDOR MODAL (usado desde el formulario de Salidas) ══ -->
 <div class="modal-bg" id="addProveedorModal">
   <div class="modal" style="width:420px">
     <div class="modal-title">Nuevo Proveedor</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <div class="form-group">
-        <label class="form-label">ID / RFC del Proveedor *</label>
-        <input type="text" class="form-input" id="npId" placeholder="Ej. CDR1902132U6" style="text-transform:uppercase">
+        <label class="form-label">RFC / ID *</label>
+        <input type="text" class="form-input" id="npRFC" placeholder="Ej. CAL031230UL6" style="text-transform:uppercase">
       </div>
       <div class="form-group">
         <label class="form-label">Nombre / Razón Social *</label>
-        <input type="text" class="form-input" id="npNombre" placeholder="Ej. COMERCIALIZADORA…">
+        <input type="text" class="form-input" id="npNombre" placeholder="Ej. PROVEEDORA DE MATERIALES S.A. DE C.V.">
       </div>
       <div class="form-group">
-        <label class="form-label">Dirección</label>
-        <input type="text" class="form-input" id="npDireccion" placeholder="Calle, número, colonia…">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-input" id="npTel" placeholder="(999) 000-0000">
       </div>
       <div class="form-group">
-        <label class="form-label">Contacto</label>
-        <input type="text" class="form-input" id="npContacto" placeholder="Nombre de la persona de contacto">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Correo</label>
-        <input type="email" class="form-input" id="npCorreo" placeholder="contacto@proveedor.com">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="npEmail" placeholder="contacto@proveedor.com">
       </div>
     </div>
     <div class="modal-acts">
@@ -1874,7 +1840,6 @@ const ST = {
   usuario: null,
   nivel: null,
   clientes: {},
-  proveedores: {},
   contactos: {},
   articulos: [],
   cotizaciones: [],
@@ -1910,9 +1875,9 @@ const ST = {
   driveFolders: {},     // cache de carpetas de Drive ya creadas/encontradas: {nombre: folderId}
   globalSearch: '',     // buscador global del topbar
   globalSearchFilters: { cli:true, oc:true, fac:true, cot:true }, // filtros activos
-  ingresos: [],         // movimientos de la hoja Ingresos
-  salidas: [],          // movimientos de la hoja Salidas
-  balance: [],          // = [...ingresos, ...salidas], combinado para dashboard/búsqueda
+  ingresos: [],          // hoja "Ingresos"
+  salidas: [],           // hoja "Salidas"
+  proveedores: {},       // hoja "Proveedores" {rfc:{id,nombre,tel,email}}
   ingFiltered: [],
   gasFiltered: [],
   ingFilter: 'all',
@@ -1923,6 +1888,11 @@ const ST = {
   balEditId: null,
   balFacRef: null,
   _balTipo: 'Ingreso',
+  _bGastoModo: 'manual',   // 'manual' | 'archivo' — modo de captura del formulario de Salidas
+  _bGastoFile: null,
+  _bGastoXmlText: '',
+  _bGastoMetodo: '',       // 'XML' | 'OCR' | ''
+  _bGastoFuenteExisting: '', // link de Drive existente al editar
   _charts: {},
 };
 
@@ -1930,12 +1900,6 @@ const ST = {
    Todos los archivos que suba la app (PDFs de OC, PDFs/XML de facturas, etc.)
    se organizan dentro de esta carpeta de Drive en subcarpetas por tipo. */
 const DRIVE_ROOT_FOLDER_ID = '1sE1-x5jOMOzh1LPSrHfZu3as5p5O3EPN'; // ConecteApp
-
-/* ─── COTIZACIÓN CON IA ───
-   URL del Web App de Google Apps Script que hace de intermediario con Gemini
-   (así la API key nunca queda expuesta en este HTML). Ver instrucciones/código
-   del Apps Script aparte. Reemplaza esta URL después de publicar tu Web App. */
-const AI_QUOTE_PROXY_URL = 'https://script.google.com/macros/s/AKfycbznliiqt_hVpVlJCojqZMGtRimo6ULks9h6Nq8aQXJhM3LPGCDqV0f3vOMS_dTEvKkpXA/exec';
 
 /* ─── HELPERS DE MULTI-VÍNCULO (IDs separados por coma en una sola celda) ─── */
 function parseIds(str){
@@ -1981,7 +1945,7 @@ function startAutoRefresh(){
     const ocOpen   = document.getElementById('ocModal').classList.contains('open');
     if((formOpen && ST.formDirty) || (ocOpen && ST.ocFormDirty)) return;
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
-    const otherCaptureModals = ['addClienteModal','addContactoModal','newArticuloModal','facUploadModal'];
+    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
     // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
     if(Date.now() < facEditingUntil) return;
@@ -2155,7 +2119,7 @@ function doLogout() {
 async function loadAll() {
   setLoading(true);
   try {
-    const [cotR, cliR, conR, artR, ocR, facR, ingR, salR, provR] = await Promise.all([
+    const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR] = await Promise.all([
       sheetsGet('Cotizaciones!A2:P'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
@@ -2164,16 +2128,16 @@ async function loadAll() {
       sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
       sheetsGet('Ingresos!A2:N'),    // 14 cols: A=ID … N=Foto
       sheetsGet('Salidas!A2:Q'),     // 17 cols: A=ID … Q=XML_Content
-      sheetsGet('Proveedores!A2:E'), // 5 cols: A=ID_Proveedor … E=Correo
+      sheetsGet('Proveedores!A2:E'), // 5 cols: A=RFC/ID, B=Nombre, C=Tel, D=Email, E=Notas
     ]);
 
     /* Clientes */
     ST.clientes = {};
     (cliR||[]).forEach(r => { if(r[0]) ST.clientes[r[0]] = { id:r[0], nombre:r[1]||r[0] }; });
 
-    /* Proveedores — cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo */
+    /* Proveedores — cols: A=RFC/ID, B=Nombre, C=Tel, D=Email, E=Notas */
     ST.proveedores = {};
-    (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], direccion:r[2]||'', contacto:r[3]||'', correo:r[4]||'' }; });
+    (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], tel:r[2]||'', email:r[3]||'' }; });
 
     /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email */
     ST.contactos = {};
@@ -2256,14 +2220,14 @@ async function loadAll() {
     applyFilter();
     populateClientes();
     renderOCClienteTable();
-    // Ingresos — cols reales: A=ID,B=Fecha,C=Concepto,D=Monto,E=Cuenta,F=Estado,
-    // G=Fecha_Limite,H=Fecha_Pago,I=Cliente,J=ID_Factura,K=Responsable,L=Observaciones,M=Pdf,N=Foto (14 cols)
+
+    /* Ingresos — cols reales: A=ID,B=Fecha,C=Concepto,D=Monto,E=Cuenta,F=Estado,
+       G=Fecha_Limite,H=Fecha_Pago,I=Cliente,J=ID_Factura,K=Responsable,L=Observaciones,
+       M=Pdf,N=Foto (14 cols) */
     ST.ingresos = (ingR||[]).map((r,i)=>({
       _row:        i+2,
-      _sheet:      'Ingresos',
       id:          r[0]||'',
       fecha:       r[1]||'',
-      tipo:        'Ingreso',
       concepto:    r[2]||'',
       monto:       parseFloat((r[3]||'').toString().replace(/[$,]/g,''))||0,
       cuenta:      r[4]||'',
@@ -2271,41 +2235,37 @@ async function loadAll() {
       fechaLim:    r[6]||'',
       fechaPago:   r[7]||'',
       cliente:     r[8]||'',
-      id_factura:  r[9]||'',
+      idFactura:   r[9]||'',
       responsable: r[10]||'',
       obs:         r[11]||'',
       pdf:         r[12]||'',
       foto:        r[13]||'',
     })).filter(b=>b.id);
 
-    // Salidas — cols reales: A=ID,B=Fecha,C=Concepto,D=Monto,E=Cuenta,F=Estado,
-    // G=Fecha_Limite,H=Fecha_Pago,I=Proveedor,J=Categoría_gasto,K=Proyecto,L=Responsable,
-    // M=Es_Deuda,N=Observaciones,O=Metodo_Extraccion,P=Fuente_Archivo,Q=XML_Content (17 cols)
-    ST.salidas = (salR||[]).map((r,i)=>({
-      _row:             i+2,
-      _sheet:           'Salidas',
-      id:               r[0]||'',
-      fecha:            r[1]||'',
-      tipo:             'Gasto',
-      concepto:         r[2]||'',
-      monto:            parseFloat((r[3]||'').toString().replace(/[$,]/g,''))||0,
-      cuenta:           r[4]||'',
-      estado:           r[5]||'Pendiente',
-      fechaLim:         r[6]||'',
-      fechaPago:        r[7]||'',
-      proveedor:        r[8]||'',
-      categoria:        r[9]||'',
-      proyecto:         r[10]||'',
-      responsable:      r[11]||'',
-      esDeuda:          r[12]||'FALSE',
-      obs:              r[13]||'',
-      metodoExtraccion: r[14]||'Manual',
+    /* Salidas — cols reales: A=ID,B=Fecha,C=Concepto,D=Monto,E=Cuenta,F=Estado,
+       G=Fecha_Limite,H=Fecha_Pago,I=Proveedor,J=Categoria_gasto,K=Proyecto,L=Responsable,
+       M=Es_Deuda,N=Observaciones,O=Metodo_Extraccion,P=Fuente_Archivo,Q=XML_Content (17 cols) */
+    ST.salidas = (gasR||[]).map((r,i)=>({
+      _row:        i+2,
+      id:          r[0]||'',
+      fecha:       r[1]||'',
+      concepto:    r[2]||'',
+      monto:       parseFloat((r[3]||'').toString().replace(/[$,]/g,''))||0,
+      cuenta:      r[4]||'',
+      estado:      r[5]||'Pendiente',
+      fechaLim:    r[6]||'',
+      fechaPago:   r[7]||'',
+      proveedor:   r[8]||'',
+      categoria:   r[9]||'',
+      proyecto:    r[10]||'',
+      responsable: r[11]||'',
+      esDeuda:     r[12]||'FALSE',
+      obs:         r[13]||'',
+      metodoExtraccion: r[14]||'',
       fuenteArchivo:    r[15]||'',
       xmlContent:       r[16]||'',
     })).filter(b=>b.id);
 
-    ST.balance = [...ST.ingresos, ...ST.salidas]; // combinado, usado por dashboard/búsqueda global
-    populateProveedores();
     applyIngFilter();
     applyGasFilter();
     updateIngStats();
@@ -2516,14 +2476,6 @@ function populateClientes() {
     o.value=c.id; o.textContent=c.nombre; sel.appendChild(o);
   });
 }
-function populateProveedores(){
-  const sel=document.getElementById('bProveedor');
-  if(!sel) return;
-  const cur=sel.value;
-  sel.innerHTML='<option value="">— Seleccionar proveedor —</option>'+
-    Object.values(ST.proveedores).map(p=>`<option value="${esc(p.id)}">${esc(p.nombre||p.id)}</option>`).join('');
-  if(cur) sel.value=cur;
-}
 function populateContactos(id_cli) {
   const sel=document.getElementById('fContacto');
   sel.innerHTML='<option value="">— Seleccionar contacto —</option>';
@@ -2643,112 +2595,6 @@ function calcTotals() {
   document.getElementById('tTot').textContent=fmtMXN(tot);
 }
 
-/* ═══════════════ COTIZACIÓN CON IA ═══════════════ */
-function openAiCotModal(){
-  if(!requireAuth()) return;
-  document.getElementById('aiCotTexto').value='';
-  document.getElementById('aiCotStatus').style.display='none';
-  document.getElementById('aiCotStatus').innerHTML='';
-  document.getElementById('aiCotMicStatus').textContent='';
-  document.getElementById('aiCotModal').classList.add('open');
-}
-
-/* Dictado por voz — Web Speech API nativa del navegador, sin costo ni API externa */
-let _aiRecognition=null, _aiListening=false;
-function toggleAiDictado(){
-  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SpeechRec){ toast('err','Tu navegador no soporta dictado por voz. Prueba con Chrome (escritorio o Android).'); return; }
-  const micTxt=document.getElementById('aiCotMicTxt');
-  const micStatus=document.getElementById('aiCotMicStatus');
-  if(_aiListening){ _aiRecognition && _aiRecognition.stop(); return; }
-  _aiRecognition = new SpeechRec();
-  _aiRecognition.lang='es-MX';
-  _aiRecognition.continuous=true;
-  _aiRecognition.interimResults=false;
-  _aiRecognition.onstart=()=>{ _aiListening=true; micTxt.textContent='Detener'; micStatus.textContent='🔴 Escuchando…'; };
-  _aiRecognition.onerror=(e)=>{ micStatus.textContent='⚠️ Error de micrófono: '+(e.error||''); };
-  _aiRecognition.onend=()=>{ _aiListening=false; micTxt.textContent='Dictar por voz'; micStatus.textContent=''; };
-  _aiRecognition.onresult=(e)=>{
-    let txt='';
-    for(let i=e.resultIndex;i<e.results.length;i++){ txt+=e.results[i][0].transcript; }
-    const ta=document.getElementById('aiCotTexto');
-    ta.value = (ta.value.trim()?ta.value.trim()+' ':'') + txt.trim();
-  };
-  try{ _aiRecognition.start(); }catch(e){ toast('err','No se pudo iniciar el dictado: '+e.message); }
-}
-
-async function procesarCotizacionIA(){
-  const texto = document.getElementById('aiCotTexto').value.trim();
-  if(!texto){ toast('err','Escribe o dicta el contenido de la cotización.'); return; }
-  if(!AI_QUOTE_PROXY_URL || AI_QUOTE_PROXY_URL.includes('PON_AQUI')){
-    toast('err','Falta configurar AI_QUOTE_PROXY_URL con la URL de tu Apps Script (ver instrucciones).');
-    return;
-  }
-  const btn=document.getElementById('aiCotProcBtn');
-  const status=document.getElementById('aiCotStatus');
-  btn.disabled=true; btn.textContent='Analizando…';
-  status.style.display='block'; status.innerHTML='🤖 Analizando tu texto con IA…';
-  try{
-    const payload = {
-      action: 'cotizacionIA',
-      texto,
-      clientes: Object.values(ST.clientes).map(c=>({ id:c.id, nombre:c.nombre })),
-      contactos: (ST.contactosList||[]).map(c=>({ id:c.id, id_cli:c.id_cli, nombre:c.nombre })),
-      fechaHoy: todayISO(),
-    };
-    const resp = await fetch(AI_QUOTE_PROXY_URL, {
-      method:'POST',
-      headers:{ 'Content-Type':'text/plain;charset=utf-8' }, // evita preflight CORS contra Apps Script
-      body: JSON.stringify(payload),
-    });
-    const data = await resp.json();
-    if(data.error) throw new Error(data.error);
-    aplicarCotizacionIA(data);
-    document.getElementById('aiCotModal').classList.remove('open');
-  }catch(e){
-    status.innerHTML = '<span style="color:var(--red)">No se pudo procesar: '+esc(e.message||String(e))+'</span>';
-  }
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 1.5l1.1 2.9L12 5.5l-2.9 1.1L8 9.5l-1.1-2.9L4 5.5l2.9-1.1L8 1.5z"/></svg> Procesar con IA';
-}
-
-/* Toma el JSON estructurado que regresó la IA y llena el formulario de Cotización ya existente */
-function aplicarCotizacionIA(data){
-  abrirNueva(); // resetea el formulario y lo abre limpio
-  // Cliente
-  if(data.cliente_id && ST.clientes[data.cliente_id]){
-    document.getElementById('fCliente').value = data.cliente_id;
-    populateContactos(data.cliente_id);
-    if(data.contacto_id) setTimeout(()=>{ document.getElementById('fContacto').value=data.contacto_id; },50);
-  } else if(data.cliente_nuevo_nombre){
-    const sugerido = data.cliente_nuevo_nombre.trim();
-    if(confirm(`La IA no encontró un cliente que coincida con "${sugerido}". ¿Deseas crearlo ahora?`)){
-      document.getElementById('ncNombre').value = sugerido;
-      document.getElementById('ncRFC').value = (sugerido.replace(/[^A-Za-z0-9]/g,'').slice(0,10)||('CLI'+Date.now().toString(36))).toUpperCase();
-      document.getElementById('ncTel').value=''; document.getElementById('ncEmail').value='';
-      document.getElementById('addClienteModal').classList.add('open');
-    }
-  }
-  // Datos generales
-  document.getElementById('fFecha').value = data.fecha || todayISO();
-  document.getElementById('fVigencia').value = data.vigencia_dias || 30;
-  document.getElementById('fDesc').value = data.descripcion_general || (data.conceptos&&data.conceptos[0]?.descripcion) || 'Cotización generada con IA';
-  document.getElementById('fNotas').value = data.notas || '';
-  // Conceptos
-  const conceptos = Array.isArray(data.conceptos) ? data.conceptos : [];
-  ST.items = conceptos.length
-    ? conceptos.map(c=>{
-        const cant=parseFloat(c.cantidad)||1, precio=parseFloat(c.precio_unitario)||0;
-        return { desc:c.descripcion||'', cant, unidad:c.unidad||'pza', precio, imp:cant*precio };
-      })
-    : [{ desc:'', cant:1, unidad:'', precio:0, imp:0 }];
-  renderItems();
-  calcTotals();
-  document.getElementById('fmAiBanner').style.display='block';
-  toast('ok','Cotización generada con IA — revisa los datos y guarda.');
-  setTimeout(()=>{ ST.formDirty=true; },150);
-}
-
 /* ─── OPEN FORM ─── */
 function abrirNueva() {
   if(!requireAuth()) return;
@@ -2757,7 +2603,6 @@ function abrirNueva() {
   ST.items=[{ desc:'', cant:1, unidad:'', precio:0, imp:0 }];
   document.getElementById('fmTitle').textContent='Nueva Cotización';
   document.getElementById('fmSub').textContent='Completa los datos y agrega las partidas';
-  document.getElementById('fmAiBanner').style.display='none';
   document.getElementById('fCliente').value='';
   document.getElementById('fContacto').innerHTML='<option value="">— Seleccionar contacto —</option>';
   document.getElementById('fFecha').value=todayISO();
@@ -2796,7 +2641,6 @@ function openEdit(id,rowNum) {
 
   document.getElementById('fmTitle').textContent='Editar Cotización';
   document.getElementById('fmSub').textContent=id;
-  document.getElementById('fmAiBanner').style.display='none';
   const cli=document.getElementById('fCliente');
   cli.value=r.id_cli;
   populateContactos(r.id_cli);
@@ -4375,46 +4219,40 @@ async function saveNewCliente() {
     populateClientes();
     document.getElementById('fCliente').value=rfc;
     populateContactos(rfc);
-    // si el modal de Ingreso/Salida está abierto, refresca también su selector de cliente
-    const bCli=document.getElementById('bCliente');
-    if(bCli){
-      bCli.innerHTML='<option value="">— Sin cliente —</option>'+Object.values(ST.clientes).map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
-      bCli.value=rfc;
-    }
     document.getElementById('addClienteModal').classList.remove('open');
     toast('ok',`Cliente "${nom}" agregado.`);
   } catch(e){ toast('err','Error al guardar cliente: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Cliente';
 }
 
-/* ─── ADD PROVEEDOR (desde el formulario de Salida) ─── */
+/* ─── ADD PROVEEDOR (usado desde el formulario de Salidas) ─── */
+function populateProveedores(selectedId){
+  const sel=document.getElementById('bProveedor');
+  if(!sel) return;
+  sel.innerHTML='<option value="">— Sin proveedor —</option>'+
+    Object.values(ST.proveedores).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''))
+      .map(p=>`<option value="${esc(p.id)}">${esc(p.nombre||p.id)}</option>`).join('');
+  if(selectedId) sel.value=selectedId;
+}
 function openAddProveedor() {
   if(!requireAuth()) return;
-  const sug = ST._salSuggestedProveedor;
-  document.getElementById('npId').value       = sug?.id||'';
-  document.getElementById('npNombre').value    = sug?.nombre||'';
-  document.getElementById('npDireccion').value = '';
-  document.getElementById('npContacto').value  = '';
-  document.getElementById('npCorreo').value    = '';
+  ['npRFC','npNombre','npTel','npEmail'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('addProveedorModal').classList.add('open');
 }
 async function saveNewProveedor() {
-  const id  = document.getElementById('npId').value.trim().toUpperCase();
+  const rfc = document.getElementById('npRFC').value.trim().toUpperCase();
   const nom = document.getElementById('npNombre').value.trim();
-  if(!id){ toast('err','El ID/RFC del proveedor es obligatorio.'); return; }
+  if(!rfc){ toast('err','El RFC/ID es obligatorio.'); return; }
   if(!nom){ toast('err','El nombre es obligatorio.'); return; }
-  if(ST.proveedores[id]){ toast('err','Ya existe un proveedor con ese ID/RFC.'); return; }
+  if(ST.proveedores[rfc]){ toast('err','Ya existe un proveedor con ese RFC/ID.'); return; }
   const btn=document.getElementById('saveProveedorBtn');
   btn.disabled=true; btn.textContent='Guardando…';
   try {
-    const dir = document.getElementById('npDireccion').value.trim();
-    const con = document.getElementById('npContacto').value.trim();
-    const mail= document.getElementById('npCorreo').value.trim();
-    await sheetsAppend('Proveedores!A2:E', [[id, nom, dir, con, mail]]);
-    ST.proveedores[id]={ id, nombre:nom, direccion:dir, contacto:con, correo:mail };
-    populateProveedores();
-    const bProv=document.getElementById('bProveedor');
-    if(bProv) bProv.value=id;
+    const tel  = document.getElementById('npTel').value.trim();
+    const mail = document.getElementById('npEmail').value.trim();
+    await sheetsAppend('Proveedores!A2:E', [[rfc, nom, tel, mail, '']]);
+    ST.proveedores[rfc]={ id:rfc, nombre:nom, tel, email:mail };
+    populateProveedores(rfc);
     document.getElementById('addProveedorModal').classList.remove('open');
     toast('ok',`Proveedor "${nom}" agregado.`);
   } catch(e){ toast('err','Error al guardar proveedor: '+(e.result?.error?.message||e.message)); }
@@ -4524,8 +4362,6 @@ function switchTab(tab){
     const addBtn = document.getElementById('mainAddBtn');
     if(addBtn) addBtn.style.display='none';
     if(addTxt) addTxt.textContent='+ Agregar';
-    const aiBtn0 = document.getElementById('aiCotBtn');
-    if(aiBtn0) aiBtn0.style.display='none';
     const bcPage = document.getElementById('bcPage');
     if(bcPage) bcPage.textContent = SIMPLE_TABS[tab].label;
     const bcSection = document.getElementById('bcSection');
@@ -4562,8 +4398,6 @@ function switchTab(tab){
     const labels = {cot:'+ Cotización', fac:'+ Factura', oc:'+ OC', bal:'+ Movimiento'};
     addTxt.textContent = labels[tab] || '+ Agregar';
   }
-  const aiBtn = document.getElementById('aiCotBtn');
-  if(aiBtn) aiBtn.style.display = (tab==='cot') ? '' : 'none';
 
   // Breadcrumb (Comercial > Cotizaciones / Facturas / OC Clientes)
   const bcPage = document.getElementById('bcPage');
@@ -4633,7 +4467,7 @@ function switchBalTab(sub){
   document.getElementById('bal'+sub.charAt(0).toUpperCase()+sub.slice(1)+'Btn')?.classList.add('active');
   ST.currentBalTab = sub;
   const addTxt=document.getElementById('mainAddTxt');
-  if(addTxt) addTxt.textContent = sub==='gas'?'+ Salida':'+ Ingreso';
+  if(addTxt) addTxt.textContent = sub==='gas'?'+ Gasto':'+ Ingreso';
   const bcPage=document.getElementById('bcPage');
   if(bcPage) bcPage.textContent = {dash:'Dashboard', ing:'Ingresos', gas:'Salidas'}[sub] || 'Balance';
   if(sub==='dash') setTimeout(renderDashboard,80);
@@ -4661,7 +4495,7 @@ function setIngFilter(f,el){
 }
 function applyIngFilter(){
   const q=(document.getElementById('ingSearch')?.value||'').toLowerCase();
-  let rows=ST.ingresos;
+  let rows=ST.ingresos.slice();
   if(ST.ingFilter!=='all') rows=rows.filter(b=>b.estado===ST.ingFilter);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
   rows.sort((a,b)=>{
@@ -4697,7 +4531,8 @@ function renderIngTable(){
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h6l3 3v9H4V2z"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>
           Facturas relacionadas <span class="cnt">${facsLink.length}</span>
         </button>`
-      : '<span class="fac-rel-none">— Sin factura —</span>';
+      : (b.idFactura ? `<span class="fac-rel-none">${esc(b.idFactura)}</span>` : '<span class="fac-rel-none">— Sin factura —</span>');
+    const evid = b.pdf||b.foto;
     return `<tr>
       <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
       <td style="max-width:220px">${b.concepto||'—'}<br><span style="font-size:10.5px;color:var(--text3)">${b.obs||''}</span></td>
@@ -4709,11 +4544,11 @@ function renderIngTable(){
       <td style="font-size:10.5px">${facCell}</td>
       <td>
         <div class="row-acts" style="opacity:1">
-          ${b.pdf?`<a href="${esc(b.pdf)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
-          <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
+          ${evid?`<a href="${esc(evid)}" target="_blank" rel="noopener" class="btn-icon" title="Ver evidencia de pago" style="color:var(--blue)">📎</a>`:''}
+          <button class="btn-icon" onclick="openBalEdit('${b.id}','ing')" title="Editar" style="color:var(--text3)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
           </button>
-          <button class="btn-icon del" onclick="delBalEntry('${b.id}',${b._row})" title="Eliminar">
+          <button class="btn-icon del" onclick="delBalEntry('${b.id}',${b._row},'ing')" title="Eliminar">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
           </button>
         </div>
@@ -4844,9 +4679,9 @@ function setGasFilter(f,el){
 }
 function applyGasFilter(){
   const q=(document.getElementById('gasSearch')?.value||'').toLowerCase();
-  let rows=ST.salidas;
+  let rows=ST.salidas.slice();
   if(ST.gasFilter!=='all') rows=rows.filter(b=>b.estado===ST.gasFilter);
-  if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||(ST.proveedores[b.proveedor]?.nombre||b.proveedor||'').toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q)||(b.categoria||'').toLowerCase().includes(q));
+  if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||(b.proveedor||'').toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
   rows.sort((a,b)=>{
     const da=a.fechaPago||a.fecha||'', db=b.fechaPago||b.fecha||'';
     return db.localeCompare(da)||(b._row-a._row);
@@ -4871,32 +4706,31 @@ function updateGasStats(){
 function renderGasTable(){
   const tbody=document.getElementById('gasTbody');
   const PAGE=20, start=(ST.gasPage-1)*PAGE, slice=ST.gasFiltered.slice(start,start+PAGE);
-  if(!slice.length){ tbody.innerHTML=`<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin gastos registrados</td></tr>`; renderGasPagi(); return; }
-  tbody.innerHTML=slice.map(b=>{
-    const prov=ST.proveedores[b.proveedor]?.nombre||b.proveedor||'—';
-    return `<tr>
+  if(!slice.length){ tbody.innerHTML=`<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin gastos registrados</td></tr>`; renderGasPagi(); return; }
+  tbody.innerHTML=slice.map(b=>`<tr>
     <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
     <td style="max-width:220px">${b.concepto||'—'}<br><span style="font-size:10.5px;color:var(--text3)">${b.obs||''}</span></td>
-    <td style="font-size:12px">${esc(prov)}</td>
-    <td style="font-size:11px;color:var(--text2)">${esc(b.categoria||'—')}</td>
+    <td style="font-size:12px">${esc(ST.proveedores[b.proveedor]?.nombre||b.proveedor||'—')}</td>
+    <td style="font-size:11.5px;color:var(--text2)">${esc(b.categoria||'—')}</td>
     <td><span class="bal-cuenta">${b.cuenta||'—'}</span></td>
     <td>${badgeBal(b.estado)}</td>
+    <td style="font-size:11.5px;color:var(--text2)">${b.fechaLim||'—'}</td>
     <td style="font-size:11.5px;color:var(--text2)">${b.fechaPago||'—'}</td>
     <td style="text-align:right"><span class="bal-monto-gas">${fmtMXNBal(b.monto)}</span></td>
     <td style="text-align:center;font-size:11px;color:${b.esDeuda==='TRUE'?'var(--red)':'var(--text3)'}">${b.esDeuda==='TRUE'?'Sí':'No'}</td>
     <td>
       <div class="row-acts" style="opacity:1">
-        ${b.fuenteArchivo?`<a href="${esc(b.fuenteArchivo)}" target="_blank" rel="noopener" class="btn-icon" title="Ver comprobante (${esc(b.metodoExtraccion||'Manual')})" style="color:var(--blue)">📎</a>`:''}
-        <button class="btn-icon" onclick="openBalEdit('${b.id}')" title="Editar" style="color:var(--text3)">
+        ${b.fuenteArchivo?`<a href="${esc(b.fuenteArchivo)}" target="_blank" rel="noopener" class="btn-icon" title="Ver archivo fuente (${esc(b.metodoExtraccion||'archivo')})" style="color:var(--blue)">📎</a>`:''}
+        ${b.xmlContent?`<button class="btn-icon" onclick="openSalidaXML('${esc(b.id)}')" title="Ver XML" style="color:var(--green)">XML</button>`:''}
+        <button class="btn-icon" onclick="openBalEdit('${b.id}','gas')" title="Editar" style="color:var(--text3)">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
         </button>
-        <button class="btn-icon del" onclick="delBalEntry('${b.id}',${b._row})" title="Eliminar">
+        <button class="btn-icon del" onclick="delBalEntry('${b.id}',${b._row},'gas')" title="Eliminar">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
         </button>
       </div>
     </td>
-  </tr>`;
-  }).join('');
+  </tr>`).join('');
   renderGasPagi();
 }
 function renderGasPagi(){
@@ -4915,25 +4749,13 @@ function renderGasPagi(){
 function goGasPage(p){ const pages=Math.ceil(ST.gasFiltered.length/20)||1; ST.gasPage=Math.max(1,Math.min(p,pages)); renderGasTable(); }
 
 /* ─── MODAL BALANCE ─── */
-/* Muestra/oculta los grupos de campos exclusivos de Ingreso vs Salida */
-function toggleBalFieldGroups(isIng){
-  document.getElementById('bIngClienteGrp').style.display     = isIng?'':'none';
-  document.getElementById('bIngEvidenciaGrp').style.display   = isIng?'':'none';
-  document.getElementById('bSalProveedorGrp').style.display   = isIng?'none':'';
-  document.getElementById('bSalCategoriaGrp').style.display   = isIng?'none':'';
-  document.getElementById('bSalProyectoGrp').style.display    = isIng?'none':'';
-  document.getElementById('bSalComprobanteGrp').style.display = isIng?'none':'';
-  document.getElementById('bDeudaGrp').style.display          = isIng?'none':'';
-  document.getElementById('bObsLabel').textContent = 'Observaciones';
-}
-
 function openBalModal(tipo, prefill){
   if(!requireAuth()) return;
   ST.balEditId=null;
   ST.balFacRef=prefill?.facRef||null;
   const isIng=(tipo==='ing'||tipo==='Ingreso');
-  document.getElementById('balModalTitle').textContent = isIng?'Nuevo Ingreso':'Nueva Salida';
-  document.getElementById('balModalSub').textContent   = isIng?'Registrar un ingreso en la hoja Ingresos':'Registrar una salida en la hoja Salidas';
+  document.getElementById('balModalTitle').textContent = isIng?'Nuevo Ingreso':'Nuevo Gasto';
+  document.getElementById('balModalSub').textContent   = isIng?'Registrar un ingreso en la hoja Ingresos':'Registrar un gasto en la hoja Salidas';
   document.getElementById('bFecha').value     = prefill?.fecha || todayISOBal();
   document.getElementById('bConcepto').value  = prefill?.concepto||'';
   document.getElementById('bMonto').value     = prefill?.monto||'';
@@ -4942,47 +4764,64 @@ function openBalModal(tipo, prefill){
   document.getElementById('bFechaPago').value = prefill?.fechaPago||'';
   document.getElementById('bFechaLimite').value= '';
   document.getElementById('bEsDeuda').value   = 'FALSE';
-  document.getElementById('bObs').value       = prefill?.obs||'';
-  document.getElementById('bResponsable').value= '';
   document.getElementById('bCategoria').value = '';
   document.getElementById('bProyecto').value  = '';
-  // evidencia de pago (PDF / foto) — Ingreso
+  document.getElementById('bObs').value       = prefill?.obs||'';
+  document.getElementById('bResponsable').value= '';
+  // evidencia de pago (solo ingresos: PDF / foto)
   ST._balEvidenciaFile = null;
   document.getElementById('bEvidencia').value = '';
   ST._balEvidenciaExisting = null;
   const evCur=document.getElementById('bEvidenciaCurrent');
   evCur.style.display='none'; evCur.innerHTML='';
-  // comprobante — Salida
-  ST._salArchivoFile = null;
-  ST._salXmlContent = null;
-  ST._salMetodoExtraccion = 'Manual';
-  ST._salArchivoExisting = null;
-  ST._salSuggestedProveedor = null;
-  document.getElementById('bSalArchivo').value = '';
-  const exStatus=document.getElementById('bSalExtractStatus');
-  exStatus.style.display='none'; exStatus.innerHTML='';
-  // populate cliente / proveedor selects
+  // captura de gasto (solo gastos: manual / archivo)
+  ST._bGastoFile=null; ST._bGastoXmlText=''; ST._bGastoMetodo=''; ST._bGastoFuenteExisting='';
+  document.getElementById('bGastoFile').value='';
+  document.getElementById('bGastoExtractPreview').style.display='none';
+  setGastoModo('manual');
+  // populate cliente select (ingresos)
   const cSel=document.getElementById('bCliente');
   cSel.innerHTML='<option value="">— Sin cliente —</option>'+Object.values(ST.clientes).map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
   if(prefill?.cliente) cSel.value=prefill.cliente;
+  // populate proveedor select (gastos)
   populateProveedores();
-  // factura link
+  // factura link (solo ingresos)
   const facGrp=document.getElementById('bFacGrp');
-  if(ST.balFacRef){ facGrp.style.display=''; document.getElementById('bFactura').value=ST.balFacRef.folio||ST.balFacRef.id; }
+  if(isIng && ST.balFacRef){ facGrp.style.display=''; document.getElementById('bFactura').value=ST.balFacRef.folio||ST.balFacRef.id; }
   else { facGrp.style.display='none'; }
-  toggleBalFieldGroups(isIng);
+  // mostrar/ocultar grupos según tipo
+  toggleBalFieldsByTipo(isIng);
   document.getElementById('balModal').classList.add('open');
   ST._balTipo = isIng?'Ingreso':'Gasto';
   renderBalFacRelSection();
 }
 
-function openBalEdit(id){
+function toggleBalFieldsByTipo(isIng){
+  document.getElementById('bClienteGrp').style.display    = isIng?'':'none';
+  document.getElementById('bProveedorGrp').style.display  = isIng?'none':'';
+  document.getElementById('bCategoriaGrp').style.display  = isIng?'none':'';
+  document.getElementById('bProyectoGrp').style.display   = isIng?'none':'';
+  document.getElementById('bDeudaGrp').style.display      = isIng?'none':'';
+  document.getElementById('bEvidenciaGrp').style.display  = isIng?'':'none';
+  document.getElementById('bGastoModoWrap').style.display = isIng?'none':'';
+}
+
+/* Toggle "Llenado manual" vs "Subir PDF/Imagen/XML" en el formulario de Salidas */
+function setGastoModo(modo){
+  ST._bGastoModo=modo;
+  document.getElementById('bModoManualBtn').classList.toggle('on', modo==='manual');
+  document.getElementById('bModoArchivoBtn').classList.toggle('on', modo==='archivo');
+  document.getElementById('bGastoArchivoWrap').style.display = modo==='archivo'?'':'none';
+}
+
+function openBalEdit(id, tipo){
   if(!requireAuth()) return;
-  const b=ST.ingresos.find(x=>x.id===id) || ST.salidas.find(x=>x.id===id); if(!b) return;
+  const isIng=(tipo==='ing');
+  const b = isIng ? ST.ingresos.find(x=>x.id===id) : ST.salidas.find(x=>x.id===id);
+  if(!b) return;
   ST.balEditId=id;
   ST.balFacRef=null;
-  const isIng=b.tipo==='Ingreso';
-  document.getElementById('balModalTitle').textContent = isIng?'Editar Ingreso':'Editar Salida';
+  document.getElementById('balModalTitle').textContent = isIng?'Editar Ingreso':'Editar Gasto';
   document.getElementById('balModalSub').textContent   = `ID: ${id}`;
   document.getElementById('bFecha').value      = b.fecha||'';
   document.getElementById('bConcepto').value   = b.concepto||'';
@@ -4991,44 +4830,46 @@ function openBalEdit(id){
   document.getElementById('bEstado').value     = b.estado||'Pendiente';
   document.getElementById('bFechaPago').value  = b.fechaPago||'';
   document.getElementById('bFechaLimite').value= b.fechaLim||'';
-  document.getElementById('bEsDeuda').value    = b.esDeuda||'FALSE';
   document.getElementById('bObs').value        = b.obs||'';
   document.getElementById('bResponsable').value= b.responsable||'';
-  document.getElementById('bCategoria').value  = b.categoria||'';
-  document.getElementById('bProyecto').value   = b.proyecto||'';
-  // evidencia (Ingreso) existente
+  document.getElementById('bEsDeuda').value    = isIng?'FALSE':(b.esDeuda||'FALSE');
+  document.getElementById('bCategoria').value  = isIng?'':(b.categoria||'');
+  document.getElementById('bProyecto').value   = isIng?'':(b.proyecto||'');
+
+  // evidencia de pago (ingresos)
   ST._balEvidenciaFile = null;
   document.getElementById('bEvidencia').value = '';
-  ST._balEvidenciaExisting = { pdf:b.pdf||'' };
+  ST._balEvidenciaExisting = { pdf:b.pdf||b.foto||'' };
   const evCur=document.getElementById('bEvidenciaCurrent');
-  if(isIng && b.pdf){
+  if(isIng && ST._balEvidenciaExisting.pdf){
     evCur.style.display='block';
-    evCur.innerHTML=`<a href="${esc(b.pdf)}" target="_blank" rel="noopener" style="color:var(--blue)">📎 Ver evidencia actual</a> <button type="button" class="btn-icon" title="Quitar evidencia" onclick="clearBEvidencia()" style="color:var(--text3);margin-left:6px">✕</button>`;
+    evCur.innerHTML=`<a href="${esc(ST._balEvidenciaExisting.pdf)}" target="_blank" rel="noopener" style="color:var(--blue)">📎 Ver evidencia actual</a> <button type="button" class="btn-icon" title="Quitar evidencia" onclick="clearBEvidencia()" style="color:var(--text3);margin-left:6px">✕</button>`;
   } else {
     evCur.style.display='none'; evCur.innerHTML='';
   }
-  // comprobante (Salida) existente
-  ST._salArchivoFile = null;
-  ST._salXmlContent = isIng?null:(b.xmlContent||null);
-  ST._salMetodoExtraccion = isIng?'Manual':(b.metodoExtraccion||'Manual');
-  ST._salArchivoExisting = isIng?null:{ fuenteArchivo:b.fuenteArchivo||'' };
-  document.getElementById('bSalArchivo').value = '';
-  const exStatus=document.getElementById('bSalExtractStatus');
-  if(!isIng && b.fuenteArchivo){
-    exStatus.style.display='block';
-    exStatus.innerHTML=`📎 <a href="${esc(b.fuenteArchivo)}" target="_blank" rel="noopener" style="color:var(--blue)">Ver comprobante actual</a> — método: <b>${esc(b.metodoExtraccion||'Manual')}</b>`;
+
+  // captura de archivo (gastos)
+  ST._bGastoFile=null; ST._bGastoXmlText=isIng?'':(b.xmlContent||''); ST._bGastoMetodo=isIng?'':(b.metodoExtraccion||'');
+  ST._bGastoFuenteExisting = isIng?'':(b.fuenteArchivo||'');
+  document.getElementById('bGastoFile').value='';
+  const gPrev=document.getElementById('bGastoExtractPreview');
+  if(!isIng && ST._bGastoFuenteExisting){
+    gPrev.style.display='block';
+    gPrev.innerHTML=`Archivo fuente actual (${esc(b.metodoExtraccion||'archivo')}): <a href="${esc(ST._bGastoFuenteExisting)}" target="_blank" rel="noopener" style="color:var(--blue)">Ver archivo</a>`;
   } else {
-    exStatus.style.display='none'; exStatus.innerHTML='';
+    gPrev.style.display='none'; gPrev.innerHTML='';
   }
+  setGastoModo('manual');
+
   const cSel=document.getElementById('bCliente');
   cSel.innerHTML='<option value="">— Sin cliente —</option>'+Object.values(ST.clientes).map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
-  cSel.value=b.cliente||'';
-  populateProveedores();
-  if(!isIng) document.getElementById('bProveedor').value=b.proveedor||'';
+  cSel.value=isIng?(b.cliente||''):'';
+  populateProveedores(isIng?'':(b.proveedor||''));
+
   document.getElementById('bFacGrp').style.display='none';
-  toggleBalFieldGroups(isIng);
+  toggleBalFieldsByTipo(isIng);
   document.getElementById('balModal').classList.add('open');
-  ST._balTipo=b.tipo;
+  ST._balTipo=isIng?'Ingreso':'Gasto';
   renderBalFacRelSection();
 }
 
@@ -5124,37 +4965,22 @@ function clearBEvidencia(){
   evCur.style.display='none'; evCur.innerHTML='';
 }
 
-/* ─── Carga perezosa de librerías externas (Tesseract.js / pdf.js), una sola vez ─── */
-const _loadedScripts = {};
-function loadScriptOnce(url){
-  if(_loadedScripts[url]) return _loadedScripts[url];
-  _loadedScripts[url] = new Promise((resolve,reject)=>{
-    const s=document.createElement('script');
-    s.src=url; s.onload=()=>resolve(); s.onerror=()=>reject(new Error('No se pudo cargar '+url));
-    document.head.appendChild(s);
-  });
-  return _loadedScripts[url];
-}
-
-/* ─── COMPROBANTE DE SALIDA: XML (CFDI, exacto) o PDF/Imagen (OCR, aproximado) ───
-   XML: se parsea directo con DOMParser, sin costo y 100% confiable.
-   PDF/Imagen: se usa Tesseract.js (OCR en el navegador). Si es PDF se renderiza
-   la primera página a un canvas con pdf.js y ese canvas se pasa al OCR.
-   La precisión del OCR depende de la calidad del documento — siempre se deja
-   que el usuario revise/corrija los campos antes de guardar. */
-async function onSalArchivoSelected(input){
+/* ─── CAPTURA DE GASTO POR ARCHIVO: XML (CFDI) sencillo, o PDF/Imagen vía OCR ─── */
+async function onGastoFileSelected(input){
   const file=input.files[0];
-  const status=document.getElementById('bSalExtractStatus');
-  ST._salArchivoFile = file||null;
-  ST._salXmlContent = null;
-  if(!file){ status.style.display='none'; status.innerHTML=''; ST._salMetodoExtraccion='Manual'; return; }
+  const prev=document.getElementById('bGastoExtractPreview');
+  ST._bGastoFile = file||null;
+  ST._bGastoXmlText = '';
+  ST._bGastoMetodo = '';
+  if(!file){ prev.style.display='none'; prev.innerHTML=''; return; }
   const name=(file.name||'').toLowerCase();
-  status.style.display='block';
-
-  /* ── XML (CFDI) ── */
-  if(name.endsWith('.xml') || file.type.includes('xml')){
-    status.innerHTML='Leyendo XML…';
-    try{
+  const isXml = name.endsWith('.xml') || (file.type||'').includes('xml');
+  const isPdf = name.endsWith('.pdf') || file.type==='application/pdf';
+  const isImg = (file.type||'').startsWith('image/');
+  prev.style.display='block';
+  prev.innerHTML='<span style="color:var(--text3)">Leyendo archivo…</span>';
+  try{
+    if(isXml){
       const text = await file.text();
       const xml = new DOMParser().parseFromString(text,'text/xml');
       if(xml.querySelector('parsererror')) throw new Error('XML inválido');
@@ -5163,83 +4989,61 @@ async function onSalArchivoSelected(input){
       const conceptos = Array.from(xml.querySelectorAll('*|Conceptos > *|Concepto'));
       const fechaRaw = comp.getAttribute('Fecha')||comp.getAttribute('fecha')||'';
       const total = parseFloat(comp.getAttribute('Total')||comp.getAttribute('total')||'0')||0;
-      const nombreProv = emisor ? (emisor.getAttribute('Nombre')||emisor.getAttribute('nombre')||'') : '';
+      const nomProv = emisor ? (emisor.getAttribute('Nombre')||emisor.getAttribute('nombre')||'') : '';
       const rfcProv = emisor ? (emisor.getAttribute('Rfc')||emisor.getAttribute('rfc')||'') : '';
       const concepto = conceptos.map(c=>c.getAttribute('Descripcion')||c.getAttribute('descripcion')||'').filter(Boolean).join(' / ');
-      const fecha = fechaRaw ? fechaRaw.split('T')[0] : '';
-      ST._salXmlContent = text;
-      ST._salMetodoExtraccion = 'XML';
-      if(fecha) document.getElementById('bFecha').value = fecha;
+      const fecha = fechaRaw ? fechaRaw.split('T')[0] : todayISOBal();
+      ST._bGastoXmlText = text;
+      ST._bGastoMetodo = 'XML';
       if(total) document.getElementById('bMonto').value = total;
-      if(concepto && !document.getElementById('bConcepto').value.trim()) document.getElementById('bConcepto').value = concepto.slice(0,140);
-      const matched = rfcProv && ST.proveedores[rfcProv];
-      if(matched) document.getElementById('bProveedor').value = rfcProv;
-      status.innerHTML = `<b>Datos extraídos del XML:</b><br>
-        Proveedor: <b>${esc(nombreProv||'—')}</b> ${rfcProv?'('+esc(rfcProv)+')':''} ${matched?'✅ vinculado':(rfcProv?'⚠️ no está en tu catálogo de Proveedores — usa el botón "+" para agregarlo':'')}<br>
-        Fecha: <b>${esc(fecha||'—')}</b> · Total: <b>${fmtMXNBal(total)}</b>`;
-      ST._salSuggestedProveedor = (rfcProv && !matched) ? { id:rfcProv, nombre:nombreProv } : null;
-    }catch(e){
-      ST._salMetodoExtraccion='Manual';
-      status.innerHTML = `<span style="color:var(--red)">No se pudo leer el XML: ${esc(e.message)}</span>`;
+      document.getElementById('bFecha').value = fecha;
+      if(concepto) document.getElementById('bConcepto').value = concepto.slice(0,180);
+      if(rfcProv){
+        if(!ST.proveedores[rfcProv]) ST.proveedores[rfcProv]={id:rfcProv,nombre:nomProv||rfcProv};
+        populateProveedores(rfcProv);
+      }
+      prev.innerHTML = `<strong>Datos extraídos del XML:</strong><br>
+        Proveedor: <b>${esc(nomProv||'—')}</b> ${rfcProv?'('+esc(rfcProv)+')':''}<br>
+        Fecha: <b>${esc(fecha)}</b> &nbsp;·&nbsp; Total: <b>$${total.toLocaleString('es-MX',{minimumFractionDigits:2})}</b><br>
+        Concepto: ${esc(concepto||'—')}`;
+    } else if(isImg || isPdf){
+      if(typeof Tesseract==='undefined') throw new Error('El motor de OCR no está disponible (revisa tu conexión a internet).');
+      let ocrText='';
+      if(isImg){
+        prev.innerHTML='<span style="color:var(--text3)">Aplicando OCR a la imagen…</span>';
+        const {data}=await Tesseract.recognize(file,'spa');
+        ocrText=data.text||'';
+      } else {
+        prev.innerHTML='<span style="color:var(--text3)">Convirtiendo PDF y aplicando OCR…</span>';
+        if(typeof pdfjsLib==='undefined') throw new Error('El lector de PDF no está disponible (revisa tu conexión a internet).');
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({scale:2});
+        const canvas=document.createElement('canvas');
+        canvas.width=viewport.width; canvas.height=viewport.height;
+        await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+        const {data}=await Tesseract.recognize(canvas,'spa');
+        ocrText=data.text||'';
+      }
+      ST._bGastoMetodo='OCR';
+      const montoMatch = ocrText.match(/tota+l[^\d]{0,10}\$?\s?([\d,]+\.\d{2})/i) || ocrText.match(/\$\s?([\d]{1,3}(?:,\d{3})*\.\d{2})/);
+      const fechaISOMatch = ocrText.match(/(\d{4}-\d{2}-\d{2})/);
+      const fechaDMYMatch = ocrText.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+      if(montoMatch) document.getElementById('bMonto').value = parseFloat(montoMatch[1].replace(/,/g,''));
+      if(fechaISOMatch) document.getElementById('bFecha').value = fechaISOMatch[1];
+      else if(fechaDMYMatch) document.getElementById('bFecha').value = `${fechaDMYMatch[3]}-${fechaDMYMatch[2]}-${fechaDMYMatch[1]}`;
+      const firstLine=(ocrText.trim().split('\n').find(l=>l.trim().length>3)||'').trim();
+      if(firstLine && !document.getElementById('bConcepto').value) document.getElementById('bConcepto').value = firstLine.slice(0,180);
+      prev.innerHTML = `<strong>Texto extraído por OCR</strong> — revisa y corrige los campos antes de guardar:<br>
+        <div style="max-height:120px;overflow:auto;white-space:pre-wrap;font-family:var(--mono);font-size:10.5px;margin-top:4px;color:var(--text2)">${esc(ocrText.trim().slice(0,600))||'(sin texto detectado)'}</div>`;
+    } else {
+      throw new Error('Formato no soportado. Usa PDF, imagen o XML.');
     }
-    return;
-  }
-
-  /* ── PDF o imagen → OCR ── */
-  status.innerHTML='Preparando lectura automática (OCR)…';
-  try{
-    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js');
-    let ocrSource = file;
-    if(name.endsWith('.pdf') || file.type==='application/pdf'){
-      status.innerHTML='Convirtiendo la primera página del PDF a imagen…';
-      await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      const buf = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({scale:2});
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width; canvas.height = viewport.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-      ocrSource = canvas;
-    }
-    status.innerHTML='Leyendo texto con OCR… esto puede tardar unos segundos';
-    const { data:{ text } } = await Tesseract.recognize(ocrSource, 'spa');
-    ST._salMetodoExtraccion='OCR';
-    // Monto: toma el número con formato de moneda más grande encontrado en el texto
-    const montos = [...text.matchAll(/\$?\s?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g)]
-      .map(m=>parseFloat(m[1].replace(/,/g,'')))
-      .filter(n=>!isNaN(n) && n>0);
-    const montoDetectado = montos.length ? Math.max(...montos) : 0;
-    // RFC: 3-4 letras + 6 dígitos + 3 alfanuméricos
-    const rfcMatch = text.match(/[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}/);
-    // Fecha: yyyy-mm-dd o dd/mm/yyyy
-    let fechaTxt = '';
-    const isoMatch = text.match(/(\d{4}-\d{2}-\d{2})/);
-    const slashMatch = text.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
-    if(isoMatch) fechaTxt = isoMatch[1];
-    else if(slashMatch){
-      const parts = slashMatch[1].split(/[\/\-]/);
-      if(parts[2] && parts[2].length===4) fechaTxt = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-    }
-    if(montoDetectado) document.getElementById('bMonto').value = montoDetectado.toFixed(2);
-    if(fechaTxt) document.getElementById('bFecha').value = fechaTxt;
-    const matched = rfcMatch && ST.proveedores[rfcMatch[0]];
-    if(matched) document.getElementById('bProveedor').value = rfcMatch[0];
-    status.innerHTML = `<b>Texto leído por OCR (verifica los datos, la precisión varía según la calidad del documento):</b><br>
-      RFC detectado: <b>${esc(rfcMatch?rfcMatch[0]:'—')}</b> ${matched?'✅ vinculado a un proveedor existente':(rfcMatch?'⚠️ no está en tu catálogo':'')}<br>
-      Monto detectado: <b>${montoDetectado?fmtMXNBal(montoDetectado):'—'}</b> · Fecha detectada: <b>${esc(fechaTxt||'—')}</b><br>
-      <span style="color:var(--text3)">Corrige manualmente cualquier dato antes de guardar.</span>`;
-    ST._salSuggestedProveedor = (rfcMatch && !matched) ? { id:rfcMatch[0], nombre:'' } : null;
   }catch(e){
-    ST._salMetodoExtraccion='Manual';
-    status.innerHTML = `<span style="color:var(--red)">No se pudo leer el archivo automáticamente (${esc(e.message||String(e))}). Captura los datos manualmente — el archivo se guardará como comprobante de todas formas.</span>`;
+    ST._bGastoMetodo='';
+    prev.innerHTML = `<span style="color:var(--red)">No se pudo extraer información automáticamente: ${esc(e.message||e)}. Puedes llenar los campos manualmente.</span>`;
   }
-}
-
-function _balResetSaveBtn(btn){
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
 }
 
 async function saveBalEntry(){
@@ -5250,28 +5054,30 @@ async function saveBalEntry(){
   const monto    = parseFloat(document.getElementById('bMonto').value)||0;
   if(!fecha||!concepto||!monto){ toast('err','Fecha, concepto y monto son requeridos.'); return; }
   btn.disabled=true; btn.textContent='Guardando…';
-  const id = ST.balEditId || genBalId();
 
   if(isIng){
-    // Evidencia de pago: si hay un archivo nuevo, subirlo a Drive; si no, conservar el link existente
+    // Evidencia de pago (Ingresos): si hay un archivo nuevo, subirlo a Drive; si no, conservar el link existente
     let pdfLink = ST._balEvidenciaExisting?.pdf || '';
     try{
       if(ST._balEvidenciaFile){
-        if(!ST.token){ toast('err','Conecta tu cuenta de Google primero para subir la evidencia.'); _balResetSaveBtn(btn); return; }
+        if(!ST.token){ toast('err','Conecta tu cuenta de Google primero para subir la evidencia.'); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
         btn.textContent='Subiendo evidencia…';
         pdfLink = await driveUploadFile(ST._balEvidenciaFile, 'Ingresos/Evidencias', `EVID_${concepto}_${Date.now()}`.slice(0,80));
         btn.textContent='Guardando…';
       }
-    } catch(e){ toast('err','Error al subir la evidencia: '+(e.message||e)); _balResetSaveBtn(btn); return; }
-    // Ingresos!A2:N — ID,Fecha,Concepto,Monto,Cuenta,Estado,Fecha_Limite,Fecha_Pago,Cliente,ID_Factura,Responsable,Observaciones,Pdf,Foto
+    } catch(e){ toast('err','Error al subir la evidencia: '+(e.message||e)); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
+    // Fila con las 14 columnas reales de la hoja Ingresos (A=ID … N=Foto)
     const row=[
-      id, fecha, concepto, monto,
+      ST.balEditId || genBalId(),
+      fecha,
+      concepto,
+      monto,
       document.getElementById('bCuenta').value,
       document.getElementById('bEstado').value,
       document.getElementById('bFechaLimite').value,
       document.getElementById('bFechaPago').value,
       document.getElementById('bCliente').value,
-      ST.balEditId ? (ST.ingresos.find(x=>x.id===ST.balEditId)?.id_factura||'') : '',
+      ST.balEditId ? (ST.ingresos.find(x=>x.id===ST.balEditId)?.idFactura||'') : '', // ID_Factura (se completa al vincular facturas)
       document.getElementById('bResponsable').value,
       document.getElementById('bObs').value,
       pdfLink,
@@ -5285,7 +5091,7 @@ async function saveBalEntry(){
         await sheetsAppend('Ingresos!A2:N',[row]);
         if(ST.balFacRef){
           const f=ST.facturas.find(x=>x.id===ST.balFacRef.id);
-          if(f){ await sheetsUpdate(`Facturas!K${f._row}`,[[id]]); f.id_ingreso=id; }
+          if(f){ await sheetsUpdate(`Facturas!K${f._row}`,[[row[0]]]); f.id_ingreso=row[0]; }
         }
       }
       toast('ok','Ingreso guardado.');
@@ -5293,62 +5099,61 @@ async function saveBalEntry(){
       await loadAll();
       switchBalTab('ing');
     } catch(e){ toast('err','Error al guardar: '+(e.result?.error?.message||e.message)); }
-    _balResetSaveBtn(btn);
-    return;
+  } else {
+    // Archivo fuente (Salidas): si hay uno nuevo, subirlo a Drive; si no, conservar el existente
+    let fuenteLink = ST._bGastoFuenteExisting || '';
+    try{
+      if(ST._bGastoFile){
+        if(!ST.token){ toast('err','Conecta tu cuenta de Google primero para subir el archivo.'); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
+        btn.textContent='Subiendo archivo…';
+        fuenteLink = await driveUploadFile(ST._bGastoFile, 'Salidas/Archivos', `GASTO_${concepto}_${Date.now()}`.slice(0,80));
+        btn.textContent='Guardando…';
+      }
+    } catch(e){ toast('err','Error al subir el archivo: '+(e.message||e)); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
+    // Fila con las 17 columnas reales de la hoja Salidas (A=ID … Q=XML_Content)
+    const row=[
+      ST.balEditId || genBalId(),
+      fecha,
+      concepto,
+      monto,
+      document.getElementById('bCuenta').value,
+      document.getElementById('bEstado').value,
+      document.getElementById('bFechaLimite').value,
+      document.getElementById('bFechaPago').value,
+      document.getElementById('bProveedor').value,
+      document.getElementById('bCategoria').value,
+      document.getElementById('bProyecto').value,
+      document.getElementById('bResponsable').value,
+      document.getElementById('bEsDeuda').value,
+      document.getElementById('bObs').value,
+      ST._bGastoMetodo || (ST.balEditId ? (ST.salidas.find(x=>x.id===ST.balEditId)?.metodoExtraccion||'') : ''),
+      fuenteLink,
+      ST._bGastoXmlText || (ST.balEditId ? (ST.salidas.find(x=>x.id===ST.balEditId)?.xmlContent||'') : ''),
+    ];
+    try{
+      if(ST.balEditId){
+        const b=ST.salidas.find(x=>x.id===ST.balEditId);
+        if(b) await sheetsUpdate(`Salidas!A${b._row}:Q${b._row}`,[row]);
+      } else {
+        await sheetsAppend('Salidas!A2:Q',[row]);
+      }
+      toast('ok','Gasto guardado.');
+      closeBalModal();
+      await loadAll();
+      switchBalTab('gas');
+    } catch(e){ toast('err','Error al guardar: '+(e.result?.error?.message||e.message)); }
   }
-
-  // ── SALIDA (gasto) ──
-  const proveedor = document.getElementById('bProveedor').value;
-  if(!proveedor){ toast('err','Selecciona o agrega un proveedor.'); _balResetSaveBtn(btn); return; }
-  let fuenteArchivo = ST._salArchivoExisting?.fuenteArchivo || '';
-  try{
-    if(ST._salArchivoFile){
-      if(!ST.token){ toast('err','Conecta tu cuenta de Google primero para subir el comprobante.'); _balResetSaveBtn(btn); return; }
-      btn.textContent='Subiendo comprobante…';
-      fuenteArchivo = await driveUploadFile(ST._salArchivoFile, 'Salidas/Comprobantes', `SAL_${concepto}_${Date.now()}`.slice(0,80));
-      btn.textContent='Guardando…';
-    }
-  } catch(e){ toast('err','Error al subir el comprobante: '+(e.message||e)); _balResetSaveBtn(btn); return; }
-  // Salidas!A2:Q — ID,Fecha,Concepto,Monto,Cuenta,Estado,Fecha_Limite,Fecha_Pago,Proveedor,Categoria_gasto,Proyecto,Responsable,Es_Deuda,Observaciones,Metodo_Extraccion,Fuente_Archivo,XML_Content
-  const row=[
-    id, fecha, concepto, monto,
-    document.getElementById('bCuenta').value,
-    document.getElementById('bEstado').value,
-    document.getElementById('bFechaLimite').value,
-    document.getElementById('bFechaPago').value,
-    proveedor,
-    document.getElementById('bCategoria').value.trim(),
-    document.getElementById('bProyecto').value.trim(),
-    document.getElementById('bResponsable').value,
-    document.getElementById('bEsDeuda').value,
-    document.getElementById('bObs').value,
-    ST._salMetodoExtraccion||'Manual',
-    fuenteArchivo,
-    ST._salXmlContent||'',
-  ];
-  try{
-    if(ST.balEditId){
-      const b=ST.salidas.find(x=>x.id===ST.balEditId);
-      if(b) await sheetsUpdate(`Salidas!A${b._row}:Q${b._row}`,[row]);
-    } else {
-      await sheetsAppend('Salidas!A2:Q',[row]);
-    }
-    toast('ok','Salida guardada.');
-    closeBalModal();
-    await loadAll();
-    switchBalTab('gas');
-  } catch(e){ toast('err','Error al guardar: '+(e.result?.error?.message||e.message)); }
-  _balResetSaveBtn(btn);
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
 }
 
-async function delBalEntry(id,row){
+async function delBalEntry(id,row,tipo){
   if(!confirm('¿Eliminar este movimiento?')) return;
-  const isIng = ST.ingresos.some(b=>b.id===id);
+  const isIng=(tipo==='ing');
   try{
-    await sheetsClear(isIng ? `Ingresos!A${row}:N${row}` : `Salidas!A${row}:Q${row}`);
+    await sheetsClear(isIng?`Ingresos!A${row}:N${row}`:`Salidas!A${row}:Q${row}`);
     if(isIng) ST.ingresos=ST.ingresos.filter(b=>b.id!==id);
     else ST.salidas=ST.salidas.filter(b=>b.id!==id);
-    ST.balance=[...ST.ingresos, ...ST.salidas];
     applyIngFilter(); applyGasFilter();
     renderDashboard();
     toast('ok','Movimiento eliminado.');
@@ -5358,7 +5163,7 @@ async function delBalEntry(id,row){
 /* ─── PROMPT CREAR INGRESO DESDE FACTURA PAGADA ─── */
 function promptCrearIngreso(f){
   const cli=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
-  const si=confirm(`¿Deseas registrar el ingreso de la factura ${f.folio||f.id} por ${fmtMXNBal(f.total)} (${cli}) en el Balance?`);
+  const si=confirm(`¿Deseas registrar el ingreso de la factura ${f.folio||f.id} por ${fmtMXNBal(f.total)} (${cli}) en Ingresos?`);
   if(!si) return;
   openBalModal('ing',{
     fecha: todayISOBal(),
@@ -5383,7 +5188,7 @@ function renderDashboard(){
   // Populate / refrescar el selector de año (por si llegan años nuevos tras cargar datos)
   const ySel=document.getElementById('dashYear');
   if(ySel){
-    const years=[...new Set(ST.balance.map(b=>b.fecha?.slice(0,4)).filter(Boolean))].sort().reverse();
+    const years=[...new Set([...ST.ingresos,...ST.salidas].map(b=>b.fecha?.slice(0,4)).filter(Boolean))].sort().reverse();
     if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
     const existing=new Set([...ySel.options].map(o=>o.value));
     if(years.some(y=>!existing.has(y))){
@@ -5495,26 +5300,6 @@ function addCustomUnidad(val){
   const saved = JSON.parse(localStorage.getItem('customUnidades')||'[]');
   const dl = document.getElementById('unidadesList');
   saved.forEach(u=>{ const o=document.createElement('option'); o.value=u; dl.appendChild(o); });
-})();
-
-/* ─── CATEGORÍAS DE GASTO CUSTOM (Salidas) ─── */
-function addCustomCategoria(val){
-  if(!val||!val.trim()) return;
-  const dl = document.getElementById('categoriaGastoList');
-  if(!dl) return;
-  const existing = [...dl.options].map(o=>o.value.toLowerCase());
-  if(!existing.includes(val.trim().toLowerCase())){
-    const opt = document.createElement('option');
-    opt.value = val.trim();
-    dl.appendChild(opt);
-    const saved = JSON.parse(localStorage.getItem('customCategoriasGasto')||'[]');
-    if(!saved.includes(val.trim())){ saved.push(val.trim()); localStorage.setItem('customCategoriasGasto',JSON.stringify(saved)); }
-  }
-}
-(function(){
-  const saved = JSON.parse(localStorage.getItem('customCategoriasGasto')||'[]');
-  const dl = document.getElementById('categoriaGastoList');
-  if(dl) saved.forEach(u=>{ const o=document.createElement('option'); o.value=u; dl.appendChild(o); });
 })();
 
 /* ─── NUEVO ARTÍCULO ─── */
@@ -6003,6 +5788,17 @@ function openFacXML(facId){
   dl.download=f.folio+'.xml';
   document.getElementById('xmlViewerModal').classList.add('open');
 }
+function openSalidaXML(id){
+  const s=ST.salidas.find(x=>x.id===id);
+  if(!s||!s.xmlContent){ toast('err','No hay XML para este gasto.'); return; }
+  document.getElementById('xmlViewerTitle').textContent='XML CFDI — '+(s.concepto||s.id);
+  document.getElementById('xmlViewerPre').textContent=s.xmlContent;
+  const dl=document.getElementById('xmlDownloadLink');
+  const blob=new Blob([s.xmlContent],{type:'application/xml'});
+  dl.href=URL.createObjectURL(blob);
+  dl.download=s.id+'.xml';
+  document.getElementById('xmlViewerModal').classList.add('open');
+}
 
 /* ─── FACTURAS — render con dropdowns + botones PDF/XML ─── */
 function renderFacTableFull(){
@@ -6218,3 +6014,4 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
+
