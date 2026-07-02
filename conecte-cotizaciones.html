@@ -5945,36 +5945,35 @@ function toggleTheme(){
    No cambia nada visual: solo garantiza que nada de la vista anterior quede
    vivo (visible, flotando fuera del contenedor, o con listeners/timers activos)
    cuando se monta la vista nueva. */
-function resetViewTransitionState(){
-  // 1) Apagar explícitamente TODAS las tab-pane activas, sin importar cuál sea.
-  //    No depende de una lista fija de ids: nunca puede quedar más de una vista
-  //    montada como "activa" al mismo tiempo.
-  document.querySelectorAll('.tab-pane.active').forEach(p=>p.classList.remove('active'));
-
-  // 2) Eliminar del DOM cualquier popover flotante que viva fuera del
-  //    contenedor de vistas (se insertan sobre <body> con position:fixed),
-  //    para que nunca queden pegados en pantalla al cambiar de vista.
+function resetFloatingUIState(){
+  // Limpieza de elementos flotantes / transitorios: segura de llamar en
+  // CUALQUIER cambio de vista, incluyendo cambios de sub-pestaña dentro de
+  // un mismo módulo (ej. Balance → Dashboard/Ingresos/Salidas), porque no
+  // toca el estado de qué tab-pane principal está activo.
   clearTimeout(ST._facRelHideTimer);
   document.getElementById('facRelPopover')?.remove();
 
-  // 3) Cerrar el buscador global y cualquier dropdown de autocompletado que
-  //    haya quedado abierto en la vista anterior.
   const gsPanel=document.getElementById('globalSearchPanel');
   if(gsPanel) gsPanel.style.display='none';
   document.querySelectorAll('.art-dropdown').forEach(d=>{ d.style.display='none'; });
   const facIngDD=document.getElementById('facIngDropdown');
   if(facIngDD){ facIngDD.style.display='none'; facIngDD.innerHTML=''; }
 
-  // 4) Reiniciar el scroll del contenedor principal: la vista nueva siempre
-  //    empieza arriba, nunca hereda la posición de scroll de la anterior.
   const scrollEl=document.querySelector('.main-scroll');
   if(scrollEl) scrollEl.scrollTop=0;
 
-  // 5) Quitar el foco de cualquier campo que haya quedado activo, para que
-  //    ningún listener (blur/change) de la vista anterior siga disparándose.
   if(document.activeElement && typeof document.activeElement.blur==='function' && document.activeElement!==document.body){
     document.activeElement.blur();
   }
+}
+
+function resetViewTransitionState(){
+  // Apagar explícitamente TODAS las tab-pane activas antes de montar la
+  // vista principal nueva. Solo debe llamarse al cambiar de MÓDULO PRINCIPAL
+  // (switchTab), nunca al cambiar de sub-pestaña dentro de un módulo ya
+  // activo (eso usa resetFloatingUIState, que no toca esta clase).
+  document.querySelectorAll('.tab-pane.active').forEach(p=>p.classList.remove('active'));
+  resetFloatingUIState();
 }
 
 function switchTab(tab){
@@ -6249,7 +6248,7 @@ function toggleSidebar(force){
 
 /* ─── BALANCE SUB-TAB SWITCH (orden: Dashboard, Ingresos, Salidas) ─── */
 function switchBalTab(sub){
-  resetViewTransitionState();
+  resetFloatingUIState();
   ['ing','gas','dash'].forEach(s=>{
     document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1))?.classList.remove('active');
     document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1)+'Btn')?.classList.remove('active');
