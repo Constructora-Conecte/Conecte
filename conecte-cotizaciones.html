@@ -2132,6 +2132,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   </div>
 </div>
 
+<!-- ══ MODAL OBLIGATORIO: al marcar una factura como PAGADO ══
+     No tiene botón de cerrar (✕) ni se cierra al hacer click fuera:
+     el usuario está obligado a responder Sí o No. -->
+<div class="modal-bg" id="facPagoIngresoModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">¿Quieres generar un ingreso?</div>
+    <div class="modal-body" id="facPagoIngresoBody" style="margin-top:6px;margin-bottom:16px"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="responderPagoIngreso(false)">No</button>
+      <button class="btn btn-red" onclick="responderPagoIngreso(true)">Sí</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOASTS -->
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -6024,8 +6038,11 @@ function mainAdd(){
    "Comercial" agrupa Cotizaciones, Facturas y OC Clientes.
    "Balance" es su propia sección con Dashboard, Ingresos y Salidas. */
 function switchSection(section){
-  if(section==='comercial') switchTab(ST.currentComercialTab || 'cot');
-  else if(section==='balance') switchTab('bal');
+  // Al entrar a un módulo principal desde el menú lateral, siempre se abre
+  // su vista por defecto (Comercial → Cotizaciones, Balance → Dashboard),
+  // sin importar en qué sub-pestaña se haya quedado la última vez.
+  if(section==='comercial'){ ST.currentComercialTab='cot'; switchTab('cot'); }
+  else if(section==='balance'){ ST.currentBalTab='dash'; switchTab('bal'); }
   else switchTab(section); // 'doc' | 'nom' | 'asis' | 'emp'
 }
 
@@ -6895,23 +6912,92 @@ async function delBalEntry(id,row,tipo){
   } catch(e){ toast('err','Error al eliminar: '+(e.result?.error?.message||e.message)); }
 }
 
-/* ─── PROMPT CREAR INGRESO DESDE FACTURA PAGADA ─── */
+/* ─── MODAL OBLIGATORIO: CREAR INGRESO DESDE FACTURA PAGADA ───
+   Al marcar una factura como PAGADO se abre este modal (no se puede cerrar
+   sin responder). Si responde "Sí", se crea automáticamente el registro en
+   Ingresos con el concepto y consecutivo generados por sistema. Si responde
+   "No", no se crea ningún movimiento (la factura ya quedó en PAGADO de todas
+   formas, eso no se bloquea). */
+let ST_facPagoIngresoCtx = null;
+
 function promptCrearIngreso(f){
+  ST_facPagoIngresoCtx = f;
   const cli=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
-  const si=confirm(`¿Deseas registrar el ingreso de la factura ${f.folio||f.id} por ${fmtMXNBal(f.total)} (${cli}) en Ingresos?`);
-  if(!si) return;
-  openBalModal('ing',{
-    fecha: todayISOBal(),
-    concepto: `Pago ${f.folio||f.id} — ${f.concepto||''}`.trim().slice(0,120),
-    monto: f.total,
-    cuenta: f.metodo||'Transferencia',
-    estado: 'Pagado',
-    fechaPago: todayISOBal(),
-    cliente: f.id_cli,
-    obs: `Factura ${f.folio||f.id}`,
-    facRef: { id:f.id, folio:f.folio, _row:f._row },
-  });
-  switchTab('bal');
+  const body=document.getElementById('facPagoIngresoBody');
+  if(body) body.textContent = `Factura ${f.folio||f.id} — ${fmtMXNBal(f.total)} (${cli})`;
+  document.getElementById('facPagoIngresoModal').classList.add('open');
+}
+
+async function responderPagoIngreso(si){
+  const f = ST_facPagoIngresoCtx;
+  document.getElementById('facPagoIngresoModal').classList.remove('open');
+  ST_facPagoIngresoCtx = null;
+  if(!f) return;
+  if(!si) return; // No → la factura permanece en PAGADO, sin crear ingreso
+  await crearIngresoAutomaticoDesdeFactura(f);
+}
+
+/* Toma únicamente la primera palabra del nombre del cliente
+   (ej. "Bachoco Planta Mérida" → "Bachoco") */
+function primeraPalabraCliente(nombreCompleto){
+  const s=(nombreCompleto||'').toString().trim();
+  if(!s) return '—';
+  return s.split(/\s+/)[0];
+}
+
+/* Convierte una fecha ISO 'YYYY-MM-DD' a 'DD/MM/YYYY' */
+function fmtFechaDDMMYYYY(iso){
+  const p=String(iso||'').split('-');
+  if(p.length===3) return `${p[2]}/${p[1]}/${p[0]}`;
+  return iso||'';
+}
+
+/* Consecutivo diario: cuenta cuántos ingresos ya tienen esa misma Fecha_Pago
+   y reinicia automáticamente cada día (al comparar solo contra la fecha de hoy). */
+function siguienteConsecutivoDelDia(fechaPagoISO){
+  const existentes = (ST.ingresos||[]).filter(b => (b.fechaPago||'') === fechaPagoISO).length;
+  return existentes + 1;
+}
+
+async function crearIngresoAutomaticoDesdeFactura(f){
+  if(!requireAuth()){ toast('err','Conéctate con Google primero para poder generar el ingreso.'); return; }
+  const cliNombreCompleto = ST.clientes[f.id_cli]?.nombre || f.id_cli || '';
+  const clientePrimera = primeraPalabraCliente(cliNombreCompleto);
+  const fechaPago = todayISOBal();
+  const metodo = f.metodo || 'Transferencia';
+  const consecutivo = siguienteConsecutivoDelDia(fechaPago);
+  const fechaFmt = fmtFechaDDMMYYYY(fechaPago);
+  const concepto = `Pago - ${metodo} - ${fechaFmt} - ${consecutivo} - ${clientePrimera}`;
+  const nuevoId = genBalId();
+  // Fila con las 14 columnas reales de la hoja Ingresos (A=ID … N=Foto)
+  const row=[
+    nuevoId,
+    fechaPago,
+    concepto,
+    f.total,
+    metodo,
+    'Pagado',
+    '',              // Fecha_Limite
+    fechaPago,       // Fecha_Pago
+    f.id_cli,        // Cliente
+    '',              // ID_Factura (se llena abajo del lado de Facturas)
+    '',              // Responsable
+    `Generado automáticamente al marcar la factura ${f.folio||f.id} como Pagado.`,
+    '', // Pdf
+    '', // Foto
+  ];
+  try{
+    await sheetsAppend('Ingresos!A2:N',[row]);
+    await sheetsUpdate(`Facturas!K${f._row}`,[[nuevoId]]);
+    f.id_ingreso = nuevoId;
+    // Refleja el nuevo ingreso localmente de inmediato para que el próximo
+    // consecutivo del día se calcule bien aunque aún no se recargue todo.
+    ST.ingresos.push({ _row:null, id:nuevoId, fecha:fechaPago, concepto, monto:f.total, cuenta:metodo, estado:'Pagado', fechaLim:'', fechaPago, cliente:f.id_cli, idFactura:'', responsable:'', obs:row[11], pdf:'', foto:'' });
+    toast('ok','Ingreso generado automáticamente: '+concepto);
+    await loadAll();
+  } catch(e){
+    toast('err','Error al generar el ingreso: '+(e.result?.error?.message||e.message));
+  }
 }
 
 /* ─── DASHBOARD ─── */
