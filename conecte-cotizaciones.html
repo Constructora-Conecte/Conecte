@@ -586,6 +586,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 @media(max-width:420px){
   .stats{grid-template-columns:1fr}
 }
+/* ── ASISTENCIA: acordeón semanal / diario ── */
+.asis-week{ border:1px solid var(--border); border-radius:var(--r8); margin-bottom:10px; overflow:hidden; background:var(--bg2); }
+.asis-week-head{ width:100%; display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:var(--bg3); border:none; cursor:pointer; font-family:var(--font); font-size:12.5px; font-weight:600; color:var(--text); text-align:left; }
+.asis-week-head:hover{ background:var(--bg4); }
+.asis-week-meta{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:400; color:var(--text3); }
+.asis-week-body{ padding:10px 14px; }
+.asis-day{ margin-bottom:10px; }
+.asis-day:last-child{ margin-bottom:0; }
+.asis-day-head{ font-size:11.5px; font-weight:600; color:var(--text2); margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+.asis-emp-list{ display:flex; flex-direction:column; gap:4px; }
+.asis-emp-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; padding:8px 10px; background:var(--bg3); border:1px solid transparent; border-radius:var(--r4); cursor:pointer; font-family:var(--font); text-align:left; transition:all .12s; }
+.asis-emp-row:hover{ border-color:var(--border2); background:var(--bg4); }
+.asis-emp-name{ font-size:12px; font-weight:500; color:var(--text); }
+.asis-emp-meta{ font-size:10.5px; color:var(--text3); white-space:nowrap; }
+.asis-mov-row{ display:grid; grid-template-columns:110px 60px 1fr 50px; align-items:center; gap:8px; width:100%; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--r4); cursor:pointer; font-family:var(--font); text-align:left; }
+.asis-mov-row:hover{ border-color:var(--border2); }
+.asis-mov-row.active{ border-color:var(--red); background:var(--red-p); }
+.asis-mov-badge{ font-size:10.5px; font-weight:600; color:var(--text); background:var(--bg4); padding:2px 6px; border-radius:10px; text-align:center; }
+.asis-mov-hora{ font-size:11px; color:var(--text2); font-family:var(--mono); }
+.asis-mov-ubi{ font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.asis-mov-geo{ font-size:10.5px; font-weight:600; text-align:right; }
 </style>
 </head>
 <body>
@@ -1080,16 +1101,42 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </div>
     </div><!-- /tabNom -->
 
-    <!-- ══ TAB: ASISTENCIA (vacía, próximamente) ══ -->
+    <!-- ══ TAB: ASISTENCIA ══ -->
     <div id="tabAsis" class="tab-pane">
-      <div class="card">
-        <div class="card-body" style="padding:60px 24px;text-align:center;color:var(--text3)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" width="42" height="42" style="margin:0 auto 14px;opacity:.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
-          <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px">Asistencia</div>
-          <div style="font-size:12.5px">Esta sección está en construcción. Muy pronto podrás gestionar aquí la asistencia.</div>
+      <div class="filter-bar" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11.5px;color:var(--text3)" id="asisCount">0 registros</span>
+        </div>
+        <a href="https://constructora-conecte.github.io/Conecte/checkin.html" target="_blank" rel="noopener" class="btn btn-red btn-sm">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg>
+          Ir a registrar rostros (Check-in)
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
+        </a>
+      </div>
+      <div id="asisWeeksWrap"><div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Cargando asistencia…</div></div>
+    </div><!-- /tabAsis -->
+
+    <!-- ══ MODAL: DETALLE DE ASISTENCIA (empleado + día) ══ -->
+    <div class="modal-bg" id="asisDetailModal">
+      <div class="modal-lg" style="width:640px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title" id="asisDetailTitle">Asistencia</div>
+            <div class="mlg-sub" id="asisDetailSub">—</div>
+          </div>
+          <button class="close-x" onclick="document.getElementById('asisDetailModal').classList.remove('open')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body">
+          <div id="asisDetailList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+          <div id="asisMapWrap" style="border:1px solid var(--border);border-radius:var(--r8);overflow:hidden;height:280px">
+            <iframe id="asisMapFrame" src="" style="width:100%;height:100%;border:0" loading="lazy"></iframe>
+          </div>
+          <div style="margin-top:6px;font-size:10.5px;color:var(--text3)" id="asisMapHint">Selecciona un movimiento de la lista para ver su ubicación exacta.</div>
         </div>
       </div>
-    </div><!-- /tabAsis -->
+    </div>
 
   </div><!-- /content -->
   </div><!-- /main-scroll -->
@@ -1444,20 +1491,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     <div class="modal-title">Nuevo Proveedor</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <div class="form-group">
-        <label class="form-label">RFC / ID *</label>
-        <input type="text" class="form-input" id="npRFC" placeholder="Ej. CAL031230UL6" style="text-transform:uppercase">
+        <label class="form-label">ID Proveedor *</label>
+        <input type="text" class="form-input" id="npID" placeholder="Ej. CDR1902132U6" style="text-transform:uppercase">
       </div>
       <div class="form-group">
         <label class="form-label">Nombre / Razón Social *</label>
-        <input type="text" class="form-input" id="npNombre" placeholder="Ej. PROVEEDORA DE MATERIALES S.A. DE C.V.">
+        <input type="text" class="form-input" id="npNombre" placeholder="Ej. COMERCIALIZADORA…">
       </div>
       <div class="form-group">
-        <label class="form-label">Teléfono</label>
-        <input type="text" class="form-input" id="npTel" placeholder="(999) 000-0000">
+        <label class="form-label">Dirección</label>
+        <input type="text" class="form-input" id="npDireccion" placeholder="Calle, número, colonia…">
       </div>
       <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="npEmail" placeholder="contacto@proveedor.com">
+        <label class="form-label">Contacto</label>
+        <input type="text" class="form-input" id="npContacto" placeholder="Nombre del contacto">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo</label>
+        <input type="email" class="form-input" id="npCorreo" placeholder="contacto@proveedor.com">
       </div>
     </div>
     <div class="modal-acts">
@@ -1877,7 +1928,10 @@ const ST = {
   globalSearchFilters: { cli:true, oc:true, fac:true, cot:true }, // filtros activos
   ingresos: [],          // hoja "Ingresos"
   salidas: [],           // hoja "Salidas"
-  proveedores: {},       // hoja "Proveedores" {rfc:{id,nombre,tel,email}}
+  proveedores: {},       // hoja "Proveedores" {id:{id,nombre,direccion,contacto,correo}}
+  registros: [],         // hoja "Registros" (asistencia / check-in)
+  asisOpenWeek: null,    // key de la semana expandida en Asistencia
+  asisDetail: null,      // {fecha, idUsuario, nombre, movs:[...]}
   ingFiltered: [],
   gasFiltered: [],
   ingFilter: 'all',
@@ -1945,7 +1999,7 @@ function startAutoRefresh(){
     const ocOpen   = document.getElementById('ocModal').classList.contains('open');
     if((formOpen && ST.formDirty) || (ocOpen && ST.ocFormDirty)) return;
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
-    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal'];
+    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal','asisDetailModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
     // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
     if(Date.now() < facEditingUntil) return;
@@ -2119,7 +2173,7 @@ function doLogout() {
 async function loadAll() {
   setLoading(true);
   try {
-    const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR] = await Promise.all([
+    const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR, regR] = await Promise.all([
       sheetsGet('Cotizaciones!A2:P'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
@@ -2128,16 +2182,33 @@ async function loadAll() {
       sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
       sheetsGet('Ingresos!A2:N'),    // 14 cols: A=ID … N=Foto
       sheetsGet('Salidas!A2:Q'),     // 17 cols: A=ID … Q=XML_Content
-      sheetsGet('Proveedores!A2:E'), // 5 cols: A=RFC/ID, B=Nombre, C=Tel, D=Email, E=Notas
+      sheetsGet('Proveedores!A2:E'), // 5 cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo
+      sheetsGet('Registros!A2:I'),   // 9 cols: A=Fecha,B=Hora,C=ID_Usuario,D=Nombre,E=Tipo_Marca,F=Ubicacion_Detectada,G=Lat,H=Long,I=Dentro_Geofence
     ]);
 
     /* Clientes */
     ST.clientes = {};
     (cliR||[]).forEach(r => { if(r[0]) ST.clientes[r[0]] = { id:r[0], nombre:r[1]||r[0] }; });
 
-    /* Proveedores — cols: A=RFC/ID, B=Nombre, C=Tel, D=Email, E=Notas */
+    /* Proveedores — cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo */
     ST.proveedores = {};
-    (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], tel:r[2]||'', email:r[3]||'' }; });
+    (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], direccion:r[2]||'', contacto:r[3]||'', correo:r[4]||'' }; });
+
+    /* Registros de asistencia — cols: A=Fecha,B=Hora,C=ID_Usuario,D=Nombre,E=Tipo_Marca,
+       F=Ubicacion_Detectada,G=Lat,H=Long,I=Dentro_Geofence */
+    ST.registros = (regR||[]).map((r,i)=>({
+      _row:      i+2,
+      fecha:     (r[0]||'').toString().trim(),
+      hora:      (r[1]||'').toString().trim(),
+      idUsuario: r[2]||'',
+      nombre:    r[3]||r[2]||'—',
+      tipoMarca: r[4]||'',
+      ubicacion: r[5]||'',
+      lat:       r[6]!==undefined && r[6]!=='' ? parseFloat(r[6]) : null,
+      lng:       r[7]!==undefined && r[7]!=='' ? parseFloat(r[7]) : null,
+      dentroGeofence: r[8]||'',
+    })).filter(r=>r.fecha);
+    renderAsistencia();
 
     /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email */
     ST.contactos = {};
@@ -4236,23 +4307,24 @@ function populateProveedores(selectedId){
 }
 function openAddProveedor() {
   if(!requireAuth()) return;
-  ['npRFC','npNombre','npTel','npEmail'].forEach(id=>document.getElementById(id).value='');
+  ['npID','npNombre','npDireccion','npContacto','npCorreo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('addProveedorModal').classList.add('open');
 }
 async function saveNewProveedor() {
-  const rfc = document.getElementById('npRFC').value.trim().toUpperCase();
+  const id  = document.getElementById('npID').value.trim().toUpperCase();
   const nom = document.getElementById('npNombre').value.trim();
-  if(!rfc){ toast('err','El RFC/ID es obligatorio.'); return; }
+  if(!id){ toast('err','El ID de proveedor es obligatorio.'); return; }
   if(!nom){ toast('err','El nombre es obligatorio.'); return; }
-  if(ST.proveedores[rfc]){ toast('err','Ya existe un proveedor con ese RFC/ID.'); return; }
+  if(ST.proveedores[id]){ toast('err','Ya existe un proveedor con ese ID.'); return; }
   const btn=document.getElementById('saveProveedorBtn');
   btn.disabled=true; btn.textContent='Guardando…';
   try {
-    const tel  = document.getElementById('npTel').value.trim();
-    const mail = document.getElementById('npEmail').value.trim();
-    await sheetsAppend('Proveedores!A2:E', [[rfc, nom, tel, mail, '']]);
-    ST.proveedores[rfc]={ id:rfc, nombre:nom, tel, email:mail };
-    populateProveedores(rfc);
+    const direccion = document.getElementById('npDireccion').value.trim();
+    const contacto  = document.getElementById('npContacto').value.trim();
+    const correo    = document.getElementById('npCorreo').value.trim();
+    await sheetsAppend('Proveedores!A2:E', [[id, nom, direccion, contacto, correo]]);
+    ST.proveedores[id]={ id, nombre:nom, direccion, contacto, correo };
+    populateProveedores(id);
     document.getElementById('addProveedorModal').classList.remove('open');
     toast('ok',`Proveedor "${nom}" agregado.`);
   } catch(e){ toast('err','Error al guardar proveedor: '+(e.result?.error?.message||e.message)); }
@@ -4370,6 +4442,7 @@ function switchTab(tab){
     const balSubNav=document.getElementById('balanceSubNav');
     if(comSubNav) comSubNav.style.display='none';
     if(balSubNav) balSubNav.style.display='none';
+    if(tab==='asis') renderAsistencia();
     return;
   }
   document.getElementById('mainAddBtn').style.display='';
@@ -4439,6 +4512,140 @@ function switchSection(section){
   if(section==='comercial') switchTab(ST.currentComercialTab || 'cot');
   else if(section==='balance') switchTab('bal');
   else switchTab(section); // 'doc' | 'nom' | 'asis' — vistas nuevas, aún sin funcionalidad
+}
+
+/* ─── ASISTENCIA: agrupación semanal (lunes–domingo) / diaria + detalle con mapa ─── */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function parseAsisDate(fechaStr){
+  const s=(fechaStr||'').toString().trim().replace(/\//g,'-');
+  const [y,m,d]=s.split('-').map(n=>parseInt(n,10));
+  if(!y||!m||!d) return null;
+  return new Date(y, m-1, d);
+}
+function asisMonday(date){
+  const d=new Date(date);
+  const day=d.getDay(); // 0=Dom,1=Lun,...6=Sáb
+  const diff=(day===0?-6:1-day);
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function asisISO(date){ return `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`; }
+const ASIS_MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const ASIS_DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+function asisFmtCorto(date){ return `${pad2(date.getDate())} ${ASIS_MESES[date.getMonth()]}`; }
+function asisFmtLargo(date){ return `${ASIS_DIAS[date.getDay()]} ${pad2(date.getDate())} de ${ASIS_MESES[date.getMonth()]}`; }
+
+function renderAsistencia(){
+  const wrap=document.getElementById('asisWeeksWrap');
+  const countEl=document.getElementById('asisCount');
+  if(!wrap) return;
+  const regs=ST.registros||[];
+  if(countEl) countEl.textContent = regs.length+(regs.length===1?' registro':' registros');
+  if(!regs.length){
+    wrap.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Sin registros de asistencia todavía.</div>';
+    return;
+  }
+  // Agrupar: semana(lunes) → día → empleado → movimientos
+  const weeks={};
+  regs.forEach(r=>{
+    const d=parseAsisDate(r.fecha);
+    if(!d) return;
+    const mon=asisMonday(d);
+    const sun=new Date(mon); sun.setDate(sun.getDate()+6);
+    const wk=asisISO(mon);
+    if(!weeks[wk]) weeks[wk]={monday:mon, sunday:sun, days:{}};
+    const dayKey=asisISO(d);
+    if(!weeks[wk].days[dayKey]) weeks[wk].days[dayKey]={date:d, employees:{}};
+    const empKey=r.idUsuario||r.nombre;
+    if(!weeks[wk].days[dayKey].employees[empKey]) weeks[wk].days[dayKey].employees[empKey]={nombre:r.nombre, idUsuario:r.idUsuario, movs:[]};
+    weeks[wk].days[dayKey].employees[empKey].movs.push(r);
+  });
+  const weekKeys=Object.keys(weeks).sort().reverse(); // semana más reciente arriba
+  if(!weekKeys.includes(ST.asisOpenWeek)) ST.asisOpenWeek=weekKeys[0]||null;
+  wrap.innerHTML = weekKeys.map(wk=>{
+    const w=weeks[wk];
+    const dayKeys=Object.keys(w.days).sort().reverse(); // día más reciente arriba
+    const totalRegs=dayKeys.reduce((s,dk)=>s+Object.values(w.days[dk].employees).reduce((s2,e)=>s2+e.movs.length,0),0);
+    const isOpen=ST.asisOpenWeek===wk;
+    const daysHtml = dayKeys.map(dk=>{
+      const day=w.days[dk];
+      const emps=Object.values(day.employees).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+      return `<div class="asis-day">
+        <div class="asis-day-head">${esc(asisFmtLargo(day.date))} <span style="color:var(--text3);font-weight:400">· ${emps.reduce((s,e)=>s+e.movs.length,0)} movimientos</span></div>
+        <div class="asis-emp-list">
+          ${emps.map(e=>{
+            const last=e.movs.slice().sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')).slice(-1)[0];
+            return `<button type="button" class="asis-emp-row" onclick="openAsisDetail('${esc(dk)}','${esc(e.idUsuario||e.nombre)}')">
+              <span class="asis-emp-name">${esc(e.nombre||e.idUsuario||'—')}</span>
+              <span class="asis-emp-meta">${e.movs.length} marca${e.movs.length===1?'':'s'} · última: ${esc(last?.tipoMarca||'—')} ${esc(last?.hora||'')}</span>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="asis-week ${isOpen?'open':''}">
+      <button type="button" class="asis-week-head" onclick="toggleAsisWeek('${wk}')">
+        <span>Semana del ${esc(asisFmtCorto(w.monday))} al ${esc(asisFmtCorto(w.sunday))} ${w.sunday.getFullYear()}</span>
+        <span class="asis-week-meta">${totalRegs} registros <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11" style="transform:rotate(${isOpen?90:0}deg);transition:transform .15s"><path d="M6 3l5 5-5 5"/></svg></span>
+      </button>
+      <div class="asis-week-body" style="display:${isOpen?'block':'none'}">${daysHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAsisWeek(wk){
+  ST.asisOpenWeek = ST.asisOpenWeek===wk ? null : wk;
+  renderAsistencia();
+}
+
+/* Card de detalle: movimientos del empleado en el día + mapa con Lat/Long exactos */
+function openAsisDetail(fechaISO, empKey){
+  const movs = ST.registros.filter(r=>{
+    const d=parseAsisDate(r.fecha);
+    return d && asisISO(d)===fechaISO && (r.idUsuario||r.nombre)===empKey;
+  }).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  if(!movs.length) return;
+  const nombre=movs[0].nombre||empKey;
+  const dateObj=parseAsisDate(fechaISO);
+  document.getElementById('asisDetailTitle').textContent = nombre;
+  document.getElementById('asisDetailSub').textContent = asisFmtLargo(dateObj)+' '+dateObj.getFullYear();
+  const list=document.getElementById('asisDetailList');
+  list.innerHTML = movs.map(m=>{
+    const hasCoords = m.lat!=null && m.lng!=null && !isNaN(m.lat) && !isNaN(m.lng);
+    const geoOk = /^s[ií]$/i.test(m.dentroGeofence||'');
+    return `<button type="button" class="asis-mov-row" onclick="focusAsisMap(${hasCoords?m.lat:'null'},${hasCoords?m.lng:'null'},this)">
+      <span class="asis-mov-badge">${esc(m.tipoMarca||'—')}</span>
+      <span class="asis-mov-hora">${esc(m.hora||'—')}</span>
+      <span class="asis-mov-ubi" title="${esc(m.ubicacion||'')}">${esc(m.ubicacion||'—')}</span>
+      <span class="asis-mov-geo" style="color:${geoOk?'var(--green)':'var(--red)'}">${esc(m.dentroGeofence||'—')}</span>
+    </button>`;
+  }).join('');
+  document.getElementById('asisDetailModal').classList.add('open');
+  // Enfocar automáticamente el movimiento más reciente que sí tenga coordenadas
+  const rows=list.querySelectorAll('.asis-mov-row');
+  let lastIdx=-1;
+  movs.forEach((m,i)=>{ if(m.lat!=null&&m.lng!=null&&!isNaN(m.lat)&&!isNaN(m.lng)) lastIdx=i; });
+  if(lastIdx>=0){
+    focusAsisMap(movs[lastIdx].lat, movs[lastIdx].lng, rows[lastIdx]);
+  } else {
+    document.getElementById('asisMapFrame').src='';
+    document.getElementById('asisMapHint').textContent='Este empleado no tiene coordenadas registradas en sus movimientos de este día.';
+  }
+}
+
+function focusAsisMap(lat,lng,el){
+  document.querySelectorAll('.asis-mov-row').forEach(r=>r.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const frame=document.getElementById('asisMapFrame');
+  const hint=document.getElementById('asisMapHint');
+  if(lat==null||lng==null||isNaN(lat)||isNaN(lng)){
+    frame.src='';
+    hint.textContent='Este movimiento no tiene coordenadas registradas.';
+    return;
+  }
+  frame.src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+  hint.innerHTML = `Lat: ${lat} · Long: ${lng} — <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener" style="color:var(--blue)">Abrir en Google Maps ↗</a>`;
 }
 
 /* ─── MENÚ LATERAL RETRÁCTIL (solo iconos cuando está contraído) ─── */
@@ -6014,4 +6221,3 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
-
