@@ -172,6 +172,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwE7EQorfA2aQc_q7mZCgMG
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
+// Evita que el navegador sirva una respuesta GET cacheada y vieja en vez de
+// consultar de verdad al servidor cada vez.
+function fetchFresco(url){
+  const sep = url.includes('?') ? '&' : '?';
+  return fetch(`${url}${sep}_=${Date.now()}`, { cache: 'no-store' });
+}
+
 const ETIQUETAS = {
   Entrada: 'Entrada', Salida: 'Salida',
   Salida_Comida: 'Salida a comer', Regreso_Comida: 'Regreso de comer',
@@ -226,7 +233,7 @@ async function iniciarCamara(){
 }
 
 async function cargarEmpleados(){
-  const res = await fetch(`${API_URL}?action=getPersonal`);
+  const res = await fetchFresco(`${API_URL}?action=getPersonal`);
   const empleados = await res.json();
   selectEmpleado.innerHTML = '<option value="">Selecciona un empleado...</option>';
   empleados.forEach(emp => {
@@ -303,7 +310,7 @@ function renderFeed(registros){
 
 async function pollRegistros(){
   try {
-    const res = await fetch(`${API_URL}?action=getRegistrosRecientes`);
+    const res = await fetchFresco(`${API_URL}?action=getRegistrosRecientes`);
     const registros = await res.json();
     renderFeed(registros);
 
