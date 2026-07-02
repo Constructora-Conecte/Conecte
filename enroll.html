@@ -101,11 +101,15 @@ button.principal:disabled{opacity:.4; cursor:not-allowed}
 #toast .icon{font-size:1.4rem}
 #toast .txt b{color:var(--green)}
 
-/* ── RESPONSIVE: escritorio en 2 columnas ── */
+/* ── RESPONSIVE ── */
 @media (min-width:820px){
   .layout{ flex-direction:row; align-items:flex-start; max-width:1000px; }
   .col-enrolar{ flex:0 0 380px; }
   .col-feed{ flex:1; }
+}
+@media (max-width:400px){
+  .card{padding:16px}
+  .video-wrap{border-radius:var(--r12)}
 }
 </style>
 </head>
@@ -160,9 +164,11 @@ button.principal:disabled{opacity:.4; cursor:not-allowed}
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
-// ================== CONFIGURA ESTO ==================
-const API_URL = 'https://script.google.com/macros/s/AKfycbxzwWYHgNUDdV1CG6KjOW4D3WIwm3mDsTnx9U42lOL-YjOcWUr_IgHaGKTxfCa81JDv7A/exec';
-// ======================================================
+// ============================================================
+// ⚙️ CONFIG — edita aquí si algún día cambias de Apps Script
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbwE7EQorfA2aQc_q7mZCgMGjSBoIoHs-mulwkliNKNC9bpQNPlJLLz4M5EGbh3XA4MTIA/exec';
+// ============================================================
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
