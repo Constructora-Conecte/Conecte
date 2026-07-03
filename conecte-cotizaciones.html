@@ -174,15 +174,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .card-sub{font-size:11.5px;color:var(--text3);margin-left:auto}
 .card-body{padding:16px}
 
-/* ── FORM GRID ── */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-group{display:flex;flex-direction:column;gap:5px}
+/* ── FORM GRID ──
+   Causa real del scroll horizontal en modales grandes: los <select>/<input>
+   dentro de una celda de grid/flex NO se encogen por debajo de su contenido
+   (min-width:auto por default en items de grid y flex). Si un proveedor,
+   categoría u opción tiene texto largo, la celda "1fr" se expande y el grid
+   entero se desborda. La solución real es forzar min-width:0 + width:100%
+   en los items y en los controles, y usar minmax(0,1fr) en las columnas
+   (no basta con overflow-x:hidden, eso solo esconde el síntoma). */
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;min-width:0}
+.form-group{display:flex;flex-direction:column;gap:5px;min-width:0}
 .form-group.full{grid-column:1/-1}
 .form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)}
 .form-input,.form-select,.form-textarea{
   background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r4);
   padding:8px 10px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;
   transition:border-color .15s;
+  width:100%;min-width:0;max-width:100%;box-sizing:border-box;
 }
 .form-input::placeholder{color:var(--text3)}
 .form-input:focus,.form-select:focus,.form-textarea:focus{
@@ -382,7 +390,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 }
 .mlg-title{font-size:14px;font-weight:600;color:var(--white)}
 .mlg-sub{font-size:11.5px;color:var(--text3);margin-top:2px}
-.mlg-body{padding:18px 22px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;}
+.mlg-body{padding:18px 22px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:1;min-height:0;min-width:0;}
 .mlg-foot{
   padding:13px 22px;border-top:1px solid var(--border);
   display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;
@@ -1565,7 +1573,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 <!-- ══ BALANCE MODAL (Ingreso / Gasto) ══ -->
 <div class="modal-bg" id="balModal">
-  <div class="modal-lg" style="width:580px">
+  <div class="modal-lg" style="width:520px">
     <div class="mlg-head">
       <div>
         <div class="mlg-title" id="balModalTitle">Nuevo Ingreso</div>
@@ -1592,10 +1600,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </div>
 
       <div class="form-grid" style="margin-bottom:14px">
+        <!-- Fila: Fecha | Fecha de pago -->
         <div class="form-group">
           <label class="form-label">Fecha *</label>
           <input type="date" class="form-input" id="bFecha">
         </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de Pago</label>
+          <input type="date" class="form-input" id="bFechaPago">
+        </div>
+        <!-- Fila: Cuenta / Forma de pago | Estado -->
         <div class="form-group">
           <label class="form-label">Cuenta / Forma de pago *</label>
           <select class="form-select" id="bCuenta">
@@ -1607,14 +1621,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <option value="Factoraje">Factoraje</option>
           </select>
         </div>
-        <div class="form-group full">
-          <label class="form-label">Concepto *</label>
-          <input type="text" class="form-input" id="bConcepto" placeholder="Descripción del movimiento">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Monto *</label>
-          <input type="number" class="form-input" id="bMonto" placeholder="0.00" min="0" step="0.01">
-        </div>
         <div class="form-group">
           <label class="form-label">Estado</label>
           <select class="form-select" id="bEstado">
@@ -1624,13 +1630,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <option value="Cancelado">Cancelado</option>
           </select>
         </div>
+        <!-- Fila: Monto | Fecha límite -->
         <div class="form-group">
-          <label class="form-label">Fecha de Pago</label>
-          <input type="date" class="form-input" id="bFechaPago">
+          <label class="form-label">Monto *</label>
+          <input type="number" class="form-input" id="bMonto" placeholder="0.00" min="0" step="0.01">
         </div>
         <div class="form-group">
           <label class="form-label">Fecha Límite</label>
           <input type="date" class="form-input" id="bFechaLimite">
+        </div>
+        <!-- Fila: Proveedor | Categoría (gastos) — Cliente (ingresos) -->
+        <div class="form-group" id="bProveedorGrp" style="display:none">
+          <label class="form-label">Proveedor</label>
+          <div style="display:flex;gap:6px;min-width:0">
+            <select class="form-select" id="bProveedor" style="flex:1;min-width:0"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Nuevo proveedor" onclick="openAddProveedor()" style="flex-shrink:0;padding:0 10px">+</button>
+          </div>
         </div>
         <div class="form-group" id="bCategoriaGrp" style="display:none">
           <label class="form-label">Categoría del gasto</label>
@@ -1645,20 +1660,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <label class="form-label">Cliente</label>
           <select class="form-select" id="bCliente"></select>
         </div>
-        <div class="form-group" id="bProveedorGrp" style="display:none">
-          <label class="form-label">Proveedor</label>
-          <div style="display:flex;gap:6px">
-            <select class="form-select" id="bProveedor" style="flex:1"></select>
-            <button type="button" class="btn btn-ghost btn-sm" title="Nuevo proveedor" onclick="openAddProveedor()" style="flex-shrink:0;padding:0 10px">+</button>
-          </div>
-        </div>
+        <!-- Fila: Proyecto (detalle de compra) | Responsable -->
         <div class="form-group" id="bProyectoGrp" style="display:none">
           <label class="form-label">Proyecto</label>
-          <input type="text" class="form-input" id="bProyecto" placeholder="Proyecto relacionado (opcional)">
+          <input type="text" class="form-input" id="bProyecto" placeholder="Detalle completo de la compra (se llena solo al importar XML)">
         </div>
         <div class="form-group">
           <label class="form-label">Responsable</label>
           <input type="text" class="form-input" id="bResponsable" placeholder="Nombre del responsable">
+        </div>
+        <!-- Concepto: resumen corto, ancho completo -->
+        <div class="form-group full">
+          <label class="form-label">Concepto *</label>
+          <input type="text" class="form-input" id="bConcepto" placeholder="Resumen corto del movimiento (se genera solo si se deja vacío)">
         </div>
         <div class="form-group" id="bFacGrp" style="display:none">
           <label class="form-label">Factura vinculada</label>
@@ -2328,6 +2342,42 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('xmlViewerModal').classList.remove('open')">Cerrar</button>
     </div>
     <pre id="xmlViewerPre" style="flex:1;overflow:auto;padding:16px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.5;white-space:pre-wrap"></pre>
+  </div>
+</div>
+
+<!-- ══ CARD DE DETALLE DE GASTO (vista rápida, no reemplaza el formulario) ══ -->
+<div class="modal-bg" id="gastoCardModal">
+  <div class="modal" style="width:460px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--white)" id="gcTitle">Gasto</div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:2px" id="gcSub">—</div>
+      </div>
+      <button class="close-x" onclick="closeGastoCard()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div style="padding:16px 20px;overflow-y:auto;flex:1;min-height:0" id="gcBody"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;flex-shrink:0">
+      <div id="gcRelBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" id="gcEditBtn" onclick="">Editar</button>
+        <button class="btn btn-red btn-sm" onclick="closeGastoCard()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CARD GENÉRICA DE REGISTROS RELACIONADOS (reutilizable para cualquier relación) ══ -->
+<div class="modal-bg" id="relListModal">
+  <div class="modal" style="width:440px;max-width:97vw;max-height:80vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="font-size:13px;font-weight:600;color:var(--white)" id="relListTitle">Relacionados</span>
+      <button class="close-x" onclick="closeRelList()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div style="padding:10px 14px;overflow-y:auto;flex:1;min-height:0" id="relListBody"></div>
   </div>
 </div>
 
@@ -6815,7 +6865,7 @@ function renderGasTable(){
   const tbody=document.getElementById('gasTbody');
   const PAGE=20, start=(ST.gasPage-1)*PAGE, slice=ST.gasFiltered.slice(start,start+PAGE);
   if(!slice.length){ tbody.innerHTML=`<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin gastos registrados</td></tr>`; renderGasPagi(); return; }
-  tbody.innerHTML=slice.map(b=>`<tr>
+  tbody.innerHTML=slice.map(b=>`<tr onclick="openGastoCard('${esc(b.id)}')" style="cursor:pointer">
     <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
     <td style="max-width:220px">${b.concepto||'—'}<br><span style="font-size:10.5px;color:var(--text3)">${b.obs||''}</span></td>
     <td style="font-size:12px">${esc(ST.proveedores[b.proveedor]?.nombre||b.proveedor||'—')}</td>
@@ -6826,7 +6876,7 @@ function renderGasTable(){
     <td style="font-size:11.5px;color:var(--text2)">${b.fechaPago||'—'}</td>
     <td style="text-align:right"><span class="bal-monto-gas">${fmtMXNBal(b.monto)}</span></td>
     <td style="text-align:center;font-size:11px;color:${b.esDeuda==='TRUE'?'var(--red)':'var(--text3)'}">${b.esDeuda==='TRUE'?'Sí':'No'}</td>
-    <td>
+    <td onclick="event.stopPropagation()">
       <div class="row-acts" style="opacity:1">
         ${b.fuenteArchivo?`<a href="${esc(b.fuenteArchivo)}" target="_blank" rel="noopener" class="btn-icon" title="Ver archivo fuente (${esc(b.metodoExtraccion||'archivo')})" style="color:var(--blue)">📎</a>`:''}
         ${b.xmlContent?`<button class="btn-icon" onclick="openSalidaXML('${esc(b.id)}')" title="Ver XML" style="color:var(--green)">XML</button>`:''}
@@ -7073,6 +7123,51 @@ function clearBEvidencia(){
   evCur.style.display='none'; evCur.innerHTML='';
 }
 
+/* ─── Catálogo SAT c_FormaPago → descripción legible para mostrar en la UI ─── */
+const SAT_FORMA_PAGO = {
+  '01':'Efectivo','02':'Cheque nominativo','03':'Transferencia electrónica',
+  '04':'Tarjeta de crédito','05':'Monedero electrónico','06':'Dinero electrónico',
+  '08':'Vales de despensa','12':'Dación en pago','13':'Pago por subrogación',
+  '14':'Pago por consignación','15':'Condonación','17':'Compensación','23':'Novación',
+  '24':'Confusión','25':'Remisión de deuda','26':'Prescripción o caducidad',
+  '27':'A satisfacción del acreedor','28':'Tarjeta de débito','29':'Tarjeta de servicios',
+  '30':'Aplicación de anticipos','31':'Intermediario pagos','99':'Por definir'
+};
+function formaPagoLabelSAT(codigo){
+  if(!codigo) return '';
+  return SAT_FORMA_PAGO[codigo] || ('Código SAT '+codigo);
+}
+/* Selecciona la forma de pago legible en el <select>; si el catálogo del
+   formulario no trae esa opción todavía, la agrega dinámicamente para no
+   perder información (ej. "Cheque nominativo", "Vales de despensa", etc). */
+function setFormaPagoSelect(label){
+  const sel=document.getElementById('bCuenta');
+  if(!sel||!label) return;
+  let opt=Array.from(sel.options).find(o=>o.value.toLowerCase()===label.toLowerCase());
+  if(!opt){
+    opt=document.createElement('option');
+    opt.value=label; opt.textContent=label;
+    sel.appendChild(opt);
+  }
+  sel.value=label;
+}
+/* Genera un resumen corto (máx. 5 palabras) a partir del detalle completo
+   guardado en Proyecto. Nunca copia el texto completo y nunca queda vacío. */
+function generarConceptoResumen(detalleCompleto){
+  const FALLBACK='Compra de materiales';
+  if(!detalleCompleto || !detalleCompleto.trim()) return FALLBACK;
+  const items = detalleCompleto.split(/\s*(?:,|\/)\s*/).map(s=>s.trim()).filter(Boolean);
+  if(!items.length) return FALLBACK;
+  // Se toma la primera partida como referencia y se limpian medidas/números/comillas
+  let base = items[0].replace(/[\d"'.]+/g,' ').replace(/\s+/g,' ').trim() || items[0];
+  const palabras = base.toLowerCase().split(' ').filter(Boolean).slice(0,3);
+  if(!palabras.length) return FALLBACK;
+  let resumen = 'Compra de ' + palabras.join(' ');
+  resumen = resumen.split(' ').slice(0,5).join(' ').trim(); // tope duro de 5 palabras
+  if(!resumen) return FALLBACK;
+  return resumen.charAt(0).toUpperCase()+resumen.slice(1);
+}
+
 /* ─── CAPTURA DE GASTO POR ARCHIVO: XML (CFDI) sencillo, o PDF/Imagen vía OCR ─── */
 async function onGastoFileSelected(input){
   const file=input.files[0];
@@ -7099,21 +7194,40 @@ async function onGastoFileSelected(input){
       const total = parseFloat(comp.getAttribute('Total')||comp.getAttribute('total')||'0')||0;
       const nomProv = emisor ? (emisor.getAttribute('Nombre')||emisor.getAttribute('nombre')||'') : '';
       const rfcProv = emisor ? (emisor.getAttribute('Rfc')||emisor.getAttribute('rfc')||'') : '';
-      const concepto = conceptos.map(c=>c.getAttribute('Descripcion')||c.getAttribute('descripcion')||'').filter(Boolean).join(' / ');
+      // Detalle completo de las partidas del CFDI: esto se guarda íntegro en
+      // Proyecto (columna K). NUNCA se guarda este texto largo en Concepto.
+      const detalleCompleto = conceptos.map(c=>c.getAttribute('Descripcion')||c.getAttribute('descripcion')||'').filter(Boolean).join(', ');
+      // Fecha = Fecha de pago = fecha de emisión del XML (regla fija, nunca se calcula otra).
       const fecha = fechaRaw ? fechaRaw.split('T')[0] : todayISOBal();
+      // Forma de pago (atributo FormaPago del Comprobante) → descripción legible.
+      const formaPagoCod = comp.getAttribute('FormaPago')||comp.getAttribute('formaPago')||'';
+      const formaPagoTxt = formaPagoLabelSAT(formaPagoCod);
       ST._bGastoXmlText = text;
       ST._bGastoMetodo = 'XML';
+      ST._bGastoFormaPagoSAT = formaPagoCod; // se conserva el código SAT en memoria para validaciones futuras
       if(total) document.getElementById('bMonto').value = total;
       document.getElementById('bFecha').value = fecha;
-      if(concepto) document.getElementById('bConcepto').value = concepto.slice(0,180);
+      document.getElementById('bFechaPago').value = fecha; // la factura se considera pagada el día de su emisión
+      document.getElementById('bEstado').value = 'Pagado';
+      if(formaPagoTxt) setFormaPagoSelect(formaPagoTxt);
+      // Proyecto (columna K) = detalle completo; Concepto (columna C) = resumen automático (máx. 5 palabras)
+      document.getElementById('bProyecto').value = detalleCompleto;
+      document.getElementById('bConcepto').value = generarConceptoResumen(detalleCompleto);
+      // Proveedor: búsqueda ÚNICA Y EXCLUSIVAMENTE por RFC, nunca por nombre.
+      // Si el RFC ya existe en Proveedores, se usa el nombre/etiqueta registrado ahí
+      // (no el nombre que trae el XML). Si no existe, se guarda el gasto con el RFC
+      // como referencia pendiente; en cuanto se dé de alta ese RFC en Proveedores,
+      // la vinculación ocurre sola porque toda la app relaciona por RFC, no por nombre.
       if(rfcProv){
         if(!ST.proveedores[rfcProv]) ST.proveedores[rfcProv]={id:rfcProv,nombre:nomProv||rfcProv};
         populateProveedores(rfcProv);
       }
       prev.innerHTML = `<strong>Datos extraídos del XML:</strong><br>
-        Proveedor: <b>${esc(nomProv||'—')}</b> ${rfcProv?'('+esc(rfcProv)+')':''}<br>
-        Fecha: <b>${esc(fecha)}</b> &nbsp;·&nbsp; Total: <b>$${total.toLocaleString('es-MX',{minimumFractionDigits:2})}</b><br>
-        Concepto: ${esc(concepto||'—')}`;
+        Proveedor: <b>${esc(ST.proveedores[rfcProv]?.nombre||nomProv||'—')}</b> ${rfcProv?'('+esc(rfcProv)+')':''}<br>
+        Fecha / Fecha de pago: <b>${esc(fecha)}</b> &nbsp;·&nbsp; Total: <b>$${total.toLocaleString('es-MX',{minimumFractionDigits:2})}</b><br>
+        Forma de pago: <b>${esc(formaPagoTxt||'—')}</b><br>
+        Concepto (resumen): ${esc(document.getElementById('bConcepto').value||'—')}<br>
+        Proyecto (detalle completo): ${esc(detalleCompleto||'—')}`;
     } else if(isImg || isPdf){
       if(typeof Tesseract==='undefined') throw new Error('El motor de OCR no está disponible (revisa tu conexión a internet).');
       let ocrText='';
@@ -7158,8 +7272,14 @@ async function saveBalEntry(){
   const btn=document.getElementById('balSaveBtn');
   const isIng = ST._balTipo==='Ingreso';
   const fecha    = document.getElementById('bFecha').value;
-  const concepto = document.getElementById('bConcepto').value.trim();
+  let concepto   = document.getElementById('bConcepto').value.trim();
   const monto    = parseFloat(document.getElementById('bMonto').value)||0;
+  // Un Gasto nunca debe quedar sin Concepto: si se dejó vacío, se genera
+  // automáticamente a partir del detalle guardado en Proyecto.
+  if(!isIng && !concepto){
+    concepto = generarConceptoResumen(document.getElementById('bProyecto').value.trim());
+    document.getElementById('bConcepto').value = concepto;
+  }
   if(!fecha||!concepto||!monto){ toast('err','Fecha, concepto y monto son requeridos.'); return; }
   btn.disabled=true; btn.textContent='Guardando…';
 
@@ -7238,6 +7358,14 @@ async function saveBalEntry(){
       fuenteLink,
       ST._bGastoXmlText || (ST.balEditId ? (ST.salidas.find(x=>x.id===ST.balEditId)?.xmlContent||'') : ''),
     ];
+    // Salvaguarda: la hoja Salidas tiene exactamente 17 columnas (A–Q). Si el
+    // arreglo no trae 17 elementos, algo se desalineó antes de escribir y es
+    // mejor abortar que guardar datos en columnas incorrectas.
+    if(row.length!==17){
+      toast('err','Error interno: el gasto tiene '+row.length+' columnas en vez de 17 (A–Q). No se guardó, revisa el código.');
+      btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
+      return;
+    }
     try{
       if(ST.balEditId){
         const b=ST.salidas.find(x=>x.id===ST.balEditId);
@@ -7968,6 +8096,91 @@ function openSalidaXML(id){
   dl.download=s.id+'.xml';
   document.getElementById('xmlViewerModal').classList.add('open');
 }
+
+/* ─── RELACIONES ENTRE MÓDULOS (arquitectura reutilizable) ───
+   Para agregar una relación nueva (Gasto→Compras, Gasto→Activos,
+   Proyecto→Gastos, Cliente→Cotizaciones, etc.) basta con agregar un objeto
+   {key,label,count,items,renderRow} al arreglo del tipo de entidad
+   correspondiente. La Card genérica (openRelList) y el botón en la Card de
+   detalle ya saben leer cualquier definición nueva sin más cambios.
+   Proveedores queda fuera de este sistema a propósito: esa información ya
+   se muestra directamente dentro de la Card del gasto (Proveedor / RFC). */
+const RELATION_DEFS = {
+  gasto: [
+    {
+      key:'nominas',
+      label:'Nóminas relacionadas',
+      count:(g)=> ST.nominas.filter(n=>n.idSalida===g.id).length,
+      items:(g)=> ST.nominas.filter(n=>n.idSalida===g.id),
+      renderRow:(n)=>`
+        <div onclick="openRelDetail_nomina('${esc(n.idNomina)}')"
+             style="cursor:pointer;padding:9px 8px;border-radius:var(--r4);border-bottom:1px solid var(--border);transition:background .15s"
+             onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'">
+          <div style="font-weight:600;font-size:12.5px;color:var(--white)">${esc(n.nombreEmpleado||n.idEmpleado)}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Semana ${esc(n.semanaAnio||'—')} · ${esc(n.fechaInicio||'—')} · ${esc(n.estatus||'—')}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-top:2px">${fmtMXNBal(n.totalFinal||0)}</div>
+        </div>`
+    }
+    // Espacio reservado para futuras relaciones (Compras, Activos, Proyecto…)
+    // en cuanto exista en la hoja el campo que las vincule por ID.
+  ]
+};
+
+/* ─── CARD DE DETALLE DE GASTO (consulta rápida, no reemplaza el formulario) ─── */
+function openGastoCard(id){
+  const g=ST.salidas.find(x=>x.id===id);
+  if(!g){ toast('err','No se encontró el gasto.'); return; }
+  const provNombre = ST.proveedores[g.proveedor]?.nombre || g.proveedor || '—';
+  document.getElementById('gcTitle').textContent = g.concepto||'Gasto';
+  document.getElementById('gcSub').textContent = 'ID: '+g.id;
+  const row=(label,val)=>`<div style="display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--border)">
+    <span style="color:var(--text3);flex-shrink:0">${esc(label)}</span><span style="text-align:right;min-width:0">${val}</span></div>`;
+  const body = `
+    ${row('Concepto', esc(g.concepto||'—'))}
+    ${row('Compra', g.proyecto ? esc(g.proyecto) : '—')}
+    ${row('Fecha', esc(g.fecha||'—'))}
+    ${row('Fecha de pago', esc(g.fechaPago||'—'))}
+    ${row('Proveedor', esc(provNombre))}
+    ${row('RFC', esc(g.proveedor||'—'))}
+    ${row('Forma de pago', esc(g.cuenta||'—'))}
+    ${row('Categoría', esc(g.categoria||'—'))}
+    ${row('Responsable', esc(g.responsable||'—'))}
+    ${row('Importe', fmtMXNBal(g.monto||0))}
+    ${row('Estado', badgeBal(g.estado))}
+    ${row('¿Es deuda?', g.esDeuda==='TRUE'?'Sí':'No')}
+    ${row('Observaciones', g.obs ? esc(g.obs) : '—')}
+    ${row('XML', g.xmlContent ? `<button class="btn btn-ghost btn-sm" onclick="openSalidaXML('${esc(g.id)}')">Ver XML</button>` : '—')}
+    ${row('PDF', g.fuenteArchivo ? `<a href="${esc(g.fuenteArchivo)}" target="_blank" rel="noopener" style="color:var(--blue)">Ver archivo</a>` : '—')}
+  `;
+  document.getElementById('gcBody').innerHTML = body;
+  document.getElementById('gcEditBtn').setAttribute('onclick', `closeGastoCard();openBalEdit('${esc(g.id)}','gas')`);
+  const relBtnsWrap=document.getElementById('gcRelBtns');
+  relBtnsWrap.innerHTML = (RELATION_DEFS.gasto||[]).map(def=>{
+    const n=def.count(g);
+    if(!n) return '';
+    return `<button class="btn btn-ghost btn-sm" onclick="openRelList('gasto','${esc(g.id)}','${def.key}')">${esc(def.label)} (${n})</button>`;
+  }).join('') || `<span style="font-size:11px;color:var(--text3)">Sin registros relacionados</span>`;
+  document.getElementById('gastoCardModal').classList.add('open');
+}
+function closeGastoCard(){ document.getElementById('gastoCardModal').classList.remove('open'); }
+
+/* Card genérica para listar cualquier relación registrada en RELATION_DEFS */
+function openRelList(entityType, entityId, relKey){
+  const def=(RELATION_DEFS[entityType]||[]).find(d=>d.key===relKey);
+  if(!def) return;
+  let entity=null;
+  if(entityType==='gasto') entity=ST.salidas.find(x=>x.id===entityId);
+  if(!entity) return;
+  const items=def.items(entity);
+  document.getElementById('relListTitle').textContent=def.label;
+  document.getElementById('relListBody').innerHTML = items.length
+    ? items.map(def.renderRow).join('')
+    : `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin registros relacionados.</div>`;
+  document.getElementById('relListModal').classList.add('open');
+}
+function closeRelList(){ document.getElementById('relListModal').classList.remove('open'); }
+/* Desde la lista de relacionados también se puede abrir la Card completa de cada registro */
+function openRelDetail_nomina(idNomina){ closeRelList(); openNomResumenCard(idNomina); }
 
 /* ─── FACTURAS — render con dropdowns + botones PDF/XML ─── */
 function renderFacTableFull(){
