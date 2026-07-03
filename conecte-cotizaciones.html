@@ -1725,7 +1725,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <div class="form-grid" style="margin-bottom:14px">
         <div class="form-group full">
           <label class="form-label">Empleado *</label>
-          <select class="form-select" id="nEmpleado" onchange="recalcNomPreview()"></select>
+          <select class="form-select" id="nEmpleado" onchange="onNomEmpleadoChange()"></select>
         </div>
         <div class="form-group" id="nEstatusGrp" style="display:none">
           <label class="form-label">Estatus</label>
@@ -1771,13 +1771,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <label class="form-label">Extra en efectivo <span style="color:var(--text3);font-weight:400">(apoyo/gratificación — solo suma al efectivo)</span></label>
           <input type="number" class="form-input" id="nExtraEfectivo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
         </div>
-        <div class="form-group full" id="nRecibeValesInfo" style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:11.5px">
-          Vales: <span id="nRecibeValesTxt" style="font-weight:600">—</span>
-          <span style="font-size:10.5px">(se define por empleado en la hoja "Personal", columna Recibe_Vales)</span>
-        </div>
-        <div class="form-group full" id="nRecibeFiscalInfo" style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:11.5px">
-          Fiscal: <span id="nRecibeFiscalTxt" style="font-weight:600">—</span>
-          <span style="font-size:10.5px">(se define por empleado en la hoja "Personal", columna Recibe_Fiscal; si no recibe fiscal, ese monto se suma automáticamente al efectivo)</span>
+        <div class="form-group full" style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4)">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="nRecibeVales" onchange="recalcNomPreview()"> Recibe vales
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="nRecibeFiscal" onchange="recalcNomPreview()"> Recibe fiscal
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--red)">
+            <input type="checkbox" id="nValesEn0" onchange="recalcNomPreview()"> Vales en 0
+          </label>
+          <span style="font-size:10.5px;color:var(--text3);width:100%">
+            Se cargan automáticamente según la hoja "Personal", pero puedes ajustarlos solo para esta semana — no modifican la configuración permanente del empleado. "Vales en 0" siempre inicia desactivado y tiene prioridad sobre "Recibe vales".
+          </span>
         </div>
         <div class="form-group full">
           <label class="form-label">Observaciones de incidencias</label>
@@ -1788,6 +1794,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <!-- ── PANEL DE CÁLCULO EN VIVO ── -->
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);padding:14px 16px">
         <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:10px;text-transform:uppercase">Cálculo automático</div>
+        <div id="nomNoTrabajoWarn" style="display:none;margin-bottom:10px;padding:8px 10px;background:rgba(229,62,62,.12);border:1px solid rgba(229,62,62,.3);border-radius:var(--r4);color:var(--red);font-size:11.5px;font-weight:600">
+          Las faltas cubren toda la semana laboral: no generó pago. Todo queda en $0 (sueldo, vales y fiscal).
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:11.5px">
           <div>
             <div style="color:var(--text3);margin-bottom:4px">Sueldo total acordado</div>
@@ -1847,6 +1856,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   </div>
 </div>
 
+<!-- ══ MODAL: RESUMEN DE NÓMINA (card al hacer click en el nombre del empleado) ══ -->
+<div class="modal-bg" id="nomResumenModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-title" id="nomResTitle">Resumen semanal</div>
+    <div class="modal-body" id="nomResBody" style="margin-top:8px"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" id="nomResPdfBtn" onclick="">Generar PDF</button>
+      <button class="btn btn-red" onclick="closeNomResumenCard()">Cerrar</button>
+    </div>
+  </div>
+</div>
 <!-- ══ DELETE MODAL ══ -->
 <div class="modal-bg" id="delModal">
   <div class="modal">
@@ -2782,7 +2802,7 @@ async function loadAll() {
          AJ = ID_Salida                 (folio del movimiento espejo en la hoja Salidas)
          AK = (reservada) */
     try{
-      const nomR = await sheetsGet('Nominas!A2:AK');
+      const nomR = await sheetsGet('Nominas!A2:AN');
       ST.nominas = (nomR||[]).map((r,i)=>({
         _row: i+2,
         idNomina: r[0]||'',
@@ -2821,6 +2841,14 @@ async function loadAll() {
         extraEfectivo: parseFloat(r[33])||0,        // AH
         efectivoRealEntregar: parseFloat(r[34])||0, // AI · dato principal
         idSalida: r[35]||'',                        // AJ
+        // AK/AL/AM — ajustes manuales guardados SOLO para esta nómina semanal (no
+        // modifican la hoja Personal). Si la celda viene vacía (nóminas guardadas antes
+        // de este cambio), se deja como null para que se use la config base del empleado.
+        recibeValesSemana: r[36]===undefined||r[36]===null||String(r[36]).trim()===''
+          ? null : /^(TRUE|SI|SÍ|1)$/i.test(String(r[36]).trim()),
+        recibeFiscalSemana: r[37]===undefined||r[37]===null||String(r[37]).trim()===''
+          ? null : /^(TRUE|SI|SÍ|1)$/i.test(String(r[37]).trim()),
+        valesEn0: /^(TRUE|SI|SÍ|1)$/i.test(String(r[38]||'').trim()),
       })).filter(n=>n.idNomina);
       ST.nominasError = null;
     }catch(nomErr){
@@ -2925,7 +2953,7 @@ async function loadAll() {
         id:   r[0]||'', fecha: r[1]||'', id_cli: r[2]||'',
         sub:  parseFloat(r[3])||0, iva: parseFloat(r[4])||0, total: parseFloat(r[5])||0,
         items: itemsArr,
-        desc: r[8]||'', notas: r[9]||'', id_usr: r[11]||'',
+        desc: r[8]||'', notas: r[9]||'', creacion: r[10]||'', id_usr: r[11]||'',
         id_con: r[12]||'', vigencia: r[13]||'', estatus: r[14]||'Pendiente',
         fechaEnvio: r[16]||'',
       };
@@ -3417,10 +3445,19 @@ async function guardarCot() {
   const itemsJSON = JSON.stringify(ST.items.map(it=>({
     desc: it.desc, cant: it.cant, unidad: it.unidad, precio: it.precio, imp: it.imp
   })));
+  // Fecha de creación (col K): es un dato de auditoría que se fija UNA sola vez y
+  // nunca debe volver a tocarse en ediciones posteriores (aunque se cambie el
+  // estatus a "Enviado" o se edite cualquier otro campo). Si ya existe un registro
+  // con esa misma cotización, se conserva su fecha de creación original; solo si
+  // es un registro nuevo se usa la fecha de hoy.
+  const registroExistente = ST.editId ? ST.cotizaciones.find(c=>c.id===ST.editId) : null;
+  const fechaCreacion = registroExistente && registroExistente.creacion
+    ? registroExistente.creacion
+    : sheetDate(todayISO());
   const row = [
     newId, sheetDate(fecha), cliente,
     sub.toFixed(2), iva.toFixed(2), tot.toFixed(2),
-    itemsJSON, '', desc, notas, sheetDate(todayISO()),
+    itemsJSON, '', desc, notas, fechaCreacion,
     ST.usuario||'', contacto, vigencia, estatus, '',
     fechaEnvio ? sheetDate(fechaEnvio) : ''
   ];
@@ -3789,6 +3826,11 @@ function generarPDF(id, itemsOverride) {
 }
 
 function quickPDF(id){
+  // Si el formulario de captura está abierto EDITANDO esta misma cotización, los
+  // campos en pantalla son la fuente de verdad (pueden traer cambios sin guardar).
+  // No pasamos itemsOverride para que generarPDF() los lea en vivo del formulario.
+  const formAbiertoParaEsteId = document.getElementById('formModal')?.classList.contains('open') && ST.editId===id;
+  if(formAbiertoParaEsteId){ generarPDF(id); return; }
   const r=ST.cotizaciones.find(c=>c.id===id);
   if(!r){ toast('err','No se encontró la cotización.'); return; }
   const savedItems=(r.items&&r.items.length)?r.items:[{desc:r.desc,cant:1,precio:r.sub,imp:r.sub,unidad:''}];
@@ -4925,17 +4967,41 @@ function nomFmtFechaLarga(iso){
               retencionExtra, extraEfectivo }
    NOTA IMPORTANTE (dato principal del sistema): "efectivoRealEntregar" es el efectivo
    físico que hay que sacar de caja. Ya NO se usa Sueldo_Total como indicador principal. */
-function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo }){
+function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo, recibeValesOverride, recibeFiscalOverride, valesEn0 }){
   faltas = Math.max(0, parseFloat(faltas)||0);
   prestamo = Math.max(0, parseFloat(prestamo)||0);
   bonos = Math.max(0, parseFloat(bonos)||0);
   descuentos = Math.max(0, parseFloat(descuentos)||0);
   retencionExtra = Math.max(0, parseFloat(retencionExtra)||0);
   extraEfectivo = Math.max(0, parseFloat(extraEfectivo)||0);
+  valesEn0 = !!valesEn0;
 
   const sueldoTotal = empleado?.sueldoTotalAcordado || 0;
-  const recibeVales = empleado ? (empleado.recibeVales !== false) : true;
-  const recibeFiscal = empleado ? (empleado.recibeFiscal !== false) : true;
+  const diasLaborales0 = ST.cfgDiasLaborales||7;
+
+  // ── Prioridad 1: empleado que NO trabajó en toda la semana ──
+  // Si las faltas cubren o exceden los días laborales de la semana, ningún concepto
+  // se calcula: pago, vales y fiscal quedan en $0. Nada se prorratea ni se redistribuye.
+  const noTrabajo = faltas >= diasLaborales0;
+  if(noTrabajo){
+    return {
+      sueldoTotal, recibeVales:false, recibeFiscal:false,
+      fiscalBruto:0, valesBruto:0, efectivoBruto:0,
+      diasDescontados: diasLaborales0, fiscalDescuento:0, valesDescuento:0, efectivoDescuento:0,
+      retencionExtra, extraEfectivo:0,
+      fiscalNeto:0, valesNeto:0, efectivoNeto:0,
+      subtotalPago:0, totalDescuentos:0, efectivoRealEntregar:0, totalFinal:0,
+      noTrabajo:true,
+    };
+  }
+
+  // Recibe_Vales / Recibe_Fiscal: por defecto se toman de la hoja "Personal" (config
+  // permanente del empleado), pero pueden ajustarse manualmente solo para esta nómina
+  // semanal mediante los checkboxes del formulario, sin alterar esa configuración base.
+  const baseVales = empleado ? (empleado.recibeVales !== false) : true;
+  const baseFiscal = empleado ? (empleado.recibeFiscal !== false) : true;
+  const recibeVales = (recibeValesOverride!==undefined && recibeValesOverride!==null) ? !!recibeValesOverride : baseVales;
+  const recibeFiscal = (recibeFiscalOverride!==undefined && recibeFiscalOverride!==null) ? !!recibeFiscalOverride : baseFiscal;
 
   // Bruto semanal de cada componente. Los montos vienen de la hoja Parametros
   // (ST.cfgSalarioMinDiario, ST.cfgValesSemanal), nunca quedan fijos en la fórmula.
@@ -4965,7 +5031,11 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
   const fiscalNeto = recibeFiscal ? +(fiscalBruto - fiscalDescuento - retencionExtra).toFixed(2) : 0;
   // Vales_Neto_Final: si Recibe_Vales = TRUE, siempre el monto semanal completo (nunca se
   // prorratea ni se descuenta por faltas). Si Recibe_Vales = FALSE, siempre 0.
-  const valesNeto = recibeVales ? valesBruto : 0;
+  // "Vales en 0" es una penalización temporal con prioridad sobre todo lo demás: fuerza
+  // el neto a $0 aunque "Recibe vales" esté activado. Ese dinero NO se redistribuye a
+  // efectivo ni a fiscal — ya quedó reservado fuera del efectivo bruto (ver valesBruto
+  // arriba) y simplemente desaparece.
+  const valesNeto = valesEn0 ? 0 : (recibeVales ? valesBruto : 0);
   // Efectivo_Neto_Final: el Extra_Efectivo (apoyos/bonos extraordinarios en mano) se suma
   // únicamente aquí, nunca afecta fiscal ni vales.
   const efectivoNeto = +(efectivoBruto - efectivoDescuento + extraEfectivo).toFixed(2);
@@ -4988,6 +5058,7 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
     retencionExtra, extraEfectivo,
     fiscalNeto, valesNeto, efectivoNeto,
     subtotalPago, totalDescuentos, efectivoRealEntregar, totalFinal,
+    noTrabajo:false, valesEn0,
   };
 }
 
@@ -5078,7 +5149,7 @@ function renderNominas(){
         const filas = grupo.map(n=>{
           const estColor = n.estatus==='Pagado' ? 'var(--green,#38a169)' : n.estatus==='Cancelado' ? 'var(--text3)' : 'var(--orange)';
           return `<tr>
-            <td>${esc(n.nombreEmpleado||n.idEmpleado)}</td>
+            <td><span style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px" onclick="openNomResumenCard('${n.idNomina}')" title="Ver resumen completo">${esc(n.nombreEmpleado||n.idEmpleado)}</span></td>
             <td style="text-align:center">${n.faltas||0}${n.diasDescontados?` <span style="color:var(--text3);font-size:10.5px">(-${n.diasDescontados.toFixed(2)}d)</span>`:''}</td>
             <td style="text-align:right">${fmtMXN(n.fiscalNeto)}</td>
             <td style="text-align:right">${fmtMXN(n.valesNeto)}</td>
@@ -5143,7 +5214,7 @@ function openNomModal(idNomina){
   document.getElementById('nomModalSub').textContent = existente ? existente.idNomina : 'Registra la semana en la hoja Nominas';
 
   const disabled = existente && existente.estatus!=='Pendiente';
-  ['nEmpleado','nFechaInicio','nFaltas','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs'].forEach(id=>{
+  ['nEmpleado','nFechaInicio','nFaltas','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs','nRecibeVales','nRecibeFiscal','nValesEn0'].forEach(id=>{
     document.getElementById(id).disabled = !!disabled;
   });
   document.getElementById('nEstatus').value = existente ? existente.estatus : 'Pendiente';
@@ -5159,6 +5230,15 @@ function openNomModal(idNomina){
     document.getElementById('nRetencionExtra').value = existente.fiscalRetencionExtra||0;
     document.getElementById('nExtraEfectivo').value = existente.extraEfectivo||0;
     document.getElementById('nObs').value = existente.observaciones||'';
+    // Restaura los ajustes manuales guardados con ESTA nómina (solo aplicaron a esa
+    // semana). Si el registro es de antes de este cambio y no trae el dato guardado,
+    // se usa como respaldo la configuración base del empleado en hoja Personal.
+    const empBase = ST.personal[existente.idEmpleado];
+    document.getElementById('nRecibeVales').checked = existente.recibeValesSemana!==undefined && existente.recibeValesSemana!==null
+      ? !!existente.recibeValesSemana : (empBase ? empBase.recibeVales!==false : true);
+    document.getElementById('nRecibeFiscal').checked = existente.recibeFiscalSemana!==undefined && existente.recibeFiscalSemana!==null
+      ? !!existente.recibeFiscalSemana : (empBase ? empBase.recibeFiscal!==false : true);
+    document.getElementById('nValesEn0').checked = !!existente.valesEn0;
   } else {
     empSel.value = '';
     document.getElementById('nFechaInicio').value = nomMondayOf(todayISO());
@@ -5169,6 +5249,10 @@ function openNomModal(idNomina){
     document.getElementById('nRetencionExtra').value = 0;
     document.getElementById('nExtraEfectivo').value = 0;
     document.getElementById('nObs').value = '';
+    // "Vales en 0" SIEMPRE inicia desactivado — nunca guarda estado entre nóminas.
+    document.getElementById('nValesEn0').checked = false;
+    document.getElementById('nRecibeVales').checked = true;
+    document.getElementById('nRecibeFiscal').checked = true;
   }
   document.getElementById('nomSaveBtn').style.display = disabled ? 'none' : '';
   document.getElementById('nomPdfInlineBtn').style.display = existente ? '' : 'none';
@@ -5178,6 +5262,55 @@ function openNomModal(idNomina){
   modal.classList.add('open');
 }
 function closeNomModal(){ document.getElementById('nomModal').classList.remove('open'); }
+
+/* ── Punto 9: card/resumen al hacer click en el nombre del empleado dentro de Nóminas ──
+   Muestra el desglose completo (sin necesidad de abrir el formulario de edición). */
+function openNomResumenCard(idNomina){
+  const n = ST.nominas.find(x=>x.idNomina===idNomina);
+  if(!n){ toast('err','No se encontró esa nómina.'); return; }
+  const emp = ST.personal[n.idEmpleado] || {};
+  document.getElementById('nomResTitle').textContent = n.nombreEmpleado || n.idEmpleado;
+  const row=(label,val,bold)=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12.5px${bold?';font-weight:700':''}">
+    <span style="color:var(--text3)">${esc(label)}</span><span>${val}</span></div>`;
+  const diasTrabajados = Math.max(0, (ST.cfgDiasLaborales||7) - (n.faltas||0));
+  const body = `
+    <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:6px;text-transform:uppercase">Resumen semanal · ${esc(n.semanaAnio||'')}</div>
+    ${n.noTrabajo || (n.faltas>=(ST.cfgDiasLaborales||7)) ? `<div style="margin-bottom:8px;padding:6px 8px;background:rgba(229,62,62,.12);border-radius:var(--r4);color:var(--red);font-size:11.5px;font-weight:600">No trabajó esta semana — todo en $0</div>` : ''}
+    ${row('Sueldo base semanal', fmtMXN(n.sueldoTotalSnap||0))}
+    ${row('Días trabajados', diasTrabajados.toFixed(2))}
+    ${row('Faltas', n.faltas||0)}
+    ${row('Bonos', fmtMXN(n.bonos||0))}
+    ${row('Descuentos adicionales', fmtMXN(n.descuentosAdicionales||0))}
+    ${row('Préstamo descontado', fmtMXN(n.prestamo||0))}
+    <div style="border-top:1px solid var(--border);margin:8px 0"></div>
+    ${row('Fiscal', fmtMXN(n.fiscalNeto||0))}
+    ${row('Vales', fmtMXN(n.valesNeto||0))}
+    ${row('Efectivo', fmtMXN(n.efectivoRealEntregar||0))}
+    <div style="border-top:1px solid var(--border);margin:8px 0"></div>
+    ${row('Total a pagar', `<span style="font-weight:800;font-size:16px;color:var(--red)">${fmtMXN(n.totalFinal||0)}</span>`, true)}
+    <div style="margin-top:10px;font-size:10.5px;color:var(--text3)">Estatus: ${esc(n.estatus)} · ${n.estatusFirma==='Firmado'?'✅ Firmado':(n.urlPDF?'📄 Enviado':'Sin enviar')}</div>
+  `;
+  document.getElementById('nomResBody').innerHTML = body;
+  document.getElementById('nomResPdfBtn').setAttribute('onclick', `generarPDFNomina('${n.idNomina}')`);
+  document.getElementById('nomResumenModal').classList.add('open');
+}
+function closeNomResumenCard(){ document.getElementById('nomResumenModal').classList.remove('open'); }
+
+/* Al elegir empleado en una nómina NUEVA, precarga los checkboxes Recibe_Vales /
+   Recibe_Fiscal con el valor configurado en la hoja "Personal" para ese empleado.
+   Esto es solo un valor inicial editable: cambiarlo aquí NO modifica la hoja Personal.
+   Si se está editando una nómina existente, no se debe pisar lo que el usuario ya
+   restauró/ajustó al abrir el modal. */
+function onNomEmpleadoChange(){
+  if(!ST.nomEditId){
+    const idEmp = document.getElementById('nEmpleado').value;
+    const empleado = ST.personal[idEmp];
+    document.getElementById('nRecibeVales').checked = empleado ? empleado.recibeVales!==false : true;
+    document.getElementById('nRecibeFiscal').checked = empleado ? empleado.recibeFiscal!==false : true;
+    document.getElementById('nValesEn0').checked = false;
+  }
+  recalcNomPreview();
+}
 
 /* Recalcula en vivo el panel de resultados dentro del modal */
 function recalcNomPreview(){
@@ -5196,8 +5329,13 @@ function recalcNomPreview(){
     descuentos: document.getElementById('nDescuentos').value,
     retencionExtra: document.getElementById('nRetencionExtra').value,
     extraEfectivo: document.getElementById('nExtraEfectivo').value,
+    recibeValesOverride: document.getElementById('nRecibeVales').checked,
+    recibeFiscalOverride: document.getElementById('nRecibeFiscal').checked,
+    valesEn0: document.getElementById('nValesEn0').checked,
   });
   const set=(id,v)=>{document.getElementById(id).textContent=v;};
+  const warnEl = document.getElementById('nomNoTrabajoWarn');
+  if(warnEl) warnEl.style.display = r.noTrabajo ? '' : 'none';
   set('pvSueldoTotal', empleado? fmtMXN(r.sueldoTotal):'—');
   set('pvDiasDesc', r.diasDescontados.toFixed(4));
   set('pvFiscalBruto', fmtMXN(r.fiscalBruto));
@@ -5214,10 +5352,6 @@ function recalcNomPreview(){
   set('pvTotalDesc', fmtMXN(r.totalDescuentos));
   set('pvTotalFinal', fmtMXN(r.totalFinal));
   set('pvEfectivoReal', fmtMXN(r.efectivoRealEntregar));
-  const valesTxt = document.getElementById('nRecibeValesTxt');
-  if(valesTxt) valesTxt.textContent = !empleado ? '—' : (r.recibeVales ? 'Sí recibe vales' : 'No recibe vales (desactivado)');
-  const fiscalTxt = document.getElementById('nRecibeFiscalTxt');
-  if(fiscalTxt) fiscalTxt.textContent = !empleado ? '—' : (r.recibeFiscal ? 'Sí recibe fiscal' : 'No recibe fiscal (monto trasladado a efectivo)');
 }
 
 async function guardarNomina(){
@@ -5246,8 +5380,14 @@ async function guardarNomina(){
   const extraEfectivo = document.getElementById('nExtraEfectivo').value;
   const obs = document.getElementById('nObs').value;
   const estatus = ST.nomEditId ? document.getElementById('nEstatus').value : 'Pendiente';
+  const recibeValesSemana = document.getElementById('nRecibeVales').checked;
+  const recibeFiscalSemana = document.getElementById('nRecibeFiscal').checked;
+  const valesEn0 = document.getElementById('nValesEn0').checked;
 
-  const r = calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo });
+  const r = calcularNomina({
+    empleado, faltas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo,
+    recibeValesOverride: recibeValesSemana, recibeFiscalOverride: recibeFiscalSemana, valesEn0,
+  });
 
   const existente = ST.nomEditId ? ST.nominas.find(n=>n.idNomina===ST.nomEditId) : null;
 
@@ -5263,14 +5403,17 @@ async function guardarNomina(){
     existente ? existente.urlPDF : '', existente ? existente.estatusFirma : 'Pendiente', existente ? existente.fechaFirma : '',
     r.retencionExtra, r.extraEfectivo, r.efectivoRealEntregar,
     existente ? existente.idSalida : '',
+    // AK, AL, AM — ajustes manuales que SOLO aplican a esta nómina semanal; nunca
+    // tocan la hoja Personal, y la siguiente nómina siempre vuelve a leer su config base.
+    recibeValesSemana, recibeFiscalSemana, valesEn0,
   ];
 
   document.getElementById('nomSaveBtn').disabled = true;
   try{
     if(ST.nomEditRow){
-      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AK${ST.nomEditRow}`, [row]);
+      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AN${ST.nomEditRow}`, [row]);
     } else {
-      await sheetsAppend('Nominas!A2:AK', [row]);
+      await sheetsAppend('Nominas!A2:AN', [row]);
     }
     // NOTA: ya no se genera ningún movimiento individual en "Salidas" al guardar una nómina.
     // Los movimientos de caja se generan únicamente cuando la semana completa se marca
