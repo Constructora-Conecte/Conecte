@@ -5231,7 +5231,7 @@ function isoDate(d){
   return d.slice(0,10);
 }
 function sheetDate(iso){ if(!iso) return ''; const[y,m,day]=iso.split('-'); return `${parseInt(m)}/${parseInt(day)}/${y}`; }
-function fmtMXN(n){ return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtMXN(n){ const v=n||0; const neg=v<0; return (neg?'-$':'$')+Math.abs(v).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 /* ══════════════════════════════════════════════════════════════
    MÓDULO DE NÓMINAS
@@ -5406,23 +5406,47 @@ function parseNomPdfText(raw){
    (Total de la semana − Vales − Transferencia real), sin adivinar ni duplicar
    ningún descuento. */
 function aplicarNomPdfExtract(ex){
-  // Empleado: primero por RFC (dato único e inequívoco que trae el propio recibo);
-  // si no hay coincidencia, se cae a comparar por nombre (tolerante a mayúsculas y
-  // acentos). Nunca depende de la posición del dato en el PDF.
+  // Empleado: se intenta por varias vías, de la más confiable a la más laxa, porque
+  // el regex de posición fija (bloqueEmp) no siempre acierta según el formato exacto
+  // del CFDI. Si el primer intento falla, se prueban los siguientes contra el TEXTO
+  // COMPLETO del PDF (no solo el fragmento que el regex logró aislar), usando el
+  // propio catálogo de empleados como fuente de verdad — así es mucho más difícil
+  // que el nombre se quede sin llenar.
+  const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+  const textoCompleto = norm(ex.raw||'');
   let match = null;
+  // 1) RFC extraído por el regex vs. catálogo
   if(ex.rfc){
     const rfcObjetivo = ex.rfc.replace(/\s+/g,'').toUpperCase();
     match = (ST.personalList||[]).find(p => (p.rfc||'').replace(/\s+/g,'').toUpperCase()===rfcObjetivo);
   }
+  // 2) Si no hubo match por RFC extraído, busca el RFC de CADA empleado del catálogo
+  //    directamente dentro del texto completo del PDF (no depende de que el regex
+  //    haya logrado aislar el bloque "Nombre ... RFC" correctamente).
+  if(!match){
+    match = (ST.personalList||[]).find(p => p.rfc && textoCompleto.includes(p.rfc.replace(/\s+/g,'').toUpperCase()));
+  }
+  // 3) Nombre extraído por el regex vs. catálogo (exacto o parcial, tolerante a acentos)
   if(!match && ex.empleado){
-    const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     const objetivo = norm(ex.empleado);
     match = (ST.personalList||[]).find(p => norm(p.nombre)===objetivo)
          || (ST.personalList||[]).find(p => norm(p.nombre).includes(objetivo) || objetivo.includes(norm(p.nombre)));
   }
+  // 4) Último respaldo: busca el nombre completo de cada empleado del catálogo
+  //    directamente dentro del texto completo del PDF, por si el regex no logró
+  //    aislar ningún nombre (formato distinto, columnas desordenadas por el
+  //    extractor de texto, etc.).
+  if(!match){
+    match = (ST.personalList||[]).find(p => {
+      const n = norm(p.nombre);
+      return n && n.length>=5 && textoCompleto.includes(n);
+    });
+  }
   if(match){
     document.getElementById('nEmpleado').value = match.id;
     onNomEmpleadoChange();
+  } else {
+    toast('inf','No se pudo identificar automáticamente al empleado en el PDF; selecciónalo manualmente.');
   }
 
   // Periodo / Fecha → semana de inicio (se ajusta automáticamente al lunes correspondiente)
@@ -5445,13 +5469,26 @@ function aplicarNomPdfExtract(ex){
     }
   }
 
+  // Deducciones del PDF (columna "Deducciones" del CFDI: ISR + otras retenciones
+  // fiscales) → se colocan en "Retención fiscal extra". Solo si el usuario no había
+  // capturado ya un valor manual en ese campo, igual que con la Transferencia.
+  // Esto SOLO afecta lo fiscal (nunca el efectivo ni los vales), tal como ya
+  // funciona el campo "Retención fiscal extra" en el resto del sistema.
+  if(ex.descuentos || ex.retenciones){
+    const campoRet = document.getElementById('nRetencionExtra');
+    if(!parseFloat(campoRet.value)){
+      campoRet.value = ex.descuentos || ex.retenciones;
+    }
+  }
+
   // Deja constancia en observaciones de lo que trae el recibo fiscal (ISR, ajuste
-  // al neto, días de pago fiscales, neto depositado), solo para consulta — no
-  // afecta ningún cálculo, así el usuario ve qué deducciones fiscales hubo en la
-  // semana aunque no se apliquen dos veces.
+  // al neto, días de pago fiscales, neto depositado, deducciones), solo para
+  // consulta — no afecta ningún cálculo, así el usuario ve qué deducciones fiscales
+  // hubo en la semana aunque no se apliquen dos veces.
   const detalles = [];
   if(ex.isr) detalles.push(`ISR $${ex.isr.toFixed(2)}`);
   if(ex.ajusteNeto) detalles.push(`Ajuste al neto $${ex.ajusteNeto.toFixed(2)}`);
+  if(ex.descuentos) detalles.push(`Deducciones $${ex.descuentos.toFixed(2)} (colocadas en Retención fiscal)`);
   if(ex.dias!=null) detalles.push(`Días de pago fiscal: ${ex.dias}`);
   if(ex.netoRecibo) detalles.push(`Neto del recibo: $${ex.netoRecibo.toFixed(2)}`);
   const obs = document.getElementById('nObs');
@@ -5590,10 +5627,19 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
   // Transferencia + Efectivo + Vales = Total de la nómina (Total_Final_Pagar, ya con
   // el ajuste manual de centavos aplicado si estuviera activo). Los vales no se tocan
   // porque son un método de pago aparte que no se reparte manualmente.
+  // IMPORTANTE (corrección de préstamos en negativo): la Transferencia manual es un
+  // HECHO ya consumado (el neto que el recibo fiscal en PDF dice que ya se depositó
+  // esta semana) — NUNCA debe recortarse aunque el préstamo u otros descuentos dejen
+  // poco o nada en el total de la semana. Antes, si el total (ya con el préstamo
+  // restado) era menor que la Transferencia, el código recortaba la Transferencia
+  // para "cuadrar" y el Efectivo se quedaba en $0 en vez de reflejar la deuda real.
+  // Ahora la Transferencia se respeta tal cual se capturó/importó, y es el Efectivo
+  // el que absorbe cualquier diferencia — incluso en negativo si el empleado queda
+  // debiendo — que es exactamente donde el préstamo siempre debe descontarse.
   let transferenciaFinalDisplay = fiscalNeto;
   let efectivoFinalDisplay = efectivoRealEntregar;
   if(modoManual){
-    transferenciaFinalDisplay = +Math.min(transferenciaManual, Math.max(0,totalFinalDisplay-valesNeto)).toFixed(2);
+    transferenciaFinalDisplay = +transferenciaManual.toFixed(2);
     efectivoFinalDisplay = +(totalFinalDisplay - valesNeto - transferenciaFinalDisplay).toFixed(2);
   }
 
@@ -6624,7 +6670,7 @@ async function generarPDFNomina(idNomina){
   function txt(s,x,y,opts){doc.text(String(s==null?'':s),x,y,opts||{});}
   function hline(x1,x2,y,col,w){doc.setDrawColor(...(col||C.line));doc.setLineWidth(w||0.25);doc.line(x1,y,x2,y);}
   function setF(style,size,col){doc.setFont('helvetica',style);doc.setFontSize(size);doc.setTextColor(...(col||C.ink));}
-  function money(v){return '$'+(v||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function money(v){const n=v||0; const neg=n<0; return (neg?'-$':'$')+Math.abs(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
   function eyebrow(s,x,y,opts){ setF('bold',6.7,C.faint); txt(String(s).toUpperCase(),x,y,opts); }
 
   try{
@@ -6673,10 +6719,26 @@ async function generarPDFNomina(idNomina){
     y+=6;
     hline(ML,MR,y,C.lineSoft,0.3); y+=6;
 
+    // ── MODO COMPACTO (garantiza 1 sola hoja) ──
+    // Cuantos más conceptos extra tenga la semana (bonos, extra en efectivo, los 3
+    // tipos de falta, préstamo, descuentos adicionales, retención fiscal) y entre
+    // más larga sea la nota de Observaciones, más fácil es que el recibo se pase de
+    // 1 hoja. En vez de dejar que se cree una 2ª hoja, se activa un modo compacto que
+    // ACORTA las notas explicativas (nunca las elimina del todo) y reduce un poco
+    // el espaciado entre líneas, para que TODO quepa siempre en una sola hoja.
+    const extrasCount = (n.bonos?1:0)+(n.extraEfectivo?1:0)+((n.faltas||0)>0?1:0)+
+      ((n.faltasJustificadas||0)>0?1:0)+((n.faltasCastigo||0)>0?1:0)+(n.prestamo?1:0)+
+      (n.descuentosAdicionales?1:0)+(n.fiscalRetencionExtra?1:0);
+    const obsLen = (n.observaciones||'').length;
+    const COMPACT = extrasCount>=3 || obsLen>90;
+
     // ── TABLA: PERCEPCIONES / DEDUCCIONES ──
     // Formato de una sola columna a todo el ancho (CW) con una nota breve en
     // lenguaje sencillo debajo de cada concepto, para que el trabajador entienda
     // exactamente de dónde sale cada peso sin tener que preguntar.
+    // checkPageBreak queda como último respaldo de seguridad (no debería activarse
+    // nunca gracias al modo compacto de arriba, pero si algún caso extremo lo
+    // rebasara, es preferible una 2ª hoja legible a que el contenido se encime).
     function checkPageBreak(minSpace){
       if(y > 297-(minSpace||20)){
         doc.addPage();
@@ -6685,36 +6747,38 @@ async function generarPDFNomina(idNomina){
         y = 26;
       }
     }
-    function fila(label, val, nota){
+    function fila(label, val, nota, notaCorta){
       checkPageBreak(16);
       setF('bold',8.8,C.ink); txt(label,ML,y);
       setF('bold',8.8,C.ink); txt(money(val),MR,y,{align:'right'});
-      y += 4.3;
-      if(nota){
-        setF('normal',7,C.faint);
-        const nl = doc.splitTextToSize(nota, CW-2);
-        doc.text(nl, ML, y);
-        y += nl.length*3.5 + 3.2;
-      } else { y += 2; }
+      y += COMPACT ? 3.8 : 4.3;
+      const notaUsar = COMPACT ? (notaCorta||nota) : nota;
+      if(notaUsar){
+        setF('normal', COMPACT?6.6:7, C.faint);
+        const nl = doc.splitTextToSize(notaUsar, CW-2);
+        const nlUsar = COMPACT ? nl.slice(0,1) : nl; // en compacto, máximo 1 línea de nota
+        doc.text(nlUsar, ML, y);
+        y += nlUsar.length*(COMPACT?2.9:3.5) + (COMPACT?1.8:3.2);
+      } else { y += COMPACT ? 1.2 : 2; }
     }
     function seccionHeader(titulo){
       checkPageBreak(24);
-      eyebrow(titulo,ML,y); y+=2.2; hline(ML,MR,y,C.line,0.5); y+=6.5;
+      eyebrow(titulo,ML,y); y+=2.2; hline(ML,MR,y,C.line,0.5); y+= COMPACT?5:6.5;
     }
     function totalLinea(label, val, color){
       checkPageBreak(14);
       hline(ML,MR,y,C.lineSoft,0.3); y+=5;
       setF('bold',9.5,C.ink); txt(label,ML,y);
       setF('bold',9.5,color||C.red); txt(money(val),MR,y,{align:'right'});
-      y+=9;
+      y+= COMPACT?6.5:9;
     }
 
     seccionHeader('Percepciones — lo que se te paga esta semana');
-    fila('Sueldo fiscal (neto)', n.fiscalNeto, 'Parte de tu pago que se transfiere a tu cuenta y aparece en tu recibo fiscal (CFDI) que emite el contador.');
-    fila('Vales de despensa (neto)', n.valesNeto, 'Vale de despensa de la semana. Nunca se descuenta por faltas, sin importar cuántas tengas.');
-    fila('Efectivo (neto)', n.efectivoNeto, 'Resto de tu sueldo acordado que se te entrega en efectivo, ya con el descuento de faltas de esta sección aplicado.');
-    if(n.bonos) fila('Bonos', n.bonos, 'Bono o gratificación extra de esta semana. Se suma directo al efectivo que se te entrega.');
-    if(n.extraEfectivo) fila('Extra en efectivo', n.extraEfectivo, 'Apoyo adicional entregado solo en efectivo, aparte del sueldo normal de la semana.');
+    fila('Sueldo fiscal (neto)', n.fiscalNeto, 'Parte de tu pago que se transfiere a tu cuenta y aparece en tu recibo fiscal (CFDI) que emite el contador.', 'Se transfiere a tu cuenta (CFDI del contador).');
+    fila('Vales de despensa (neto)', n.valesNeto, 'Vale de despensa de la semana. Nunca se descuenta por faltas, sin importar cuántas tengas.', 'Nunca se descuenta por faltas.');
+    fila('Efectivo (neto)', n.efectivoNeto, 'Resto de tu sueldo acordado que se te entrega en efectivo, ya con el descuento de faltas de esta sección aplicado.', 'Resto de tu sueldo, ya con faltas aplicadas.');
+    if(n.bonos) fila('Bonos', n.bonos, 'Bono o gratificación extra de esta semana. Se suma directo al efectivo que se te entrega.', 'Se suma directo al efectivo.');
+    if(n.extraEfectivo) fila('Extra en efectivo', n.extraEfectivo, 'Apoyo adicional entregado solo en efectivo, aparte del sueldo normal de la semana.', 'Apoyo adicional en efectivo.');
     totalLinea('Total percepciones', n.subtotalPago+n.bonos);
 
     // Desglosa el descuento por faltas en sus 3 tipos, proporcional a los días
@@ -6724,16 +6788,21 @@ async function generarPDFNomina(idNomina){
     seccionHeader('Deducciones — lo que se te descuenta esta semana');
     if((n.faltas||0)>0) fila(`Falta normal (${n.faltas} día${n.faltas===1?'':'s'})`,
       totalDiasDesc? +(totalDescFaltas*((n.faltas*(ST.cfgFactorFaltas||1.1667))/totalDiasDesc)).toFixed(2) : 0,
-      'Se descuenta el día que faltaste más la parte proporcional del séptimo día (domingo).');
+      'Se descuenta el día que faltaste más la parte proporcional del séptimo día (domingo).',
+      'Día faltado + proporcional del 7° día.');
     if((n.faltasJustificadas||0)>0) fila(`Falta justificada (${n.faltasJustificadas} día${n.faltasJustificadas===1?'':'s'})`,
       totalDiasDesc? +(totalDescFaltas*(n.faltasJustificadas/totalDiasDesc)).toFixed(2) : 0,
-      'Se descuenta únicamente el día que faltaste. El domingo NO se toca.');
+      'Se descuenta únicamente el día que faltaste. El domingo NO se toca.',
+      'Solo el día; el domingo no se toca.');
     if((n.faltasCastigo||0)>0) fila(`Falta con castigo (${n.faltasCastigo} día${n.faltasCastigo===1?'':'s'})`,
       totalDiasDesc? +(totalDescFaltas*((n.faltasCastigo*1+1)/totalDiasDesc)).toFixed(2) : 0,
-      'Se descuentan todos los días que faltaste MÁS el domingo completo, como penalización.');
-    if(n.prestamo) fila('Préstamo', n.prestamo, 'Abono de esta semana al préstamo que tienes con la empresa. Solo afecta tu efectivo, nunca tu recibo fiscal.');
-    if(n.descuentosAdicionales) fila('Descuentos adicionales', n.descuentosAdicionales, 'Otro descuento acordado para esta semana en particular.');
-    if(n.fiscalRetencionExtra) fila('Retención fiscal extra', n.fiscalRetencionExtra, 'Ajuste de ISR/IMSS/SAT que aplica el contador sobre tu recibo fiscal (CONTPAQi). Solo afecta la parte fiscal, nunca tu efectivo.');
+      'Se descuentan todos los días que faltaste MÁS el domingo completo, como penalización.',
+      'Días faltados + domingo completo.');
+    // El préstamo SIEMPRE se descuenta del efectivo (nunca del recibo fiscal), incluso
+    // si el monto deja el efectivo de la semana en negativo (el empleado queda a deber).
+    if(n.prestamo) fila('Préstamo', n.prestamo, 'Abono de esta semana al préstamo que tienes con la empresa. Se descuenta siempre de tu efectivo (nunca de tu recibo fiscal), aunque tu efectivo de la semana quede en negativo.', 'Se descuenta de tu efectivo, aunque quede en negativo.');
+    if(n.descuentosAdicionales) fila('Descuentos adicionales', n.descuentosAdicionales, 'Otro descuento acordado para esta semana en particular.', 'Descuento acordado solo esta semana.');
+    if(n.fiscalRetencionExtra) fila('Retención fiscal extra', n.fiscalRetencionExtra, 'Ajuste de ISR/IMSS/SAT que aplica el contador sobre tu recibo fiscal (CONTPAQi). Solo afecta la parte fiscal, nunca tu efectivo.', 'Ajuste fiscal (ISR/IMSS/SAT). Solo lo fiscal.');
     if(!n.prestamo && !n.descuentosAdicionales && !n.fiscalRetencionExtra && !(n.faltas||0) && !(n.faltasJustificadas||0) && !(n.faltasCastigo||0)){
       setF('italic',7.6,C.faint); txt('Sin deducciones esta semana.',ML,y); y+=6;
     }
@@ -6741,31 +6810,42 @@ async function generarPDFNomina(idNomina){
 
     // ── TOTAL SEMANA (fiscal + vales + efectivo) ──
     checkPageBreak(45);
-    hline(ML,MR,y,C.line,0.4); y+=6;
+    hline(ML,MR,y,C.line,0.4); y+= COMPACT?4.5:6;
     setF('normal',9,C.sub); txt('Total semana (fiscal + vales + efectivo)',ML,y);
     setF('bold',10,C.ink); txt(money(n.totalFinal),MR,y,{align:'right'});
-    y+=8;
+    y+= COMPACT?6:8;
 
     // ── EFECTIVO REAL A ENTREGAR (dato principal) ──
+    // Si el efectivo queda en negativo (p. ej. por un préstamo grande), se aclara
+    // en texto que el empleado queda a deber, en vez de solo mostrar el signo "-".
     checkPageBreak(35);
-    hline(ML,MR,y,C.ink,0.6); y+=7;
+    hline(ML,MR,y,C.ink,0.6); y+= COMPACT?5.5:7;
     setF('bold',12,C.ink); txt('EFECTIVO A ENTREGAR',ML,y);
     setF('bold',14,C.red); txt(money(n.efectivoRealEntregar),MR,y,{align:'right'});
-    y+=5;
+    y+= COMPACT?4:5;
     setF('italic',7.2,C.faint);
-    txt('Este es el único monto que se te entrega físicamente en mano. La parte fiscal y los vales se pagan por transferencia / vale aparte.',ML,y);
-    y+=4.5;
+    const notaEfectivo = n.efectivoRealEntregar<0
+      ? 'Efectivo en negativo: el préstamo u otros descuentos superaron tu efectivo de la semana — quedas a deber esa diferencia.'
+      : 'Este es el único monto que se te entrega físicamente en mano. La parte fiscal y los vales se pagan por transferencia / vale aparte.';
+    txt(notaEfectivo,ML,y);
+    y+= COMPACT?3.8:4.5;
     setF('italic',7.6,C.sub);
     txt('Cuenta de depósito BBVA (fiscal): '+(emp.cuentaBBVA||'—'),ML,y);
-    y+=14;
+    y+= COMPACT?10:14;
 
     // ── OBSERVACIONES ──
+    // En modo compacto se recorta a máx. 3 líneas (con "…" y aviso) para
+    // garantizar que el recibo siempre quepa en 1 hoja; el texto completo sigue
+    // disponible sin recortar dentro del sistema (ficha de la nómina).
     if(n.observaciones){
       checkPageBreak(25);
       eyebrow('Observaciones',ML,y); y+=4.5;
-      setF('normal',8.2,C.ink);
-      const ol=doc.splitTextToSize(n.observaciones,CW);
-      doc.text(ol,ML,y); y+=ol.length*4.2+6;
+      setF('normal', COMPACT?7.4:8.2, C.ink);
+      let ol=doc.splitTextToSize(n.observaciones,CW);
+      let recortado = false;
+      if(COMPACT && ol.length>3){ ol = ol.slice(0,3); recortado = true; }
+      doc.text(ol,ML,y); y+=ol.length*(COMPACT?3.6:4.2)+ (recortado?2:6);
+      if(recortado){ setF('italic',6.6,C.faint); txt('… ver el detalle completo de esta nómina en el sistema.',ML,y); y+=6; }
     }
 
     // ── FIRMA ──
