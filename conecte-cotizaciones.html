@@ -989,6 +989,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             Nuevo Ingreso
           </button>
         </div>
+        <!-- Punto 10: filtros avanzados combinables (Mes / Año / Cliente / Método de pago) -->
+        <div class="filter-bar" style="margin-top:-6px">
+          <select class="form-select" id="ingFMes" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()">
+            <option value="">Mes: todos</option>
+            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+          <select class="form-select" id="ingFAnio" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()"><option value="">Año: todos</option></select>
+          <select class="form-select" id="ingFCliente" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()"><option value="">Cliente: todos</option></select>
+          <select class="form-select" id="ingFCuenta" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()"><option value="">Método de pago: todos</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosIng()">Limpiar filtros</button>
+        </div>
         <div class="card">
           <div class="card-header">
             <span class="card-title">Registro de Ingresos</span>
@@ -1027,6 +1041,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
             Nuevo Gasto
           </button>
+        </div>
+        <!-- Punto 10: filtros avanzados combinables (Mes / Año / Proveedor / Categoría) -->
+        <div class="filter-bar" style="margin-top:-6px">
+          <select class="form-select" id="gasFMes" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()">
+            <option value="">Mes: todos</option>
+            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+          <select class="form-select" id="gasFAnio" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()"><option value="">Año: todos</option></select>
+          <select class="form-select" id="gasFProveedor" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()"><option value="">Proveedor: todos</option></select>
+          <select class="form-select" id="gasFCategoria" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()"><option value="">Categoría: todas</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosGas()">Limpiar filtros</button>
         </div>
         <div class="card">
           <div class="card-header">
@@ -1766,6 +1794,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <input type="number" class="form-input" id="nFaltas" min="0" step="1" value="0" oninput="recalcNomPreview()">
         </div>
         <div class="form-group">
+          <label class="form-label">Faltas justificadas <span style="color:var(--text3);font-weight:400">(no descuentan)</span></label>
+          <input type="number" class="form-input" id="nFaltasJustificadas" min="0" step="1" value="0" oninput="recalcNomPreview()">
+        </div>
+        <div class="form-group">
           <label class="form-label">Préstamo a descontar</label>
           <input type="number" class="form-input" id="nPrestamo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
         </div>
@@ -1785,6 +1817,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <label class="form-label">Extra en efectivo <span style="color:var(--text3);font-weight:400">(apoyo/gratificación — solo suma al efectivo)</span></label>
           <input type="number" class="form-input" id="nExtraEfectivo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
         </div>
+        <div class="form-group">
+          <label class="form-label">Monto acordado de la semana <span style="color:var(--text3);font-weight:400">(opcional — sustituye el sueldo base)</span></label>
+          <input type="number" class="form-input" id="nMontoAcordadoManual" min="0" step="0.01" value="0" placeholder="Déjalo en 0 para usar el sueldo base del empleado" oninput="recalcNomPreview()">
+        </div>
         <div class="form-group full" style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4)">
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
             <input type="checkbox" id="nRecibeVales" onchange="recalcNomPreview()"> Recibe vales
@@ -1798,6 +1834,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <span style="font-size:10.5px;color:var(--text3);width:100%">
             Se cargan automáticamente según la hoja "Personal", pero puedes ajustarlos solo para esta semana — no modifican la configuración permanente del empleado. "Vales en 0" siempre inicia desactivado y tiene prioridad sobre "Recibe vales".
           </span>
+        </div>
+
+        <!-- Punto 1: Modo Manual — reparto manual Transferencia/Efectivo -->
+        <div class="form-group full" style="padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4)">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
+            <input type="checkbox" id="nModoManual" onchange="onModoManualToggle()"> Modo Manual
+          </label>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:4px">
+            Para casos especiales donde el cálculo automático no representa exactamente lo que se le pagará. Indica cuánto se paga por Transferencia y el sistema calcula el Efectivo automáticamente (Transferencia + Efectivo + Vales = Total de la nómina). No afecta préstamos, faltas ni vales.
+          </div>
+          <div id="nModoManualFields" style="display:none;margin-top:10px">
+            <label class="form-label">Transferencia (manual)</label>
+            <input type="number" class="form-input" id="nTransferenciaManual" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+          </div>
+        </div>
+
+        <!-- Punto 5: Ajuste manual por diferencias de centavos / Total final -->
+        <div class="form-group full" style="padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4)">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
+            <input type="checkbox" id="nAjusteManualActivo" onchange="onAjusteManualToggle()"> Ajuste manual del total (Total final)
+          </label>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:4px">
+            Solo para corregir diferencias de centavos contra el recibo fiscal. Al activarlo, el importe que escribas aquí sustituye al total calculado automáticamente; el resto del cálculo (faltas, préstamo, vales) no se modifica.
+          </div>
+          <div id="nAjusteManualFields" style="display:none;margin-top:10px">
+            <label class="form-label">Total final (definitivo)</label>
+            <input type="number" class="form-input" id="nTotalManualOverride" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+          </div>
         </div>
         <div class="form-group full">
           <label class="form-label">Observaciones de incidencias</label>
@@ -1848,6 +1912,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <div>
             <div style="color:var(--text3);margin-bottom:4px">Total semana (fiscal+vales+efectivo)</div>
             <div style="font-weight:600" id="pvTotalFinal">—</div>
+            <div style="color:var(--text3);margin-top:6px;font-size:10px" id="pvAjusteNota"></div>
+          </div>
+        </div>
+        <div id="pvModoManualRow" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);grid-template-columns:1fr 1fr;gap:14px;font-size:11.5px">
+          <div>
+            <div style="color:var(--text3);margin-bottom:4px">Transferencia (Modo Manual)</div>
+            <div style="font-weight:700" id="pvTransferenciaManual">—</div>
+          </div>
+          <div>
+            <div style="color:var(--text3);margin-bottom:4px">Efectivo calculado (Modo Manual)</div>
+            <div style="font-weight:700" id="pvEfectivoManual">—</div>
           </div>
         </div>
         <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -2899,6 +2974,16 @@ async function loadAll() {
         recibeFiscalSemana: r[37]===undefined||r[37]===null||String(r[37]).trim()===''
           ? null : /^(TRUE|SI|SÍ|1)$/i.test(String(r[37]).trim()),
         valesEn0: /^(TRUE|SI|SÍ|1)$/i.test(String(r[38]||'').trim()),
+        // AN–AS — columnas NUEVAS para Modo Manual / monto acordado / ajuste de
+        // centavos / faltas justificadas. Si la hoja "Nominas" todavía no las
+        // tiene agregadas, simplemente llegan vacías y todo sigue funcionando
+        // igual que antes (valores por defecto = deshabilitado / 0).
+        modoManual: /^(TRUE|SI|SÍ|1)$/i.test(String(r[39]||'').trim()),
+        transferenciaManual: parseFloat(r[40])||0,
+        montoAcordadoManual: parseFloat(r[41])||0,
+        ajusteManualActivo: /^(TRUE|SI|SÍ|1)$/i.test(String(r[42]||'').trim()),
+        totalManualOverride: parseFloat(r[43])||0,
+        faltasJustificadas: parseFloat(r[44])||0,
       })).filter(n=>n.idNomina);
       ST.nominasError = null;
     }catch(nomErr){
@@ -3491,23 +3576,35 @@ async function guardarCot() {
   const iva = sub*0.16;
   const tot = sub+iva;
 
-  const newId = ST.editId || await genNextFolio(cliente, desc);
-  const itemsJSON = JSON.stringify(ST.items.map(it=>({
-    desc: it.desc, cant: it.cant, unidad: it.unidad, precio: it.precio, imp: it.imp
-  })));
-  // Fecha de creación (col K): es un dato de auditoría que se fija UNA sola vez y
-  // nunca debe volver a tocarse en ediciones posteriores (aunque se cambie el
-  // estatus a "Enviado" o se edite cualquier otro campo). Si ya existe un registro
-  // con esa misma cotización, se conserva su fecha de creación original; solo si
-  // es un registro nuevo se usa la fecha de hoy.
   const registroExistente = ST.editId ? ST.cotizaciones.find(c=>c.id===ST.editId) : null;
   const fechaCreacion = registroExistente && registroExistente.creacion
     ? registroExistente.creacion
     : sheetDate(todayISO());
+
+  // Punto 9: si la descripción cambió en una cotización ya existente, el ID debe
+  // sincronizarse automáticamente (solo la parte final, folio y RFC no cambian).
+  // Excepción de seguridad: si ya hay Órdenes de Compra vinculadas a este ID, NO se
+  // cambia el ID (para no dejarlas huérfanas) y se avisa al usuario.
+  let newId;
+  let avisoIdNoSync = false;
+  if(ST.editId){
+    const idSincronizado = buildSyncedCotId(ST.editId, desc);
+    const tieneOcVinculadas = [...(ST.ocList||[]), ...(ST.ocAll||[])]
+      .some(o => o.id_cot===ST.editId || (o.cotIds||[]).includes(ST.editId));
+    if(idSincronizado !== ST.editId && tieneOcVinculadas){
+      newId = ST.editId;
+      avisoIdNoSync = true;
+    } else {
+      newId = idSincronizado;
+    }
+  } else {
+    newId = await genNextFolio(cliente, desc);
+  }
   const row = [
     newId, sheetDate(fecha), cliente,
     sub.toFixed(2), iva.toFixed(2), tot.toFixed(2),
-    itemsJSON, '', desc, notas, fechaCreacion,
+    JSON.stringify(ST.items.map(it=>({desc: it.desc, cant: it.cant, unidad: it.unidad, precio: it.precio, imp: it.imp}))),
+    '', desc, notas, fechaCreacion,
     ST.usuario||'', contacto, vigencia, estatus, '',
     fechaEnvio ? sheetDate(fechaEnvio) : ''
   ];
@@ -3518,7 +3615,9 @@ async function guardarCot() {
   try {
     if(ST.editId && ST.editRow){
       await sheetsUpdate(`Cotizaciones!A${ST.editRow}:Q${ST.editRow}`, [row]);
-      toast('ok',`${newId} actualizada.`);
+      toast('ok', avisoIdNoSync
+        ? `${newId} actualizada. El ID no se sincronizó con la nueva descripción porque ya tiene Órdenes de Compra vinculadas.`
+        : `${newId} actualizada.`);
     } else {
       await sheetsAppend('Cotizaciones!A2:Q', [row]);
       ST.editId = newId;
@@ -5017,21 +5116,30 @@ function nomFmtFechaLarga(iso){
               retencionExtra, extraEfectivo }
    NOTA IMPORTANTE (dato principal del sistema): "efectivoRealEntregar" es el efectivo
    físico que hay que sacar de caja. Ya NO se usa Sueldo_Total como indicador principal. */
-function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo, recibeValesOverride, recibeFiscalOverride, valesEn0 }){
+function calcularNomina({ empleado, faltas, faltasJustificadas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo, recibeValesOverride, recibeFiscalOverride, valesEn0, montoAcordadoOverride, modoManual, transferenciaManual, ajusteManualActivo, totalManualOverride }){
   faltas = Math.max(0, parseFloat(faltas)||0);
+  faltasJustificadas = Math.max(0, parseFloat(faltasJustificadas)||0);
   prestamo = Math.max(0, parseFloat(prestamo)||0);
   bonos = Math.max(0, parseFloat(bonos)||0);
   descuentos = Math.max(0, parseFloat(descuentos)||0);
   retencionExtra = Math.max(0, parseFloat(retencionExtra)||0);
   extraEfectivo = Math.max(0, parseFloat(extraEfectivo)||0);
   valesEn0 = !!valesEn0;
+  modoManual = !!modoManual;
+  ajusteManualActivo = !!ajusteManualActivo;
+  montoAcordadoOverride = Math.max(0, parseFloat(montoAcordadoOverride)||0);
+  transferenciaManual = Math.max(0, parseFloat(transferenciaManual)||0);
+  totalManualOverride = Math.max(0, parseFloat(totalManualOverride)||0);
 
-  const sueldoTotal = empleado?.sueldoTotalAcordado || 0;
+  // Punto 2: si se indica un "Monto acordado" manual para la semana (casos de alta
+  // tardía, por ejemplo), ese monto sustituye al sueldo base del empleado y los
+  // descuentos por faltas se calculan sobre él, no sobre la config permanente.
+  const sueldoTotal = montoAcordadoOverride>0 ? montoAcordadoOverride : (empleado?.sueldoTotalAcordado || 0);
   const diasLaborales0 = ST.cfgDiasLaborales||7;
 
   // ── Prioridad 1: empleado que NO trabajó en toda la semana ──
-  // Si las faltas cubren o exceden los días laborales de la semana, ningún concepto
-  // se calcula: pago, vales y fiscal quedan en $0. Nada se prorratea ni se redistribuye.
+  // Las faltas justificadas NUNCA cuentan para esta regla ni generan descuento:
+  // solo las faltas normales (con descuento) pueden dejar la semana en $0.
   const noTrabajo = faltas >= diasLaborales0;
   if(noTrabajo){
     return {
@@ -5041,7 +5149,9 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
       retencionExtra, extraEfectivo:0,
       fiscalNeto:0, valesNeto:0, efectivoNeto:0,
       subtotalPago:0, totalDescuentos:0, efectivoRealEntregar:0, totalFinal:0,
-      noTrabajo:true,
+      noTrabajo:true, faltasJustificadas,
+      montoAcordadoOverride, modoManual:false, transferenciaManual:0, transferenciaFinalDisplay:0, efectivoFinalDisplay:0,
+      ajusteManualActivo:false, totalManualOverride:0, totalFinalDisplay:0,
     };
   }
 
@@ -5063,7 +5173,9 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
   const valesBruto = recibeVales ? +ST.cfgValesSemanal.toFixed(2) : 0;
   const efectivoBruto = +(sueldoTotal - fiscalBruto - valesBruto).toFixed(2);
 
-  // Regla de faltas: cada falta = factor configurable (por defecto 1.1667) de días descontados
+  // Regla de faltas: cada falta (NO justificada) = factor configurable (por defecto 1.1667)
+  // de días descontados. Las faltas justificadas se registran pero nunca entran aquí
+  // (punto 6: no generan descuento económico).
   const diasDescontados = +(faltas*(ST.cfgFactorFaltas||1.1667)).toFixed(4);
   const diasLaborales = ST.cfgDiasLaborales||7;
   const factorDia = diasDescontados/diasLaborales;
@@ -5091,6 +5203,8 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
   const efectivoNeto = +(efectivoBruto - efectivoDescuento + extraEfectivo).toFixed(2);
 
   const subtotalPago = +(fiscalNeto+valesNeto+efectivoNeto).toFixed(2);
+  // Punto 4: el préstamo sigue descontándose exactamente igual, con o sin Modo Manual —
+  // se resta aquí, antes de cualquier ajuste manual de reparto o de centavos.
   const totalDescuentos = +(fiscalDescuento+valesDescuento+efectivoDescuento+retencionExtra+prestamo+descuentos).toFixed(2);
 
   // ★ EFECTIVO_REAL_A_ENTREGAR — el dato más importante del sistema.
@@ -5102,17 +5216,42 @@ function calcularNomina({ empleado, faltas, prestamo, bonos, descuentos, retenci
   // Total_Final_Pagar: el total de dinero semanal completo (transferencia + vales + efectivo real)
   const totalFinal = +(fiscalNeto + valesNeto + efectivoRealEntregar).toFixed(2);
 
+  // Punto 5: Ajuste manual / Total final — para corregir diferencias de centavos contra
+  // el recibo fiscal sin tocar el resto del cálculo. Solo cambia el TOTAL mostrado/guardado.
+  const totalFinalDisplay = (ajusteManualActivo && totalManualOverride>0) ? +totalManualOverride.toFixed(2) : totalFinal;
+
+  // Punto 1: Modo Manual — el usuario indica cuánto se paga por Transferencia y el
+  // sistema calcula el Efectivo automáticamente para que siempre se cumpla:
+  // Transferencia + Efectivo + Vales = Total de la nómina (Total_Final_Pagar, ya con
+  // el ajuste manual de centavos aplicado si estuviera activo). Los vales no se tocan
+  // porque son un método de pago aparte que no se reparte manualmente.
+  let transferenciaFinalDisplay = fiscalNeto;
+  let efectivoFinalDisplay = efectivoRealEntregar;
+  if(modoManual){
+    transferenciaFinalDisplay = +Math.min(transferenciaManual, Math.max(0,totalFinalDisplay-valesNeto)).toFixed(2);
+    efectivoFinalDisplay = +(totalFinalDisplay - valesNeto - transferenciaFinalDisplay).toFixed(2);
+  }
+
   return {
     sueldoTotal, recibeVales, recibeFiscal, fiscalBruto, valesBruto, efectivoBruto,
     diasDescontados, fiscalDescuento, valesDescuento, efectivoDescuento,
     retencionExtra, extraEfectivo,
     fiscalNeto, valesNeto, efectivoNeto,
     subtotalPago, totalDescuentos, efectivoRealEntregar, totalFinal,
-    noTrabajo:false, valesEn0,
+    noTrabajo:false, valesEn0, faltasJustificadas, montoAcordadoOverride,
+    modoManual, transferenciaManual, transferenciaFinalDisplay, efectivoFinalDisplay,
+    ajusteManualActivo, totalManualOverride, totalFinalDisplay,
   };
 }
 
 /* ── RENDER: listado + stats de la pestaña Nóminas ── */
+/* Punto 7: expandir/contraer un grupo semanal de Nóminas */
+function toggleNomSemana(key){
+  ST.nomWeekCollapsed = ST.nomWeekCollapsed || {};
+  ST.nomWeekCollapsed[key] = !ST.nomWeekCollapsed[key];
+  renderNominas();
+}
+
 function renderNominas(){
   const tbody = document.getElementById('nomTbody');
   if(!tbody) return; // la vista aún no está montada en el DOM
@@ -5164,6 +5303,7 @@ function renderNominas(){
         semanas[key].push(n);
       });
       const keysOrdenadas = Object.keys(semanas).sort((a,b)=> b.localeCompare(a));
+      ST.nomWeekCollapsed = ST.nomWeekCollapsed || {};
 
       tbody.innerHTML = keysOrdenadas.map(key=>{
         const grupo = semanas[key].slice().sort((a,b)=> (a.nombreEmpleado||'').localeCompare(b.nombreEmpleado||''));
@@ -5175,6 +5315,8 @@ function renderNominas(){
         const totSemana = activos.reduce((s,n)=>s+n.totalFinal,0);
 
         const semKey = key;
+        const semKeyJs = String(key).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        const collapsed = !!ST.nomWeekCollapsed[semKey];
         const semRec = ST.semanas[semKey];
         const semConcluida = semRec && semRec.estado==='Concluida';
         const busy = ST.semanaConcluyendo===semKey;
@@ -5187,14 +5329,19 @@ function renderNominas(){
             ? `<button class="btn btn-ghost btn-sm" style="padding:3px 8px" ${busy?'disabled':''} onclick="reabrirSemana('${semKey}')" title="Reabrir semana para seguir editando nóminas">↺ Reabrir semana</button>`
             : `<button class="btn btn-red btn-sm" style="padding:3px 10px" ${busy?'disabled':''} onclick="concluirSemana('${semKey}')" title="Generar los 3 movimientos globales en Salidas (Fiscal, Vales, Efectivo) para toda la semana">${busy?'Generando…':'Concluir semana →'}</button>`;
 
+        // Punto 7: flecha para expandir/contraer el grupo semanal (el estado se
+        // conserva en ST.nomWeekCollapsed mientras dure la sesión).
         const headerRow = `<tr style="background:var(--bg3)">
-          <td colspan="6" style="padding:8px 10px;font-weight:700;font-size:12px">
+          <td colspan="6" style="padding:8px 10px;font-weight:700;font-size:12px;cursor:pointer" onclick="toggleNomSemana('${semKeyJs}')" title="Expandir / contraer semana">
+            <span style="display:inline-block;width:14px;color:var(--text3)">${collapsed?'▶':'▼'}</span>
             ${nomFmtFechaLarga(primero.fechaInicio)} → ${nomFmtFechaLarga(primero.fechaFin)}
             <span style="font-weight:400;color:var(--text3);margin-left:6px">${primero.semanaAnio} · ${grupo.length} nómina(s)</span>
             ${semBadge}
           </td>
           <td colspan="3" style="padding:8px 10px;text-align:right">${semBtn}</td>
         </tr>`;
+
+        if(collapsed) return headerRow;
 
         const filas = grupo.map(n=>{
           const estColor = n.estatus==='Pagado' ? 'var(--green,#38a169)' : n.estatus==='Cancelado' ? 'var(--text3)' : 'var(--orange)';
@@ -5264,7 +5411,7 @@ function openNomModal(idNomina){
   document.getElementById('nomModalSub').textContent = existente ? existente.idNomina : 'Registra la semana en la hoja Nominas';
 
   const disabled = existente && existente.estatus!=='Pendiente';
-  ['nEmpleado','nFechaInicio','nFaltas','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs','nRecibeVales','nRecibeFiscal','nValesEn0'].forEach(id=>{
+  ['nEmpleado','nFechaInicio','nFaltas','nFaltasJustificadas','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs','nRecibeVales','nRecibeFiscal','nValesEn0','nMontoAcordadoManual','nModoManual','nTransferenciaManual','nAjusteManualActivo','nTotalManualOverride'].forEach(id=>{
     document.getElementById(id).disabled = !!disabled;
   });
   document.getElementById('nEstatus').value = existente ? existente.estatus : 'Pendiente';
@@ -5274,12 +5421,20 @@ function openNomModal(idNomina){
     empSel.value = existente.idEmpleado;
     document.getElementById('nFechaInicio').value = existente.fechaInicio;
     document.getElementById('nFaltas').value = existente.faltas||0;
+    document.getElementById('nFaltasJustificadas').value = existente.faltasJustificadas||0;
     document.getElementById('nPrestamo').value = existente.prestamo||0;
     document.getElementById('nBonos').value = existente.bonos||0;
     document.getElementById('nDescuentos').value = existente.descuentosAdicionales||0;
     document.getElementById('nRetencionExtra').value = existente.fiscalRetencionExtra||0;
     document.getElementById('nExtraEfectivo').value = existente.extraEfectivo||0;
     document.getElementById('nObs').value = existente.observaciones||'';
+    document.getElementById('nMontoAcordadoManual').value = existente.montoAcordadoManual||0;
+    document.getElementById('nModoManual').checked = !!existente.modoManual;
+    document.getElementById('nTransferenciaManual').value = existente.transferenciaManual||0;
+    document.getElementById('nAjusteManualActivo').checked = !!existente.ajusteManualActivo;
+    document.getElementById('nTotalManualOverride').value = existente.totalManualOverride||0;
+    document.getElementById('nModoManualFields').style.display = existente.modoManual ? '' : 'none';
+    document.getElementById('nAjusteManualFields').style.display = existente.ajusteManualActivo ? '' : 'none';
     // Restaura los ajustes manuales guardados con ESTA nómina (solo aplicaron a esa
     // semana). Si el registro es de antes de este cambio y no trae el dato guardado,
     // se usa como respaldo la configuración base del empleado en hoja Personal.
@@ -5293,12 +5448,20 @@ function openNomModal(idNomina){
     empSel.value = '';
     document.getElementById('nFechaInicio').value = nomMondayOf(todayISO());
     document.getElementById('nFaltas').value = 0;
+    document.getElementById('nFaltasJustificadas').value = 0;
     document.getElementById('nPrestamo').value = 0;
     document.getElementById('nBonos').value = 0;
     document.getElementById('nDescuentos').value = 0;
     document.getElementById('nRetencionExtra').value = 0;
     document.getElementById('nExtraEfectivo').value = 0;
     document.getElementById('nObs').value = '';
+    document.getElementById('nMontoAcordadoManual').value = 0;
+    document.getElementById('nModoManual').checked = false;
+    document.getElementById('nTransferenciaManual').value = 0;
+    document.getElementById('nAjusteManualActivo').checked = false;
+    document.getElementById('nTotalManualOverride').value = 0;
+    document.getElementById('nModoManualFields').style.display = 'none';
+    document.getElementById('nAjusteManualFields').style.display = 'none';
     // "Vales en 0" SIEMPRE inicia desactivado — nunca guarda estado entre nóminas.
     document.getElementById('nValesEn0').checked = false;
     document.getElementById('nRecibeVales').checked = true;
@@ -5327,15 +5490,19 @@ function openNomResumenCard(idNomina){
     <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:6px;text-transform:uppercase">Resumen semanal · ${esc(n.semanaAnio||'')}</div>
     ${n.noTrabajo || (n.faltas>=(ST.cfgDiasLaborales||7)) ? `<div style="margin-bottom:8px;padding:6px 8px;background:rgba(229,62,62,.12);border-radius:var(--r4);color:var(--red);font-size:11.5px;font-weight:600">No trabajó esta semana — todo en $0</div>` : ''}
     ${row('Sueldo base semanal', fmtMXN(n.sueldoTotalSnap||0))}
+    ${n.montoAcordadoManual>0 ? row('Monto acordado (manual)', fmtMXN(n.montoAcordadoManual)) : ''}
     ${row('Días trabajados', diasTrabajados.toFixed(2))}
-    ${row('Faltas', n.faltas||0)}
+    ${row('Faltas (con descuento)', n.faltas||0)}
+    ${n.faltasJustificadas>0 ? row('Faltas justificadas (sin descuento)', n.faltasJustificadas) : ''}
     ${row('Bonos', fmtMXN(n.bonos||0))}
     ${row('Descuentos adicionales', fmtMXN(n.descuentosAdicionales||0))}
     ${row('Préstamo descontado', fmtMXN(n.prestamo||0))}
     <div style="border-top:1px solid var(--border);margin:8px 0"></div>
-    ${row('Fiscal', fmtMXN(n.fiscalNeto||0))}
+    ${row('Fiscal / Transferencia', fmtMXN(n.fiscalNeto||0))}
     ${row('Vales', fmtMXN(n.valesNeto||0))}
     ${row('Efectivo', fmtMXN(n.efectivoRealEntregar||0))}
+    ${n.modoManual ? `<div style="margin-top:4px;font-size:10.5px;color:var(--orange)">⚙ Reparto en Modo Manual</div>` : ''}
+    ${n.ajusteManualActivo ? `<div style="margin-top:2px;font-size:10.5px;color:var(--orange)">⚙ Total ajustado manualmente</div>` : ''}
     <div style="border-top:1px solid var(--border);margin:8px 0"></div>
     ${row('Total a pagar', `<span style="font-weight:800;font-size:16px;color:var(--red)">${fmtMXN(n.totalFinal||0)}</span>`, true)}
     <div style="margin-top:10px;font-size:10.5px;color:var(--text3)">Estatus: ${esc(n.estatus)} · ${n.estatusFirma==='Firmado'?'✅ Firmado':(n.urlPDF?'📄 Enviado':'Sin enviar')}</div>
@@ -5362,6 +5529,16 @@ function onNomEmpleadoChange(){
   recalcNomPreview();
 }
 
+/* Punto 1 y 5: muestran/ocultan los campos de captura de Modo Manual y Ajuste Manual */
+function onModoManualToggle(){
+  document.getElementById('nModoManualFields').style.display = document.getElementById('nModoManual').checked ? '' : 'none';
+  recalcNomPreview();
+}
+function onAjusteManualToggle(){
+  document.getElementById('nAjusteManualFields').style.display = document.getElementById('nAjusteManualActivo').checked ? '' : 'none';
+  recalcNomPreview();
+}
+
 /* Recalcula en vivo el panel de resultados dentro del modal */
 function recalcNomPreview(){
   const idEmp = document.getElementById('nEmpleado').value;
@@ -5374,6 +5551,7 @@ function recalcNomPreview(){
   const r = calcularNomina({
     empleado,
     faltas: document.getElementById('nFaltas').value,
+    faltasJustificadas: document.getElementById('nFaltasJustificadas').value,
     prestamo: document.getElementById('nPrestamo').value,
     bonos: document.getElementById('nBonos').value,
     descuentos: document.getElementById('nDescuentos').value,
@@ -5382,6 +5560,11 @@ function recalcNomPreview(){
     recibeValesOverride: document.getElementById('nRecibeVales').checked,
     recibeFiscalOverride: document.getElementById('nRecibeFiscal').checked,
     valesEn0: document.getElementById('nValesEn0').checked,
+    montoAcordadoOverride: document.getElementById('nMontoAcordadoManual').value,
+    modoManual: document.getElementById('nModoManual').checked,
+    transferenciaManual: document.getElementById('nTransferenciaManual').value,
+    ajusteManualActivo: document.getElementById('nAjusteManualActivo').checked,
+    totalManualOverride: document.getElementById('nTotalManualOverride').value,
   });
   const set=(id,v)=>{document.getElementById(id).textContent=v;};
   const warnEl = document.getElementById('nomNoTrabajoWarn');
@@ -5400,8 +5583,18 @@ function recalcNomPreview(){
   set('pvEfecNeto', fmtMXN(r.efectivoNeto));
   set('pvSubtotal', fmtMXN(r.subtotalPago));
   set('pvTotalDesc', fmtMXN(r.totalDescuentos));
-  set('pvTotalFinal', fmtMXN(r.totalFinal));
-  set('pvEfectivoReal', fmtMXN(r.efectivoRealEntregar));
+  set('pvTotalFinal', fmtMXN(r.totalFinalDisplay));
+  set('pvAjusteNota', r.ajusteManualActivo && r.totalManualOverride>0 ? 'Total ajustado manualmente (antes: '+fmtMXN(r.totalFinal)+')' : '');
+  const modoManualRow = document.getElementById('pvModoManualRow');
+  if(r.modoManual && !r.noTrabajo){
+    modoManualRow.style.display = 'grid';
+    set('pvTransferenciaManual', fmtMXN(r.transferenciaFinalDisplay));
+    set('pvEfectivoManual', fmtMXN(r.efectivoFinalDisplay));
+    set('pvEfectivoReal', fmtMXN(r.efectivoFinalDisplay));
+  } else {
+    modoManualRow.style.display = 'none';
+    set('pvEfectivoReal', fmtMXN(r.efectivoRealEntregar));
+  }
 }
 
 async function guardarNomina(){
@@ -5423,6 +5616,7 @@ async function guardarNomina(){
   }
 
   const faltas = document.getElementById('nFaltas').value;
+  const faltasJustificadas = document.getElementById('nFaltasJustificadas').value;
   const prestamo = document.getElementById('nPrestamo').value;
   const bonos = document.getElementById('nBonos').value;
   const descuentos = document.getElementById('nDescuentos').value;
@@ -5433,37 +5627,58 @@ async function guardarNomina(){
   const recibeValesSemana = document.getElementById('nRecibeVales').checked;
   const recibeFiscalSemana = document.getElementById('nRecibeFiscal').checked;
   const valesEn0 = document.getElementById('nValesEn0').checked;
+  const montoAcordadoManual = document.getElementById('nMontoAcordadoManual').value;
+  const modoManual = document.getElementById('nModoManual').checked;
+  const transferenciaManual = document.getElementById('nTransferenciaManual').value;
+  const ajusteManualActivo = document.getElementById('nAjusteManualActivo').checked;
+  const totalManualOverride = document.getElementById('nTotalManualOverride').value;
 
   const r = calcularNomina({
-    empleado, faltas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo,
+    empleado, faltas, faltasJustificadas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo,
     recibeValesOverride: recibeValesSemana, recibeFiscalOverride: recibeFiscalSemana, valesEn0,
+    montoAcordadoOverride: montoAcordadoManual, modoManual, transferenciaManual,
+    ajusteManualActivo, totalManualOverride,
   });
 
   const existente = ST.nomEditId ? ST.nominas.find(n=>n.idNomina===ST.nomEditId) : null;
+
+  // Puntos 1 y 5: lo que realmente se guarda en las columnas "oficiales" (Fiscal_Neto_Final,
+  // Efectivo_Real_A_Entregar, Total_Final_Pagar) ya refleja el reparto manual y/o el ajuste
+  // de centavos, si están activos. Así el resumen, el PDF y las tablas no necesitan lógica
+  // aparte: leen directamente el número definitivo. Préstamo y faltas ya quedaron aplicados
+  // dentro de r antes de este paso, así que esa lógica nunca se pierde.
+  const fiscalNetoFinal = (r.modoManual && !r.noTrabajo) ? r.transferenciaFinalDisplay : r.fiscalNeto;
+  const efectivoRealFinal = (r.modoManual && !r.noTrabajo) ? r.efectivoFinalDisplay : r.efectivoRealEntregar;
+  const totalFinalGuardar = r.totalFinalDisplay;
 
   const row = [
     idNomina, idEmp, empleado.nombre, fIni, fFin, semanaAnio, estatus,
     existente ? existente.fechaRegistro : new Date().toISOString(),
     parseFloat(faltas)||0, r.diasDescontados, parseFloat(prestamo)||0, parseFloat(bonos)||0, parseFloat(descuentos)||0, obs,
     r.sueldoTotal, empleado.salarioFiscal, empleado.compensacionEfectivo,
-    r.fiscalBruto, r.fiscalDescuento, r.fiscalNeto,
+    r.fiscalBruto, r.fiscalDescuento, fiscalNetoFinal,
     r.valesBruto, r.valesDescuento, r.valesNeto,
     r.efectivoBruto, r.efectivoDescuento, r.efectivoNeto,
-    r.subtotalPago, r.totalDescuentos, r.totalFinal,
+    r.subtotalPago, r.totalDescuentos, totalFinalGuardar,
     existente ? existente.urlPDF : '', existente ? existente.estatusFirma : 'Pendiente', existente ? existente.fechaFirma : '',
-    r.retencionExtra, r.extraEfectivo, r.efectivoRealEntregar,
+    r.retencionExtra, r.extraEfectivo, efectivoRealFinal,
     existente ? existente.idSalida : '',
     // AK, AL, AM — ajustes manuales que SOLO aplican a esta nómina semanal; nunca
     // tocan la hoja Personal, y la siguiente nómina siempre vuelve a leer su config base.
     recibeValesSemana, recibeFiscalSemana, valesEn0,
+    // AN–AS — NUEVAS: Modo Manual, Transferencia manual, Monto acordado manual,
+    // Ajuste manual de total activo, Total final manual, Faltas justificadas.
+    // Estas columnas deben existir en la hoja "Nominas" (agrégalas si aún no están).
+    modoManual, parseFloat(transferenciaManual)||0, parseFloat(montoAcordadoManual)||0,
+    ajusteManualActivo, parseFloat(totalManualOverride)||0, parseFloat(faltasJustificadas)||0,
   ];
 
   document.getElementById('nomSaveBtn').disabled = true;
   try{
     if(ST.nomEditRow){
-      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AN${ST.nomEditRow}`, [row]);
+      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AS${ST.nomEditRow}`, [row]);
     } else {
-      await sheetsAppend('Nominas!A2:AN', [row]);
+      await sheetsAppend('Nominas!A2:AS', [row]);
     }
     // NOTA: ya no se genera ningún movimiento individual en "Salidas" al guardar una nómina.
     // Los movimientos de caja se generan únicamente cuando la semana completa se marca
@@ -6119,6 +6334,20 @@ async function genNextFolio(cliente, desc) {
   return `CONE-COT${nextNum}-${rfc}-${descClean||'SIN DESC'}`;
 }
 function genId(cli){ return 'CONE-COT'+String(Math.floor(Math.random()*900)+100)+'-'+(cli||'CA').slice(0,3).toUpperCase(); }
+
+/* Punto 9: el ID de cotización tiene el formato CONE-COT{folio}-{RFC}-{DESCRIPCIÓN}.
+   Al editar la descripción, esta función regenera solo la última parte del ID
+   (la descripción), conservando intactos el folio y el RFC — esos nunca cambian. */
+function buildSyncedCotId(oldId, nuevaDesc){
+  const m = String(oldId||'').match(/^(CONE-COT\d+-[A-Za-z0-9]+)-.*$/);
+  if(!m) return oldId; // formato no reconocido (ID viejo/manual): no se toca
+  const descClean = (nuevaDesc||'').trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9 ]/g,' ')
+    .replace(/\s+/g,' ').trim()
+    .toUpperCase();
+  return `${m[1]}-${descClean||'SIN DESC'}`;
+}
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ─── TOAST ─── */
@@ -6652,9 +6881,20 @@ function setIngFilter(f,el){
   applyIngFilter();
 }
 function applyIngFilter(){
+  poblarFiltrosAvanzadosIng();
   const q=(document.getElementById('ingSearch')?.value||'').toLowerCase();
+  const fMes = document.getElementById('ingFMes')?.value||'';
+  const fAnio = document.getElementById('ingFAnio')?.value||'';
+  const fCliente = document.getElementById('ingFCliente')?.value||'';
+  const fCuenta = document.getElementById('ingFCuenta')?.value||'';
   let rows=ST.ingresos.slice();
   if(ST.ingFilter!=='all') rows=rows.filter(b=>b.estado===ST.ingFilter);
+  // Punto 10: filtros avanzados combinables — todos se aplican con AND entre sí
+  // y con el chip de Estado y la búsqueda de texto.
+  if(fMes) rows=rows.filter(b=>String(b.fecha||'').slice(5,7)===fMes);
+  if(fAnio) rows=rows.filter(b=>String(b.fecha||'').slice(0,4)===fAnio);
+  if(fCliente) rows=rows.filter(b=>b.cliente===fCliente);
+  if(fCuenta) rows=rows.filter(b=>b.cuenta===fCuenta);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
   rows.sort((a,b)=>{
     const da=a.fechaPago||a.fecha||'', db=b.fechaPago||b.fecha||'';
@@ -6664,6 +6904,36 @@ function applyIngFilter(){
   document.getElementById('ingCount').textContent=rows.length;
   renderIngTable();
   updateIngStats();
+}
+/* Puebla los selects de Año / Cliente / Método de pago con los valores realmente
+   presentes en los ingresos, conservando la selección actual si sigue siendo válida. */
+function poblarFiltrosAvanzadosIng(){
+  const selAnio=document.getElementById('ingFAnio');
+  if(selAnio){
+    const anios=[...new Set(ST.ingresos.map(b=>String(b.fecha||'').slice(0,4)).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+    const prev=selAnio.value;
+    selAnio.innerHTML='<option value="">Año: todos</option>'+anios.map(a=>`<option value="${a}">${a}</option>`).join('');
+    if(anios.includes(prev)) selAnio.value=prev;
+  }
+  const selCli=document.getElementById('ingFCliente');
+  if(selCli){
+    const mapCli={};
+    ST.ingresos.forEach(b=>{ if(b.cliente) mapCli[b.cliente]=ST.clientes[b.cliente]?.nombre||b.cliente; });
+    const prev=selCli.value;
+    selCli.innerHTML='<option value="">Cliente: todos</option>'+Object.keys(mapCli).sort((a,b)=>mapCli[a].localeCompare(mapCli[b])).map(id=>`<option value="${esc(id)}">${esc(mapCli[id])}</option>`).join('');
+    if(mapCli[prev]!==undefined) selCli.value=prev;
+  }
+  const selCuenta=document.getElementById('ingFCuenta');
+  if(selCuenta){
+    const cuentas=[...new Set(ST.ingresos.map(b=>b.cuenta).filter(Boolean))].sort();
+    const prev=selCuenta.value;
+    selCuenta.innerHTML='<option value="">Método de pago: todos</option>'+cuentas.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if(cuentas.includes(prev)) selCuenta.value=prev;
+  }
+}
+function limpiarFiltrosIng(){
+  ['ingFMes','ingFAnio','ingFCliente','ingFCuenta'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  applyIngFilter();
 }
 function updateIngStats(){
   const ing=ST.ingresos;
@@ -6836,9 +7106,20 @@ function setGasFilter(f,el){
   applyGasFilter();
 }
 function applyGasFilter(){
+  poblarFiltrosAvanzadosGas();
   const q=(document.getElementById('gasSearch')?.value||'').toLowerCase();
+  const fMes = document.getElementById('gasFMes')?.value||'';
+  const fAnio = document.getElementById('gasFAnio')?.value||'';
+  const fProveedor = document.getElementById('gasFProveedor')?.value||'';
+  const fCategoria = document.getElementById('gasFCategoria')?.value||'';
   let rows=ST.salidas.slice();
   if(ST.gasFilter!=='all') rows=rows.filter(b=>b.estado===ST.gasFilter);
+  // Punto 10: filtros avanzados combinables — todos se aplican con AND entre sí
+  // y con el chip de Estado y la búsqueda de texto (ej. Año 2026 + Marzo + Proveedor).
+  if(fMes) rows=rows.filter(b=>String(b.fecha||'').slice(5,7)===fMes);
+  if(fAnio) rows=rows.filter(b=>String(b.fecha||'').slice(0,4)===fAnio);
+  if(fProveedor) rows=rows.filter(b=>b.proveedor===fProveedor);
+  if(fCategoria) rows=rows.filter(b=>b.categoria===fCategoria);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||(b.proveedor||'').toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
   rows.sort((a,b)=>{
     const da=a.fechaPago||a.fecha||'', db=b.fechaPago||b.fecha||'';
@@ -6848,6 +7129,39 @@ function applyGasFilter(){
   document.getElementById('gasCount').textContent=rows.length;
   renderGasTable();
   updateGasStats();
+}
+/* Puebla los selects de Año / Proveedor / Categoría con los valores realmente
+   presentes en los gastos, conservando la selección actual si sigue siendo válida.
+   Nota: no existe una columna "Subcategoría" en la hoja Salidas actual, por eso
+   ese filtro no se incluyó — si se agrega esa columna, aquí se puede replicar
+   el mismo patrón que Categoría. */
+function poblarFiltrosAvanzadosGas(){
+  const selAnio=document.getElementById('gasFAnio');
+  if(selAnio){
+    const anios=[...new Set(ST.salidas.map(b=>String(b.fecha||'').slice(0,4)).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+    const prev=selAnio.value;
+    selAnio.innerHTML='<option value="">Año: todos</option>'+anios.map(a=>`<option value="${a}">${a}</option>`).join('');
+    if(anios.includes(prev)) selAnio.value=prev;
+  }
+  const selProv=document.getElementById('gasFProveedor');
+  if(selProv){
+    const mapProv={};
+    ST.salidas.forEach(b=>{ if(b.proveedor) mapProv[b.proveedor]=ST.proveedores[b.proveedor]?.nombre||b.proveedor; });
+    const prev=selProv.value;
+    selProv.innerHTML='<option value="">Proveedor: todos</option>'+Object.keys(mapProv).sort((a,b)=>mapProv[a].localeCompare(mapProv[b])).map(id=>`<option value="${esc(id)}">${esc(mapProv[id])}</option>`).join('');
+    if(mapProv[prev]!==undefined) selProv.value=prev;
+  }
+  const selCat=document.getElementById('gasFCategoria');
+  if(selCat){
+    const cats=[...new Set(ST.salidas.map(b=>b.categoria).filter(Boolean))].sort();
+    const prev=selCat.value;
+    selCat.innerHTML='<option value="">Categoría: todas</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if(cats.includes(prev)) selCat.value=prev;
+  }
+}
+function limpiarFiltrosGas(){
+  ['gasFMes','gasFAnio','gasFProveedor','gasFCategoria'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  applyGasFilter();
 }
 function updateGasStats(){
   const gas=ST.salidas;
