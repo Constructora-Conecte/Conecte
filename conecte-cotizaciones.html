@@ -189,7 +189,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);display:flex;align-items:center}
 
 /* ══ NÓMINAS: layout de tres columnas + ayuda contextual + resumen + vista previa ══ */
-.nom-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,0.85fr) minmax(0,0.95fr);gap:20px;align-items:start;min-width:0}
+.nom-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,0.7fr) minmax(0,0.7fr);gap:16px;align-items:start;min-width:0}
 .nom-col-left{display:flex;flex-direction:column;gap:12px;min-width:0}
 .nom-col-right{position:sticky;top:0;display:flex;flex-direction:column;gap:12px;min-width:0}
 .nom-col-preview{position:sticky;top:0;display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -220,34 +220,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 #fhTooltip.show{opacity:1}
 
 /* Resumen en vivo (columna central) */
-.nom-summary{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r8);padding:14px 16px}
-.nom-summary-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:10px;text-transform:uppercase}
-.nom-summary-row{display:flex;justify-content:space-between;align-items:center;padding:3.5px 0;font-size:12px;gap:10px}
+.nom-summary{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r8);padding:10px 12px}
+.nom-summary-title{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:7px;text-transform:uppercase}
+.nom-summary-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:11px;gap:8px}
 .nom-summary-row span:first-child{color:var(--text3)}
 .nom-summary-row.b span:last-child{font-weight:700}
-.nom-summary-div{border-top:1px solid var(--border);margin:8px 0}
-.nom-summary-hero{margin-top:10px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.nom-summary-hero-val{font-weight:800;font-size:24px;color:var(--red);white-space:nowrap}
+.nom-summary-div{border-top:1px solid var(--border);margin:6px 0}
+.nom-summary-hero{margin-top:8px;padding-top:9px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nom-summary-hero-val{font-weight:800;font-size:20px;color:var(--red);white-space:nowrap}
 
 /* Vista previa del recibo (columna derecha) — imita visualmente el PDF generado
    y se actualiza en tiempo real con cada cambio del formulario. */
-.nom-receipt{background:#fff;color:#1a1a1a;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.4);overflow:hidden;font-size:11.5px}
-.nom-receipt-head{background:#af0d12;color:#fff;padding:11px 14px}
-.nom-receipt-co{font-weight:700;font-size:12px;letter-spacing:.02em}
-.nom-receipt-sub{font-size:9.5px;opacity:.85;margin-top:2px}
-.nom-receipt-body{padding:14px 16px}
-.nom-receipt-emp{font-weight:700;font-size:13px;word-break:break-word}
-.nom-receipt-meta{font-size:10.5px;color:#666;margin-top:2px}
-.nom-receipt-div{border-top:1px solid #e6e6e6;margin:10px 0}
+.nom-receipt{background:#fff;color:#1a1a1a;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.4);overflow:hidden;font-size:10.5px}
+.nom-receipt-head{background:#af0d12;color:#fff;padding:8px 11px}
+.nom-receipt-co{font-weight:700;font-size:11px;letter-spacing:.02em}
+.nom-receipt-sub{font-size:8.5px;opacity:.85;margin-top:2px}
+.nom-receipt-body{padding:10px 12px}
+.nom-receipt-emp{font-weight:700;font-size:12px;word-break:break-word}
+.nom-receipt-meta{font-size:9.5px;color:#666;margin-top:2px}
+.nom-receipt-div{border-top:1px solid #e6e6e6;margin:7px 0}
 .nom-receipt-div.strong{border-top:1.5px solid #1a1a1a}
-.nom-receipt-sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#999;margin-bottom:6px}
-.nom-receipt-row{display:flex;justify-content:space-between;gap:8px;padding:2.5px 0;font-size:11.5px}
-.nom-receipt-empty{font-size:10.5px;color:#999;font-style:italic;padding:4px 0}
-.nom-receipt-total{display:flex;justify-content:space-between;font-weight:700;font-size:12px;padding:4px 0}
-.nom-receipt-hero{margin-top:8px;padding-top:10px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;font-weight:800;gap:8px}
-.nom-receipt-hero span:first-child{font-size:11px}
-.nom-receipt-hero span:last-child{color:#af0d12;font-size:17px;white-space:nowrap}
-.nom-receipt-warn{margin:0 16px 12px;padding:6px 8px;background:#fdecea;color:#af0d12;border-radius:6px;font-size:10.5px;font-weight:600}
+.nom-receipt-sec{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#999;margin-bottom:4px}
+.nom-receipt-row{display:flex;justify-content:space-between;gap:6px;padding:2px 0;font-size:10.5px}
+.nom-receipt-empty{font-size:9.5px;color:#999;font-style:italic;padding:3px 0}
+.nom-receipt-total{display:flex;justify-content:space-between;font-weight:700;font-size:11px;padding:3px 0}
+.nom-receipt-hero{margin-top:6px;padding-top:8px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;font-weight:800;gap:6px}
+.nom-receipt-hero span:first-child{font-size:10px}
+.nom-receipt-hero span:last-child{color:#af0d12;font-size:15px;white-space:nowrap}
+.nom-receipt-warn{margin:0 12px 10px;padding:5px 7px;background:#fdecea;color:#af0d12;border-radius:6px;font-size:9.5px;font-weight:600}
 
 /* Importar recibo PDF */
 .nom-import-box{border:1px dashed var(--border2);border-radius:var(--r8);padding:11px 13px;background:var(--bg3)}
@@ -5331,84 +5331,133 @@ async function onNomPdfImportSelected(input){
 }
 
 const NOM_PDF_LABELS = {
-  empleado:'Empleado', rfc:'RFC', periodo:'Periodo', dias:'Días pagados', sueldo:'Sueldo',
-  septimoDia:'Séptimo día', isr:'ISR', ajusteNeto:'Ajuste al neto', despensa:'Despensa/Vales',
-  vales:'Vales', total:'Total', neto:'Neto', sbc:'SBC', fecha:'Fecha'
+  empleado:'Empleado', rfc:'RFC', periodo:'Periodo', dias:'Días de pago (fiscal)', sueldo:'Sueldo',
+  septimoDia:'Séptimo día', isr:'ISR', ajusteNeto:'Ajuste al neto', subtotal:'Subtotal',
+  descuentos:'Descuentos', retenciones:'Retenciones', total:'Total percepciones',
+  netoRecibo:'Neto del recibo (transferencia real)', sbc:'SBC', fecha:'Fecha'
 };
 
 /* Compatible con distintas variantes de CFDI de nómina: busca los CONCEPTOS por
-   texto (ISR / I.S.R. / Retención, Despensa / Vales, Séptimo Día, Subtotal, Neto,
-   etc.), nunca por posición fija en la página. */
+   texto (ISR / I.S.R. / Retención, Séptimo Día, Subtotal, Neto del recibo, etc.),
+   nunca por posición fija en la página.
+
+   IMPORTANTE — este recibo es SOLO la parte fiscal (lo que se timbra y transfiere
+   ante el SAT). No dice nada del efectivo en mano ni de los vales de despensa de la
+   semana: esos siguen la configuración normal del empleado y jamás se tocan a
+   partir de este PDF. Por eso aquí NO se extraen "despensa"/"vales" como datos que
+   vayan a aplicarse — solo lo que de verdad corresponde a lo fiscal. */
 function parseNomPdfText(raw){
   const t = (raw||'').replace(/\s+/g,' ').trim();
   const num = (re)=>{ const m = t.match(re); if(!m) return null; return parseFloat(m[1].replace(/,/g,'')); };
   const str = (re)=>{ const m = t.match(re); return m ? m[1].trim() : null; };
 
   const out = { raw:t };
-  out.empleado   = str(/(?:Nombre(?:\s+del\s+trabajador)?|Empleado)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ\s]{5,60}?)(?:\s{2,}|RFC|$)/i);
-  out.rfc        = str(/RFC[:\s]*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
+  // Empleado + RFC se extraen JUNTOS del bloque "NNN - NOMBRE ... RFC: XXXX", que es
+  // el único punto del CFDI donde aparecen encadenados así — evita confundir el RFC
+  // del empleado con el RFC del emisor (Constructora Conecte), que aparece antes en
+  // el documento y de otro modo sería el primero en coincidir.
+  const bloqueEmp = t.match(/\d{1,4}\s*-\s*([A-ZÁÉÍÓÚÑ.'\s]{5,60}?)\s*(?:Ejercicio\s*:?\s*\d{2,4}\s*)?RFC\s*[:\-]?\s*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
+  if(bloqueEmp){
+    out.empleado = bloqueEmp[1].trim();
+    out.rfc = bloqueEmp[2].trim().toUpperCase();
+  } else {
+    // Respaldo para formatos de CFDI que no traigan el patrón "NNN - Nombre".
+    out.empleado = str(/(?:Nombre(?:\s+del\s+trabajador)?|Empleado)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ\s]{5,60}?)(?:\s{2,}|RFC|$)/i);
+    out.rfc = str(/RFC[:\s]*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
+  }
   out.periodo    = str(/Periodo(?:\s+de\s+pago)?\s*[:\-]?\s*([\d\/\-\wA-Za-zÁÉÍÓÚñÑ\s]{4,30}?)(?:\s{2,}|$)/i);
   out.fecha      = str(/(\d{4}-\d{2}-\d{2})/) || (()=>{ const m=t.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : null; })();
-  out.dias       = num(/D[ií]as\s*(?:pagados|trabajados)?\s*[:\-]?\s*(\d{1,2}(?:\.\d+)?)/i);
-  out.sueldo     = num(/Sueldo(?:s)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  // "Días de Pago" (fiscal) — se muestra solo como referencia; NUNCA se usa para
+  // adivinar faltas, porque el conteo fiscal no equivale a los días realmente
+  // faltados (esos los captura el usuario a mano en la sección Faltas).
+  out.dias       = num(/D[ií]as\s+de\s+Pago\s*:?\s*(\d{1,2}(?:\.\d+)?)/i) || num(/D[ií]as\s*(?:pagados|trabajados)?\s*[:\-]?\s*(\d{1,2}(?:\.\d+)?)/i);
+  out.sueldo     = num(/\bSueldo(?:s)?\s+([\d,]+\.\d{2})/i);
   out.septimoDia = num(/S[eé]ptimo\s*D[ií]a\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
-  out.isr        = num(/(?:I\.?S\.?R\.?|Retenci[oó]n(?:\s+de)?\s*I\.?S\.?R\.?)\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
-  out.ajusteNeto = num(/Ajuste\s+al\s+Neto\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
-  out.despensa   = num(/Despensa\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
-  out.vales      = num(/Vales(?:\s+de\s+despensa)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
-  out.total      = num(/Total\s*(?:Percepciones)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
-  out.neto       = num(/Neto\s*(?:a\s+pagar)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.isr        = num(/(?:I\.?S\.?R\.?|Retenci[oó]n(?:\s+de)?\s*I\.?S\.?R\.?)\s*(?:mes)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.ajusteNeto = num(/Ajuste\s+al\s+neto\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.subtotal   = num(/Subtotal\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.descuentos = num(/\bDescuentos\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.retenciones= num(/Retenciones\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.total      = num(/\bTotal\s*(?:Percepc\.?\s*(?:m[aá]s\s*Otros\s*Pagos)?)?\s*\$?\s?([\d,]+\.\d{2})/i);
+  // "Neto del recibo": lo que de verdad se depositó/transfirió al empleado por la
+  // vía fiscal esta semana, ya con TODAS las deducciones fiscales aplicadas
+  // (ISR, ajuste al neto, etc.). Es el único dato de este PDF que se usa para
+  // llenar algo en el formulario — el resto es solo informativo.
+  out.netoRecibo = num(/Neto\s+del\s+recibo\s*\$?\s?([\d,]+\.\d{2})/i) || num(/Neto\s*(?:a\s+pagar)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
   out.sbc        = num(/S\.?B\.?C\.?\s*[:\-]?\s*\$?\s?([\d,]+(?:\.\d+)?)/i);
   return out;
 }
 
 /* Llena el formulario con lo extraído del PDF. Nada queda bloqueado: la
-   importación es solo una ayuda, el usuario puede corregir cualquier campo. */
+   importación es solo una ayuda, el usuario puede corregir cualquier campo.
+
+   LÓGICA DE NEGOCIO (importante): el recibo fiscal en PDF SOLO describe la parte
+   que se paga por transferencia/nómina formal. NO sabe nada del efectivo en mano
+   ni de los vales de despensa de la semana — esos siguen la configuración normal
+   del empleado (Recibe_Vales, vales de la semana) y este PDF JAMÁS los agrega ni
+   los quita. Tampoco cambia el "Monto acordado" semanal (el sueldo total pactado
+   no depende del recibo fiscal) ni marca faltas automáticamente (los "Días de
+   Pago" fiscales usan una lógica distinta a los días realmente faltados; el
+   usuario los captura a mano y el sistema los descuenta del efectivo).
+   Lo único que este PDF sabe con certeza es cuánto se depositó realmente por la
+   vía fiscal esta semana ("Neto del recibo"), así que eso es lo único que se
+   escribe en el formulario: activa "Modo Manual" y coloca ese monto como la
+   Transferencia, dejando que el sistema calcule el efectivo restante solo
+   (Total de la semana − Vales − Transferencia real), sin adivinar ni duplicar
+   ningún descuento. */
 function aplicarNomPdfExtract(ex){
-  // Empleado: coincidencia por nombre contra la lista de Personal (búsqueda por texto,
-  // tolerante a mayúsculas/acentos — nunca depende de la posición del dato en el PDF).
-  if(ex.empleado){
+  // Empleado: primero por RFC (dato único e inequívoco que trae el propio recibo);
+  // si no hay coincidencia, se cae a comparar por nombre (tolerante a mayúsculas y
+  // acentos). Nunca depende de la posición del dato en el PDF.
+  let match = null;
+  if(ex.rfc){
+    const rfcObjetivo = ex.rfc.replace(/\s+/g,'').toUpperCase();
+    match = (ST.personalList||[]).find(p => (p.rfc||'').replace(/\s+/g,'').toUpperCase()===rfcObjetivo);
+  }
+  if(!match && ex.empleado){
     const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     const objetivo = norm(ex.empleado);
-    const match = (ST.personalList||[]).find(p => norm(p.nombre)===objetivo)
-               || (ST.personalList||[]).find(p => norm(p.nombre).includes(objetivo) || objetivo.includes(norm(p.nombre)));
-    if(match){
-      document.getElementById('nEmpleado').value = match.id;
-      onNomEmpleadoChange();
-    }
+    match = (ST.personalList||[]).find(p => norm(p.nombre)===objetivo)
+         || (ST.personalList||[]).find(p => norm(p.nombre).includes(objetivo) || objetivo.includes(norm(p.nombre)));
   }
+  if(match){
+    document.getElementById('nEmpleado').value = match.id;
+    onNomEmpleadoChange();
+  }
+
   // Periodo / Fecha → semana de inicio (se ajusta automáticamente al lunes correspondiente)
   if(ex.fecha){
     document.getElementById('nFechaInicio').value = nomMondayOf(ex.fecha);
   }
-  // Sueldo del recibo fiscal → Monto acordado de la semana (solo si el usuario no
-  // había capturado ya un valor manual)
-  if(ex.sueldo && !parseFloat(document.getElementById('nMontoAcordadoManual').value)){
-    document.getElementById('nMontoAcordadoManual').value = ex.sueldo;
-  }
-  // ISR del recibo fiscal → Retención fiscal extra (afecta únicamente lo fiscal,
-  // igual que en el recibo oficial)
-  if(ex.isr && !parseFloat(document.getElementById('nRetencionExtra').value)){
-    document.getElementById('nRetencionExtra').value = ex.isr;
-  }
-  // Días pagados → si son menos que los días laborales configurados, se estiman
-  // como faltas normales (el usuario puede corregir el tipo de falta si aplica)
-  if(ex.dias!=null){
-    const diasLab = ST.cfgDiasLaborales||7;
-    const faltasEstimadas = Math.max(0, +(diasLab-ex.dias).toFixed(4));
-    if(faltasEstimadas>0 && !parseFloat(document.getElementById('nFaltas').value)){
-      document.getElementById('nFaltas').value = faltasEstimadas;
+
+  // Neto del recibo → Transferencia real en "Modo Manual" (solo si el usuario no
+  // había capturado ya un valor manual). El efectivo restante lo calcula el
+  // sistema solo; el "Monto acordado", los vales y las faltas no se tocan.
+  if(ex.netoRecibo){
+    const campoTransferencia = document.getElementById('nTransferenciaManual');
+    if(!parseFloat(campoTransferencia.value)){
+      campoTransferencia.value = ex.netoRecibo;
+      const chkModoManual = document.getElementById('nModoManual');
+      if(!chkModoManual.checked){
+        chkModoManual.checked = true;
+        onModoManualToggle();
+      }
     }
   }
-  // Ajuste al Neto → Descuentos adicionales (si es negativo) o Extra en efectivo (si es positivo)
-  if(ex.ajusteNeto){
-    if(ex.ajusteNeto<0) document.getElementById('nDescuentos').value = Math.abs(ex.ajusteNeto);
-    else document.getElementById('nExtraEfectivo').value = ex.ajusteNeto;
-  }
-  // Deja constancia en observaciones de que esta nómina se generó con ayuda de un PDF importado
+
+  // Deja constancia en observaciones de lo que trae el recibo fiscal (ISR, ajuste
+  // al neto, días de pago fiscales, neto depositado), solo para consulta — no
+  // afecta ningún cálculo, así el usuario ve qué deducciones fiscales hubo en la
+  // semana aunque no se apliquen dos veces.
+  const detalles = [];
+  if(ex.isr) detalles.push(`ISR $${ex.isr.toFixed(2)}`);
+  if(ex.ajusteNeto) detalles.push(`Ajuste al neto $${ex.ajusteNeto.toFixed(2)}`);
+  if(ex.dias!=null) detalles.push(`Días de pago fiscal: ${ex.dias}`);
+  if(ex.netoRecibo) detalles.push(`Neto del recibo: $${ex.netoRecibo.toFixed(2)}`);
   const obs = document.getElementById('nObs');
   if(!obs.value.includes('Datos importados de recibo PDF')){
-    obs.value = (obs.value?obs.value+'\n':'') + 'Datos importados de recibo PDF — verificados y ajustados manualmente.';
+    const linea = 'Datos importados de recibo PDF' + (detalles.length? ' ('+detalles.join(', ')+')':'') + ' — verificados y ajustados manualmente.';
+    obs.value = (obs.value?obs.value+'\n':'') + linea;
   }
   recalcNomPreview();
 }
