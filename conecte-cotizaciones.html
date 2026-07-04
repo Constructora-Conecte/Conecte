@@ -183,6 +183,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
    en los items y en los controles, y usar minmax(0,1fr) en las columnas
    (no basta con overflow-x:hidden, eso solo esconde el síntoma). */
 .form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;min-width:0}
+.form-grid-nom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:18px;row-gap:14px;min-width:0}
 .form-group{display:flex;flex-direction:column;gap:5px;min-width:0}
 .form-group.full{grid-column:1/-1}
 .form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)}
@@ -579,13 +580,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   .bal-tab{padding:0 10px}
 }
 @media(max-width:600px){
-  .form-grid{grid-template-columns:1fr}
+  .form-grid,.form-grid-nom{grid-template-columns:1fr!important}
   .stats{grid-template-columns:1fr 1fr}
   .topbar{padding:0 10px;gap:6px}
   .topbar-brand{font-size:12px}
   .topbar-page{display:none}
   .content{padding:10px 8px 40px}
-  .modal{width:94vw!important;max-width:94vw!important;padding:16px!important}
+  .modal,.modal-lg{width:94vw!important;max-width:94vw!important;padding:16px!important}
   .filter-bar{gap:4px}
   .filter-bar input[type="text"]{width:100%!important;margin-top:6px}
   .card-header{flex-wrap:wrap;gap:8px}
@@ -1753,7 +1754,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 <!-- ══ MODAL: NÓMINA SEMANAL ══ -->
 <div class="modal-bg" id="nomModal">
-  <div class="modal-lg" style="width:640px">
+  <div class="modal-lg" style="width:1040px">
     <div class="mlg-head">
       <div>
         <div class="mlg-title" id="nomModalTitle">Nueva Nómina Semanal</div>
@@ -1764,8 +1765,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </button>
     </div>
     <div class="mlg-body">
-      <div class="form-grid" style="margin-bottom:14px">
-        <div class="form-group full">
+      <div class="form-grid form-grid-nom" style="margin-bottom:16px">
+        <div class="form-group full" style="grid-column:1/-1">
           <label class="form-label">Empleado *</label>
           <select class="form-select" id="nEmpleado" onchange="onNomEmpleadoChange()"></select>
         </div>
@@ -1879,47 +1880,48 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <div id="nomNoTrabajoWarn" style="display:none;margin-bottom:10px;padding:8px 10px;background:rgba(229,62,62,.12);border:1px solid rgba(229,62,62,.3);border-radius:var(--r4);color:var(--red);font-size:11.5px;font-weight:600">
           Las faltas cubren toda la semana laboral: no generó pago. Todo queda en $0 (sueldo, vales y fiscal).
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:11.5px">
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;font-size:12px">
           <div>
             <div style="color:var(--text3);margin-bottom:4px">Sueldo total acordado</div>
             <div style="font-weight:600" id="pvSueldoTotal">—</div>
-            <div style="color:var(--text3);margin-top:6px">Días descontados</div>
+            <div style="color:var(--text3);margin-top:8px">Días descontados</div>
             <div style="font-weight:600" id="pvDiasDesc">0.0000</div>
           </div>
           <div>
-            <div style="color:var(--text3);margin-bottom:2px">Sueldo Fiscal</div>
+            <div style="color:var(--text3);margin-bottom:3px">Sueldo Fiscal</div>
             <div>Bruto: <span id="pvFiscalBruto">—</span></div>
             <div>Descuento: <span id="pvFiscalDesc">—</span></div>
-            <div style="font-weight:700">Neto: <span id="pvFiscalNeto">—</span></div>
+            <div style="font-weight:700;margin-top:2px">Neto: <span id="pvFiscalNeto">—</span></div>
           </div>
           <div>
-            <div style="color:var(--text3);margin-bottom:2px">Vales</div>
+            <div style="color:var(--text3);margin-bottom:3px">Vales</div>
             <div>Bruto: <span id="pvValesBruto">—</span></div>
             <div>Descuento: <span id="pvValesDesc">—</span></div>
-            <div style="font-weight:700">Neto: <span id="pvValesNeto">—</span></div>
+            <div style="font-weight:700;margin-top:2px">Neto: <span id="pvValesNeto">—</span></div>
           </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:11.5px;margin-top:12px">
           <div>
-            <div style="color:var(--text3);margin-bottom:2px">Efectivo</div>
+            <div style="color:var(--text3);margin-bottom:3px">Efectivo</div>
             <div>Bruto: <span id="pvEfecBruto">—</span></div>
             <div>Descuento: <span id="pvEfecDesc">—</span></div>
             <div>+ Extra efectivo: <span id="pvExtraEfec">—</span></div>
-            <div style="font-weight:700">Neto: <span id="pvEfecNeto">—</span></div>
+            <div style="font-weight:700;margin-top:2px">Neto: <span id="pvEfecNeto">—</span></div>
           </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;font-size:12px;margin-top:16px">
           <div>
             <div style="color:var(--text3);margin-bottom:4px">Subtotal a pagar</div>
             <div style="font-weight:600" id="pvSubtotal">—</div>
-            <div style="color:var(--text3);margin-top:6px">Total descuentos <span style="font-size:9.5px">(incl. retención fiscal)</span></div>
+            <div style="color:var(--text3);margin-top:8px">Total descuentos <span style="font-size:10px">(incl. retención fiscal)</span></div>
             <div style="font-weight:600" id="pvTotalDesc">—</div>
           </div>
           <div>
             <div style="color:var(--text3);margin-bottom:4px">Total semana (fiscal+vales+efectivo)</div>
             <div style="font-weight:600" id="pvTotalFinal">—</div>
-            <div style="color:var(--text3);margin-top:6px;font-size:10px" id="pvAjusteNota"></div>
+            <div style="color:var(--text3);margin-top:8px;font-size:10.5px" id="pvAjusteNota"></div>
           </div>
+          <div></div>
         </div>
-        <div id="pvModoManualRow" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);grid-template-columns:1fr 1fr;gap:14px;font-size:11.5px">
+        <div id="pvModoManualRow" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;font-size:12px">
           <div>
             <div style="color:var(--text3);margin-bottom:4px">Transferencia (Modo Manual)</div>
             <div style="font-weight:700" id="pvTransferenciaManual">—</div>
@@ -6218,61 +6220,94 @@ async function generarPDFNomina(idNomina){
     hline(ML,MR,y,C.lineSoft,0.3); y+=6;
 
     // ── TABLA: PERCEPCIONES / DEDUCCIONES ──
-    const halfW=(CW-8)/2, xL=ML, xR=ML+halfW+8;
-    function seccion(x0,titulo,filas,total,totalLbl){
-      let yy=y;
-      eyebrow(titulo,x0,yy); yy+=2.2; hline(x0,x0+halfW,yy,C.line,0.4); yy+=5;
-      setF('normal',8.2,C.ink);
-      filas.forEach(([lbl,val])=>{
-        setF('normal',8.2,C.sub); txt(lbl,x0,yy);
-        setF('normal',8.2,C.ink); txt(money(val),x0+halfW,yy,{align:'right'});
-        yy+=5.4;
-      });
-      hline(x0,x0+halfW,yy,C.lineSoft,0.3); yy+=5;
-      setF('bold',9,C.ink); txt(totalLbl,x0,yy);
-      setF('bold',9,C.red); txt(money(total),x0+halfW,yy,{align:'right'});
-      return yy;
+    // Formato de una sola columna a todo el ancho (CW) con una nota breve en
+    // lenguaje sencillo debajo de cada concepto, para que el trabajador entienda
+    // exactamente de dónde sale cada peso sin tener que preguntar.
+    function checkPageBreak(minSpace){
+      if(y > 297-(minSpace||20)){
+        doc.addPage();
+        setF('bold',9,C.faint); txt('Recibo de Nómina — '+n.idNomina+' (continuación)',ML,16);
+        hline(ML,MR,19,C.line,0.4);
+        y = 26;
+      }
     }
-    const percepciones = [
-      ['Sueldo fiscal (neto)', n.fiscalNeto],
-      ['Vales de despensa (neto)', n.valesNeto],
-      ['Efectivo (neto)', n.efectivoNeto],
-      ['Bonos', n.bonos],
-    ];
-    if(n.extraEfectivo) percepciones.push(['Extra en efectivo', n.extraEfectivo]);
+    function fila(label, val, nota){
+      checkPageBreak(16);
+      setF('bold',8.8,C.ink); txt(label,ML,y);
+      setF('bold',8.8,C.ink); txt(money(val),MR,y,{align:'right'});
+      y += 4.3;
+      if(nota){
+        setF('normal',7,C.faint);
+        const nl = doc.splitTextToSize(nota, CW-2);
+        doc.text(nl, ML, y);
+        y += nl.length*3.5 + 3.2;
+      } else { y += 2; }
+    }
+    function seccionHeader(titulo){
+      checkPageBreak(24);
+      eyebrow(titulo,ML,y); y+=2.2; hline(ML,MR,y,C.line,0.5); y+=6.5;
+    }
+    function totalLinea(label, val, color){
+      checkPageBreak(14);
+      hline(ML,MR,y,C.lineSoft,0.3); y+=5;
+      setF('bold',9.5,C.ink); txt(label,ML,y);
+      setF('bold',9.5,color||C.red); txt(money(val),MR,y,{align:'right'});
+      y+=9;
+    }
+
+    seccionHeader('Percepciones — lo que se te paga esta semana');
+    fila('Sueldo fiscal (neto)', n.fiscalNeto, 'Parte de tu pago que se transfiere a tu cuenta y aparece en tu recibo fiscal (CFDI) que emite el contador.');
+    fila('Vales de despensa (neto)', n.valesNeto, 'Vale de despensa de la semana. Nunca se descuenta por faltas, sin importar cuántas tengas.');
+    fila('Efectivo (neto)', n.efectivoNeto, 'Resto de tu sueldo acordado que se te entrega en efectivo, ya con el descuento de faltas de esta sección aplicado.');
+    if(n.bonos) fila('Bonos', n.bonos, 'Bono o gratificación extra de esta semana. Se suma directo al efectivo que se te entrega.');
+    if(n.extraEfectivo) fila('Extra en efectivo', n.extraEfectivo, 'Apoyo adicional entregado solo en efectivo, aparte del sueldo normal de la semana.');
+    totalLinea('Total percepciones', n.subtotalPago+n.bonos);
+
     // Desglosa el descuento por faltas en sus 3 tipos, proporcional a los días
-    // que aportó cada tipo dentro del total de días descontados (mismo total que
-    // ya se refleja en Fiscal_Descuento + Efectivo_Descuento).
+    // que aportó cada tipo dentro del total de días descontados.
     const totalDescFaltas = n.fiscalDescuento+n.valesDescuento+n.efectivoDescuento;
     const totalDiasDesc = n.diasDescontados||0;
-    const deducciones = [];
-    if((n.faltas||0)>0) deducciones.push([`Falta normal (${n.faltas} · día + 7° prop.)`, totalDiasDesc? +(totalDescFaltas*((n.faltas*(ST.cfgFactorFaltas||1.1667))/totalDiasDesc)).toFixed(2) : 0]);
-    if((n.faltasJustificadas||0)>0) deducciones.push([`Falta justificada (${n.faltasJustificadas} · solo el día)`, totalDiasDesc? +(totalDescFaltas*(n.faltasJustificadas/totalDiasDesc)).toFixed(2) : 0]);
-    if((n.faltasCastigo||0)>0) deducciones.push([`Falta con castigo (${n.faltasCastigo} · días + 7° completo)`, totalDiasDesc? +(totalDescFaltas*((n.faltasCastigo*1+1)/totalDiasDesc)).toFixed(2) : 0]);
-    deducciones.push(['Préstamo', n.prestamo]);
-    deducciones.push(['Descuentos adicionales', n.descuentosAdicionales]);
-    if(n.fiscalRetencionExtra) deducciones.push(['Retención fiscal extra (IMSS/ISR/SAT)', n.fiscalRetencionExtra]);
-    const yPercL = seccion(xL,'Percepciones', percepciones, n.subtotalPago+n.bonos, 'Total percepciones');
-    const yDedR = seccion(xR,'Deducciones', deducciones, n.totalDescuentos, 'Total deducciones');
-    y = Math.max(yPercL,yDedR)+10;
+    seccionHeader('Deducciones — lo que se te descuenta esta semana');
+    if((n.faltas||0)>0) fila(`Falta normal (${n.faltas} día${n.faltas===1?'':'s'})`,
+      totalDiasDesc? +(totalDescFaltas*((n.faltas*(ST.cfgFactorFaltas||1.1667))/totalDiasDesc)).toFixed(2) : 0,
+      'Se descuenta el día que faltaste más la parte proporcional del séptimo día (domingo).');
+    if((n.faltasJustificadas||0)>0) fila(`Falta justificada (${n.faltasJustificadas} día${n.faltasJustificadas===1?'':'s'})`,
+      totalDiasDesc? +(totalDescFaltas*(n.faltasJustificadas/totalDiasDesc)).toFixed(2) : 0,
+      'Se descuenta únicamente el día que faltaste. El domingo NO se toca.');
+    if((n.faltasCastigo||0)>0) fila(`Falta con castigo (${n.faltasCastigo} día${n.faltasCastigo===1?'':'s'})`,
+      totalDiasDesc? +(totalDescFaltas*((n.faltasCastigo*1+1)/totalDiasDesc)).toFixed(2) : 0,
+      'Se descuentan todos los días que faltaste MÁS el domingo completo, como penalización.');
+    if(n.prestamo) fila('Préstamo', n.prestamo, 'Abono de esta semana al préstamo que tienes con la empresa. Solo afecta tu efectivo, nunca tu recibo fiscal.');
+    if(n.descuentosAdicionales) fila('Descuentos adicionales', n.descuentosAdicionales, 'Otro descuento acordado para esta semana en particular.');
+    if(n.fiscalRetencionExtra) fila('Retención fiscal extra', n.fiscalRetencionExtra, 'Ajuste de ISR/IMSS/SAT que aplica el contador sobre tu recibo fiscal (CONTPAQi). Solo afecta la parte fiscal, nunca tu efectivo.');
+    if(!n.prestamo && !n.descuentosAdicionales && !n.fiscalRetencionExtra && !(n.faltas||0) && !(n.faltasJustificadas||0) && !(n.faltasCastigo||0)){
+      setF('italic',7.6,C.faint); txt('Sin deducciones esta semana.',ML,y); y+=6;
+    }
+    totalLinea('Total deducciones', n.totalDescuentos);
 
     // ── TOTAL SEMANA (fiscal + vales + efectivo) ──
+    checkPageBreak(45);
     hline(ML,MR,y,C.line,0.4); y+=6;
     setF('normal',9,C.sub); txt('Total semana (fiscal + vales + efectivo)',ML,y);
     setF('bold',10,C.ink); txt(money(n.totalFinal),MR,y,{align:'right'});
     y+=8;
 
     // ── EFECTIVO REAL A ENTREGAR (dato principal) ──
+    checkPageBreak(35);
     hline(ML,MR,y,C.ink,0.6); y+=7;
     setF('bold',12,C.ink); txt('EFECTIVO A ENTREGAR',ML,y);
     setF('bold',14,C.red); txt(money(n.efectivoRealEntregar),MR,y,{align:'right'});
-    y+=6;
+    y+=5;
+    setF('italic',7.2,C.faint);
+    txt('Este es el único monto que se te entrega físicamente en mano. La parte fiscal y los vales se pagan por transferencia / vale aparte.',ML,y);
+    y+=4.5;
     setF('italic',7.6,C.sub);
     txt('Cuenta de depósito BBVA (fiscal): '+(emp.cuentaBBVA||'—'),ML,y);
     y+=14;
 
     // ── OBSERVACIONES ──
     if(n.observaciones){
+      checkPageBreak(25);
       eyebrow('Observaciones',ML,y); y+=4.5;
       setF('normal',8.2,C.ink);
       const ol=doc.splitTextToSize(n.observaciones,CW);
@@ -6280,6 +6315,7 @@ async function generarPDFNomina(idNomina){
     }
 
     // ── FIRMA ──
+    checkPageBreak(45);
     y = Math.max(y, 235);
     hline(ML,ML+80,y,C.ink,0.4);
     setF('normal',8,C.sub);
@@ -8751,4 +8787,3 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
-
