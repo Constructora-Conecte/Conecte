@@ -5580,14 +5580,19 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
 
   const diasDescontados = +(diasDescJustificada+diasDescNormal+diasDescCastigo).toFixed(4);
   const diasLaborales = ST.cfgDiasLaborales||7;
-  const factorDia = diasDescontados/diasLaborales;
 
-  // Fiscal_Descuento_Faltas: si no recibe fiscal no hay nada que descontar (ya es 0).
-  const fiscalDescuento = recibeFiscal ? +(fiscalBruto*factorDia).toFixed(2) : 0;
+  // Fiscal_Descuento_Faltas: regla obligatoria — el recibo fiscal (CFDI) NUNCA se
+  // descuenta por faltas, de ningún tipo. Siempre es 0; el fiscal se paga íntegro.
+  const fiscalDescuento = 0;
   // Vales_Descuento_Faltas: regla obligatoria — los vales de despensa NUNCA se descuentan
   // por faltas, sin importar cuántas faltas tenga el empleado. Siempre es 0.
   const valesDescuento = 0;
-  const efectivoDescuento = +(efectivoBruto*factorDia).toFixed(2);   // Efectivo_Descuento_Faltas
+  // Efectivo_Descuento_Faltas: como Fiscal y Vales nunca se tocan, TODO el descuento por
+  // faltas (de los 3 tipos) sale únicamente del Efectivo. Se calcula sobre el día completo
+  // del sueldo acordado (sueldoTotal, que YA incluye fiscal+vales+efectivo) entre los días
+  // laborales de la semana — no sobre una porción parcial de ese sueldo.
+  const diarioSueldoAcordado = sueldoTotal/diasLaborales;
+  const efectivoDescuento = +(diasDescontados*diarioSueldoAcordado).toFixed(2);   // Efectivo_Descuento_Faltas
 
   // Fiscal_Neto_Final: el descuento por faltas Y la retención manual (IMSS/ISR/SAT/etc.)
   // afectan ÚNICAMENTE lo fiscal. Nunca tocan vales ni efectivo. Si Recibe_Fiscal = FALSE,
@@ -6794,9 +6799,9 @@ async function generarPDFNomina(idNomina){
       totalDiasDesc? +(totalDescFaltas*(n.faltasJustificadas/totalDiasDesc)).toFixed(2) : 0,
       'Se descuenta únicamente el día que faltaste. El domingo NO se toca.',
       'Solo el día; el domingo no se toca.');
-    if((n.faltasCastigo||0)>0) fila(`Falta con castigo (${n.faltasCastigo} día${n.faltasCastigo===1?'':'s'})`,
+    if((n.faltasCastigo||0)>0) fila(`Falta injustificada (${n.faltasCastigo} día${n.faltasCastigo===1?'':'s'})`,
       totalDiasDesc? +(totalDescFaltas*((n.faltasCastigo*1+1)/totalDiasDesc)).toFixed(2) : 0,
-      'Se descuentan todos los días que faltaste MÁS el domingo completo, como penalización.',
+      'Se descuentan todos los días que faltaste MÁS el domingo completo, por ser falta injustificada.',
       'Días faltados + domingo completo.');
     // El préstamo SIEMPRE se descuenta del efectivo (nunca del recibo fiscal), incluso
     // si el monto deja el efectivo de la semana en negativo (el empleado queda a deber).
