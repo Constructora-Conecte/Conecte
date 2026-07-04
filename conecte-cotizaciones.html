@@ -188,10 +188,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .form-group.full{grid-column:1/-1}
 .form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);display:flex;align-items:center}
 
-/* ══ NÓMINAS: layout de dos columnas + ayuda contextual + resumen ══ */
-.nom-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:start;min-width:0}
+/* ══ NÓMINAS: layout de tres columnas + ayuda contextual + resumen + vista previa ══ */
+.nom-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,0.85fr) minmax(0,0.95fr);gap:20px;align-items:start;min-width:0}
 .nom-col-left{display:flex;flex-direction:column;gap:12px;min-width:0}
 .nom-col-right{position:sticky;top:0;display:flex;flex-direction:column;gap:12px;min-width:0}
+.nom-col-preview{position:sticky;top:0;display:flex;flex-direction:column;gap:8px;min-width:0}
 .nom-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:10px;min-width:0}
 .nom-grid .form-group.full{grid-column:1/-1}
 .nom-section{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r4);padding:10px 12px}
@@ -199,23 +200,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .nom-chk-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;row-gap:8px}
 .nom-chk-row label{display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;white-space:nowrap}
 
-/* Ayuda contextual: icono (?) con tarjeta flotante azul al hacer hover */
+/* Ayuda contextual: icono (?) — la tarjeta azul se dibuja con JS en un elemento
+   único anclado a <body> (position:fixed), para que NUNCA quede recortada por
+   el overflow:hidden/auto del modal, sin importar en qué columna esté el campo. */
 .fh{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:14px;height:14px;border-radius:50%;background:var(--bg4);color:var(--text2);
   font-size:9.5px;font-weight:700;cursor:help;margin-left:5px;flex-shrink:0}
 .fh:hover,.fh:focus{background:#2563eb;color:#fff;outline:none}
-.fh .fh-tip{
-  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(4px);
-  width:230px;background:#2563eb;color:#fff;font-size:11px;font-weight:400;line-height:1.5;
-  text-transform:none;letter-spacing:normal;padding:9px 11px;border-radius:10px;
-  box-shadow:0 12px 28px rgba(0,0,0,.4);opacity:0;pointer-events:none;
-  transition:opacity .15s ease,transform .15s ease;z-index:60;
+#fhTooltip{
+  position:fixed;max-width:260px;background:#2563eb;color:#fff;font-size:11.5px;font-weight:400;
+  line-height:1.55;text-transform:none;letter-spacing:normal;padding:10px 12px;border-radius:10px;
+  box-shadow:0 14px 32px rgba(0,0,0,.45);opacity:0;pointer-events:none;
+  transition:opacity .12s ease;z-index:9999;white-space:normal;word-wrap:break-word;
 }
-.fh .fh-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  border:5px solid transparent;border-top-color:#2563eb}
-.fh:hover .fh-tip,.fh:focus .fh-tip{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#fhTooltip::after{content:'';position:absolute;width:0;height:0;
+  left:var(--al,50%);transform:translateX(-50%);border:6px solid transparent;}
+#fhTooltip.above::after{top:100%;border-top-color:#2563eb}
+#fhTooltip.below::after{bottom:100%;border-bottom-color:#2563eb}
+#fhTooltip.show{opacity:1}
 
-/* Resumen en vivo (columna derecha) */
+/* Resumen en vivo (columna central) */
 .nom-summary{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r8);padding:14px 16px}
 .nom-summary-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:10px;text-transform:uppercase}
 .nom-summary-row{display:flex;justify-content:space-between;align-items:center;padding:3.5px 0;font-size:12px;gap:10px}
@@ -225,14 +229,38 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .nom-summary-hero{margin-top:10px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .nom-summary-hero-val{font-weight:800;font-size:24px;color:var(--red);white-space:nowrap}
 
+/* Vista previa del recibo (columna derecha) — imita visualmente el PDF generado
+   y se actualiza en tiempo real con cada cambio del formulario. */
+.nom-receipt{background:#fff;color:#1a1a1a;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.4);overflow:hidden;font-size:11.5px}
+.nom-receipt-head{background:#af0d12;color:#fff;padding:11px 14px}
+.nom-receipt-co{font-weight:700;font-size:12px;letter-spacing:.02em}
+.nom-receipt-sub{font-size:9.5px;opacity:.85;margin-top:2px}
+.nom-receipt-body{padding:14px 16px}
+.nom-receipt-emp{font-weight:700;font-size:13px;word-break:break-word}
+.nom-receipt-meta{font-size:10.5px;color:#666;margin-top:2px}
+.nom-receipt-div{border-top:1px solid #e6e6e6;margin:10px 0}
+.nom-receipt-div.strong{border-top:1.5px solid #1a1a1a}
+.nom-receipt-sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#999;margin-bottom:6px}
+.nom-receipt-row{display:flex;justify-content:space-between;gap:8px;padding:2.5px 0;font-size:11.5px}
+.nom-receipt-empty{font-size:10.5px;color:#999;font-style:italic;padding:4px 0}
+.nom-receipt-total{display:flex;justify-content:space-between;font-weight:700;font-size:12px;padding:4px 0}
+.nom-receipt-hero{margin-top:8px;padding-top:10px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;font-weight:800;gap:8px}
+.nom-receipt-hero span:first-child{font-size:11px}
+.nom-receipt-hero span:last-child{color:#af0d12;font-size:17px;white-space:nowrap}
+.nom-receipt-warn{margin:0 16px 12px;padding:6px 8px;background:#fdecea;color:#af0d12;border-radius:6px;font-size:10.5px;font-weight:600}
+
 /* Importar recibo PDF */
 .nom-import-box{border:1px dashed var(--border2);border-radius:var(--r8);padding:11px 13px;background:var(--bg3)}
 .nom-import-box.has-data{border-style:solid;border-color:#2563eb}
 .nom-import-preview{margin-top:8px;font-size:11px;color:var(--text2);line-height:1.6}
 
+@media(max-width:1300px){
+  .nom-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .nom-col-preview{grid-column:1/-1}
+}
 @media(max-width:1000px){
   .nom-layout{grid-template-columns:1fr!important}
-  .nom-col-right{position:static!important}
+  .nom-col-right,.nom-col-preview{position:static!important}
 }
 .form-input,.form-select,.form-textarea{
   background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r4);
@@ -1801,7 +1829,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 <!-- ══ MODAL: NÓMINA SEMANAL ══ -->
 <div class="modal-bg" id="nomModal">
-  <div class="modal-lg" style="width:1280px">
+  <div class="modal-lg" style="width:1560px">
     <div class="mlg-head">
       <div>
         <div class="mlg-title" id="nomModalTitle">Nueva Nómina Semanal</div>
@@ -1821,7 +1849,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <div class="nom-import-box" id="nomImportBox">
             <label class="form-label" style="margin-bottom:6px">
               Importar recibo fiscal (PDF)
-              <span class="fh" tabindex="0">?<span class="fh-tip">Sube el CFDI de nómina en PDF y el sistema intentará leer automáticamente Empleado, Periodo, Días, Sueldo, ISR, Vales y Neto para llenar el formulario. Siempre puedes corregir cualquier dato después.</span></span>
+              <span class="fh" tabindex="0" data-tip="Sube el CFDI de nómina en PDF y el sistema intentará leer automáticamente Empleado, Periodo, Días, Sueldo, ISR, Vales y Neto para llenar el formulario. Siempre puedes corregir cualquier dato después.">?</span>
             </label>
             <input type="file" class="form-input" id="nomPdfImportFile" accept=".pdf,application/pdf" onchange="onNomPdfImportSelected(this)">
             <div id="nomPdfImportPreview" class="nom-import-preview" style="display:none"></div>
@@ -1856,7 +1884,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
               </div>
               <div class="form-group">
                 <label class="form-label">Monto acordado (semana)
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Opcional. Sustituye el sueldo base del empleado solo para esta semana (ej. altas a mitad de semana). Déjalo en 0 para usar el sueldo configurado en Personal.</span></span>
+                  <span class="fh" tabindex="0" data-tip="Opcional. Sustituye el sueldo base del empleado solo para esta semana (ej. altas a mitad de semana). Déjalo en 0 para usar el sueldo configurado en Personal.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nMontoAcordadoManual" min="0" step="0.01" value="0" placeholder="0 = usar sueldo base" oninput="recalcNomPreview()">
               </div>
@@ -1868,19 +1896,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <div class="nom-grid">
               <div class="form-group">
                 <label class="form-label">Normales
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Descuenta el día completo más la parte proporcional del séptimo día (domingo).</span></span>
+                  <span class="fh" tabindex="0" data-tip="Descuenta el día completo más la parte proporcional del séptimo día (domingo).">?</span>
                 </label>
                 <input type="number" class="form-input" id="nFaltas" min="0" step="1" value="0" oninput="recalcNomPreview()">
               </div>
               <div class="form-group">
                 <label class="form-label">Justificadas
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Solo descuenta el día faltado. El séptimo día (domingo) no se toca.</span></span>
+                  <span class="fh" tabindex="0" data-tip="Solo descuenta el día faltado. El séptimo día (domingo) no se toca.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nFaltasJustificadas" min="0" step="1" value="0" oninput="recalcNomPreview()">
               </div>
               <div class="form-group">
                 <label class="form-label">Con castigo
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Descuenta todos los días faltados más el séptimo día completo (no proporcional), como penalización.</span></span>
+                  <span class="fh" tabindex="0" data-tip="Descuenta todos los días faltados más el séptimo día completo (no proporcional), como penalización.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nFaltasCastigo" min="0" step="1" value="0" oninput="recalcNomPreview()">
               </div>
@@ -1892,31 +1920,31 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <div class="nom-grid">
               <div class="form-group">
                 <label class="form-label">Bonos
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Los bonos incrementan el sueldo acordado y afectan el cálculo del efectivo a entregar, pero no modifican el salario fiscal.</span></span>
+                  <span class="fh" tabindex="0" data-tip="Los bonos incrementan el sueldo acordado y afectan el cálculo del efectivo a entregar, pero no modifican el salario fiscal.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nBonos" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
               </div>
               <div class="form-group">
                 <label class="form-label">Préstamos
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Abono de esta semana al préstamo del empleado con la empresa. Solo se descuenta del efectivo, nunca del recibo fiscal.</span></span>
+                  <span class="fh" tabindex="0" data-tip="Abono de esta semana al préstamo del empleado con la empresa. Solo se descuenta del efectivo, nunca del recibo fiscal.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nPrestamo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
               </div>
               <div class="form-group">
                 <label class="form-label">Descuentos extra
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Cualquier otro descuento acordado únicamente para esta semana.</span></span>
+                  <span class="fh" tabindex="0" data-tip="Cualquier otro descuento acordado únicamente para esta semana.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nDescuentos" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
               </div>
               <div class="form-group">
                 <label class="form-label">Retención fiscal extra
-                  <span class="fh" tabindex="0">?<span class="fh-tip">IMSS/ISR/SAT/incapacidad. Se resta únicamente de la parte fiscal (transferencia), nunca del efectivo ni de los vales.</span></span>
+                  <span class="fh" tabindex="0" data-tip="IMSS/ISR/SAT/incapacidad. Se resta únicamente de la parte fiscal (transferencia), nunca del efectivo ni de los vales.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nRetencionExtra" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
               </div>
               <div class="form-group">
                 <label class="form-label">Extra en efectivo
-                  <span class="fh" tabindex="0">?<span class="fh-tip">Apoyo o gratificación adicional que se suma únicamente al efectivo que se entrega en mano.</span></span>
+                  <span class="fh" tabindex="0" data-tip="Apoyo o gratificación adicional que se suma únicamente al efectivo que se entrega en mano.">?</span>
                 </label>
                 <input type="number" class="form-input" id="nExtraEfectivo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
               </div>
@@ -1928,15 +1956,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <div class="nom-chk-row">
               <label>
                 <input type="checkbox" id="nRecibeVales" onchange="recalcNomPreview()"> Recibe vales
-                <span class="fh" tabindex="0">?<span class="fh-tip">Se carga por defecto según la hoja Personal. Cambiarlo aquí solo afecta esta semana, no la configuración permanente del empleado.</span></span>
+                <span class="fh" tabindex="0" data-tip="Se carga por defecto según la hoja Personal. Cambiarlo aquí solo afecta esta semana, no la configuración permanente del empleado.">?</span>
               </label>
               <label>
                 <input type="checkbox" id="nRecibeFiscal" onchange="recalcNomPreview()"> Recibe fiscal
-                <span class="fh" tabindex="0">?<span class="fh-tip">Si se desactiva, el monto que iba a fiscal se traslada automáticamente al efectivo: el empleado no pierde dinero, solo cambia el método de pago.</span></span>
+                <span class="fh" tabindex="0" data-tip="Si se desactiva, el monto que iba a fiscal se traslada automáticamente al efectivo: el empleado no pierde dinero, solo cambia el método de pago.">?</span>
               </label>
               <label style="color:var(--red)">
                 <input type="checkbox" id="nValesEn0" onchange="recalcNomPreview()"> Vales en 0
-                <span class="fh" tabindex="0">?<span class="fh-tip">Penalización temporal solo para esta semana: fuerza el vale a $0 aunque "Recibe vales" esté activo. Siempre inicia desactivado y tiene prioridad sobre "Recibe vales".</span></span>
+                <span class="fh" tabindex="0" data-tip="Penalización temporal solo para esta semana: fuerza el vale a $0 aunque &quot;Recibe vales&quot; esté activo. Siempre inicia desactivado y tiene prioridad sobre &quot;Recibe vales&quot;.">?</span>
               </label>
             </div>
           </div>
@@ -1944,7 +1972,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <div class="nom-section">
             <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
               <input type="checkbox" id="nModoManual" onchange="onModoManualToggle()"> Modo Manual
-              <span class="fh" tabindex="0">?<span class="fh-tip">Para casos especiales donde el cálculo automático no representa exactamente lo que se pagará. Indicas cuánto se paga por transferencia y el sistema calcula el efectivo automáticamente. No afecta préstamos, faltas ni vales.</span></span>
+              <span class="fh" tabindex="0" data-tip="Para casos especiales donde el cálculo automático no representa exactamente lo que se pagará. Indicas cuánto se paga por transferencia y el sistema calcula el efectivo automáticamente. No afecta préstamos, faltas ni vales.">?</span>
             </label>
             <div id="nModoManualFields" style="display:none;margin-top:10px">
               <label class="form-label">Transferencia (manual)</label>
@@ -1955,7 +1983,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <div class="nom-section">
             <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
               <input type="checkbox" id="nAjusteManualActivo" onchange="onAjusteManualToggle()"> Ajuste manual del total
-              <span class="fh" tabindex="0">?<span class="fh-tip">Solo para corregir diferencias de centavos contra el recibo fiscal. El importe que escribas sustituye al total calculado; el resto del cálculo no se modifica.</span></span>
+              <span class="fh" tabindex="0" data-tip="Solo para corregir diferencias de centavos contra el recibo fiscal. El importe que escribas sustituye al total calculado; el resto del cálculo no se modifica.">?</span>
             </label>
             <div id="nAjusteManualFields" style="display:none;margin-top:10px">
               <label class="form-label">Total final (definitivo)</label>
@@ -2013,6 +2041,42 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
                 <div style="font-size:12px;color:var(--text2)">Efectivo a entregar</div>
               </div>
               <div class="nom-summary-hero-val" id="pvEfectivoReal">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════ COLUMNA DERECHA — VISTA PREVIA DEL RECIBO ═══════════ -->
+        <div class="nom-col-preview">
+          <div class="nom-summary-title">Vista previa del recibo</div>
+          <div class="nom-receipt" id="nomReceiptPreview">
+            <div class="nom-receipt-head">
+              <div class="nom-receipt-co">CONSTRUCTORA CONECTE</div>
+              <div class="nom-receipt-sub">Recibo de Nómina — vista previa en vivo</div>
+            </div>
+            <div class="nom-receipt-warn" id="nrWarn" style="display:none">No trabajó esta semana — todo en $0.</div>
+            <div class="nom-receipt-body">
+              <div class="nom-receipt-emp" id="nrEmpleado">Selecciona un empleado…</div>
+              <div class="nom-receipt-meta" id="nrPeriodo">—</div>
+
+              <div class="nom-receipt-div"></div>
+              <div class="nom-receipt-sec">Percepciones</div>
+              <div class="nom-receipt-row"><span>Sueldo fiscal (neto)</span><span id="nrFiscal">$0.00</span></div>
+              <div class="nom-receipt-row"><span>Vales de despensa</span><span id="nrVales">$0.00</span></div>
+              <div class="nom-receipt-row"><span>Efectivo (neto)</span><span id="nrEfectivo">$0.00</span></div>
+              <div class="nom-receipt-row" id="nrBonosRow" style="display:none"><span>Bonos</span><span id="nrBonos">$0.00</span></div>
+              <div class="nom-receipt-row" id="nrExtraRow" style="display:none"><span>Extra en efectivo</span><span id="nrExtra">$0.00</span></div>
+
+              <div class="nom-receipt-div"></div>
+              <div class="nom-receipt-sec">Deducciones</div>
+              <div class="nom-receipt-row" id="nrFaltasRow" style="display:none"><span>Descuento por faltas</span><span id="nrFaltas">$0.00</span></div>
+              <div class="nom-receipt-row" id="nrPrestamoRow" style="display:none"><span>Préstamo</span><span id="nrPrestamo">$0.00</span></div>
+              <div class="nom-receipt-row" id="nrDescRow" style="display:none"><span>Descuentos adicionales</span><span id="nrDesc">$0.00</span></div>
+              <div class="nom-receipt-row" id="nrRetRow" style="display:none"><span>Retención fiscal extra</span><span id="nrRet">$0.00</span></div>
+              <div class="nom-receipt-empty" id="nrSinDeducciones">Sin deducciones esta semana.</div>
+
+              <div class="nom-receipt-div strong"></div>
+              <div class="nom-receipt-total"><span>Total semana</span><span id="nrTotal">$0.00</span></div>
+              <div class="nom-receipt-hero"><span>EFECTIVO A ENTREGAR</span><span id="nrEfectivoReal">$0.00</span></div>
             </div>
           </div>
         </div>
@@ -5860,7 +5924,110 @@ function recalcNomPreview(){
     modoManualRow.style.display = 'none';
     set('pvEfectivoReal', fmtMXN(r.efectivoRealEntregar));
   }
+  updateNomReceiptPreview(r, empleado, fIni, fFin);
 }
+
+/* ── Vista previa en vivo del recibo (columna derecha del modal) ──
+   Imita visualmente lo que generará generarPDFNomina(), actualizándose con
+   cada cambio del formulario, sin necesidad de generar el PDF real. */
+function updateNomReceiptPreview(r, empleado, fIni, fFin){
+  const box = document.getElementById('nomReceiptPreview');
+  if(!box) return;
+  const setTxt=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  const setRow=(rowId,valId,show,val)=>{
+    const row=document.getElementById(rowId);
+    if(!row) return;
+    row.style.display = show ? '' : 'none';
+    if(show) setTxt(valId, fmtMXN(val));
+  };
+
+  document.getElementById('nrWarn').style.display = r.noTrabajo ? '' : 'none';
+  setTxt('nrEmpleado', empleado ? (empleado.nombre||'—') : 'Selecciona un empleado…');
+  setTxt('nrPeriodo', fIni ? `${nomFmtFechaLarga(fIni)} — ${fFin?nomFmtFechaLarga(fFin):'—'}` : '—');
+
+  setTxt('nrFiscal', fmtMXN(r.fiscalNeto));
+  setTxt('nrVales', fmtMXN(r.valesNeto));
+  setTxt('nrEfectivo', fmtMXN(r.efectivoNeto));
+  const bonos = parseFloat(document.getElementById('nBonos').value)||0;
+  setRow('nrBonosRow','nrBonos', bonos>0, bonos);
+  setRow('nrExtraRow','nrExtra', (r.extraEfectivo||0)>0, r.extraEfectivo);
+
+  const descFaltas = +(r.fiscalDescuento + r.valesDescuento + r.efectivoDescuento).toFixed(2);
+  const prestamo = parseFloat(document.getElementById('nPrestamo').value)||0;
+  const descuentos = parseFloat(document.getElementById('nDescuentos').value)||0;
+  const retExtra = r.retencionExtra||0;
+  setRow('nrFaltasRow','nrFaltas', descFaltas>0, descFaltas);
+  setRow('nrPrestamoRow','nrPrestamo', prestamo>0, prestamo);
+  setRow('nrDescRow','nrDesc', descuentos>0, descuentos);
+  setRow('nrRetRow','nrRet', retExtra>0, retExtra);
+  const sinDeducciones = !(descFaltas>0 || prestamo>0 || descuentos>0 || retExtra>0);
+  document.getElementById('nrSinDeducciones').style.display = sinDeducciones ? '' : 'none';
+
+  setTxt('nrTotal', fmtMXN(r.totalFinalDisplay));
+  const efectivoHero = (r.modoManual && !r.noTrabajo) ? r.efectivoFinalDisplay : r.efectivoRealEntregar;
+  setTxt('nrEfectivoReal', fmtMXN(efectivoHero));
+}
+
+/* ── AYUDA CONTEXTUAL: tooltip azul anclado a <body> (position:fixed) ──
+   Se maneja con un único elemento reutilizable para evitar que el navegador
+   lo recorte por el overflow:hidden/auto del modal, sin importar en qué
+   columna o qué tan cerca del borde esté el icono "?". Se posiciona con
+   getBoundingClientRect y se ajusta para no salirse de la pantalla. */
+(function initFieldHelpTooltips(){
+  let tip;
+  function ensureTip(){
+    if(!tip){
+      tip = document.createElement('div');
+      tip.id = 'fhTooltip';
+      document.body.appendChild(tip);
+    }
+    return tip;
+  }
+  function showTip(target){
+    const text = target.getAttribute('data-tip');
+    if(!text) return;
+    const el = ensureTip();
+    el.textContent = text;
+    el.classList.remove('show','above','below');
+    // Mide primero sin animación para calcular tamaño real
+    el.style.left = '-9999px'; el.style.top='-9999px';
+    el.classList.add('show');
+    const r = target.getBoundingClientRect();
+    const tw = el.offsetWidth, th = el.offsetHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let left = r.left + r.width/2 - tw/2;
+    left = Math.max(8, Math.min(left, vw - tw - 8));
+    let top = r.top - th - 10;
+    let placement = 'above';
+    if(top < 8){ top = r.bottom + 10; placement = 'below'; }
+    if(top + th > vh - 8) top = Math.max(8, vh - th - 8);
+    el.classList.add(placement);
+    el.style.left = left+'px';
+    el.style.top = top+'px';
+    // Flecha apunta al icono, no siempre al centro de la tarjeta
+    const arrowLeft = Math.max(10, Math.min(r.left + r.width/2 - left, tw-10));
+    el.style.setProperty('--al', arrowLeft+'px');
+  }
+  function hideTip(){ if(tip) tip.classList.remove('show'); }
+  document.addEventListener('mouseover', e=>{
+    const t = e.target.closest && e.target.closest('.fh');
+    if(t) showTip(t);
+  });
+  document.addEventListener('mouseout', e=>{
+    const t = e.target.closest && e.target.closest('.fh');
+    if(t) hideTip();
+  });
+  document.addEventListener('focusin', e=>{
+    const t = e.target.closest && e.target.closest('.fh');
+    if(t) showTip(t);
+  });
+  document.addEventListener('focusout', e=>{
+    const t = e.target.closest && e.target.closest('.fh');
+    if(t) hideTip();
+  });
+  window.addEventListener('scroll', hideTip, true);
+  window.addEventListener('resize', hideTip);
+})();
 
 async function guardarNomina(){
   if(!requireAuth()) return;
