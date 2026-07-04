@@ -186,7 +186,54 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .form-grid-nom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:18px;row-gap:14px;min-width:0}
 .form-group{display:flex;flex-direction:column;gap:5px;min-width:0}
 .form-group.full{grid-column:1/-1}
-.form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)}
+.form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);display:flex;align-items:center}
+
+/* ══ NÓMINAS: layout de dos columnas + ayuda contextual + resumen ══ */
+.nom-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:start;min-width:0}
+.nom-col-left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.nom-col-right{position:sticky;top:0;display:flex;flex-direction:column;gap:12px;min-width:0}
+.nom-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:10px;min-width:0}
+.nom-grid .form-group.full{grid-column:1/-1}
+.nom-section{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r4);padding:10px 12px}
+.nom-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px}
+.nom-chk-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;row-gap:8px}
+.nom-chk-row label{display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;white-space:nowrap}
+
+/* Ayuda contextual: icono (?) con tarjeta flotante azul al hacer hover */
+.fh{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:14px;height:14px;border-radius:50%;background:var(--bg4);color:var(--text2);
+  font-size:9.5px;font-weight:700;cursor:help;margin-left:5px;flex-shrink:0}
+.fh:hover,.fh:focus{background:#2563eb;color:#fff;outline:none}
+.fh .fh-tip{
+  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(4px);
+  width:230px;background:#2563eb;color:#fff;font-size:11px;font-weight:400;line-height:1.5;
+  text-transform:none;letter-spacing:normal;padding:9px 11px;border-radius:10px;
+  box-shadow:0 12px 28px rgba(0,0,0,.4);opacity:0;pointer-events:none;
+  transition:opacity .15s ease,transform .15s ease;z-index:60;
+}
+.fh .fh-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#2563eb}
+.fh:hover .fh-tip,.fh:focus .fh-tip{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+
+/* Resumen en vivo (columna derecha) */
+.nom-summary{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r8);padding:14px 16px}
+.nom-summary-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:10px;text-transform:uppercase}
+.nom-summary-row{display:flex;justify-content:space-between;align-items:center;padding:3.5px 0;font-size:12px;gap:10px}
+.nom-summary-row span:first-child{color:var(--text3)}
+.nom-summary-row.b span:last-child{font-weight:700}
+.nom-summary-div{border-top:1px solid var(--border);margin:8px 0}
+.nom-summary-hero{margin-top:10px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nom-summary-hero-val{font-weight:800;font-size:24px;color:var(--red);white-space:nowrap}
+
+/* Importar recibo PDF */
+.nom-import-box{border:1px dashed var(--border2);border-radius:var(--r8);padding:11px 13px;background:var(--bg3)}
+.nom-import-box.has-data{border-style:solid;border-color:#2563eb}
+.nom-import-preview{margin-top:8px;font-size:11px;color:var(--text2);line-height:1.6}
+
+@media(max-width:1000px){
+  .nom-layout{grid-template-columns:1fr!important}
+  .nom-col-right{position:static!important}
+}
 .form-input,.form-select,.form-textarea{
   background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r4);
   padding:8px 10px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;
@@ -580,7 +627,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   .bal-tab{padding:0 10px}
 }
 @media(max-width:600px){
-  .form-grid,.form-grid-nom{grid-template-columns:1fr!important}
+  .form-grid,.form-grid-nom,.nom-grid{grid-template-columns:1fr!important}
   .stats{grid-template-columns:1fr 1fr}
   .topbar{padding:0 10px;gap:6px}
   .topbar-brand{font-size:12px}
@@ -1754,7 +1801,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 <!-- ══ MODAL: NÓMINA SEMANAL ══ -->
 <div class="modal-bg" id="nomModal">
-  <div class="modal-lg" style="width:1040px">
+  <div class="modal-lg" style="width:1280px">
     <div class="mlg-head">
       <div>
         <div class="mlg-title" id="nomModalTitle">Nueva Nómina Semanal</div>
@@ -1765,179 +1812,211 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </button>
     </div>
     <div class="mlg-body">
-      <div class="form-grid form-grid-nom" style="margin-bottom:16px">
-        <div class="form-group full" style="grid-column:1/-1">
-          <label class="form-label">Empleado *</label>
-          <select class="form-select" id="nEmpleado" onchange="onNomEmpleadoChange()"></select>
-        </div>
-        <div class="form-group" id="nEstatusGrp" style="display:none">
-          <label class="form-label">Estatus</label>
-          <select class="form-select" id="nEstatus">
-            <option value="Pendiente">Pendiente</option>
-            <option value="Pagado">Pagado</option>
-            <option value="Cancelado">Cancelado</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fecha de inicio de semana (lunes) *</label>
-          <input type="date" class="form-input" id="nFechaInicio" onchange="this.value=nomMondayOf(this.value);recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fecha de fin de semana</label>
-          <div class="form-input" style="background:var(--bg3);color:var(--text2);display:flex;align-items:center" id="nFechaFinPreview">—</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Semana / Año (ISO)</label>
-          <div class="form-input" style="background:var(--bg3);color:var(--text2);display:flex;align-items:center" id="nSemanaPreview">—</div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Faltas normales <span style="color:var(--text3);font-weight:400">(día + proporcional del 7°)</span></label>
-          <input type="number" class="form-input" id="nFaltas" min="0" step="1" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Faltas justificadas <span style="color:var(--text3);font-weight:400">(solo el día, no toca el 7°)</span></label>
-          <input type="number" class="form-input" id="nFaltasJustificadas" min="0" step="1" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Faltas con castigo <span style="color:var(--text3);font-weight:400">(todos los días + 7° completo)</span></label>
-          <input type="number" class="form-input" id="nFaltasCastigo" min="0" step="1" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Préstamo a descontar</label>
-          <input type="number" class="form-input" id="nPrestamo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Bonos extras</label>
-          <input type="number" class="form-input" id="nBonos" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Descuentos adicionales</label>
-          <input type="number" class="form-input" id="nDescuentos" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Retención fiscal extra <span style="color:var(--text3);font-weight:400">(IMSS/ISR/SAT/incapacidad — solo afecta lo fiscal)</span></label>
-          <input type="number" class="form-input" id="nRetencionExtra" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Extra en efectivo <span style="color:var(--text3);font-weight:400">(apoyo/gratificación — solo suma al efectivo)</span></label>
-          <input type="number" class="form-input" id="nExtraEfectivo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Monto acordado de la semana <span style="color:var(--text3);font-weight:400">(opcional — sustituye el sueldo base)</span></label>
-          <input type="number" class="form-input" id="nMontoAcordadoManual" min="0" step="0.01" value="0" placeholder="Déjalo en 0 para usar el sueldo base del empleado" oninput="recalcNomPreview()">
-        </div>
-        <div class="form-group full" style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4)">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-            <input type="checkbox" id="nRecibeVales" onchange="recalcNomPreview()"> Recibe vales
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-            <input type="checkbox" id="nRecibeFiscal" onchange="recalcNomPreview()"> Recibe fiscal
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--red)">
-            <input type="checkbox" id="nValesEn0" onchange="recalcNomPreview()"> Vales en 0
-          </label>
-          <span style="font-size:10.5px;color:var(--text3);width:100%">
-            Se cargan automáticamente según la hoja "Personal", pero puedes ajustarlos solo para esta semana — no modifican la configuración permanente del empleado. "Vales en 0" siempre inicia desactivado y tiene prioridad sobre "Recibe vales".
-          </span>
+      <div class="nom-layout">
+
+        <!-- ═══════════ COLUMNA IZQUIERDA — CAPTURA ═══════════ -->
+        <div class="nom-col-left">
+
+          <!-- Importar recibo fiscal en PDF -->
+          <div class="nom-import-box" id="nomImportBox">
+            <label class="form-label" style="margin-bottom:6px">
+              Importar recibo fiscal (PDF)
+              <span class="fh" tabindex="0">?<span class="fh-tip">Sube el CFDI de nómina en PDF y el sistema intentará leer automáticamente Empleado, Periodo, Días, Sueldo, ISR, Vales y Neto para llenar el formulario. Siempre puedes corregir cualquier dato después.</span></span>
+            </label>
+            <input type="file" class="form-input" id="nomPdfImportFile" accept=".pdf,application/pdf" onchange="onNomPdfImportSelected(this)">
+            <div id="nomPdfImportPreview" class="nom-import-preview" style="display:none"></div>
+          </div>
+
+          <div class="nom-section">
+            <div class="nom-section-title">Datos generales</div>
+            <div class="nom-grid">
+              <div class="form-group full">
+                <label class="form-label">Empleado *</label>
+                <select class="form-select" id="nEmpleado" onchange="onNomEmpleadoChange()"></select>
+              </div>
+              <div class="form-group" id="nEstatusGrp" style="display:none">
+                <label class="form-label">Estatus</label>
+                <select class="form-select" id="nEstatus">
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Pagado">Pagado</option>
+                  <option value="Cancelado">Cancelado</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Semana (lunes) *</label>
+                <input type="date" class="form-input" id="nFechaInicio" onchange="this.value=nomMondayOf(this.value);recalcNomPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fin de semana</label>
+                <div class="form-input" style="background:var(--bg3);color:var(--text2);display:flex;align-items:center" id="nFechaFinPreview">—</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Semana / Año (ISO)</label>
+                <div class="form-input" style="background:var(--bg3);color:var(--text2);display:flex;align-items:center" id="nSemanaPreview">—</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Monto acordado (semana)
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Opcional. Sustituye el sueldo base del empleado solo para esta semana (ej. altas a mitad de semana). Déjalo en 0 para usar el sueldo configurado en Personal.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nMontoAcordadoManual" min="0" step="0.01" value="0" placeholder="0 = usar sueldo base" oninput="recalcNomPreview()">
+              </div>
+            </div>
+          </div>
+
+          <div class="nom-section">
+            <div class="nom-section-title">Faltas</div>
+            <div class="nom-grid">
+              <div class="form-group">
+                <label class="form-label">Normales
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Descuenta el día completo más la parte proporcional del séptimo día (domingo).</span></span>
+                </label>
+                <input type="number" class="form-input" id="nFaltas" min="0" step="1" value="0" oninput="recalcNomPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Justificadas
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Solo descuenta el día faltado. El séptimo día (domingo) no se toca.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nFaltasJustificadas" min="0" step="1" value="0" oninput="recalcNomPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Con castigo
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Descuenta todos los días faltados más el séptimo día completo (no proporcional), como penalización.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nFaltasCastigo" min="0" step="1" value="0" oninput="recalcNomPreview()">
+              </div>
+            </div>
+          </div>
+
+          <div class="nom-section">
+            <div class="nom-section-title">Bonos, préstamos y ajustes</div>
+            <div class="nom-grid">
+              <div class="form-group">
+                <label class="form-label">Bonos
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Los bonos incrementan el sueldo acordado y afectan el cálculo del efectivo a entregar, pero no modifican el salario fiscal.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nBonos" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Préstamos
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Abono de esta semana al préstamo del empleado con la empresa. Solo se descuenta del efectivo, nunca del recibo fiscal.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nPrestamo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Descuentos extra
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Cualquier otro descuento acordado únicamente para esta semana.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nDescuentos" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Retención fiscal extra
+                  <span class="fh" tabindex="0">?<span class="fh-tip">IMSS/ISR/SAT/incapacidad. Se resta únicamente de la parte fiscal (transferencia), nunca del efectivo ni de los vales.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nRetencionExtra" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Extra en efectivo
+                  <span class="fh" tabindex="0">?<span class="fh-tip">Apoyo o gratificación adicional que se suma únicamente al efectivo que se entrega en mano.</span></span>
+                </label>
+                <input type="number" class="form-input" id="nExtraEfectivo" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+              </div>
+            </div>
+          </div>
+
+          <div class="nom-section">
+            <div class="nom-section-title">Vales y método de pago</div>
+            <div class="nom-chk-row">
+              <label>
+                <input type="checkbox" id="nRecibeVales" onchange="recalcNomPreview()"> Recibe vales
+                <span class="fh" tabindex="0">?<span class="fh-tip">Se carga por defecto según la hoja Personal. Cambiarlo aquí solo afecta esta semana, no la configuración permanente del empleado.</span></span>
+              </label>
+              <label>
+                <input type="checkbox" id="nRecibeFiscal" onchange="recalcNomPreview()"> Recibe fiscal
+                <span class="fh" tabindex="0">?<span class="fh-tip">Si se desactiva, el monto que iba a fiscal se traslada automáticamente al efectivo: el empleado no pierde dinero, solo cambia el método de pago.</span></span>
+              </label>
+              <label style="color:var(--red)">
+                <input type="checkbox" id="nValesEn0" onchange="recalcNomPreview()"> Vales en 0
+                <span class="fh" tabindex="0">?<span class="fh-tip">Penalización temporal solo para esta semana: fuerza el vale a $0 aunque "Recibe vales" esté activo. Siempre inicia desactivado y tiene prioridad sobre "Recibe vales".</span></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="nom-section">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
+              <input type="checkbox" id="nModoManual" onchange="onModoManualToggle()"> Modo Manual
+              <span class="fh" tabindex="0">?<span class="fh-tip">Para casos especiales donde el cálculo automático no representa exactamente lo que se pagará. Indicas cuánto se paga por transferencia y el sistema calcula el efectivo automáticamente. No afecta préstamos, faltas ni vales.</span></span>
+            </label>
+            <div id="nModoManualFields" style="display:none;margin-top:10px">
+              <label class="form-label">Transferencia (manual)</label>
+              <input type="number" class="form-input" id="nTransferenciaManual" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+            </div>
+          </div>
+
+          <div class="nom-section">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
+              <input type="checkbox" id="nAjusteManualActivo" onchange="onAjusteManualToggle()"> Ajuste manual del total
+              <span class="fh" tabindex="0">?<span class="fh-tip">Solo para corregir diferencias de centavos contra el recibo fiscal. El importe que escribas sustituye al total calculado; el resto del cálculo no se modifica.</span></span>
+            </label>
+            <div id="nAjusteManualFields" style="display:none;margin-top:10px">
+              <label class="form-label">Total final (definitivo)</label>
+              <input type="number" class="form-input" id="nTotalManualOverride" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">Observaciones de incidencias</label>
+            <textarea class="form-textarea" id="nObs" rows="2" placeholder="Ej. Falta justificada con incapacidad, adelanto de préstamo, etc."></textarea>
+          </div>
         </div>
 
-        <!-- Punto 1: Modo Manual — reparto manual Transferencia/Efectivo -->
-        <div class="form-group full" style="padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4)">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
-            <input type="checkbox" id="nModoManual" onchange="onModoManualToggle()"> Modo Manual
-          </label>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:4px">
-            Para casos especiales donde el cálculo automático no representa exactamente lo que se le pagará. Indica cuánto se paga por Transferencia y el sistema calcula el Efectivo automáticamente (Transferencia + Efectivo + Vales = Total de la nómina). No afecta préstamos, faltas ni vales.
-          </div>
-          <div id="nModoManualFields" style="display:none;margin-top:10px">
-            <label class="form-label">Transferencia (manual)</label>
-            <input type="number" class="form-input" id="nTransferenciaManual" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+        <!-- ═══════════ COLUMNA DERECHA — CÁLCULO AUTOMÁTICO ═══════════ -->
+        <div class="nom-col-right">
+          <div class="nom-summary">
+            <div class="nom-summary-title">Cálculo automático</div>
+            <div id="nomNoTrabajoWarn" style="display:none;margin-bottom:10px;padding:8px 10px;background:rgba(229,62,62,.12);border:1px solid rgba(229,62,62,.3);border-radius:var(--r4);color:var(--red);font-size:11.5px;font-weight:600">
+              Las faltas cubren toda la semana laboral: no generó pago. Todo queda en $0 (sueldo, vales y fiscal).
+            </div>
+
+            <div class="nom-summary-row"><span>Sueldo total acordado</span><span id="pvSueldoTotal">—</span></div>
+            <div class="nom-summary-row"><span>Días descontados</span><span id="pvDiasDesc">0.0000</span></div>
+            <div class="nom-summary-div"></div>
+
+            <div class="nom-summary-row"><span>Salario fiscal — bruto</span><span id="pvFiscalBruto">—</span></div>
+            <div class="nom-summary-row"><span>Salario fiscal — descuento</span><span id="pvFiscalDesc">—</span></div>
+            <div class="nom-summary-row b"><span>Salario fiscal — neto</span><span id="pvFiscalNeto">—</span></div>
+            <div class="nom-summary-div"></div>
+
+            <div class="nom-summary-row"><span>Vales — bruto</span><span id="pvValesBruto">—</span></div>
+            <div class="nom-summary-row"><span>Vales — descuento</span><span id="pvValesDesc">—</span></div>
+            <div class="nom-summary-row b"><span>Vales — neto</span><span id="pvValesNeto">—</span></div>
+            <div class="nom-summary-div"></div>
+
+            <div class="nom-summary-row"><span>Efectivo — bruto</span><span id="pvEfecBruto">—</span></div>
+            <div class="nom-summary-row"><span>Efectivo — descuento</span><span id="pvEfecDesc">—</span></div>
+            <div class="nom-summary-row"><span>+ Extra efectivo</span><span id="pvExtraEfec">—</span></div>
+            <div class="nom-summary-row b"><span>Efectivo — neto</span><span id="pvEfecNeto">—</span></div>
+            <div class="nom-summary-div"></div>
+
+            <div class="nom-summary-row"><span>Subtotal a pagar</span><span id="pvSubtotal">—</span></div>
+            <div class="nom-summary-row"><span>Total descuentos</span><span id="pvTotalDesc">—</span></div>
+            <div class="nom-summary-row b"><span>Total semana (transferencia+vales+efectivo)</span><span id="pvTotalFinal">—</span></div>
+            <div style="color:var(--text3);font-size:10.5px" id="pvAjusteNota"></div>
+
+            <div id="pvModoManualRow" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+              <div class="nom-summary-row"><span>Transferencia (Modo Manual)</span><span id="pvTransferenciaManual">—</span></div>
+              <div class="nom-summary-row"><span>Efectivo calculado (Modo Manual)</span><span id="pvEfectivoManual">—</span></div>
+            </div>
+
+            <div class="nom-summary-hero">
+              <div>
+                <div style="color:var(--text3);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em">★ Dato principal</div>
+                <div style="font-size:12px;color:var(--text2)">Efectivo a entregar</div>
+              </div>
+              <div class="nom-summary-hero-val" id="pvEfectivoReal">—</div>
+            </div>
           </div>
         </div>
 
-        <!-- Punto 5: Ajuste manual por diferencias de centavos / Total final -->
-        <div class="form-group full" style="padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4)">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer">
-            <input type="checkbox" id="nAjusteManualActivo" onchange="onAjusteManualToggle()"> Ajuste manual del total (Total final)
-          </label>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:4px">
-            Solo para corregir diferencias de centavos contra el recibo fiscal. Al activarlo, el importe que escribas aquí sustituye al total calculado automáticamente; el resto del cálculo (faltas, préstamo, vales) no se modifica.
-          </div>
-          <div id="nAjusteManualFields" style="display:none;margin-top:10px">
-            <label class="form-label">Total final (definitivo)</label>
-            <input type="number" class="form-input" id="nTotalManualOverride" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
-          </div>
-        </div>
-        <div class="form-group full">
-          <label class="form-label">Observaciones de incidencias</label>
-          <textarea class="form-textarea" id="nObs" rows="2" placeholder="Ej. Falta justificada con incapacidad, adelanto de préstamo, etc."></textarea>
-        </div>
-      </div>
-
-      <!-- ── PANEL DE CÁLCULO EN VIVO ── -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);padding:14px 16px">
-        <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em;margin-bottom:10px;text-transform:uppercase">Cálculo automático</div>
-        <div id="nomNoTrabajoWarn" style="display:none;margin-bottom:10px;padding:8px 10px;background:rgba(229,62,62,.12);border:1px solid rgba(229,62,62,.3);border-radius:var(--r4);color:var(--red);font-size:11.5px;font-weight:600">
-          Las faltas cubren toda la semana laboral: no generó pago. Todo queda en $0 (sueldo, vales y fiscal).
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;font-size:12px">
-          <div>
-            <div style="color:var(--text3);margin-bottom:4px">Sueldo total acordado</div>
-            <div style="font-weight:600" id="pvSueldoTotal">—</div>
-            <div style="color:var(--text3);margin-top:8px">Días descontados</div>
-            <div style="font-weight:600" id="pvDiasDesc">0.0000</div>
-          </div>
-          <div>
-            <div style="color:var(--text3);margin-bottom:3px">Sueldo Fiscal</div>
-            <div>Bruto: <span id="pvFiscalBruto">—</span></div>
-            <div>Descuento: <span id="pvFiscalDesc">—</span></div>
-            <div style="font-weight:700;margin-top:2px">Neto: <span id="pvFiscalNeto">—</span></div>
-          </div>
-          <div>
-            <div style="color:var(--text3);margin-bottom:3px">Vales</div>
-            <div>Bruto: <span id="pvValesBruto">—</span></div>
-            <div>Descuento: <span id="pvValesDesc">—</span></div>
-            <div style="font-weight:700;margin-top:2px">Neto: <span id="pvValesNeto">—</span></div>
-          </div>
-          <div>
-            <div style="color:var(--text3);margin-bottom:3px">Efectivo</div>
-            <div>Bruto: <span id="pvEfecBruto">—</span></div>
-            <div>Descuento: <span id="pvEfecDesc">—</span></div>
-            <div>+ Extra efectivo: <span id="pvExtraEfec">—</span></div>
-            <div style="font-weight:700;margin-top:2px">Neto: <span id="pvEfecNeto">—</span></div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;font-size:12px;margin-top:16px">
-          <div>
-            <div style="color:var(--text3);margin-bottom:4px">Subtotal a pagar</div>
-            <div style="font-weight:600" id="pvSubtotal">—</div>
-            <div style="color:var(--text3);margin-top:8px">Total descuentos <span style="font-size:10px">(incl. retención fiscal)</span></div>
-            <div style="font-weight:600" id="pvTotalDesc">—</div>
-          </div>
-          <div>
-            <div style="color:var(--text3);margin-bottom:4px">Total semana (fiscal+vales+efectivo)</div>
-            <div style="font-weight:600" id="pvTotalFinal">—</div>
-            <div style="color:var(--text3);margin-top:8px;font-size:10.5px" id="pvAjusteNota"></div>
-          </div>
-          <div></div>
-        </div>
-        <div id="pvModoManualRow" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;font-size:12px">
-          <div>
-            <div style="color:var(--text3);margin-bottom:4px">Transferencia (Modo Manual)</div>
-            <div style="font-weight:700" id="pvTransferenciaManual">—</div>
-          </div>
-          <div>
-            <div style="color:var(--text3);margin-bottom:4px">Efectivo calculado (Modo Manual)</div>
-            <div style="font-weight:700" id="pvEfectivoManual">—</div>
-          </div>
-        </div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="color:var(--text3);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em">★ Dato principal</div>
-            <div style="font-size:12px;color:var(--text2)">Efectivo real a entregar en caja</div>
-          </div>
-          <div style="font-weight:800;font-size:22px;color:var(--red)" id="pvEfectivoReal">—</div>
-        </div>
       </div>
     </div>
     <div class="mlg-foot">
@@ -5126,6 +5205,150 @@ function nomFmtFechaLarga(iso){
   return isNaN(d)?iso:d.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
 }
 
+/* Nombre de archivo del recibo: identifica al trabajador y al periodo con solo
+   ver el nombre — nunca usa el ID interno de la nómina (NOM-xxxx-yyyymmdd).
+   Formato: Recibo_Nomina_{Nombre_Completo}_P{semana}_{Año}.pdf */
+function nomPdfFileName(n, empleado){
+  const nombre = (n.nombreEmpleado || empleado?.nombre || 'Empleado')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')      // quita acentos
+    .replace(/[^a-zA-Z0-9\s]/g,'')                          // quita símbolos
+    .trim().replace(/\s+/g,'_');
+  const m = /^(\d{4})-W(\d{2})$/.exec(n.semanaAnio||'');
+  const periodo = m ? `P${m[2]}` : (n.semanaAnio||'').replace(/[^a-zA-Z0-9]/g,'_');
+  const anio = m ? m[1] : (n.fechaInicio||'').slice(0,4);
+  return `Recibo_Nomina_${nombre}_${periodo}_${anio}.pdf`.replace(/_+/g,'_');
+}
+
+/* ── IMPORTACIÓN DE RECIBO FISCAL EN PDF ──
+   Lee el PDF con pdf.js (texto embebido del CFDI); si el PDF no trae texto
+   (es una imagen escaneada), cae a OCR con Tesseract. Identifica los conceptos
+   por texto (no por posición), para ser compatible con distintos formatos de
+   recibo, y llena el formulario automáticamente. Todo queda editable después. */
+async function onNomPdfImportSelected(input){
+  const file = input.files[0];
+  const prev = document.getElementById('nomPdfImportPreview');
+  const box = document.getElementById('nomImportBox');
+  if(!file){ prev.style.display='none'; prev.innerHTML=''; box.classList.remove('has-data'); return; }
+  prev.style.display='block';
+  prev.innerHTML = '<span style="color:var(--text3)">Leyendo el PDF…</span>';
+  try{
+    if(typeof pdfjsLib==='undefined') throw new Error('El lector de PDF no está disponible (revisa tu conexión a internet).');
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    let text = '';
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      text += content.items.map(it=>it.str).join(' ') + '\n';
+    }
+    // Si el PDF no trae texto embebido (recibo escaneado como imagen), usar OCR.
+    if(text.trim().length < 20){
+      if(typeof Tesseract==='undefined') throw new Error('Este PDF no tiene texto legible y el motor de OCR no está disponible.');
+      prev.innerHTML = '<span style="color:var(--text3)">El PDF parece una imagen escaneada — aplicando OCR…</span>';
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({scale:2});
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+      const {data} = await Tesseract.recognize(canvas,'spa');
+      text = data.text || '';
+    }
+    const ex = parseNomPdfText(text);
+    aplicarNomPdfExtract(ex);
+    box.classList.add('has-data');
+    const campos = Object.keys(ex).filter(k=>ex[k]!==null && ex[k]!==undefined && ex[k]!=='' && k!=='raw');
+    prev.innerHTML = `<strong style="color:var(--text)">Datos detectados en el PDF</strong> (revisa y corrige si es necesario):<br>` +
+      (campos.length ? campos.map(k=>`${esc(NOM_PDF_LABELS[k]||k)}: <b>${esc(String(ex[k]))}</b>`).join(' &nbsp;·&nbsp; ')
+                     : '<span style="color:var(--orange)">No se pudo identificar información específica; revisa el formulario manualmente.</span>');
+  }catch(e){
+    box.classList.remove('has-data');
+    prev.innerHTML = `<span style="color:var(--red)">No se pudo leer el PDF: ${esc(e.message||e)}. Puedes llenar el formulario manualmente.</span>`;
+  }
+}
+
+const NOM_PDF_LABELS = {
+  empleado:'Empleado', rfc:'RFC', periodo:'Periodo', dias:'Días pagados', sueldo:'Sueldo',
+  septimoDia:'Séptimo día', isr:'ISR', ajusteNeto:'Ajuste al neto', despensa:'Despensa/Vales',
+  vales:'Vales', total:'Total', neto:'Neto', sbc:'SBC', fecha:'Fecha'
+};
+
+/* Compatible con distintas variantes de CFDI de nómina: busca los CONCEPTOS por
+   texto (ISR / I.S.R. / Retención, Despensa / Vales, Séptimo Día, Subtotal, Neto,
+   etc.), nunca por posición fija en la página. */
+function parseNomPdfText(raw){
+  const t = (raw||'').replace(/\s+/g,' ').trim();
+  const num = (re)=>{ const m = t.match(re); if(!m) return null; return parseFloat(m[1].replace(/,/g,'')); };
+  const str = (re)=>{ const m = t.match(re); return m ? m[1].trim() : null; };
+
+  const out = { raw:t };
+  out.empleado   = str(/(?:Nombre(?:\s+del\s+trabajador)?|Empleado)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ\s]{5,60}?)(?:\s{2,}|RFC|$)/i);
+  out.rfc        = str(/RFC[:\s]*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
+  out.periodo    = str(/Periodo(?:\s+de\s+pago)?\s*[:\-]?\s*([\d\/\-\wA-Za-zÁÉÍÓÚñÑ\s]{4,30}?)(?:\s{2,}|$)/i);
+  out.fecha      = str(/(\d{4}-\d{2}-\d{2})/) || (()=>{ const m=t.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : null; })();
+  out.dias       = num(/D[ií]as\s*(?:pagados|trabajados)?\s*[:\-]?\s*(\d{1,2}(?:\.\d+)?)/i);
+  out.sueldo     = num(/Sueldo(?:s)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.septimoDia = num(/S[eé]ptimo\s*D[ií]a\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.isr        = num(/(?:I\.?S\.?R\.?|Retenci[oó]n(?:\s+de)?\s*I\.?S\.?R\.?)\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.ajusteNeto = num(/Ajuste\s+al\s+Neto\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.despensa   = num(/Despensa\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.vales      = num(/Vales(?:\s+de\s+despensa)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.total      = num(/Total\s*(?:Percepciones)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.neto       = num(/Neto\s*(?:a\s+pagar)?\s*[:\-]?\s*\$?\s?([\d,]+\.\d{2})/i);
+  out.sbc        = num(/S\.?B\.?C\.?\s*[:\-]?\s*\$?\s?([\d,]+(?:\.\d+)?)/i);
+  return out;
+}
+
+/* Llena el formulario con lo extraído del PDF. Nada queda bloqueado: la
+   importación es solo una ayuda, el usuario puede corregir cualquier campo. */
+function aplicarNomPdfExtract(ex){
+  // Empleado: coincidencia por nombre contra la lista de Personal (búsqueda por texto,
+  // tolerante a mayúsculas/acentos — nunca depende de la posición del dato en el PDF).
+  if(ex.empleado){
+    const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const objetivo = norm(ex.empleado);
+    const match = (ST.personalList||[]).find(p => norm(p.nombre)===objetivo)
+               || (ST.personalList||[]).find(p => norm(p.nombre).includes(objetivo) || objetivo.includes(norm(p.nombre)));
+    if(match){
+      document.getElementById('nEmpleado').value = match.id;
+      onNomEmpleadoChange();
+    }
+  }
+  // Periodo / Fecha → semana de inicio (se ajusta automáticamente al lunes correspondiente)
+  if(ex.fecha){
+    document.getElementById('nFechaInicio').value = nomMondayOf(ex.fecha);
+  }
+  // Sueldo del recibo fiscal → Monto acordado de la semana (solo si el usuario no
+  // había capturado ya un valor manual)
+  if(ex.sueldo && !parseFloat(document.getElementById('nMontoAcordadoManual').value)){
+    document.getElementById('nMontoAcordadoManual').value = ex.sueldo;
+  }
+  // ISR del recibo fiscal → Retención fiscal extra (afecta únicamente lo fiscal,
+  // igual que en el recibo oficial)
+  if(ex.isr && !parseFloat(document.getElementById('nRetencionExtra').value)){
+    document.getElementById('nRetencionExtra').value = ex.isr;
+  }
+  // Días pagados → si son menos que los días laborales configurados, se estiman
+  // como faltas normales (el usuario puede corregir el tipo de falta si aplica)
+  if(ex.dias!=null){
+    const diasLab = ST.cfgDiasLaborales||7;
+    const faltasEstimadas = Math.max(0, +(diasLab-ex.dias).toFixed(4));
+    if(faltasEstimadas>0 && !parseFloat(document.getElementById('nFaltas').value)){
+      document.getElementById('nFaltas').value = faltasEstimadas;
+    }
+  }
+  // Ajuste al Neto → Descuentos adicionales (si es negativo) o Extra en efectivo (si es positivo)
+  if(ex.ajusteNeto){
+    if(ex.ajusteNeto<0) document.getElementById('nDescuentos').value = Math.abs(ex.ajusteNeto);
+    else document.getElementById('nExtraEfectivo').value = ex.ajusteNeto;
+  }
+  // Deja constancia en observaciones de que esta nómina se generó con ayuda de un PDF importado
+  const obs = document.getElementById('nObs');
+  if(!obs.value.includes('Datos importados de recibo PDF')){
+    obs.value = (obs.value?obs.value+'\n':'') + 'Datos importados de recibo PDF — verificados y ajustados manualmente.';
+  }
+  recalcNomPreview();
+}
+
 /* ── REGLAS DE NEGOCIO: cálculo íntegro de una nómina semanal ──
    entrada: { empleado (obj de ST.personal), faltas, prestamo, bonos, descuentos,
               retencionExtra, extraEfectivo }
@@ -5433,6 +5656,14 @@ function openNomModal(idNomina){
   ST.nomEditId = existente ? existente.idNomina : null;
   ST.nomEditRow = existente ? existente._row : null;
 
+  // Reinicia el bloque de importación de PDF cada vez que se abre el formulario.
+  const nomImportFile = document.getElementById('nomPdfImportFile');
+  if(nomImportFile) nomImportFile.value = '';
+  const nomImportPrev = document.getElementById('nomPdfImportPreview');
+  if(nomImportPrev){ nomImportPrev.style.display='none'; nomImportPrev.innerHTML=''; }
+  const nomImportBox = document.getElementById('nomImportBox');
+  if(nomImportBox) nomImportBox.classList.remove('has-data');
+
   const empSel = document.getElementById('nEmpleado');
   empSel.innerHTML = '<option value="">Selecciona un empleado…</option>' +
     ST.personalList.map(p=>`<option value="${p.id}">${p.nombre} — ${p.puesto||''}</option>`).join('');
@@ -5724,6 +5955,13 @@ async function guardarNomina(){
     toast('ok','Nómina guardada: '+idNomina);
     closeNomModal();
     await loadAll();
+    // Renombrado/regenerado automático: si esta nómina ya tenía un recibo PDF generado,
+    // cualquier cambio (empleado, semana, bonos, préstamo, vales, ISR, faltas, sueldo, etc.)
+    // debe reflejarse en el PDF de inmediato. Se regenera y REEMPLAZA el archivo anterior
+    // (mismo Drive file, nuevo nombre/contenido) — nunca se crean copias duplicadas.
+    if(existente && existente.urlPDF){
+      try{ await generarPDFNomina(idNomina); }catch(e){ console.warn('No se pudo regenerar el recibo PDF automáticamente:', e); }
+    }
   }catch(e){
     console.error(e);
     toast('err','Error al guardar la nómina: '+(e.result?.error?.message||e.message||e));
@@ -6328,18 +6566,22 @@ async function generarPDFNomina(idNomina){
     setF('italic',7,C.faint);
     txt('Recibo generado el '+new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})+' · Documento interno, no es un CFDI de nómina.',PW/2,276,{align:'center'});
 
-    const fileName = `Recibo_${n.idNomina}.pdf`;
+    // Nombre de archivo legible: identifica al trabajador y al periodo con solo
+    // ver el nombre (nunca el ID interno NOM-xxxx-yyyymmdd).
+    const fileName = nomPdfFileName(n, emp);
     doc.save(fileName);
     toast('ok','Recibo generado: '+fileName);
 
     // Intenta subir el recibo a Drive y guardar el link en la hoja (no bloquea si falla).
-    // Punto 7 (PDF dinámico): si ya existía un recibo para esta nómina, se REEMPLAZA su
-    // contenido en el mismo archivo (mismo link), en vez de crear un PDF duplicado.
+    // 1 Nómina = 1 PDF vigente: si ya existía un recibo para esta nómina, driveUpsertFile
+    // REEMPLAZA el contenido Y el nombre del mismo archivo (mismo link), en vez de crear
+    // un PDF duplicado. Si algún dato de la nómina cambia (empleado, periodo, sueldo,
+    // faltas, bonos, etc.) el archivo se regenera y renombra automáticamente al guardar.
     if(ST.token){
       try{
         const blob = doc.output('blob');
         const file = new File([blob], fileName, { type:'application/pdf' });
-        const link = await driveUpsertFile(n.urlPDF, file, 'Recibos de Nómina', `Recibo_${n.idNomina}`);
+        const link = await driveUpsertFile(n.urlPDF, file, 'Recibos de Nómina', fileName.replace(/\.pdf$/i,''));
         await sheetsUpdate(`Nominas!AD${n._row}`, [[link]]);
         n.urlPDF = link;
         renderNominas();
