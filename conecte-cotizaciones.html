@@ -1792,6 +1792,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <div class="form-group">
           <label class="form-label">Faltas injustificadas</label>
           <input type="number" class="form-input" id="nFaltas" min="0" step="1" value="0" oninput="recalcNomPreview()">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-top:4px;cursor:pointer">
+            <input type="checkbox" id="nFaltaSoloDia" onchange="recalcNomPreview()">
+            Descontar solo el día en efectivo (sin domingo) — lo fiscal no cambia
+          </label>
         </div>
         <div class="form-group">
           <label class="form-label">Faltas justificadas <span style="color:var(--text3);font-weight:400">(no descuentan)</span></label>
@@ -2927,7 +2931,7 @@ async function loadAll() {
          AJ = ID_Salida                 (folio del movimiento espejo en la hoja Salidas)
          AK = (reservada) */
     try{
-      const nomR = await sheetsGet('Nominas!A2:AN');
+      const nomR = await sheetsGet('Nominas!A2:AT');
       ST.nominas = (nomR||[]).map((r,i)=>({
         _row: i+2,
         idNomina: r[0]||'',
@@ -2984,6 +2988,9 @@ async function loadAll() {
         ajusteManualActivo: /^(TRUE|SI|SÍ|1)$/i.test(String(r[42]||'').trim()),
         totalManualOverride: parseFloat(r[43])||0,
         faltasJustificadas: parseFloat(r[44])||0,
+        // AT — NUEVA: si viene vacía (nóminas guardadas antes de este cambio), se
+        // asume false (comportamiento de siempre: factor normal con proporción de domingo).
+        faltaSoloDia: /^(TRUE|SI|SÍ|1)$/i.test(String(r[45]||'').trim()),
       })).filter(n=>n.idNomina);
       ST.nominasError = null;
     }catch(nomErr){
@@ -5116,9 +5123,10 @@ function nomFmtFechaLarga(iso){
               retencionExtra, extraEfectivo }
    NOTA IMPORTANTE (dato principal del sistema): "efectivoRealEntregar" es el efectivo
    físico que hay que sacar de caja. Ya NO se usa Sueldo_Total como indicador principal. */
-function calcularNomina({ empleado, faltas, faltasJustificadas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo, recibeValesOverride, recibeFiscalOverride, valesEn0, montoAcordadoOverride, modoManual, transferenciaManual, ajusteManualActivo, totalManualOverride }){
+function calcularNomina({ empleado, faltas, faltasJustificadas, faltaSoloDia, prestamo, bonos, descuentos, retencionExtra, extraEfectivo, recibeValesOverride, recibeFiscalOverride, valesEn0, montoAcordadoOverride, modoManual, transferenciaManual, ajusteManualActivo, totalManualOverride }){
   faltas = Math.max(0, parseFloat(faltas)||0);
   faltasJustificadas = Math.max(0, parseFloat(faltasJustificadas)||0);
+  faltaSoloDia = !!faltaSoloDia;
   prestamo = Math.max(0, parseFloat(prestamo)||0);
   bonos = Math.max(0, parseFloat(bonos)||0);
   descuentos = Math.max(0, parseFloat(descuentos)||0);
@@ -5149,7 +5157,7 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, prestamo, bonos,
       retencionExtra, extraEfectivo:0,
       fiscalNeto:0, valesNeto:0, efectivoNeto:0,
       subtotalPago:0, totalDescuentos:0, efectivoRealEntregar:0, totalFinal:0,
-      noTrabajo:true, faltasJustificadas,
+      noTrabajo:true, faltasJustificadas, faltaSoloDia,
       montoAcordadoOverride, modoManual:false, transferenciaManual:0, transferenciaFinalDisplay:0, efectivoFinalDisplay:0,
       ajusteManualActivo:false, totalManualOverride:0, totalFinalDisplay:0,
     };
@@ -5174,18 +5182,27 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, prestamo, bonos,
   const efectivoBruto = +(sueldoTotal - fiscalBruto - valesBruto).toFixed(2);
 
   // Regla de faltas: cada falta (NO justificada) = factor configurable (por defecto 1.1667)
-  // de días descontados. Las faltas justificadas se registran pero nunca entran aquí
-  // (punto 6: no generan descuento económico).
-  const diasDescontados = +(faltas*(ST.cfgFactorFaltas||1.1667)).toFixed(4);
+  // de días descontados, porque el sueldo semanal incluye el día de descanso (domingo) y
+  // una falta entre semana también resta proporcionalmente parte de ese domingo.
+  // "Descontar solo el día" (factor = 1, sin la proporción de domingo) SOLO afecta el
+  // descuento del EFECTIVO. La parte FISCAL siempre sigue funcionando de forma normal,
+  // con el factor completo, sin importar este checkbox. Las faltas justificadas nunca
+  // entran aquí (punto 6: no generan descuento económico).
+  const factorNormal = ST.cfgFactorFaltas||1.1667;
+  const diasDescontadosFiscal = +(faltas*factorNormal).toFixed(4);
+  const diasDescontadosEfectivo = +(faltas*(faltaSoloDia?1:factorNormal)).toFixed(4);
+  const diasDescontados = diasDescontadosEfectivo; // valor mostrado/guardado como referencia general
   const diasLaborales = ST.cfgDiasLaborales||7;
-  const factorDia = diasDescontados/diasLaborales;
+  const factorDiaFiscal = diasDescontadosFiscal/diasLaborales;
+  const factorDiaEfectivo = diasDescontadosEfectivo/diasLaborales;
 
   // Fiscal_Descuento_Faltas: si no recibe fiscal no hay nada que descontar (ya es 0).
-  const fiscalDescuento = recibeFiscal ? +(fiscalBruto*factorDia).toFixed(2) : 0;
+  // Siempre usa el factor normal, independientemente de "Descontar solo el día".
+  const fiscalDescuento = recibeFiscal ? +(fiscalBruto*factorDiaFiscal).toFixed(2) : 0;
   // Vales_Descuento_Faltas: regla obligatoria — los vales de despensa NUNCA se descuentan
   // por faltas, sin importar cuántas faltas tenga el empleado. Siempre es 0.
   const valesDescuento = 0;
-  const efectivoDescuento = +(efectivoBruto*factorDia).toFixed(2);   // Efectivo_Descuento_Faltas
+  const efectivoDescuento = +(efectivoBruto*factorDiaEfectivo).toFixed(2);   // Efectivo_Descuento_Faltas — respeta "solo el día"
 
   // Fiscal_Neto_Final: el descuento por faltas Y la retención manual (IMSS/ISR/SAT/etc.)
   // afectan ÚNICAMENTE lo fiscal. Nunca tocan vales ni efectivo. Si Recibe_Fiscal = FALSE,
@@ -5238,7 +5255,7 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, prestamo, bonos,
     retencionExtra, extraEfectivo,
     fiscalNeto, valesNeto, efectivoNeto,
     subtotalPago, totalDescuentos, efectivoRealEntregar, totalFinal,
-    noTrabajo:false, valesEn0, faltasJustificadas, montoAcordadoOverride,
+    noTrabajo:false, valesEn0, faltasJustificadas, faltaSoloDia, montoAcordadoOverride,
     modoManual, transferenciaManual, transferenciaFinalDisplay, efectivoFinalDisplay,
     ajusteManualActivo, totalManualOverride, totalFinalDisplay,
   };
@@ -5411,7 +5428,7 @@ function openNomModal(idNomina){
   document.getElementById('nomModalSub').textContent = existente ? existente.idNomina : 'Registra la semana en la hoja Nominas';
 
   const disabled = existente && existente.estatus!=='Pendiente';
-  ['nEmpleado','nFechaInicio','nFaltas','nFaltasJustificadas','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs','nRecibeVales','nRecibeFiscal','nValesEn0','nMontoAcordadoManual','nModoManual','nTransferenciaManual','nAjusteManualActivo','nTotalManualOverride'].forEach(id=>{
+  ['nEmpleado','nFechaInicio','nFaltas','nFaltaSoloDia','nFaltasJustificadas','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs','nRecibeVales','nRecibeFiscal','nValesEn0','nMontoAcordadoManual','nModoManual','nTransferenciaManual','nAjusteManualActivo','nTotalManualOverride'].forEach(id=>{
     document.getElementById(id).disabled = !!disabled;
   });
   document.getElementById('nEstatus').value = existente ? existente.estatus : 'Pendiente';
@@ -5421,6 +5438,7 @@ function openNomModal(idNomina){
     empSel.value = existente.idEmpleado;
     document.getElementById('nFechaInicio').value = existente.fechaInicio;
     document.getElementById('nFaltas').value = existente.faltas||0;
+    document.getElementById('nFaltaSoloDia').checked = !!existente.faltaSoloDia;
     document.getElementById('nFaltasJustificadas').value = existente.faltasJustificadas||0;
     document.getElementById('nPrestamo').value = existente.prestamo||0;
     document.getElementById('nBonos').value = existente.bonos||0;
@@ -5448,6 +5466,7 @@ function openNomModal(idNomina){
     empSel.value = '';
     document.getElementById('nFechaInicio').value = nomMondayOf(todayISO());
     document.getElementById('nFaltas').value = 0;
+    document.getElementById('nFaltaSoloDia').checked = false;
     document.getElementById('nFaltasJustificadas').value = 0;
     document.getElementById('nPrestamo').value = 0;
     document.getElementById('nBonos').value = 0;
@@ -5493,6 +5512,7 @@ function openNomResumenCard(idNomina){
     ${n.montoAcordadoManual>0 ? row('Monto acordado (manual)', fmtMXN(n.montoAcordadoManual)) : ''}
     ${row('Días trabajados', diasTrabajados.toFixed(2))}
     ${row('Faltas (con descuento)', n.faltas||0)}
+    ${(n.faltas>0 && n.faltaSoloDia) ? `<div style="margin:-2px 0 4px;font-size:10.5px;color:var(--text3)">↳ Efectivo descontado solo por día (sin domingo); lo fiscal usó el factor normal</div>` : ''}
     ${n.faltasJustificadas>0 ? row('Faltas justificadas (sin descuento)', n.faltasJustificadas) : ''}
     ${row('Bonos', fmtMXN(n.bonos||0))}
     ${row('Descuentos adicionales', fmtMXN(n.descuentosAdicionales||0))}
@@ -5551,6 +5571,7 @@ function recalcNomPreview(){
   const r = calcularNomina({
     empleado,
     faltas: document.getElementById('nFaltas').value,
+    faltaSoloDia: document.getElementById('nFaltaSoloDia').checked,
     faltasJustificadas: document.getElementById('nFaltasJustificadas').value,
     prestamo: document.getElementById('nPrestamo').value,
     bonos: document.getElementById('nBonos').value,
@@ -5616,6 +5637,7 @@ async function guardarNomina(){
   }
 
   const faltas = document.getElementById('nFaltas').value;
+  const faltaSoloDia = document.getElementById('nFaltaSoloDia').checked;
   const faltasJustificadas = document.getElementById('nFaltasJustificadas').value;
   const prestamo = document.getElementById('nPrestamo').value;
   const bonos = document.getElementById('nBonos').value;
@@ -5634,7 +5656,7 @@ async function guardarNomina(){
   const totalManualOverride = document.getElementById('nTotalManualOverride').value;
 
   const r = calcularNomina({
-    empleado, faltas, faltasJustificadas, prestamo, bonos, descuentos, retencionExtra, extraEfectivo,
+    empleado, faltas, faltasJustificadas, faltaSoloDia, prestamo, bonos, descuentos, retencionExtra, extraEfectivo,
     recibeValesOverride: recibeValesSemana, recibeFiscalOverride: recibeFiscalSemana, valesEn0,
     montoAcordadoOverride: montoAcordadoManual, modoManual, transferenciaManual,
     ajusteManualActivo, totalManualOverride,
@@ -5666,19 +5688,22 @@ async function guardarNomina(){
     // AK, AL, AM — ajustes manuales que SOLO aplican a esta nómina semanal; nunca
     // tocan la hoja Personal, y la siguiente nómina siempre vuelve a leer su config base.
     recibeValesSemana, recibeFiscalSemana, valesEn0,
-    // AN–AS — NUEVAS: Modo Manual, Transferencia manual, Monto acordado manual,
+    // AN–AS — Modo Manual, Transferencia manual, Monto acordado manual,
     // Ajuste manual de total activo, Total final manual, Faltas justificadas.
-    // Estas columnas deben existir en la hoja "Nominas" (agrégalas si aún no están).
     modoManual, parseFloat(transferenciaManual)||0, parseFloat(montoAcordadoManual)||0,
     ajusteManualActivo, parseFloat(totalManualOverride)||0, parseFloat(faltasJustificadas)||0,
+    // AT — NUEVA: si la falta se descuenta solo por el día (factor 1, sin la proporción
+    // del domingo) en vez del factor normal (por defecto 1.1667). Solo aplica a esta
+    // nómina semanal, igual que los demás ajustes manuales.
+    faltaSoloDia,
   ];
 
   document.getElementById('nomSaveBtn').disabled = true;
   try{
     if(ST.nomEditRow){
-      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AS${ST.nomEditRow}`, [row]);
+      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AT${ST.nomEditRow}`, [row]);
     } else {
-      await sheetsAppend('Nominas!A2:AS', [row]);
+      await sheetsAppend('Nominas!A2:AT', [row]);
     }
     // NOTA: ya no se genera ningún movimiento individual en "Salidas" al guardar una nómina.
     // Los movimientos de caja se generan únicamente cuando la semana completa se marca
