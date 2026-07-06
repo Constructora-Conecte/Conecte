@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="theme-color" content="#141414">
+<title>Conecte · Reportes de Campo</title>
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIkNvbmVjdGUgLSBSZXBvcnRlcyBkZSBDYW1wbyIsICJzaG9ydF9uYW1lIjogIkNvbmVjdGUgUmVwb3J0ZXMiLCAiZGVzY3JpcHRpb24iOiAiQ2FwdHVyYSByw6FwaWRhIGRlIHJlcG9ydGVzIGRpYXJpb3MsIGV2aWRlbmNpYXMgeSBzb2xpY2l0dWRlcyBkZSBtYXRlcmlhbCBwYXJhIENvbm5lY3RlLiIsICJzdGFydF91cmwiOiAiLi9SZXBvcnRlcy5odG1sIiwgInNjb3BlIjogIi4vIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxNDE0MTQiLCAidGhlbWVfY29sb3IiOiAiIzE0MTQxNCIsICJpY29ucyI6IFt7InNyYyI6ICJodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vQ29uc3RydWN0b3JhLUNvbmVjdGUvQ29uZWN0ZS9tYWluL0ltYWdlbmVzL0xvZ28ucG5nIiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9wbmcifSwgeyJzcmMiOiAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0NvbnN0cnVjdG9yYS1Db25lY3RlL0NvbmVjdGUvbWFpbi9JbWFnZW5lcy9Mb2dvLnBuZyIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2UvcG5nIn1dfQ==">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════
+   TOKENS — mismos que Conecte App, para que se vea como la misma familia
+══════════════════════════════════ */
+:root{
+  --bg:      #141414;
+  --bg2:     #1c1c1c;
+  --bg3:     #252525;
+  --bg4:     #2e2e2e;
+  --border:  rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text:    #e4e4e4;
+  --text2:   #999;
+  --text3:   #555;
+  --white:   #fff;
+  --red:     #e53e3e;
+  --red-d:   #c53030;
+  --red-p:   rgba(229,62,62,.15);
+  --green:   #48bb78;
+  --green-p: rgba(72,187,120,.15);
+  --yellow:  #ecc94b;
+  --yellow-p:rgba(236,201,75,.15);
+  --blue:    #63b3ed;
+  --blue-p:  rgba(99,179,237,.15);
+  --orange:  #ed8936;
+  --orange-p:rgba(237,137,54,.15);
+  --font:'Inter',sans-serif;
+  --r4:4px; --r8:8px; --r12:12px; --r16:16px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  font-size:15px;overscroll-behavior-y:contain;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+input,select,textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r8);
+  color:var(--text);padding:12px 13px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--red)}
+textarea{resize:vertical;min-height:90px;line-height:1.45}
+::placeholder{color:var(--text3)}
+
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:calc(54px + var(--safe-top));padding-top:var(--safe-top);
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;padding-left:16px;padding-right:16px;flex-shrink:0;
+}
+.topbar img{width:26px;height:26px;border-radius:6px;flex-shrink:0}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--white)}
+.topbar-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.conn{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);
+  padding:5px 9px;border:1px solid var(--border2);border-radius:20px;background:var(--bg3)}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;transition:background .2s}
+.conn.off .conn-dot{background:var(--text3)}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:16px 16px calc(110px + var(--safe-bottom))}
+.view{display:none}
+.view.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);margin-bottom:14px;overflow:hidden}
+.card-head{padding:14px 16px 4px;display:flex;align-items:center;gap:8px}
+.card-icon{width:26px;height:26px;border-radius:7px;background:var(--red-p);color:var(--red);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-icon svg{width:14px;height:14px}
+.card-title{font-size:13.5px;font-weight:700;color:var(--white)}
+.card-body{padding:14px 16px 16px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+.hint{font-size:11.5px;color:var(--text3);margin-top:2px}
+
+/* ── BOTONES ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:var(--r8);font-weight:600;cursor:pointer;border:none;transition:all .15s;width:100%}
+.btn svg{width:16px;height:16px;flex-shrink:0}
+.btn-lg{height:52px;font-size:15.5px}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:active{background:var(--red-d)}
+.btn-red:disabled{background:var(--bg4);color:var(--text3);cursor:not-allowed}
+.btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.btn-ghost:active{background:var(--bg4)}
+.btn-row{display:flex;gap:10px}
+.btn-row .btn{flex:1;height:46px;font-size:13.5px}
+.btn-sm{height:34px;padding:0 12px;font-size:12.5px;width:auto}
+.btn-outline-red{background:transparent;border:1px solid var(--red);color:var(--red)}
+
+/* ── FOTOS ── */
+.fotos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.foto-thumb{position:relative;aspect-ratio:1;border-radius:var(--r8);overflow:hidden;background:var(--bg3);border:1px solid var(--border2)}
+.foto-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.foto-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;
+  background:rgba(0,0,0,.65);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.foto-del svg{width:11px;height:11px}
+.foto-peso{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;
+  font-size:9px;text-align:center;padding:2px 0}
+
+/* ── MATERIALES (tarjetas dinámicas) ── */
+.mat-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:12px;margin-bottom:10px}
+.mat-item-head{display:flex;align-items:center;margin-bottom:10px}
+.mat-item-num{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.mat-item-del{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;
+  display:flex;align-items:center;gap:4px;font-size:11.5px;padding:4px}
+.mat-item-del svg{width:13px;height:13px}
+.mat-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.empty-msg{text-align:center;color:var(--text3);font-size:12.5px;padding:14px 0}
+
+/* ── TABBAR ── */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;height:calc(64px + var(--safe-bottom));padding-bottom:var(--safe-bottom);
+  background:var(--bg2);border-top:1px solid var(--border);display:flex;z-index:50;
+}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:none;color:var(--text3);cursor:pointer}
+.tab-btn svg{width:21px;height:21px}
+.tab-btn.active{color:var(--red)}
+.tab-btn span{font-size:10.5px;font-weight:600}
+
+/* ── ENVIAR (sticky sobre el tabbar) ── */
+.send-bar{position:fixed;left:0;right:0;bottom:calc(64px + var(--safe-bottom));padding:10px 16px;
+  background:linear-gradient(to top, var(--bg) 55%, transparent);z-index:40}
+.progress{height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-bottom:8px;display:none}
+.progress.show{display:block}
+.progress-bar{height:100%;width:0%;background:var(--red);transition:width .25s}
+
+/* ── HISTORIAL ── */
+.hist-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);
+  padding:14px 16px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+.hist-top{display:flex;align-items:center;gap:8px}
+.hist-fecha{font-size:14px;font-weight:700;color:var(--white)}
+.badge{margin-left:auto;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+.badge.pendiente{background:var(--yellow-p);color:var(--yellow)}
+.badge.enviando{background:var(--blue-p);color:var(--blue)}
+.badge.enviado{background:var(--green-p);color:var(--green)}
+.badge.error{background:var(--red-p);color:var(--red)}
+.hist-desc{font-size:12.5px;color:var(--text2);line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hist-meta{display:flex;gap:14px;font-size:11px;color:var(--text3)}
+.hist-error{font-size:11.5px;color:var(--red);margin-top:2px}
+.hist-retry{margin-top:4px}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;top:calc(10px + var(--safe-top));left:16px;right:16px;z-index:200;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:12px 14px;border-radius:var(--r8);font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:9px;box-shadow:0 6px 18px rgba(0,0,0,.35);
+  animation:toastIn .2s ease;pointer-events:auto}
+.toast svg{width:16px;height:16px;flex-shrink:0}
+.toast.ok{background:#1a3b28;color:var(--green);border:1px solid var(--green-p)}
+.toast.err{background:#3b1a1a;color:var(--red);border:1px solid var(--red-p)}
+.toast.inf{background:#1a2b3b;color:var(--blue);border:1px solid var(--blue-p)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SELECTOR DE FOTOS (inputs ocultos) ── */
+.file-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state svg{width:44px;height:44px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <img src="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png" alt="Conecte">
+    <div>
+      <div class="topbar-brand">Reportes de Campo</div>
+    </div>
+    <div class="conn" id="connIndicator"><span class="conn-dot"></span><span id="connLabel">En línea</span></div>
+  </div>
+
+  <!-- CONTENIDO -->
+  <div class="content" id="content">
+
+    <!-- VISTA: NUEVO REPORTE -->
+    <div class="view active" id="viewNuevo">
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="card-title">Datos del reporte</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="field-label">Fecha del reporte</label>
+            <input type="date" id="fFecha">
+          </div>
+          <div class="field">
+            <label class="field-label">¿Quién realiza el reporte?</label>
+            <select id="fUsuario">
+              <option value="">Selecciona tu nombre…</option>
+            </select>
+            <div class="hint" id="usuarioHint"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-13a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v13"/><path d="M9 21v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6"/></svg>
+          </div>
+          <div class="card-title">Trabajo realizado</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="field-label">Descripción</label>
+            <textarea id="fDescripcion" placeholder="Describe todo lo realizado durante el día…" rows="5"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <div class="card-title">Evidencias fotográficas</div>
+        </div>
+        <div class="card-body">
+          <div class="btn-row">
+            <button type="button" class="btn btn-ghost" id="btnCamara">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Tomar foto
+            </button>
+            <button type="button" class="btn btn-ghost" id="btnGaleria">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              Galería
+            </button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" class="file-hidden" id="inputCamara">
+          <input type="file" accept="image/*" multiple class="file-hidden" id="inputGaleria">
+          <div class="fotos-grid" id="fotosGrid"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="card-title">Observaciones</div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <textarea id="fObservaciones" placeholder="Comentarios adicionales (opcional)…" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3.24H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.58a2 2 0 0 0 2.83 0l5.59-5.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="7.5" r="1"/></svg>
+          </div>
+          <div class="card-title">Solicitud de materiales y herramientas</div>
+        </div>
+        <div class="card-body">
+          <div id="materialesLista"></div>
+          <div class="empty-msg" id="materialesVacio">Aún no has agregado ninguna solicitud.</div>
+          <button type="button" class="btn btn-ghost btn-sm" style="width:100%;margin-top:6px" id="btnAgregarMaterial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar solicitud
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VISTA: HISTORIAL -->
+    <div class="view" id="viewHistorial">
+      <div id="historialLista"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTÓN ENVIAR (solo visible en la vista Nuevo reporte) -->
+  <div class="send-bar" id="sendBar">
+    <div class="progress" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+    <button type="button" class="btn btn-red btn-lg" id="btnEnviar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Enviar reporte
+    </button>
+  </div>
+
+  <!-- TABBAR -->
+  <div class="tabbar">
+    <button class="tab-btn active" data-view="viewNuevo" id="tabNuevo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Nuevo reporte</span>
+    </button>
+    <button class="tab-btn" data-view="viewHistorial" id="tabHistorial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+      <span>Historial</span>
+    </button>
+  </div>
+
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============================================================
+   CONNECTE SERVICE — único módulo autorizado para hablar con Connecte.
+   Hoy: Web App de Apps Script (POST JSON). Mañana: cuando Connecte tenga
+   API REST propia, SOLO se cambia CONFIG.ENDPOINT (y CONFIG.MODO a 'rest').
+   Nada más en este archivo necesita cambiar.
+   ============================================================ */
+const ConnecteService = (() => {
+  const CONFIG = {
+    // 👉 No encontré una URL de Web App ya usada en tus archivos (tu Code.gs
+    // no la trae escrita), así que necesito que pegues aquí la tuya:
+    // Implementar → Administrar implementaciones → copiar "URL de la app web".
+    ENDPOINT: 'https://script.google.com/macros/s/TU_ID_DE_IMPLEMENTACION/exec',
+    ACTIONS: {
+      ENVIAR_REPORTE: 'guardarReporteDiario',
+      PERSONAL: 'getPersonalActivo', // reutiliza la acción que ya existe en tu Code.gs
+      PING: 'ping'
+    },
+    MODO: 'apps-script' // 'apps-script' | 'rest'
+  };
+
+  async function _post(action, payload) {
+    const body = CONFIG.MODO === 'apps-script'
+      ? JSON.stringify({ action, ...payload })
+      : JSON.stringify(payload);
+    // 'text/plain' evita el preflight CORS que Apps Script Web Apps no maneja bien;
+    // Apps Script igual lo parsea vía JSON.parse(e.postData.contents).
+    const res = await fetch(CONFIG.ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  }
+
+  async function _get(action, params) {
+    const url = new URL(CONFIG.ENDPOINT);
+    url.searchParams.set('action', action);
+    Object.entries(params || {}).forEach(([k, v]) => url.searchParams.set(k, v));
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  }
+
+  function enviarReporte(reporte) { return _post(CONFIG.ACTIONS.ENVIAR_REPORTE, { reporte }); }
+  function getPersonalActivo() { return _get(CONFIG.ACTIONS.PERSONAL, {}); }
+  async function estaDisponible() {
+    try { await _get(CONFIG.ACTIONS.PING, {}); return true; } catch (err) { return false; }
+  }
+
+  return { enviarReporte, getPersonalActivo, estaDisponible, CONFIG };
+})();
+
+/* ============================================================
+   OFFLINE QUEUE — guarda reportes en IndexedDB y los sincroniza.
+   Estados: 'pendiente' | 'enviando' | 'enviado' | 'error'.
+   No sabe nada de Connecte (usa ConnecteService) ni del DOM (avisa
+   cambios de estado mediante onChange, que la UI usa para refrescarse).
+   ============================================================ */
+const OfflineQueue = (() => {
+  const DB_NAME = 'connecte-reportes';
+  const DB_VERSION = 1;
+  const STORE = 'reportes';
+
+  let _db = null;
+  let _onChange = () => {};
+  let _sincronizando = false;
+
+  function _openDB() {
+    if (_db) return Promise.resolve(_db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) {
+          const store = db.createObjectStore(STORE, { keyPath: 'idReporte' });
+          store.createIndex('estado', 'estado', { unique: false });
+          store.createIndex('fecha', 'fecha', { unique: false });
+        }
+      };
+      req.onsuccess = () => { _db = req.result; resolve(_db); };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function _tx(mode) {
+    const db = await _openDB();
+    return db.transaction(STORE, mode).objectStore(STORE);
+  }
+
+  function _uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'r-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  function onChange(fn) { _onChange = fn || (() => {}); }
+
+  async function guardar(reporte) {
+    const idReporte = reporte.idReporte || _uuid();
+    const registro = {
+      ...reporte, idReporte, estado: 'pendiente', intentos: 0, error: null,
+      fechaCaptura: reporte.fechaCaptura || new Date().toISOString()
+    };
+    const store = await _tx('readwrite');
+    await new Promise((res, rej) => {
+      const r = store.put(registro);
+      r.onsuccess = res; r.onerror = () => rej(r.error);
+    });
+    _onChange();
+    return idReporte;
+  }
+
+  async function _actualizar(idReporte, cambios) {
+    const store = await _tx('readwrite');
+    const actual = await new Promise((res, rej) => {
+      const r = store.get(idReporte);
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+    if (!actual) return;
+    const nuevo = { ...actual, ...cambios };
+    await new Promise((res, rej) => {
+      const r = store.put(nuevo);
+      r.onsuccess = res; r.onerror = () => rej(r.error);
+    });
+    _onChange();
+  }
+
+  async function listar() {
+    const store = await _tx('readonly');
+    const todos = await new Promise((res, rej) => {
+      const r = store.getAll();
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+    return todos.sort((a, b) => (b.fechaCaptura || '').localeCompare(a.fechaCaptura || ''));
+  }
+
+  async function pendientes() {
+    return (await listar()).filter(r => r.estado === 'pendiente' || r.estado === 'error');
+  }
+
+  async function sincronizar() {
+    if (_sincronizando) return;
+    if (!navigator.onLine) return;
+    _sincronizando = true;
+    try {
+      const lista = await pendientes();
+      for (const r of lista) {
+        await _actualizar(r.idReporte, { estado: 'enviando' });
+        try {
+          const resp = await ConnecteService.enviarReporte(r);
+          await _actualizar(r.idReporte, { estado: 'enviado', folio: resp.folio || null, error: null });
+        } catch (err) {
+          await _actualizar(r.idReporte, { estado: 'error', intentos: (r.intentos || 0) + 1, error: err.message || 'Error de envío' });
+        }
+      }
+    } finally {
+      _sincronizando = false;
+    }
+  }
+
+  async function reintentar(idReporte) {
+    const store = await _tx('readonly');
+    const r = await new Promise((res, rej) => {
+      const req = store.get(idReporte);
+      req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+    });
+    if (!r) return;
+    await _actualizar(idReporte, { estado: 'pendiente' });
+    sincronizar();
+  }
+
+  window.addEventListener('online', () => sincronizar());
+
+  return { onChange, guardar, listar, pendientes, sincronizar, reintentar };
+})();
+
+/* ============================================================
+   IMAGE UTILS — comprime fotos en el navegador antes de guardarlas/enviarlas.
+   ============================================================ */
+const ImageUtils = (() => {
+  const MAX_ANCHO = 1280;
+  const CALIDAD_JPEG = 0.72;
+
+  function _leerComoImagen(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { resolve(img); URL.revokeObjectURL(url); };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  async function comprimir(file) {
+    const img = await _leerComoImagen(file);
+    const escala = Math.min(1, MAX_ANCHO / img.width);
+    const ancho = Math.round(img.width * escala);
+    const alto = Math.round(img.height * escala);
+    const canvas = document.createElement('canvas');
+    canvas.width = ancho; canvas.height = alto;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, ancho, alto);
+    const base64 = canvas.toDataURL('image/jpeg', CALIDAD_JPEG);
+    const pesoKB = Math.round((base64.length * 0.75) / 1024);
+    return { nombre: (file.name || 'foto').replace(/\.[^.]+$/, '') + '.jpg', base64, ancho, alto, pesoKB };
+  }
+
+  return { comprimir };
+})();
+
+/* ============================================================
+   ESTADO de la app (solo lo que vive en memoria del formulario
+   mientras el usuario captura; en cuanto se envía, se delega
+   a OfflineQueue, que es quien conoce el estado persistente).
+   ============================================================ */
+let idReporteActual = crearIdReporte();
+let fotos = [];       // [{nombre, base64, pesoKB}]
+let materiales = [];  // [{id, material, cantidad, unidad, trabajo, fechaNecesaria, observaciones}]
+let enviando = false;
+
+const UNIDADES = ['pza','m','m²','m³','kg','lt','caja','rollo','bulto','otro'];
+
+function crearIdReporte(){
+  return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'r-'+Date.now()+'-'+Math.random().toString(16).slice(2);
+}
+
+/* ── UTILIDADES DE UI ── */
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function mostrarToast(tipo, mensaje){
+  const iconos = {
+    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+    err:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    inf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+  };
+  const el = document.createElement('div');
+  el.className = 'toast ' + tipo;
+  el.innerHTML = iconos[tipo] + '<span>' + mensaje + '</span>';
+  $('#toastWrap').appendChild(el);
+  setTimeout(() => el.remove(), 3600);
+}
+
+/* ── NAVEGACIÓN DE TABS ── */
+function cambiarVista(id){
+  $all('.view').forEach(v => v.classList.remove('active'));
+  $('#' + id).classList.add('active');
+  $all('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-view="' + id + '"]').classList.add('active');
+  $('#sendBar').style.display = (id === 'viewNuevo') ? 'block' : 'none';
+  if (id === 'viewHistorial') renderHistorial();
+}
+$('#tabNuevo').addEventListener('click', () => cambiarVista('viewNuevo'));
+$('#tabHistorial').addEventListener('click', () => cambiarVista('viewHistorial'));
+
+/* ── FECHA POR DEFECTO (hoy, editable) ── */
+$('#fFecha').value = new Date().toISOString().slice(0, 10);
+
+/* ── SELECTOR DE PERSONAL (reutiliza la acción getPersonalActivo que ya existe en tu Code.gs) ── */
+async function cargarPersonal(){
+  try{
+    const lista = await ConnecteService.getPersonalActivo();
+    const sel = $('#fUsuario');
+    lista.forEach(p => {
+      const op = document.createElement('option');
+      op.value = p.id; op.textContent = p.nombre;
+      sel.appendChild(op);
+    });
+  }catch(err){
+    $('#usuarioHint').textContent = 'No se pudo cargar la lista de personal (sin conexión). Puedes escribir tu nombre en Observaciones si no apareces en la lista más tarde.';
+  }
+}
+cargarPersonal();
+
+/* ── FOTOS ── */
+$('#btnCamara').addEventListener('click', () => $('#inputCamara').click());
+$('#btnGaleria').addEventListener('click', () => $('#inputGaleria').click());
+
+async function manejarArchivos(fileList){
+  for (const file of Array.from(fileList)){
+    try{
+      const foto = await ImageUtils.comprimir(file);
+      fotos.push(foto);
+    }catch(err){
+      mostrarToast('err', 'No se pudo procesar una de las fotos.');
+    }
+  }
+  renderFotos();
+}
+$('#inputCamara').addEventListener('change', (e) => { manejarArchivos(e.target.files); e.target.value=''; });
+$('#inputGaleria').addEventListener('change', (e) => { manejarArchivos(e.target.files); e.target.value=''; });
+
+function renderFotos(){
+  const grid = $('#fotosGrid');
+  grid.innerHTML = fotos.map((f, i) => `
+    <div class="foto-thumb">
+      <img src="${f.base64}" alt="${f.nombre}">
+      <div class="foto-peso">${f.pesoKB} KB</div>
+      <button type="button" class="foto-del" data-i="${i}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('');
+  grid.querySelectorAll('.foto-del').forEach(btn => {
+    btn.addEventListener('click', () => { fotos.splice(+btn.dataset.i, 1); renderFotos(); });
+  });
+}
+
+/* ── MATERIALES DINÁMICOS ── */
+function agregarMaterial(){
+  materiales.push({
+    id: 'm' + Date.now() + Math.random().toString(16).slice(2),
+    material: '', cantidad: '', unidad: 'pza', trabajo: '', fechaNecesaria: '', observaciones: ''
+  });
+  renderMateriales();
+}
+$('#btnAgregarMaterial').addEventListener('click', agregarMaterial);
+
+function renderMateriales(){
+  const cont = $('#materialesLista');
+  $('#materialesVacio').style.display = materiales.length ? 'none' : 'block';
+  cont.innerHTML = materiales.map((m, i) => `
+    <div class="mat-item" data-id="${m.id}">
+      <div class="mat-item-head">
+        <span class="mat-item-num">Solicitud ${i + 1}</span>
+        <button type="button" class="mat-item-del" data-action="del">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Quitar
+        </button>
+      </div>
+      <div class="field">
+        <label class="field-label">Material o herramienta</label>
+        <input type="text" data-f="material" value="${escapeAttr(m.material)}" placeholder="Ej. Cemento gris">
+      </div>
+      <div class="mat-grid2" style="margin-bottom:14px">
+        <div class="field" style="margin-bottom:0">
+          <label class="field-label">Cantidad</label>
+          <input type="number" inputmode="decimal" min="0" data-f="cantidad" value="${escapeAttr(m.cantidad)}" placeholder="0">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label class="field-label">Unidad</label>
+          <select data-f="unidad">
+            ${UNIDADES.map(u => `<option value="${u}" ${u===m.unidad?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">¿Para qué trabajo?</label>
+        <input type="text" data-f="trabajo" value="${escapeAttr(m.trabajo)}" placeholder="Ej. Colado de losa">
+      </div>
+      <div class="field">
+        <label class="field-label">¿Para qué fecha se necesita?</label>
+        <input type="date" data-f="fechaNecesaria" value="${escapeAttr(m.fechaNecesaria)}">
+      </div>
+      <div class="field">
+        <label class="field-label">Observaciones (opcional)</label>
+        <input type="text" data-f="observaciones" value="${escapeAttr(m.observaciones)}" placeholder="Detalle adicional…">
+      </div>
+    </div>`).join('');
+
+  cont.querySelectorAll('.mat-item').forEach(item => {
+    const id = item.dataset.id;
+    const obj = materiales.find(x => x.id === id);
+    item.querySelectorAll('[data-f]').forEach(inp => {
+      inp.addEventListener('input', () => { obj[inp.dataset.f] = inp.value; });
+    });
+    item.querySelector('[data-action="del"]').addEventListener('click', () => {
+      materiales = materiales.filter(x => x.id !== id);
+      renderMateriales();
+    });
+  });
+}
+function escapeAttr(v){ return String(v ?? '').replace(/"/g, '&quot;'); }
+
+/* ── ENVÍO DEL REPORTE ── */
+$('#btnEnviar').addEventListener('click', enviarReporte);
+
+function validar(){
+  if (!$('#fFecha').value) return 'Falta la fecha del reporte.';
+  if (!$('#fDescripcion').value.trim()) return 'Describe el trabajo realizado antes de enviar.';
+  return null;
+}
+
+async function enviarReporte(){
+  if (enviando) return; // evita doble tap / doble envío
+  const err = validar();
+  if (err){ mostrarToast('err', err); return; }
+
+  enviando = true;
+  const btn = $('#btnEnviar');
+  btn.disabled = true;
+  $('#progressWrap').classList.add('show');
+  $('#progressBar').style.width = '15%';
+
+  const usuarioSel = $('#fUsuario');
+  const reporte = {
+    idReporte: idReporteActual,
+    fecha: $('#fFecha').value,
+    usuarioId: usuarioSel.value || null,
+    usuario: usuarioSel.value ? usuarioSel.options[usuarioSel.selectedIndex].textContent : 'Sin especificar',
+    descripcion: $('#fDescripcion').value.trim(),
+    observaciones: $('#fObservaciones').value.trim(),
+    fotos: fotos.map(f => ({ nombre: f.nombre, base64: f.base64 })),
+    materiales: materiales.filter(m => m.material.trim() !== ''),
+    fechaCaptura: new Date().toISOString()
+  };
+
+  try{
+    $('#progressBar').style.width = '55%';
+    await OfflineQueue.guardar(reporte);
+    $('#progressBar').style.width = '100%';
+
+    // Intenta enviar de inmediato si hay conexión; si no, queda "Pendiente"
+    // y OfflineQueue lo reintentará solo cuando regrese el internet.
+    await OfflineQueue.sincronizar();
+
+    const guardados = await OfflineQueue.listar();
+    const esteReporte = guardados.find(r => r.idReporte === reporte.idReporte);
+    if (esteReporte && esteReporte.estado === 'enviado'){
+      mostrarToast('ok', 'Reporte enviado a Connecte correctamente.');
+    } else {
+      mostrarToast('inf', 'Sin conexión: el reporte se guardó como pendiente y se enviará solo.');
+    }
+
+    limpiarFormulario();
+  }catch(e){
+    mostrarToast('err', 'No se pudo guardar el reporte. Intenta de nuevo.');
+  }finally{
+    setTimeout(() => {
+      $('#progressWrap').classList.remove('show');
+      $('#progressBar').style.width = '0%';
+    }, 500);
+    btn.disabled = false;
+    enviando = false;
+  }
+}
+
+function limpiarFormulario(){
+  idReporteActual = crearIdReporte();
+  fotos = [];
+  materiales = [];
+  $('#fDescripcion').value = '';
+  $('#fObservaciones').value = '';
+  $('#fFecha').value = new Date().toISOString().slice(0, 10);
+  renderFotos();
+  renderMateriales();
+}
+
+/* ── HISTORIAL ── */
+const ETIQUETA_ESTADO = { pendiente:'Pendiente', enviando:'Enviando…', enviado:'Enviado', error:'Error' };
+
+async function renderHistorial(){
+  const cont = $('#historialLista');
+  const lista = await OfflineQueue.listar();
+
+  if (!lista.length){
+    cont.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+        <p>Aún no has enviado reportes.</p>
+      </div>`;
+    return;
+  }
+
+  cont.innerHTML = lista.map(r => `
+    <div class="hist-item">
+      <div class="hist-top">
+        <span class="hist-fecha">${formatearFecha(r.fecha)}</span>
+        <span class="badge ${r.estado}">${ETIQUETA_ESTADO[r.estado] || r.estado}</span>
+      </div>
+      <div class="hist-desc">${escapeHtml(r.descripcion || '')}</div>
+      <div class="hist-meta">
+        <span>${r.usuario || 'Sin especificar'}</span>
+        <span>${(r.fotos || []).length} foto(s)</span>
+        <span>${(r.materiales || []).length} solicitud(es)</span>
+      </div>
+      ${r.estado === 'error' ? `<div class="hist-error">${escapeHtml(r.error || 'No se pudo enviar')}</div>` : ''}
+      ${r.estado === 'error' ? `<button class="btn btn-outline-red btn-sm hist-retry" data-retry="${r.idReporte}">Reintentar envío</button>` : ''}
+    </div>`).join('');
+
+  cont.querySelectorAll('[data-retry]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = 'Reintentando…';
+      await OfflineQueue.reintentar(btn.dataset.retry);
+    });
+  });
+}
+function formatearFecha(iso){
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+OfflineQueue.onChange(() => { if ($('#viewHistorial').classList.contains('active')) renderHistorial(); });
+
+/* ── INDICADOR DE CONEXIÓN ── */
+function actualizarConexion(){
+  const online = navigator.onLine;
+  $('#connIndicator').classList.toggle('off', !online);
+  $('#connLabel').textContent = online ? 'En línea' : 'Sin conexión';
+  if (online) OfflineQueue.sincronizar();
+}
+window.addEventListener('online', actualizarConexion);
+window.addEventListener('offline', actualizarConexion);
+actualizarConexion();
+
+/* ── PWA: registro del service worker ── */
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+/* ── ARRANQUE ── */
+renderFotos();
+renderMateriales();
+OfflineQueue.sincronizar();
+</script>
+</body>
+</html>
