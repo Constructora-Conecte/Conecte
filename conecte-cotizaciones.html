@@ -8794,10 +8794,13 @@ function renderOCClienteTable(){
     r.cotIds.join(',').toLowerCase().includes(ocClientSearch)
   );
 
-  // Orden: por Fecha Recibida, de más nueva a más antigua. Si dos registros
-  // comparten fecha, se usa el ID (orden de creación) como criterio secundario
-  // para que el orden sea siempre consistente.
+  // Agrupado: Pendiente -> Facturado -> Cancelado. Dentro de cada grupo, por
+  // Fecha Recibida de más nueva a más antigua; si dos comparten fecha, se usa
+  // el ID (orden de creación) como criterio secundario para un orden consistente.
+  const ocEstatusOrder={Pendiente:0,Facturado:1,Cancelado:2};
   rows.sort((a,b)=>{
+    const oa=ocEstatusOrder[a.estatus]??3, ob=ocEstatusOrder[b.estatus]??3;
+    if(oa!==ob) return oa-ob;
     const byDate=cmpDate(b.fecha,a.fecha);
     if(byDate!==0) return byDate;
     return (b.id||'').localeCompare(a.id||'');
@@ -8827,8 +8830,21 @@ function renderOCClienteTable(){
     return;
   }
 
+  const ocGroupMeta={
+    Pendiente:{label:'PENDIENTE',cls:'g-pend'},
+    Facturado:{label:'FACTURADO',cls:'g-acep'},
+    Cancelado:{label:'CANCELADO',cls:'g-rech'},
+  };
+  let lastOcGroup=null;
   const hoy=new Date();
   tbody.innerHTML=rows.map(r=>{
+    let groupHeader='';
+    if(r.estatus!==lastOcGroup){
+      lastOcGroup=r.estatus;
+      const meta=ocGroupMeta[r.estatus]||{label:(r.estatus||'OTRO').toUpperCase(),cls:'g-pend'};
+      const sum=rows.filter(x=>x.estatus===r.estatus).reduce((s,x)=>s+(x.monto||0),0);
+      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="9">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
+    }
     const cliNom=ST.clientes[r.id_cli]?.nombre||r.id_cli||'—';
     const stClass={Pendiente:'pill-pend',Facturado:'pill-acep',Cancelado:'pill-rech'}[r.estatus]||'pill-pend';
     const hasPDF=!!r.pdfB64;
@@ -8857,7 +8873,7 @@ function renderOCClienteTable(){
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
       </button>`;
     }
-    return `<tr>
+    return groupHeader + `<tr>
       <td>
         ${hasPDF
           ?`<button class="folio" style="cursor:pointer;background:none;border:none;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue);text-decoration:underline;padding:0" onclick="openPDFViewer('${r.id}','OC: '+encodeURIComponent('${esc(r.numero)}'))" title="${diasTitle} — Ver archivo">${esc(r.numero)}</button>`
