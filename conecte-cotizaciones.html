@@ -400,6 +400,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .group-row.g-orange td{ background:var(--orange-p); color:var(--orange); }
 .group-row .g-sum{ font-weight:500; opacity:.75; margin-left:8px; font-size:10.5px; }
 
+/* Password category badge + category group headers (Sistemas > Contraseñas) */
+.pwd-cat{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text2);white-space:nowrap;display:inline-block}
+.pwd-group-row td{padding:6px 12px!important;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);background:var(--bg3);border-top:1px solid var(--border);border-bottom:none!important}
+.pwd-link{color:var(--blue);text-decoration:none;font-size:11.5px}
+.pwd-link:hover{text-decoration:underline}
+
 /* ── BUSCADOR GLOBAL ── */
 .gs-filter{
   font-size:10.5px; font-weight:600; padding:4px 8px; border-radius:var(--r4);
@@ -429,8 +435,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .folio{
   font-family:var(--mono);font-size:11px;font-weight:500;color:var(--red);
   background:var(--red-p);padding:2px 7px;border-radius:3px;cursor:pointer;
-  white-space:nowrap;border:none;
+  white-space:nowrap;border:none;max-width:130px;overflow:hidden;text-overflow:ellipsis;
 }
+.cot-table th:first-child,.fac-table th:first-child{width:110px}
 .folio:hover{background:rgba(229,62,62,.25)}
 .row-acts{display:flex;gap:3px;opacity:0;transition:opacity .15s}
 .cot-table tr:hover .row-acts{opacity:1}
@@ -456,6 +463,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .stats.stats-3{grid-template-columns:repeat(3,1fr)}
 @media(max-width:1100px){.stats.stats-5{grid-template-columns:repeat(3,1fr)}}
 .stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:13px 15px}
+.stat-click{cursor:pointer;transition:border-color .15s,transform .1s}
+.stat-click:hover{border-color:var(--border2);transform:translateY(-1px)}
+.stat-click:active{transform:translateY(0)}
 .stat-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:7px}
 .stat-val{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--white);margin-bottom:2px}
 .stat-delta{font-size:11px;color:var(--text3)}
@@ -901,22 +911,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
       <!-- Stats -->
       <div class="stats">
-        <div class="stat cr"><div class="stat-lbl">Total Cotizaciones</div><div class="stat-val" id="sTotal">—</div><div class="stat-delta">Todas</div></div>
-        <div class="stat cg"><div class="stat-lbl">Aceptadas</div><div class="stat-val" id="sAcep">—</div><div class="stat-delta" id="sAcepPct">—</div></div>
-        <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="sPend">—</div><div class="stat-delta">Sin respuesta</div></div>
-        <div class="stat cb"><div class="stat-lbl">Monto Total</div><div class="stat-val" id="sMonto">—</div><div class="stat-delta">Suma</div></div>
+        <div class="stat cr stat-click" title="Ver todas" onclick="cardFilter('cotChipAll',setFilter,'all')"><div class="stat-lbl">Total Cotizaciones</div><div class="stat-val" id="sTotal">—</div><div class="stat-delta">Todas</div></div>
+        <div class="stat cg stat-click" title="Ver aceptadas" onclick="cardFilter('cotChipAcep',setFilter,'Aceptado')"><div class="stat-lbl">Aceptadas</div><div class="stat-val" id="sAcep">—</div><div class="stat-delta" id="sAcepPct">—</div></div>
+        <div class="stat cy stat-click" title="Ver pendientes" onclick="cardFilter('cotChipPend',setFilter,'Pendiente')"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="sPend">—</div><div class="stat-delta">Sin respuesta</div></div>
+        <div class="stat cb stat-click" title="Ver todas" onclick="cardFilter('cotChipAll',setFilter,'all')"><div class="stat-lbl">Monto Total</div><div class="stat-val" id="sMonto">—</div><div class="stat-delta">Suma</div></div>
       </div>
 
       <!-- Filter bar -->
       <div class="filter-bar">
-        <button class="fchip on" onclick="setFilter('all',this)">Todas</button>
-        <button class="fchip" onclick="setFilter('Pendiente',this)">Pendiente</button>
+        <button class="fchip on" id="cotChipAll" onclick="setFilter('all',this)">Todas</button>
+        <button class="fchip" id="cotChipPend" onclick="setFilter('Pendiente',this)">Pendiente</button>
         <button class="fchip" onclick="setFilter('Enviado',this)">Enviado</button>
         <button class="fchip" onclick="setFilter('Seguimiento 1',this)">Seguimiento</button>
-        <button class="fchip" onclick="setFilter('Aceptado',this)">Aceptado</button>
+        <button class="fchip" id="cotChipAcep" onclick="setFilter('Aceptado',this)">Aceptado</button>
         <button class="fchip" onclick="setFilter('Rechazado',this)">Rechazado</button>
         <span class="fsep"></span>
-        <input type="text" id="searchBar" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar…" oninput="onSearch(this.value)">
+        <input type="text" id="searchBar" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Folio, cliente, contacto, descripción u OC…" oninput="onSearch(this.value)">
         <select class="fsort" onchange="setSort(this.value)">
           <option value="agrupado">Agrupado por estatus</option>
           <option value="fecha-desc">Fecha ↓</option>
@@ -970,16 +980,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     <div id="tabFac" class="tab-pane">
       <!-- Stats Facturas -->
       <div class="stats" style="margin-bottom:16px">
-        <div class="stat cr"><div class="stat-lbl">Total Facturas</div><div class="stat-val" id="fsTotalF">—</div><div class="stat-delta">Registradas</div></div>
-        <div class="stat cg"><div class="stat-lbl">Pagadas</div><div class="stat-val" id="fsPagadas">—</div><div class="stat-delta" id="fsPagPct">—</div></div>
-        <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="fsPendF">—</div><div class="stat-delta">Sin confirmar</div></div>
-        <div class="stat cb"><div class="stat-lbl">Monto Total</div><div class="stat-val" id="fsMontoF">—</div><div class="stat-delta">Facturado</div></div>
+        <div class="stat cr stat-click" title="Ver todas" onclick="cardFilter('facChipAll',setFacFilter,'all')"><div class="stat-lbl">Total Facturas</div><div class="stat-val" id="fsTotalF">—</div><div class="stat-delta">Registradas</div></div>
+        <div class="stat cg stat-click" title="Ver pagadas" onclick="cardFilter('facChipPag',setFacFilter,'Pagado')"><div class="stat-lbl">Pagadas</div><div class="stat-val" id="fsPagadas">—</div><div class="stat-delta" id="fsPagPct">—</div></div>
+        <div class="stat cy stat-click" title="Ver pendientes" onclick="cardFilter('facChipPend',setFacFilter,'Pendiente')"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="fsPendF">—</div><div class="stat-delta">Sin confirmar</div></div>
+        <div class="stat cb stat-click" title="Ver todas" onclick="cardFilter('facChipAll',setFacFilter,'all')"><div class="stat-lbl">Monto Total</div><div class="stat-val" id="fsMontoF">—</div><div class="stat-delta">Facturado</div></div>
       </div>
       <!-- Filter bar facturas -->
       <div class="filter-bar">
         <button class="fchip on" id="facChipAll" onclick="setFacFilter('all',this)">Todas</button>
-        <button class="fchip" onclick="setFacFilter('Pagado',this)">Pagado</button>
-        <button class="fchip" onclick="setFacFilter('Pendiente',this)">Pendiente</button>
+        <button class="fchip" id="facChipPag" onclick="setFacFilter('Pagado',this)">Pagado</button>
+        <button class="fchip" id="facChipPend" onclick="setFacFilter('Pendiente',this)">Pendiente</button>
         <button class="fchip" onclick="setFacFilter('Cancelado',this)">Cancelado</button>
         <span class="fsep"></span>
         <select class="fsort" id="facYearFilter" onchange="setFacYearFilter(this.value)" style="height:28px">
@@ -996,7 +1006,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <option value="">Todos los clientes</option>
         </select>
         <span class="fsep"></span>
-        <input type="text" id="facSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar factura…" oninput="onFacSearch(this.value)">
+        <input type="text" id="facSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Folio, cliente, concepto u OC…" oninput="onFacSearch(this.value)">
         <select class="fsort" id="facSort" onchange="setFacSort(this.value)">
           <option value="agrupado" selected>Agrupado por Estatus</option>
           <option value="fecha-desc">Fecha ↓</option>
@@ -1053,19 +1063,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     <div id="tabOC" class="tab-pane">
       <!-- Stats OC -->
       <div class="stats stats-5" style="margin-bottom:16px">
-        <div class="stat cr"><div class="stat-lbl">Total OC</div><div class="stat-val" id="ocsTot">—</div><div class="stat-delta">Registradas</div></div>
-        <div class="stat cy"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="ocsPend">—</div><div class="stat-delta" id="ocsPendMonto">Sin facturar</div></div>
-        <div class="stat cg"><div class="stat-lbl">Facturadas</div><div class="stat-val" id="ocsFact">—</div><div class="stat-delta" id="ocsFactMonto">Completas</div></div>
-        <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Canceladas</div><div class="stat-val" id="ocsCan">—</div><div class="stat-delta">Anuladas</div></div>
-        <div class="stat" style="border-color:var(--blue)"><div class="stat-lbl" style="color:var(--blue)">Monto Total</div><div class="stat-val" id="ocsMontoTotal">—</div><div class="stat-delta" id="ocsBalanceBar">Acumulado</div></div>
+        <div class="stat cr stat-click" title="Ver todas" onclick="cardFilter('ocChipAll',setOCFilter,'all')"><div class="stat-lbl">Total OC</div><div class="stat-val" id="ocsTot">—</div><div class="stat-delta">Registradas</div></div>
+        <div class="stat cy stat-click" title="Ver pendientes" onclick="cardFilter('ocChipPend',setOCFilter,'Pendiente')"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="ocsPend">—</div><div class="stat-delta" id="ocsPendMonto">Sin facturar</div></div>
+        <div class="stat cg stat-click" title="Ver facturadas" onclick="cardFilter('ocChipFact',setOCFilter,'Facturado')"><div class="stat-lbl">Facturadas</div><div class="stat-val" id="ocsFact">—</div><div class="stat-delta" id="ocsFactMonto">Completas</div></div>
+        <div class="stat stat-click" title="Ver canceladas" style="border-color:var(--border)" onclick="cardFilter('ocChipCan',setOCFilter,'Cancelado')"><div class="stat-lbl" style="color:var(--text3)">Canceladas</div><div class="stat-val" id="ocsCan">—</div><div class="stat-delta">Anuladas</div></div>
+        <div class="stat stat-click" title="Ver todas" style="border-color:var(--blue)" onclick="cardFilter('ocChipAll',setOCFilter,'all')"><div class="stat-lbl" style="color:var(--blue)">Monto Total</div><div class="stat-val" id="ocsMontoTotal">—</div><div class="stat-delta" id="ocsBalanceBar">Acumulado</div></div>
       </div>
 
       <!-- Filter OC -->
       <div class="filter-bar" style="margin-bottom:12px">
-        <button class="fchip on" onclick="setOCFilter('all',this)">Todas</button>
-        <button class="fchip" onclick="setOCFilter('Pendiente',this)">Pendiente</button>
-        <button class="fchip" onclick="setOCFilter('Facturado',this)">Facturado</button>
-        <button class="fchip" onclick="setOCFilter('Cancelado',this)">Cancelado</button>
+        <button class="fchip on" id="ocChipAll" onclick="setOCFilter('all',this)">Todas</button>
+        <button class="fchip" id="ocChipPend" onclick="setOCFilter('Pendiente',this)">Pendiente</button>
+        <button class="fchip" id="ocChipFact" onclick="setOCFilter('Facturado',this)">Facturado</button>
+        <button class="fchip" id="ocChipCan" onclick="setOCFilter('Cancelado',this)">Cancelado</button>
         <span class="fsep"></span>
         <input type="text" id="ocSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar OC…" oninput="onOCSearch(this.value)">
       </div>
@@ -1517,10 +1527,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <!-- Sub-vista: CONTRASEÑAS -->
       <div id="sisSubContrasenas" class="emp-subpane">
         <div class="info-card" style="margin-bottom:12px">
-          <div>🔒 Estas contraseñas se guardan tal cual en la hoja "Contraseñas" de tu Google Sheet, igual que el resto de tus datos. Solo quienes tengan acceso a esa hoja pueden verlas.</div>
+          <div>🔒 Estas contraseñas se guardan tal cual en la hoja "Contraseñas" de tu Google Sheet, igual que el resto de tus datos (A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Enlace, F=Categoría). Solo quienes tengan acceso a esa hoja pueden verlas. Se agrupan por categoría y el enlace es clicable.</div>
         </div>
         <div class="filter-bar" style="margin-bottom:12px">
-          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por sitio o usuario…" oninput="onSisContrasenasSearch(this.value)">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por sitio, usuario o categoría…" oninput="onSisContrasenasSearch(this.value)">
         </div>
         <div class="card">
           <div class="card-header">
@@ -1534,7 +1544,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <div class="cot-table-wrap">
             <table class="fac-table">
               <thead>
-                <tr><th>Sitio / Servicio</th><th>Usuario</th><th>Contraseña</th><th>Notas</th><th>Acciones</th></tr>
+                <tr><th>Sitio / Servicio</th><th>Usuario</th><th>Contraseña</th><th>Enlace</th><th>Acciones</th></tr>
               </thead>
               <tbody id="sisContrasenasTbody">
                 <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
@@ -2788,8 +2798,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <input type="text" class="form-input" id="pcPassword" placeholder="••••••••" style="font-family:var(--mono)">
       </div>
       <div class="form-group">
-        <label class="form-label">Notas</label>
-        <textarea class="form-textarea" id="pcNotas" placeholder="Observaciones, a quién pertenece, etc." style="min-height:52px"></textarea>
+        <label class="form-label">Enlace</label>
+        <input type="text" class="form-input" id="pcEnlace" placeholder="https://…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <input type="text" class="form-input" id="pcCategoria" list="pwdCatList" placeholder="Ej. Bancos, Correo, Proveedores…">
+        <datalist id="pwdCatList"></datalist>
       </div>
     </div>
     <div class="modal-acts">
@@ -3271,20 +3286,21 @@ async function loadAll() {
     ST.proveedores = {};
     (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], direccion:r[2]||'', contacto:r[3]||'', correo:r[4]||'' }; });
 
-    /* Contraseñas — hoja "Contraseñas" (A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Notas).
+    /* Contraseñas — hoja "Contraseñas" (A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Enlace, F=Categoría).
        Se carga en try/catch propio, igual que Registros/Personal, para que si la hoja
        aún no existe no rompa el resto de la carga; la sub-vista de Sistemas > Contraseñas
        muestra un aviso explicando cómo crearla. */
     ST.contrasenasError = null;
     try{
-      const contraR = await sheetsGet('Contraseñas!A2:E');
+      const contraR = await sheetsGet('Contraseñas!A2:F');
       ST.contrasenas = (contraR||[]).map((r,i)=>({
         _row: i+2,
         id: r[0]||('PWD'+(i+2)),
         sitio: r[1]||'',
         usuario: r[2]||'',
         password: r[3]||'',
-        notas: r[4]||'',
+        enlace: r[4]||'',
+        categoria: r[5]||'',
       })).filter(c=>c.sitio||c.usuario);
     }catch(contraErr){
       ST.contrasenas = [];
@@ -3844,9 +3860,15 @@ function applyFilter() {
     const q=ST.search;
     rows=rows.filter(r=>{
       const cli=ST.clientes[r.id_cli]||{};
+      const contactoNom=ST.contactos[r.id_con]||'';
+      // OC(s) vinculada(s) a esta cotización: se busca tanto por el número/folio
+      // de la OC (lo que el usuario realmente reconoce) como por su ID interno.
+      const ocsVinc=ST.ocAll.filter(o=>o.cotIds.includes(r.id));
+      const ocTxt=ocsVinc.map(o=>o.numero+' '+o.id).join(' ');
       return r.id.toLowerCase().includes(q)||r.desc.toLowerCase().includes(q)||
         (cli.nombre||'').toLowerCase().includes(q)||r.id_cli.toLowerCase().includes(q)||
-        r.estatus.toLowerCase().includes(q);
+        r.estatus.toLowerCase().includes(q)||contactoNom.toLowerCase().includes(q)||
+        ocTxt.toLowerCase().includes(q);
     });
   }
   const cotEstatusOrder={Pendiente:0,Enviado:1,'Seguimiento 1':2,'Seguimiento 2':3,Aceptado:4,Rechazado:5};
@@ -3908,7 +3930,7 @@ function renderTable() {
     const fmtSub='$'+r.sub.toLocaleString('es-MX',{minimumFractionDigits:2});
     const desc=(r.desc||'—').slice(0,40)+(r.desc.length>40?'…':'');
     return groupHeader + `<tr data-id="${esc(r.id)}">
-      <td><button class="folio" onclick="openCotResumen('${esc(r.id)}',${r._row})">${esc(r.id)}</button></td>
+      <td><button class="folio" title="${esc(r.id)}" onclick="openCotResumen('${esc(r.id)}',${r._row})">${esc(shortFolio(r.id))}</button></td>
       <td>
         <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
         <div style="font-size:10.5px;color:var(--text3);font-family:var(--mono)">${esc(r.id_cli)}</div>
@@ -4816,9 +4838,14 @@ function applyFacFilter(){
     const q=ST.facSearch;
     rows=rows.filter(r=>{
       const cli=ST.clientes[r.id_cli]||{};
+      // Buscar también por el número/folio de la(s) OC vinculada(s), que es lo que
+      // el usuario reconoce, además del ID interno (compatibilidad hacia atrás).
+      const ocsVinc=ST.ocAll.filter(o=>(r.ocIds||[]).includes(o.id));
+      const ocTxt=ocsVinc.map(o=>o.numero+' '+o.id).join(' ');
       return r.folio.toLowerCase().includes(q)||r.concepto.toLowerCase().includes(q)||
         (cli.nombre||'').toLowerCase().includes(q)||r.id_cli.toLowerCase().includes(q)||
-        r.estatus.toLowerCase().includes(q)||(r.ocIds||[]).join(',').toLowerCase().includes(q);
+        r.estatus.toLowerCase().includes(q)||(r.ocIds||[]).join(',').toLowerCase().includes(q)||
+        ocTxt.toLowerCase().includes(q);
     });
   }
   const facEstatusOrder={Pendiente:0,Pagado:1,Cancelado:2};
@@ -7072,30 +7099,53 @@ function openEditArticulo(id){
   document.getElementById('newArticuloModal').classList.add('open');
 }
 
-/* ── CONTRASEÑAS (Sistemas) ── */
+/* ── CONTRASEÑAS (Sistemas) ──
+   Se agrupan por categoría (columna F) igual que Cotizaciones/Facturas se agrupan
+   por estatus, y el enlace (columna E) se muestra como link clicable que abre en
+   una pestaña nueva. */
 function onSisContrasenasSearch(v){ ST.sisContrasenasQuery = (v||'').toLowerCase(); renderSisContrasenas(); }
+function populatePwdCatList(){
+  const dl=document.getElementById('pwdCatList'); if(!dl) return;
+  const cats=[...new Set((ST.contrasenas||[]).map(c=>c.categoria).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  dl.innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
+}
 function renderSisContrasenas(){
   const tbody=document.getElementById('sisContrasenasTbody');
   if(!tbody) return;
   if(ST.contrasenasError){
     tbody.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">
       ⚠️ No se pudo leer la hoja <strong>Contraseñas</strong> todavía (${esc(ST.contrasenasError)}).<br>
-      Crea una hoja llamada exactamente <strong>Contraseñas</strong> con columnas: A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Notas.
+      Crea una hoja llamada exactamente <strong>Contraseñas</strong> con columnas: A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Enlace, F=Categoría.
       En cuanto exista podrás agregar y editar desde aquí.
     </td></tr>`;
     document.getElementById('sisContrasenasCount').textContent='0';
     return;
   }
+  populatePwdCatList();
   const q = ST.sisContrasenasQuery||'';
   let list = (ST.contrasenas||[]).slice();
-  if(q) list = list.filter(c=>(c.sitio||'').toLowerCase().includes(q)||(c.usuario||'').toLowerCase().includes(q));
-  list.sort((a,b)=>(a.sitio||'').localeCompare(b.sitio||''));
+  if(q) list = list.filter(c=>(c.sitio||'').toLowerCase().includes(q)||(c.usuario||'').toLowerCase().includes(q)||(c.categoria||'').toLowerCase().includes(q));
+  const SIN_CAT='Sin categoría';
+  list.sort((a,b)=>{
+    const ca=a.categoria||SIN_CAT, cb=b.categoria||SIN_CAT;
+    if(ca!==cb) return ca.localeCompare(cb);
+    return (a.sitio||'').localeCompare(b.sitio||'');
+  });
   document.getElementById('sisContrasenasCount').textContent = list.length;
   if(!list.length){
     tbody.innerHTML=`<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin contraseñas guardadas todavía.'}</td></tr>`;
     return;
   }
-  tbody.innerHTML = list.map(c=>`<tr>
+  let lastCat=null;
+  tbody.innerHTML = list.map(c=>{
+    const cat=c.categoria||SIN_CAT;
+    let groupHeader='';
+    if(cat!==lastCat){
+      lastCat=cat;
+      groupHeader=`<tr class="pwd-group-row"><td colspan="5">${esc(cat)}</td></tr>`;
+    }
+    const enlaceHref = /^https?:\/\//i.test(c.enlace||'') ? c.enlace : (c.enlace ? 'https://'+c.enlace : '');
+    return groupHeader + `<tr>
     <td style="font-weight:500;font-size:12.5px">${esc(c.sitio||'—')}</td>
     <td style="font-size:12px;color:var(--text2);font-family:var(--mono)">${esc(c.usuario||'—')}</td>
     <td style="font-size:12px">
@@ -7105,7 +7155,7 @@ function renderSisContrasenas(){
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>
       </button>
     </td>
-    <td style="font-size:11.5px;color:var(--text3)">${esc(c.notas||'—')}</td>
+    <td style="font-size:11.5px">${enlaceHref?`<a class="pwd-link" href="${esc(enlaceHref)}" target="_blank" rel="noopener noreferrer" title="Ir al sitio">${esc(c.enlace)} ↗</a>`:'<span style="color:var(--text3)">—</span>'}</td>
     <td>
       <div class="row-acts">
         <button class="btn-icon" title="Editar" onclick="openEditContrasena('${esc(c.id)}')">
@@ -7116,7 +7166,8 @@ function renderSisContrasenas(){
         </button>
       </div>
     </td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 function toggleShowPwd(id){
   const mask=document.getElementById('pwdMask_'+id), real=document.getElementById('pwdReal_'+id);
@@ -7129,7 +7180,8 @@ function openAddContrasena(){
   if(!requireAuth()) return;
   ST.editContrasenaId = null;
   document.getElementById('addContrasenaModalTitle').textContent='Nueva Contraseña';
-  ['pcSitio','pcUsuario','pcPassword','pcNotas'].forEach(id=>document.getElementById(id).value='');
+  populatePwdCatList();
+  ['pcSitio','pcUsuario','pcPassword','pcEnlace','pcCategoria'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('saveContrasenaBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
   document.getElementById('addContrasenaModal').classList.add('open');
 }
@@ -7138,10 +7190,12 @@ function openEditContrasena(id){
   const c = ST.contrasenas.find(x=>x.id===id); if(!c) return;
   ST.editContrasenaId = id;
   document.getElementById('addContrasenaModalTitle').textContent='Editar Contraseña';
+  populatePwdCatList();
   document.getElementById('pcSitio').value = c.sitio||'';
   document.getElementById('pcUsuario').value = c.usuario||'';
   document.getElementById('pcPassword').value = c.password||'';
-  document.getElementById('pcNotas').value = c.notas||'';
+  document.getElementById('pcEnlace').value = c.enlace||'';
+  document.getElementById('pcCategoria').value = c.categoria||'';
   document.getElementById('saveContrasenaBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
   document.getElementById('addContrasenaModal').classList.add('open');
 }
@@ -7149,7 +7203,8 @@ async function saveContrasena(){
   const sitio = document.getElementById('pcSitio').value.trim();
   const usuario = document.getElementById('pcUsuario').value.trim();
   const password = document.getElementById('pcPassword').value;
-  const notas = document.getElementById('pcNotas').value.trim();
+  const enlace = document.getElementById('pcEnlace').value.trim();
+  const categoria = document.getElementById('pcCategoria').value.trim();
   if(!sitio){ toast('err','El sitio / servicio es obligatorio.'); return; }
   if(!password){ toast('err','La contraseña es obligatoria.'); return; }
   const btn=document.getElementById('saveContrasenaBtn');
@@ -7158,14 +7213,14 @@ async function saveContrasena(){
     if(ST.editContrasenaId){
       const c = ST.contrasenas.find(x=>x.id===ST.editContrasenaId);
       if(c){
-        await sheetsUpdate(`Contraseñas!A${c._row}:E${c._row}`,[[c.id,sitio,usuario,password,notas]]);
-        c.sitio=sitio; c.usuario=usuario; c.password=password; c.notas=notas;
+        await sheetsUpdate(`Contraseñas!A${c._row}:F${c._row}`,[[c.id,sitio,usuario,password,enlace,categoria]]);
+        c.sitio=sitio; c.usuario=usuario; c.password=password; c.enlace=enlace; c.categoria=categoria;
       }
       toast('ok','Contraseña actualizada.');
     } else {
       const id='PWD'+Date.now().toString(36).toUpperCase();
-      const row = await sheetsWriteNewRow('Contraseñas', ST.contrasenas.length, 'E', [id,sitio,usuario,password,notas]);
-      ST.contrasenas.push({_row:row, id, sitio, usuario, password, notas});
+      const row = await sheetsWriteNewRow('Contraseñas', ST.contrasenas.length, 'F', [id,sitio,usuario,password,enlace,categoria]);
+      ST.contrasenas.push({_row:row, id, sitio, usuario, password, enlace, categoria});
       toast('ok','Contraseña guardada.');
     }
     document.getElementById('addContrasenaModal').classList.remove('open');
@@ -8254,6 +8309,17 @@ function buildSyncedCotId(oldId, nuevaDesc){
   return `${m[1]}-${descClean||'SIN DESC'}`;
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function shortFolio(id){
+  const parts=String(id||'').split('-');
+  return parts.length>2 ? parts.slice(0,2).join('-') : String(id||'');
+}
+/* Permite que las tarjetas KPI (stats) funcionen como accesos directos a un filtro:
+   al hacer click en cualquier parte de la tarjeta, se activa el chip de filtro
+   correspondiente (mismo comportamiento que hacer click en el chip manualmente). */
+function cardFilter(chipId,fn,val){
+  const el=document.getElementById(chipId);
+  if(el) fn(val,el);
+}
 
 /* ─── TOAST ─── */
 function toast(type,msg){
