@@ -1537,6 +1537,40 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </div>
     </div>
 
+    <!-- ══ MODAL: VISTA PREVIA DEL GAFETE INSTITUCIONAL ══ -->
+    <div class="modal-bg" id="gafeteModal">
+      <div class="modal-lg" style="width:840px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title">🪪 Gafete institucional</div>
+            <div class="mlg-sub" id="gafeteSub">Vista previa — frente y reverso, listo para imprimir en una sola hoja</div>
+          </div>
+          <button class="close-x" onclick="closeGafeteModal()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body" style="padding:20px 22px;text-align:center">
+          <div id="gafeteLoading" style="padding:60px 0;color:var(--text3);font-size:12.5px">
+            <div class="dots" style="justify-content:center;margin-bottom:10px"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            Generando gafete en alta resolución…
+          </div>
+          <img id="gafetePreviewImg" style="display:none;max-width:100%;border-radius:var(--r8);border:1px solid var(--border2);box-shadow:0 8px 30px rgba(0,0,0,.35)" alt="Vista previa del gafete">
+          <div id="gafeteMeta" style="margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono)"></div>
+        </div>
+        <div class="mlg-foot">
+          <button class="btn btn-ghost btn-sm" onclick="closeGafeteModal()">Cerrar</button>
+          <button class="btn btn-ghost btn-sm" id="gafeteImprimirBtn" onclick="imprimirGafeteActual()" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13"><path d="M4 6V2h8v4M4 12h8v3H4v-3zM2 6h12v5H2V6z"/></svg>
+            Imprimir
+          </button>
+          <button class="btn btn-red btn-sm" id="gafeteDescargarBtn" onclick="descargarGafeteActual()" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12"><path d="M8 2v8m0 0l3-3m-3 3L5 7M3 13h10"/></svg>
+            Descargar PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ MODAL: DETALLE DE ASISTENCIA (empleado + día) ══ -->
     <div class="modal-bg" id="asisDetailModal">
       <div class="modal-lg" style="width:640px">
@@ -2735,6 +2769,12 @@ const ST = {
   /* ── NÓMINAS ── */
   personal: {},        // hoja "Personal" {id:{...}} (todos, incluye bajas)
   personalList: [],     // hoja "Personal" solo activos, para selects
+
+  /* ── GAFETES INSTITUCIONALES ── */
+  gafetes: [],          // hoja "Gafetes" — historial completo (todas las filas)
+  gafetesError: null,
+  gafeteGenerando: false,
+  gafeteActual: null,   // { frenteDataUrl, reversoDataUrl, combinadoDataUrl, gafete, empleado } del último generado (para el modal de vista previa)
   nominas: [],           // hoja "Nominas"
   nomFilter: 'all',       // filtro de estatus en listado
   nomFiltroEmpleadoId: '',
@@ -3128,6 +3168,32 @@ async function loadAll() {
       console.warn('[Empleados] No se pudo leer la hoja "Rostros" (créala para poder ver esta sub-vista):', rosErr);
       ST.rostros = {};
       ST.rostrosError = rosErr.result?.error?.message || rosErr.message || String(rosErr);
+    }
+
+    /* Gafetes — hoja "Gafetes" (10 cols: A=ID_Gafete, B=ID_Empleado, C=Nombre_Empleado,
+       D=Fecha_Emision, E=Fecha_Vencimiento, F=Estado, G=Fecha_Impresion, H=Usuario_Genero,
+       I=Reimpresiones, J=Notas). Se carga en try/catch propio para no romper el resto
+       de la app si la hoja aún no existe o el nombre no coincide exactamente. */
+    try{
+      const gafR = await sheetsGet('Gafetes!A2:J');
+      ST.gafetes = (gafR||[]).map((r,i)=>({
+        _row: i+2,
+        idGafete: r[0]||'',
+        idEmpleado: r[1]||'',
+        nombreEmpleado: r[2]||'',
+        fechaEmision: r[3]||'',
+        fechaVencimiento: r[4]||'',
+        estado: r[5]||'Activo',
+        fechaImpresion: r[6]||'',
+        usuarioGenero: r[7]||'',
+        reimpresiones: parseInt(r[8],10)||0,
+        notas: r[9]||'',
+      })).filter(g=>g.idGafete);
+      ST.gafetesError = null;
+    }catch(gafErr){
+      console.warn('[Empleados] No se pudo leer la hoja "Gafetes" (créala para poder generar gafetes):', gafErr);
+      ST.gafetes = [];
+      ST.gafetesError = gafErr.result?.error?.message || gafErr.message || String(gafErr);
     }
 
     /* Nominas — hoja "Nominas" (37 cols: A=ID_Nomina … AF=Fecha_Firma, AG:AK = campos nuevos).
@@ -6615,7 +6681,10 @@ function renderEmpleados(){
       <td style="text-align:center">${p.recibeVales ? '✅' : '—'}</td>
       <td>${esc(p.tipoPago||'—')}</td>
       <td><span style="color:${estColor};font-weight:600;font-size:11.5px">${esc(p.estado||'—')}</span></td>
-      <td><button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="openEmpModal('${p.id}')" title="Editar">✎ Editar</button></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="openEmpModal('${p.id}')" title="Editar">✎ Editar</button>
+        <button class="btn btn-ghost btn-sm" style="padding:3px 8px;margin-left:4px" onclick="generarGafeteEmpleado('${p.id}')" title="Generar gafete institucional en PDF">🪪 Generar Gafete</button>
+      </td>
     </tr>`;
   });
   tbody.innerHTML = htmlOut;
@@ -6641,11 +6710,12 @@ function openEmpCard(idEmpleado){
   body.innerHTML = `
     <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
       ${avatarBig}
-      <div>
+      <div style="flex:1">
         <div style="font-size:16px;font-weight:700;user-select:text">${esc(p.nombre||'—')}</div>
         <div style="font-size:12px;color:var(--text3)">${esc(p.puesto||'—')}</div>
         <div style="margin-top:4px;font-size:11px;font-weight:700;color:${esActivo?'var(--green,#38a169)':'var(--text3)'}">${esc(p.estado||'—')}</div>
       </div>
+      <button class="btn btn-red btn-sm" onclick="generarGafeteEmpleado('${p.id}')" title="Generar gafete institucional en PDF">🪪 Generar Gafete</button>
     </div>
     ${row('Correo', p.correo)}
     ${row('Teléfono', p.telefono)}
@@ -6776,6 +6846,473 @@ async function guardarEmpleado(){
     toast('err','Error al guardar el empleado: '+(e.result?.error?.message||e.message||e));
   }
   btn.disabled = false;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   GAFETE INSTITUCIONAL — generación automática de PDF imprimible (frente +
+   reverso lado a lado en una sola hoja, tamaño físico PVC 86×54mm cada lado).
+   Usa la hoja "Gafetes" (A:J) para llevar folio único, vigencia y control de
+   reimpresiones por empleado. Diseño dibujado en <canvas> a 300 DPI y luego
+   incrustado como imagen en un PDF (jsPDF) — así se pueden usar degradados,
+   sombras y recortes circulares que jsPDF no soporta de forma nativa.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const GAFETE_CARD_MM_W = 86;     // ancho final por lado (estándar PVC)
+const GAFETE_CARD_MM_H = 54;     // alto final por lado (estándar PVC)
+const GAFETE_GAP_MM    = 8;      // espacio entre frente y reverso (línea de doblez)
+const GAFETE_PX_MM     = 300/25.4; // px por mm a 300 DPI
+const GAFETE_CARD_PX_W = Math.round(GAFETE_CARD_MM_W*GAFETE_PX_MM); // 1016px
+const GAFETE_CARD_PX_H = Math.round(GAFETE_CARD_MM_H*GAFETE_PX_MM); // 638px
+const GAFETE_GAP_PX    = Math.round(GAFETE_GAP_MM*GAFETE_PX_MM);    // 94px
+
+const GAFETE_C = { rojo:'#AF0D12', rojoOsc:'#7A0910', negro:'#1D1D1D', gris:'#6B6B6B', grisClaro:'#9A9A9A', blanco:'#FFFFFF' };
+
+function valOrNoRegistrado(v){ const s=(v==null?'':String(v)).trim(); return s? s : 'No registrado'; }
+
+function gafeteHoyISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function gafeteAddAnios(iso, anios){ const d=new Date(iso+'T00:00:00'); d.setFullYear(d.getFullYear()+anios); return d.toISOString().slice(0,10); }
+function gafeteFmtFecha(iso){
+  if(!iso) return '—';
+  const d = new Date(iso+'T00:00:00');
+  if(isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}).replace(/\./g,'').toUpperCase();
+}
+
+/* Folio consecutivo, nunca se repite: toma el número más alto ya usado en la
+   hoja "Gafetes" (sin importar el estado) y suma 1. Formato: CON-EMP-000001 */
+function gafeteNextFolio(){
+  let max = 0;
+  (ST.gafetes||[]).forEach(g=>{
+    const m = /CON-EMP-(\d+)/i.exec(g.idGafete||'');
+    if(m){ const n=parseInt(m[1],10); if(n>max) max=n; }
+  });
+  return 'CON-EMP-' + String(max+1).padStart(6,'0');
+}
+
+/* Carga una imagen respetando CORS (necesario para poder "leerla" luego con
+   canvas). Si falla o tarda demasiado, resuelve null y el dibujo cae de vuelta
+   a un placeholder — nunca rompe la generación del gafete. */
+function gafeteCargarImagen(url, timeoutMs){
+  return new Promise((resolve)=>{
+    if(!url){ resolve(null); return; }
+    let done = false;
+    const finish = (r)=>{ if(!done){ done=true; resolve(r); } };
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = ()=>finish(img);
+    img.onerror = ()=>finish(null);
+    img.src = url;
+    setTimeout(()=>finish(null), timeoutMs||6000);
+  });
+}
+
+function gafeteRoundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function gafeteHexagono(ctx,cx,cy,r){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const ang = Math.PI/180*(60*i-30);
+    const x = cx+r*Math.cos(ang), y = cy+r*Math.sin(ang);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+/* Texto que reduce su tamaño automáticamente hasta caber en maxWidth (para
+   nombres largos), en vez de desbordarse o truncarse feo. */
+function gafeteTextoAjustado(ctx, text, x, y, maxWidth, baseSize, weight){
+  let size = baseSize;
+  ctx.font = (weight||'700')+' '+size+'px Arial, sans-serif';
+  while(ctx.measureText(text).width > maxWidth && size > 18){
+    size -= 2;
+    ctx.font = (weight||'700')+' '+size+'px Arial, sans-serif';
+  }
+  ctx.fillText(text, x, y);
+}
+
+/* ── FRENTE del gafete ── */
+async function gafeteDibujarFrente(p, registro){
+  const W = GAFETE_CARD_PX_W, H = GAFETE_CARD_PX_H;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const C = GAFETE_C;
+
+  ctx.fillStyle = C.blanco; ctx.fillRect(0,0,W,H);
+
+  // Banda superior roja con corte diagonal (identidad corporativa)
+  const bandH = H*0.40;
+  const grad = ctx.createLinearGradient(0,0,W,bandH);
+  grad.addColorStop(0,C.rojoOsc); grad.addColorStop(1,C.rojo);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(0,0); ctx.lineTo(W,0); ctx.lineTo(W,bandH*0.72); ctx.lineTo(0,bandH);
+  ctx.closePath(); ctx.fill();
+
+  // Líneas técnicas discretas dentro de la banda (detalle industrial)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 2;
+  for(let i=0;i<6;i++){
+    ctx.beginPath();
+    ctx.moveTo(W*0.5+i*30,0);
+    ctx.lineTo(W*0.5+i*30-bandH*0.5,bandH);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Polígono geométrico discreto en la esquina inferior derecha
+  ctx.save();
+  ctx.globalAlpha = 0.055; ctx.fillStyle = C.rojo;
+  ctx.beginPath();
+  ctx.moveTo(W,H); ctx.lineTo(W*0.68,H); ctx.lineTo(W,H*0.55);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // Logo + nombre de la empresa dentro de la banda
+  const logoImg = await gafeteCargarImagen(ST.logoDataUrl, 4000);
+  const chipX = 46, chipY = 32, chipH = bandH*0.52;
+  let dw = 0;
+  if(logoImg){
+    const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
+    let dh = chipH; dw = dh*(dim.w/dim.h);
+    if(dw>chipH*1.7){ dw=chipH*1.7; dh=dw*(dim.h/dim.w); }
+    const pad = 10;
+    gafeteRoundRect(ctx, chipX-pad, chipY-pad, dw+pad*2, dh+pad*2, 9);
+    ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.fill();
+    ctx.drawImage(logoImg, chipX, chipY, dw, dh);
+  }
+  ctx.fillStyle = C.blanco;
+  ctx.font = '700 32px Arial, sans-serif';
+  ctx.fillText('CONSTRUCTORA CONECTE', chipX + (logoImg? dw+34 : 0), chipY+chipH*0.68);
+
+  // Fotografía circular — borde rojo corporativo + sombra ligera
+  const photoR = H*0.225;
+  const photoCX = W*0.235, photoCY = bandH+4;
+  const fotoImg = await gafeteCargarImagen(normalizePhotoUrl(p.fotografia), 6000);
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 7;
+  ctx.beginPath(); ctx.arc(photoCX,photoCY,photoR+7,0,Math.PI*2);
+  ctx.fillStyle = C.blanco; ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(photoCX,photoCY,photoR,0,Math.PI*2); ctx.closePath(); ctx.clip();
+  if(fotoImg){
+    const s = Math.max((photoR*2)/fotoImg.width, (photoR*2)/fotoImg.height);
+    const iw = fotoImg.width*s, ih = fotoImg.height*s;
+    ctx.drawImage(fotoImg, photoCX-iw/2, photoCY-ih/2, iw, ih);
+  } else {
+    ctx.fillStyle = '#EAEAEA'; ctx.fillRect(photoCX-photoR,photoCY-photoR,photoR*2,photoR*2);
+    ctx.fillStyle = C.grisClaro; ctx.font = '700 '+Math.round(photoR*0.9)+'px Arial';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText((p.nombre||'?').trim().charAt(0).toUpperCase(), photoCX, photoCY+4);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  }
+  ctx.restore();
+
+  ctx.beginPath(); ctx.arc(photoCX,photoCY,photoR+3,0,Math.PI*2);
+  ctx.lineWidth = 7; ctx.strokeStyle = C.rojo; ctx.stroke();
+
+  // Datos del empleado
+  const textX = W*0.235 + photoR + 46;
+  let ty = photoCY - photoR*0.3;
+  ctx.fillStyle = C.negro;
+  gafeteTextoAjustado(ctx, (p.nombre||'NO REGISTRADO').toUpperCase(), textX, ty, W-textX-40, 40, '700');
+  ty += 48;
+  ctx.fillStyle = C.rojo; ctx.font = '600 22px Arial, sans-serif';
+  ctx.fillText((p.puesto||'No registrado').toUpperCase(), textX, ty);
+
+  ty += 44;
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(textX,ty); ctx.lineTo(W-40,ty); ctx.stroke();
+
+  const campoRow = (label, valor, yy)=>{
+    ctx.fillStyle = C.grisClaro; ctx.font = '700 14px Arial, sans-serif';
+    ctx.fillText(label, textX, yy);
+    ctx.fillStyle = C.negro; ctx.font = '600 20px "Courier New", monospace';
+    ctx.fillText(valOrNoRegistrado(valor), textX, yy+23);
+  };
+  campoRow('NSS', p.nss, ty+30);
+  campoRow('CURP', p.curp, ty+78);
+
+  // Franja inferior — número de emergencia
+  const footH = H*0.135;
+  ctx.fillStyle = C.negro; ctx.fillRect(0,H-footH,W,footH);
+  ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,9,footH);
+  ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.font='700 13px Arial';
+  ctx.fillText('EMERGENCIAS', 46, H-footH+28);
+  ctx.fillStyle = C.blanco; ctx.font='700 25px Arial';
+  ctx.fillText('999 908 9592', 46, H-footH+60);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font='600 12px Arial'; ctx.textAlign='right';
+  ctx.fillText(registro.idGafete, W-40, H-footH+28);
+  ctx.textAlign='left';
+
+  return canvas;
+}
+
+/* ── REVERSO del gafete (sin QR — elemento gráfico decorativo en su lugar) ── */
+async function gafeteDibujarReverso(p, registro){
+  const W = GAFETE_CARD_PX_W, H = GAFETE_CARD_PX_H;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const C = GAFETE_C;
+
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#FAFAFA'); bg.addColorStop(1,'#EFEFEF');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  // Patrón hexagonal discreto (reemplaza al QR con un elemento gráfico elegante)
+  ctx.save();
+  ctx.globalAlpha = 0.05; ctx.strokeStyle = C.rojo; ctx.lineWidth = 2;
+  const hexR = 30;
+  for(let row=0; row<6; row++){
+    for(let col=0; col<9; col++){
+      const cx = 50 + col*hexR*1.75 + (row%2? hexR*0.9:0);
+      const cy = 34 + row*hexR*1.5;
+      if(cx>W-30 || cy>H*0.6) continue;
+      gafeteHexagono(ctx, cx, cy, hexR*0.5);
+    }
+  }
+  ctx.restore();
+
+  // Marca de agua — logo en baja opacidad, centrado
+  const logoImg = await gafeteCargarImagen(ST.logoDataUrl, 4000);
+  if(logoImg){
+    const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
+    const wmW = W*0.4, wmH = wmW*(dim.h/dim.w);
+    ctx.save(); ctx.globalAlpha = 0.07;
+    ctx.drawImage(logoImg, W/2-wmW/2, H/2-wmH/2-14, wmW, wmH);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = C.rojo; ctx.fillRect(0,0,W,9);
+
+  let y = 54;
+  ctx.fillStyle = C.negro; ctx.font = '700 21px Arial';
+  ctx.fillText('CONSTRUCTORA CONECTE', 46, y);
+  ctx.fillStyle = C.rojo; ctx.fillRect(46, y+11, 64, 4);
+
+  y += 52;
+  ctx.fillStyle = '#333'; ctx.font = '400 17px Arial';
+  ctx.fillText('Este gafete acredita al portador como colaborador', 46, y);
+  ctx.fillText('autorizado de Constructora Conecte.', 46, y+24);
+
+  y += 58;
+  ctx.fillStyle = '#555'; ctx.font = '400 15px Arial';
+  ctx.fillText('En caso de encontrar este gafete favor de comunicarse al:', 46, y);
+  ctx.fillStyle = C.rojo; ctx.font = '700 22px Arial';
+  ctx.fillText('999 908 9592', 46, y+28);
+
+  // Vigencia — caja con borde
+  y += 54;
+  const boxW = W-92, boxH = 88;
+  gafeteRoundRect(ctx,46,y,boxW,boxH,10);
+  ctx.fillStyle = 'rgba(175,13,18,0.03)'; ctx.fill();
+  gafeteRoundRect(ctx,46,y,boxW,boxH,10);
+  ctx.strokeStyle = 'rgba(0,0,0,0.16)'; ctx.lineWidth = 2; ctx.stroke();
+
+  const colW = boxW/2;
+  ctx.fillStyle = C.grisClaro; ctx.font = '700 12px Arial';
+  ctx.fillText('FECHA DE EMISIÓN', 46+20, y+28);
+  ctx.fillText('FECHA DE VENCIMIENTO', 46+colW+20, y+28);
+  ctx.fillStyle = C.negro; ctx.font = '700 20px Arial';
+  ctx.fillText(gafeteFmtFecha(registro.fechaEmision), 46+20, y+58);
+  ctx.fillStyle = C.rojo;
+  ctx.fillText(gafeteFmtFecha(registro.fechaVencimiento), 46+colW+20, y+58);
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(46+colW,y+12); ctx.lineTo(46+colW,y+boxH-12); ctx.stroke();
+
+  // Identificador único
+  y += boxH+32;
+  ctx.fillStyle = C.grisClaro; ctx.font = '700 12px Arial';
+  ctx.fillText('IDENTIFICADOR ÚNICO', 46, y);
+  ctx.fillStyle = C.negro; ctx.font = '700 26px "Courier New", monospace';
+  ctx.fillText(registro.idGafete, 46, y+28);
+
+  // Pie — franja roja + logo pequeño
+  const footH = 44;
+  ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,W,footH);
+  if(logoImg){
+    const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
+    const lh = footH*0.58, lw = lh*(dim.w/dim.h);
+    ctx.drawImage(logoImg, 30, H-footH+footH*0.21, lw, lh);
+    ctx.fillStyle = C.blanco; ctx.font='700 15px Arial';
+    ctx.fillText('Constructora Conecte', 30+lw+14, H-footH/2+6);
+  } else {
+    ctx.fillStyle = C.blanco; ctx.font='700 15px Arial';
+    ctx.fillText('Constructora Conecte', 30, H-footH/2+6);
+  }
+
+  return canvas;
+}
+
+/* Une frente + reverso en UNA sola imagen (lado a lado, con espacio de
+   doblez en medio). El reverso se dibuja reflejado horizontalmente: así,
+   al recortar el contorno completo y doblar exactamente por la línea
+   central, ambos lados quedan alineados y legibles (no al revés). */
+async function gafeteConstruirImagenes(p, registro){
+  const [frente, reverso] = await Promise.all([
+    gafeteDibujarFrente(p, registro),
+    gafeteDibujarReverso(p, registro),
+  ]);
+
+  const totalW = GAFETE_CARD_PX_W*2 + GAFETE_GAP_PX;
+  const totalH = GAFETE_CARD_PX_H;
+  const combo = document.createElement('canvas');
+  combo.width = totalW; combo.height = totalH;
+  const ctx = combo.getContext('2d');
+
+  ctx.fillStyle = '#f3f3f3'; ctx.fillRect(0,0,totalW,totalH);
+  ctx.drawImage(frente, 0, 0);
+
+  ctx.save();
+  const rx = GAFETE_CARD_PX_W + GAFETE_GAP_PX;
+  ctx.translate(rx+GAFETE_CARD_PX_W, 0);
+  ctx.scale(-1,1);
+  ctx.drawImage(reverso, 0, 0);
+  ctx.restore();
+
+  // Guía visual de doblez (solo referencia en pantalla/impresión, no forma parte del diseño)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(120,120,120,0.55)'; ctx.setLineDash([7,7]); ctx.lineWidth = 2;
+  const midX = GAFETE_CARD_PX_W + GAFETE_GAP_PX/2;
+  ctx.beginPath(); ctx.moveTo(midX,0); ctx.lineTo(midX,totalH); ctx.stroke();
+  ctx.restore();
+
+  const mmPerPx = 25.4/300;
+  return { dataUrl: combo.toDataURL('image/png',1.0), wMM: totalW*mmPerPx, hMM: totalH*mmPerPx };
+}
+
+/* Arma el PDF final: imagen combinada centrada en una hoja A4 horizontal,
+   más guías discretas de corte y doblez, en alta resolución (300 DPI). */
+function gafeteConstruirPDF(combinado){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'landscape' });
+  const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight();
+  const x = (PW-combinado.wMM)/2, y = (PH-combinado.hMM)/2;
+
+  doc.addImage(combinado.dataUrl,'PNG',x,y,combinado.wMM,combinado.hMM,undefined,'FAST');
+
+  doc.setDrawColor(175,175,175); doc.setLineWidth(0.15);
+  if(doc.setLineDashPattern) doc.setLineDashPattern([1.2,1],0);
+  doc.rect(x,y,combinado.wMM,combinado.hMM);
+  const midX = x+combinado.wMM/2;
+  doc.line(midX,y-4,midX,y+combinado.hMM+4);
+  if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140,140,140);
+  doc.text('Recortar por el contorno · Doblar exactamente por la línea central · Laminar o colocar en porta gafete', PW/2, y+combinado.hMM+10, {align:'center'});
+
+  return doc;
+}
+
+/* ── Modal de vista previa ── */
+function openGafeteModal(){
+  document.getElementById('gafeteLoading').style.display = '';
+  document.getElementById('gafetePreviewImg').style.display = 'none';
+  document.getElementById('gafeteMeta').textContent = '';
+  document.getElementById('gafeteImprimirBtn').disabled = true;
+  document.getElementById('gafeteDescargarBtn').disabled = true;
+  document.getElementById('gafeteModal').classList.add('open');
+}
+function closeGafeteModal(){ document.getElementById('gafeteModal').classList.remove('open'); }
+
+function gafeteMostrarPreview(dataUrl, registro){
+  document.getElementById('gafeteLoading').style.display = 'none';
+  const img = document.getElementById('gafetePreviewImg');
+  img.src = dataUrl; img.style.display = '';
+  document.getElementById('gafeteMeta').textContent =
+    `${registro.idGafete}  ·  Emisión ${gafeteFmtFecha(registro.fechaEmision)}  ·  Vigente hasta ${gafeteFmtFecha(registro.fechaVencimiento)}`;
+  document.getElementById('gafeteImprimirBtn').disabled = false;
+  document.getElementById('gafeteDescargarBtn').disabled = false;
+}
+
+function descargarGafeteActual(){
+  if(!ST.gafeteActual) return;
+  const nombreArchivo = `Gafete_${ST.gafeteActual.gafete.idGafete}_${(ST.gafeteActual.empleado.nombre||'Empleado').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g,'').trim().replace(/\s+/g,'_')}.pdf`;
+  ST.gafeteActual.pdf.save(nombreArchivo);
+}
+function imprimirGafeteActual(){
+  if(!ST.gafeteActual) return;
+  ST.gafeteActual.pdf.autoPrint();
+  window.open(ST.gafeteActual.pdf.output('bloburl'), '_blank');
+}
+
+/* ── Orquestador principal: botón "🪪 Generar Gafete" ──
+   1) Resuelve el folio: reutiliza el activo vigente (reimpresión), renueva
+      si venció, o crea uno nuevo si el empleado no tiene ninguno.
+   2) Dibuja frente + reverso en canvas de alta resolución.
+   3) Arma el PDF final (una sola hoja) y muestra la vista previa. */
+async function generarGafeteEmpleado(idEmpleado){
+  if(!requireAuth()) return;
+  const p = ST.personal[idEmpleado];
+  if(!p){ toast('err','No se encontró ese empleado.'); return; }
+  if(ST.gafeteGenerando){ toast('inf','Ya se está generando un gafete, espera un momento…'); return; }
+  if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
+  if(ST.gafetesError){
+    toast('err','No se pudo leer la hoja "Gafetes": '+ST.gafetesError+'. Crea la hoja "Gafetes" (columnas A:J — ver documentación) para poder generar gafetes.');
+    return;
+  }
+
+  ST.gafeteGenerando = true;
+  openGafeteModal();
+  try{
+    const hoy = gafeteHoyISO();
+    let registro = (ST.gafetes||[]).slice().reverse().find(g=> g.idEmpleado===idEmpleado && (g.estado||'').toLowerCase()==='activo');
+
+    if(registro && registro.fechaVencimiento && registro.fechaVencimiento < hoy){
+      // Venció: se marca el anterior como Vencido y se genera un folio nuevo (renovación).
+      await sheetsUpdate(`Gafetes!F${registro._row}`, [['Vencido']]);
+      registro.estado = 'Vencido';
+      registro = null;
+    }
+
+    let esNuevo = false;
+    if(!registro){
+      esNuevo = true;
+      const folio = gafeteNextFolio();
+      const fEmision = hoy;
+      const fVencimiento = gafeteAddAnios(hoy,1);
+      const nuevaFila = [folio, p.id, p.nombre||'', fEmision, fVencimiento, 'Activo', hoy, ST.usuario||'', 0, ''];
+      const nuevoRow = (ST.gafetes.length||0)+2;
+      await sheetsAppend('Gafetes!A2:J', [nuevaFila]);
+      registro = {
+        _row: nuevoRow, idGafete: folio, idEmpleado: p.id, nombreEmpleado: p.nombre||'',
+        fechaEmision: fEmision, fechaVencimiento: fVencimiento, estado: 'Activo',
+        fechaImpresion: hoy, usuarioGenero: ST.usuario||'', reimpresiones: 0, notas: '',
+      };
+      ST.gafetes.push(registro);
+    } else {
+      // Ya tiene un gafete Activo vigente: se reimprime el MISMO folio (nunca cambia),
+      // solo se actualiza la fecha de impresión y sube el contador de reimpresiones.
+      registro.fechaImpresion = hoy;
+      registro.usuarioGenero = ST.usuario||'';
+      registro.reimpresiones = (registro.reimpresiones||0)+1;
+      await sheetsUpdate(`Gafetes!G${registro._row}:I${registro._row}`, [[hoy, ST.usuario||'', registro.reimpresiones]]);
+    }
+
+    const combinado = await gafeteConstruirImagenes(p, registro);
+    const pdf = gafeteConstruirPDF(combinado);
+
+    ST.gafeteActual = { pdf, combinadoDataUrl: combinado.dataUrl, gafete: registro, empleado: p };
+    gafeteMostrarPreview(combinado.dataUrl, registro);
+
+    toast('ok', esNuevo ? `Gafete ${registro.idGafete} generado.` : `Gafete ${registro.idGafete} reimpreso (van ${registro.reimpresiones}).`);
+  }catch(e){
+    console.error('Error al generar gafete:', e);
+    toast('err','Error al generar el gafete: '+(e.result?.error?.message||e.message||e));
+    closeGafeteModal();
+  }
+  ST.gafeteGenerando = false;
 }
 
 /* ── PDF: Recibo de Nómina con línea de firma para el empleado ── */
