@@ -814,6 +814,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.3"/><path d="M1.8 13c0-2.4 1.6-4 3.7-4s3.7 1.6 3.7 4"/><circle cx="11.5" cy="6" r="1.8"/><path d="M9.7 9.3c1.7.2 3 1.5 3.3 3.2"/></svg>
           <span>Empleados</span>
         </button>
+        <button class="sidebar-item" id="navSistemasBtn" onclick="switchSection('sistemas')" title="Sistemas">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          <span>Sistemas</span>
+        </button>
       </nav>
       <div class="sidebar-foot">
         <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Contraer / expandir menú">
@@ -869,6 +873,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <button class="bal-tab" id="empDocBtn" onclick="switchEmpSubTab('doc')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h6l3 3v10h-9z"/><path d="M10 1.5v3h3M5.5 8h5M5.5 10.5h5"/></svg>
           Documentación
+        </button>
+      </nav>
+
+      <!-- SUB-TABS DE SISTEMAS: Clientes, Artículos, Contraseñas (mismo diseño, fijo arriba) -->
+      <nav class="bal-nav" id="sistemasSubNav" style="display:none">
+        <button class="bal-tab active" id="sisClientesBtn" onclick="switchSistemasSubTab('clientes')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
+          Clientes
+        </button>
+        <button class="bal-tab" id="sisArticulosBtn" onclick="switchSistemasSubTab('articulos')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
+          Artículos
+        </button>
+        <button class="bal-tab" id="sisContrasenasBtn" onclick="switchSistemasSubTab('contrasenas')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
+          Contraseñas
         </button>
       </nav>
 
@@ -1405,7 +1425,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           </a>
         </div>
         <div class="stats stats-3" style="margin-bottom:16px">
-          <div class="stat cy"><div class="stat-lbl">Total empleados</div><div class="stat-val" id="rosTotal">—</div><div class="stat-delta">Activos + bajas</div></div>
+          <div class="stat cy"><div class="stat-lbl">Total empleados</div><div class="stat-val" id="rosTotal">—</div><div class="stat-delta">Solo activos</div></div>
           <div class="stat cg"><div class="stat-lbl">Con rostro registrado</div><div class="stat-val" id="rosRegistrados">—</div><div class="stat-delta">Encontrados en "Rostros"</div></div>
           <div class="stat cr"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="rosPendientes">—</div><div class="stat-delta">Aún sin registrar</div></div>
         </div>
@@ -1436,6 +1456,95 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         </div>
       </div><!-- /empSubDoc -->
     </div><!-- /tabEmp -->
+
+    <!-- ══ TAB: SISTEMAS (Clientes / Artículos / Contraseñas — catálogos maestros) ══ -->
+    <div id="tabSistemas" class="tab-pane">
+
+      <!-- Sub-vista: CLIENTES -->
+      <div id="sisSubClientes" class="emp-subpane active">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre o RFC/ID…" oninput="onSisClientesSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Clientes</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisClientesCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddCliente()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Cliente
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th>Nombre / Razón Social</th><th>RFC / ID</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="sisClientesTbody">
+                <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubClientes -->
+
+      <!-- Sub-vista: ARTÍCULOS -->
+      <div id="sisSubArticulos" class="emp-subpane">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre…" oninput="onSisArticulosSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Catálogo de Artículos</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisArticulosCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openNewArticulo()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Artículo
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th>Concepto</th><th style="text-align:right">Precio</th><th>Unidad</th><th>Impuesto</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="sisArticulosTbody">
+                <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubArticulos -->
+
+      <!-- Sub-vista: CONTRASEÑAS -->
+      <div id="sisSubContrasenas" class="emp-subpane">
+        <div class="info-card" style="margin-bottom:12px">
+          <div>🔒 Estas contraseñas se guardan tal cual en la hoja "Contraseñas" de tu Google Sheet, igual que el resto de tus datos. Solo quienes tengan acceso a esa hoja pueden verlas.</div>
+        </div>
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por sitio o usuario…" oninput="onSisContrasenasSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Contraseñas</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisContrasenasCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddContrasena()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nueva Contraseña
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th>Sitio / Servicio</th><th>Usuario</th><th>Contraseña</th><th>Notas</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="sisContrasenasTbody">
+                <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubContrasenas -->
+
+    </div><!-- /tabSistemas -->
 
 
     <!-- ══ MODAL: EMPLEADO (alta / edición completa sobre la hoja Personal) ══ -->
@@ -2269,7 +2378,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 <!-- ══ ADD CLIENT MODAL ══ -->
 <div class="modal-bg" id="addClienteModal">
   <div class="modal" style="width:420px">
-    <div class="modal-title">Nuevo Cliente</div>
+    <div class="modal-title" id="addClienteModalTitle">Nuevo Cliente</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <div class="form-group">
         <label class="form-label">RFC / ID *</label>
@@ -2622,7 +2731,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 <!-- ══ NUEVO ARTÍCULO MODAL ══ -->
 <div class="modal-bg" id="newArticuloModal">
   <div class="modal" style="width:460px">
-    <div class="modal-title">Nuevo Artículo al Catálogo</div>
+    <div class="modal-title" id="newArticuloModalTitle">Nuevo Artículo al Catálogo</div>
     <p style="font-size:11.5px;color:var(--text3);margin:-4px 0 14px">Este artículo quedará guardado en tu hoja "Articulos" y estará disponible en búsquedas futuras.</p>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <div class="form-group">
@@ -2656,6 +2765,38 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <button class="btn btn-red" id="saveArticuloBtn" onclick="saveNewArticulo()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
         Guardar al catálogo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD / EDIT CONTRASEÑA MODAL (Sistemas) ══ -->
+<div class="modal-bg" id="addContrasenaModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-title" id="addContrasenaModalTitle">Nueva Contraseña</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <div class="form-group">
+        <label class="form-label">Sitio / Servicio *</label>
+        <input type="text" class="form-input" id="pcSitio" placeholder="Ej. Google Workspace">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Usuario</label>
+        <input type="text" class="form-input" id="pcUsuario" placeholder="usuario@dominio.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña *</label>
+        <input type="text" class="form-input" id="pcPassword" placeholder="••••••••" style="font-family:var(--mono)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea class="form-textarea" id="pcNotas" placeholder="Observaciones, a quién pertenece, etc." style="min-height:52px"></textarea>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('addContrasenaModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-red" id="saveContrasenaBtn" onclick="saveContrasena()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar
       </button>
     </div>
   </div>
@@ -2930,7 +3071,7 @@ function startAutoRefresh(){
     const ocOpen   = document.getElementById('ocModal').classList.contains('open');
     if(formOpen || ocOpen) return;
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
-    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','facUploadModal','balModal','asisDetailModal','empModal','empCardModal'];
+    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','addContrasenaModal','facUploadModal','balModal','asisDetailModal','empModal','empCardModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
     // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
     if(Date.now() < facEditingUntil) return;
@@ -3124,11 +3265,31 @@ async function loadAll() {
 
     /* Clientes */
     ST.clientes = {};
-    (cliR||[]).forEach(r => { if(r[0]) ST.clientes[r[0]] = { id:r[0], nombre:r[1]||r[0] }; });
+    (cliR||[]).forEach((r,i) => { if(r[0]) ST.clientes[r[0]] = { id:r[0], nombre:r[1]||r[0], tel:r[2]||'', email:r[3]||'', _row:i+2 }; });
 
     /* Proveedores — cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo */
     ST.proveedores = {};
     (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], direccion:r[2]||'', contacto:r[3]||'', correo:r[4]||'' }; });
+
+    /* Contraseñas — hoja "Contraseñas" (A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Notas).
+       Se carga en try/catch propio, igual que Registros/Personal, para que si la hoja
+       aún no existe no rompa el resto de la carga; la sub-vista de Sistemas > Contraseñas
+       muestra un aviso explicando cómo crearla. */
+    ST.contrasenasError = null;
+    try{
+      const contraR = await sheetsGet('Contraseñas!A2:E');
+      ST.contrasenas = (contraR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('PWD'+(i+2)),
+        sitio: r[1]||'',
+        usuario: r[2]||'',
+        password: r[3]||'',
+        notas: r[4]||'',
+      })).filter(c=>c.sitio||c.usuario);
+    }catch(contraErr){
+      ST.contrasenas = [];
+      ST.contrasenasError = contraErr.result?.error?.message || contraErr.message || String(contraErr);
+    }
 
     /* Registros de asistencia — se carga aparte (try/catch propio) para que, si la hoja
        "Registros" no existe o el nombre no coincide, NO se rompa la carga del resto de la app
@@ -3399,14 +3560,15 @@ async function loadAll() {
     });
 
     /* Artículos — cols: A=ID, B=Nombre, C=Precio, D=Impuesto, E=Descripcion, F=Unidad */
-    ST.articulos = (artR||[]).filter(r=>r[0]).map(r => ({
+    ST.articulos = (artR||[]).map((r,i) => ({
       id:     r[0]||'',
       nombre: r[1]||'',
       precio: parseFloat(r[2])||0,
       impuesto: r[3]||'',
       desc:   r[4]||'',
       unidad: r[5]||'pza',
-    }));
+      _row:   i+2,
+    })).filter(a=>a.id);
 
     /* Oc_Client — cols reales: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo (PDF en base64), I=ID_Cotizacion (vínculo, agregado) */
     ST.ocAll = (ocR||[]).map((r,i)=>({
@@ -3469,6 +3631,9 @@ async function loadAll() {
     applyFilter();
     populateClientes();
     renderOCClienteTable();
+    renderSisClientes();
+    renderSisArticulos();
+    renderSisContrasenas();
 
     /* Ingresos — cols reales: A=ID,B=Fecha,C=Concepto,D=Monto,E=Cuenta,F=Estado,
        G=Fecha_Limite,H=Fecha_Pago,I=Cliente,J=ID_Factura,K=Responsable,L=Observaciones,
@@ -4233,18 +4398,39 @@ async function guardarCot() {
 }
 
 /* ─── DELETE ─── */
-function openDel(id,row){ if(!requireAuth()) return; ST.delId=id; ST.delRow=row; document.getElementById('delTarget').textContent=id; document.getElementById('delModal').classList.add('open'); }
-function closeDel(){ document.getElementById('delModal').classList.remove('open'); ST.delId=null; ST.delRow=null; }
+function openDel(id,row,kind){ if(!requireAuth()) return; ST.delId=id; ST.delRow=row; ST.delKind=kind||'cot'; document.getElementById('delTarget').textContent=id; document.getElementById('delModal').classList.add('open'); }
+function closeDel(){ document.getElementById('delModal').classList.remove('open'); ST.delId=null; ST.delRow=null; ST.delKind=null; }
 async function confirmDel(){
   if(!ST.delRow) return;
   const btn=document.getElementById('delConfBtn');
   btn.disabled=true; btn.textContent='Eliminando…';
   try{
-    await sheetsDeleteRow('Cotizaciones', ST.delRow);
-    ST.cotizaciones=ST.cotizaciones.filter(c=>c.id!==ST.delId);
-    shiftRowsAfterDelete(ST.cotizaciones, ST.delRow);
-    updateStats(); applyFilter(); closeDel();
-    toast('ok',`${ST.delId} eliminada.`);
+    const kind = ST.delKind||'cot';
+    if(kind==='cliente'){
+      await sheetsDeleteRow('Clientes', ST.delRow);
+      delete ST.clientes[ST.delId];
+      Object.values(ST.clientes).forEach(c=>{ if(c._row>ST.delRow) c._row--; });
+      populateClientes();
+      renderSisClientes();
+    } else if(kind==='articulo'){
+      await sheetsDeleteRow('Articulos', ST.delRow);
+      ST.articulos = ST.articulos.filter(a=>a._row!==ST.delRow);
+      shiftRowsAfterDelete(ST.articulos, ST.delRow);
+      renderSisArticulos();
+    } else if(kind==='contrasena'){
+      await sheetsDeleteRow('Contraseñas', ST.delRow);
+      ST.contrasenas = ST.contrasenas.filter(c=>c._row!==ST.delRow);
+      shiftRowsAfterDelete(ST.contrasenas, ST.delRow);
+      renderSisContrasenas();
+    } else {
+      await sheetsDeleteRow('Cotizaciones', ST.delRow);
+      ST.cotizaciones=ST.cotizaciones.filter(c=>c.id!==ST.delId);
+      shiftRowsAfterDelete(ST.cotizaciones, ST.delRow);
+      updateStats(); applyFilter();
+    }
+    const doneId=ST.delId;
+    closeDel();
+    toast('ok',`${doneId} eliminado.`);
   }catch(e){ toast('err','Error al eliminar: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false; btn.textContent='Sí, eliminar';
 }
@@ -6779,6 +6965,216 @@ function switchEmpSubTab(sub){
   if(sub==='rostros') renderRostros();
 }
 
+/* ─── SUB-VISTAS DE SISTEMAS: Clientes / Artículos / Contraseñas ───
+   Catálogos maestros: aquí se puede agregar y también editar/eliminar cada
+   registro directamente (a diferencia del alta rápida embebida en el
+   formulario de Cotización, que solo permite agregar). */
+function switchSistemasSubTab(sub){
+  ST.sisSubTab = sub;
+  ['sisSubClientes','sisSubArticulos','sisSubContrasenas'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['sisClientesBtn','sisArticulosBtn','sisContrasenasBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', contrasenas:'sisSubContrasenas'}[sub] || 'sisSubClientes';
+  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', contrasenas:'sisContrasenasBtn'}[sub] || 'sisClientesBtn';
+  document.getElementById(paneId)?.classList.add('active');
+  document.getElementById(btnId)?.classList.add('active');
+  if(sub==='clientes') renderSisClientes();
+  if(sub==='articulos') renderSisArticulos();
+  if(sub==='contrasenas') renderSisContrasenas();
+}
+
+/* ── CLIENTES (Sistemas) ── */
+function onSisClientesSearch(v){ ST.sisClientesQuery = (v||'').toLowerCase(); renderSisClientes(); }
+function renderSisClientes(){
+  const tbody=document.getElementById('sisClientesTbody');
+  if(!tbody) return;
+  const q = ST.sisClientesQuery||'';
+  let list = Object.values(ST.clientes||{});
+  if(q) list = list.filter(c=>(c.nombre||'').toLowerCase().includes(q)||(c.id||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  document.getElementById('sisClientesCount').textContent = list.length;
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin clientes registrados todavía.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(c=>`<tr>
+    <td style="font-weight:500;font-size:12.5px">${esc(c.nombre||c.id)}</td>
+    <td style="font-size:11.5px;color:var(--text3);font-family:var(--mono)">${esc(c.id)}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(c.tel||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(c.email||'—')}</td>
+    <td>
+      <div class="row-acts">
+        <button class="btn-icon" title="Editar" onclick="openEditCliente('${esc(c.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        </button>
+        <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(c.id)}',${c._row},'cliente')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function openEditCliente(id){
+  if(!requireAuth()) return;
+  const c = ST.clientes[id]; if(!c) return;
+  ST.editClienteId = id;
+  document.getElementById('addClienteModalTitle').textContent='Editar Cliente';
+  document.getElementById('ncRFC').value = c.id;
+  document.getElementById('ncRFC').disabled = true;
+  document.getElementById('ncNombre').value = c.nombre||'';
+  document.getElementById('ncTel').value = c.tel||'';
+  document.getElementById('ncEmail').value = c.email||'';
+  document.getElementById('saveClienteBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+  document.getElementById('addClienteModal').classList.add('open');
+}
+
+/* ── ARTÍCULOS (Sistemas) ── */
+function onSisArticulosSearch(v){ ST.sisArticulosQuery = (v||'').toLowerCase(); renderSisArticulos(); }
+function renderSisArticulos(){
+  const tbody=document.getElementById('sisArticulosTbody');
+  if(!tbody) return;
+  const q = ST.sisArticulosQuery||'';
+  let list = (ST.articulos||[]).slice();
+  if(q) list = list.filter(a=>(a.nombre||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  document.getElementById('sisArticulosCount').textContent = list.length;
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin artículos en el catálogo todavía.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(a=>`<tr>
+    <td style="font-weight:500;font-size:12.5px">${esc(a.nombre||a.id)}</td>
+    <td style="text-align:right;font-family:var(--mono);font-size:12px">${fmtMXN(a.precio||0)}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(a.unidad||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(a.impuesto||'—')}</td>
+    <td>
+      <div class="row-acts">
+        <button class="btn-icon" title="Editar" onclick="openEditArticulo('${esc(a.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        </button>
+        <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(a.nombre||a.id)}',${a._row},'articulo')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function openEditArticulo(id){
+  if(!requireAuth()) return;
+  const a = ST.articulos.find(x=>x.id===id); if(!a) return;
+  ST.editArticuloId = id;
+  document.getElementById('newArticuloModalTitle').textContent='Editar Artículo';
+  document.getElementById('naName').value = a.nombre||'';
+  document.getElementById('naPrice').value = a.precio||0;
+  document.getElementById('naUnit').value = a.unidad||'';
+  document.getElementById('naDesc').value = a.desc||'';
+  document.getElementById('naImpuesto').value = a.impuesto||'0.00%';
+  document.getElementById('saveArticuloBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+  document.getElementById('newArticuloModal').classList.add('open');
+}
+
+/* ── CONTRASEÑAS (Sistemas) ── */
+function onSisContrasenasSearch(v){ ST.sisContrasenasQuery = (v||'').toLowerCase(); renderSisContrasenas(); }
+function renderSisContrasenas(){
+  const tbody=document.getElementById('sisContrasenasTbody');
+  if(!tbody) return;
+  if(ST.contrasenasError){
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">
+      ⚠️ No se pudo leer la hoja <strong>Contraseñas</strong> todavía (${esc(ST.contrasenasError)}).<br>
+      Crea una hoja llamada exactamente <strong>Contraseñas</strong> con columnas: A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Notas.
+      En cuanto exista podrás agregar y editar desde aquí.
+    </td></tr>`;
+    document.getElementById('sisContrasenasCount').textContent='0';
+    return;
+  }
+  const q = ST.sisContrasenasQuery||'';
+  let list = (ST.contrasenas||[]).slice();
+  if(q) list = list.filter(c=>(c.sitio||'').toLowerCase().includes(q)||(c.usuario||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.sitio||'').localeCompare(b.sitio||''));
+  document.getElementById('sisContrasenasCount').textContent = list.length;
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin contraseñas guardadas todavía.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(c=>`<tr>
+    <td style="font-weight:500;font-size:12.5px">${esc(c.sitio||'—')}</td>
+    <td style="font-size:12px;color:var(--text2);font-family:var(--mono)">${esc(c.usuario||'—')}</td>
+    <td style="font-size:12px">
+      <span class="pwd-mask" id="pwdMask_${esc(c.id)}" style="font-family:var(--mono);letter-spacing:2px">••••••••</span>
+      <span class="pwd-real" id="pwdReal_${esc(c.id)}" style="font-family:var(--mono);display:none">${esc(c.password||'—')}</span>
+      <button type="button" class="btn-icon" title="Mostrar / ocultar" style="width:22px;height:22px" onclick="toggleShowPwd('${esc(c.id)}')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>
+      </button>
+    </td>
+    <td style="font-size:11.5px;color:var(--text3)">${esc(c.notas||'—')}</td>
+    <td>
+      <div class="row-acts">
+        <button class="btn-icon" title="Editar" onclick="openEditContrasena('${esc(c.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        </button>
+        <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(c.sitio||'Contraseña')}',${c._row},'contrasena')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function toggleShowPwd(id){
+  const mask=document.getElementById('pwdMask_'+id), real=document.getElementById('pwdReal_'+id);
+  if(!mask||!real) return;
+  const showing = real.style.display!=='none';
+  mask.style.display = showing ? '' : 'none';
+  real.style.display = showing ? 'none' : '';
+}
+function openAddContrasena(){
+  if(!requireAuth()) return;
+  ST.editContrasenaId = null;
+  document.getElementById('addContrasenaModalTitle').textContent='Nueva Contraseña';
+  ['pcSitio','pcUsuario','pcPassword','pcNotas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('saveContrasenaBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
+  document.getElementById('addContrasenaModal').classList.add('open');
+}
+function openEditContrasena(id){
+  if(!requireAuth()) return;
+  const c = ST.contrasenas.find(x=>x.id===id); if(!c) return;
+  ST.editContrasenaId = id;
+  document.getElementById('addContrasenaModalTitle').textContent='Editar Contraseña';
+  document.getElementById('pcSitio').value = c.sitio||'';
+  document.getElementById('pcUsuario').value = c.usuario||'';
+  document.getElementById('pcPassword').value = c.password||'';
+  document.getElementById('pcNotas').value = c.notas||'';
+  document.getElementById('saveContrasenaBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+  document.getElementById('addContrasenaModal').classList.add('open');
+}
+async function saveContrasena(){
+  const sitio = document.getElementById('pcSitio').value.trim();
+  const usuario = document.getElementById('pcUsuario').value.trim();
+  const password = document.getElementById('pcPassword').value;
+  const notas = document.getElementById('pcNotas').value.trim();
+  if(!sitio){ toast('err','El sitio / servicio es obligatorio.'); return; }
+  if(!password){ toast('err','La contraseña es obligatoria.'); return; }
+  const btn=document.getElementById('saveContrasenaBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    if(ST.editContrasenaId){
+      const c = ST.contrasenas.find(x=>x.id===ST.editContrasenaId);
+      if(c){
+        await sheetsUpdate(`Contraseñas!A${c._row}:E${c._row}`,[[c.id,sitio,usuario,password,notas]]);
+        c.sitio=sitio; c.usuario=usuario; c.password=password; c.notas=notas;
+      }
+      toast('ok','Contraseña actualizada.');
+    } else {
+      const id='PWD'+Date.now().toString(36).toUpperCase();
+      const row = await sheetsWriteNewRow('Contraseñas', ST.contrasenas.length, 'E', [id,sitio,usuario,password,notas]);
+      ST.contrasenas.push({_row:row, id, sitio, usuario, password, notas});
+      toast('ok','Contraseña guardada.');
+    }
+    document.getElementById('addContrasenaModal').classList.remove('open');
+    renderSisContrasenas();
+  }catch(e){ toast('err','Error al guardar: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
+}
+
+
 /* Sub-vista "Rostros": compara la lista de empleados (hoja Personal) contra la
    hoja "Rostros" (donde la herramienta externa Enroll registra los rostros ya
    capturados) para mostrar de un vistazo a quién le falta registrarse.
@@ -6801,17 +7197,21 @@ function renderRostros(){
     document.getElementById('rostrosCount').textContent='0 registros';
     return;
   }
-  const todos = Object.values(ST.personal||{}).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  // Solo empleados activos: las bajas no se cuentan ni se listan aquí.
+  const todos = Object.values(ST.personal||{})
+    .filter(p=>(p.estado||'').toLowerCase()==='activo')
+    .sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   const registrados = todos.filter(p=>ST.rostros[p.id]);
+  const pendientes  = todos.filter(p=>!ST.rostros[p.id]);
   document.getElementById('rosTotal').textContent = todos.length;
   document.getElementById('rosRegistrados').textContent = registrados.length;
-  document.getElementById('rosPendientes').textContent = todos.length-registrados.length;
+  document.getElementById('rosPendientes').textContent = pendientes.length;
   document.getElementById('rostrosCount').textContent = todos.length+' registros';
   if(!todos.length){
-    tbody.innerHTML='<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">Sin empleados registrados.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">Sin empleados activos.</td></tr>';
     return;
   }
-  tbody.innerHTML = todos.map(p=>{
+  const rowHtml = p=>{
     const ros = ST.rostros[p.id];
     const fotoUrl = normalizePhotoUrl(p.fotografia);
     const avatar = fotoUrl
@@ -6824,7 +7224,17 @@ function renderRostros(){
       <td>${ros?'<span class="pill pill-acep">✅ Registrado</span>':'<span class="pill pill-pend">⚠️ Pendiente</span>'}</td>
       <td style="font-size:11.5px;color:var(--text3);font-family:var(--mono)">${esc(ros?.fecha||'—')}</td>
     </tr>`;
-  }).join('');
+  };
+  let html='';
+  if(registrados.length){
+    html += `<tr class="group-row g-acep"><td colspan="5">REGISTRADOS<span class="g-sum">${registrados.length}</span></td></tr>`;
+    html += registrados.map(rowHtml).join('');
+  }
+  if(pendientes.length){
+    html += `<tr class="group-row g-pend"><td colspan="5">PENDIENTES<span class="g-sum">${pendientes.length}</span></td></tr>`;
+    html += pendientes.map(rowHtml).join('');
+  }
+  tbody.innerHTML = html;
 }
 
 function renderEmpleados(){
@@ -7863,10 +8273,14 @@ function toast(type,msg){
   },3800);
 }
 
-/* ─── ADD CLIENT ─── */
+/* ─── ADD / EDIT CLIENT ─── */
 function openAddCliente() {
   if(!requireAuth()) return;
+  ST.editClienteId = null;
+  document.getElementById('addClienteModalTitle').textContent='Nuevo Cliente';
   ['ncRFC','ncNombre','ncTel','ncEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ncRFC').disabled = false;
+  document.getElementById('saveClienteBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Cliente';
   document.getElementById('addClienteModal').classList.add('open');
 }
 async function saveNewCliente() {
@@ -7874,19 +8288,27 @@ async function saveNewCliente() {
   const nom  = document.getElementById('ncNombre').value.trim();
   if(!rfc){ toast('err','El RFC/ID es obligatorio.'); return; }
   if(!nom){ toast('err','El nombre es obligatorio.'); return; }
-  if(ST.clientes[rfc]){ toast('err','Ya existe un cliente con ese RFC/ID.'); return; }
+  if(!ST.editClienteId && ST.clientes[rfc]){ toast('err','Ya existe un cliente con ese RFC/ID.'); return; }
   const btn=document.getElementById('saveClienteBtn');
   btn.disabled=true; btn.textContent='Guardando…';
   try {
     const tel  = document.getElementById('ncTel').value.trim();
     const mail = document.getElementById('ncEmail').value.trim();
-    await sheetsAppend('Clientes!A2:E', [[rfc, nom, tel, mail, '']]);
-    ST.clientes[rfc]={ id:rfc, nombre:nom };
+    if(ST.editClienteId){
+      const c = ST.clientes[ST.editClienteId];
+      await sheetsUpdate(`Clientes!A${c._row}:E${c._row}`,[[rfc, nom, tel, mail, '']]);
+      c.nombre=nom; c.tel=tel; c.email=mail;
+      toast('ok',`Cliente "${nom}" actualizado.`);
+    } else {
+      await sheetsAppend('Clientes!A2:E', [[rfc, nom, tel, mail, '']]);
+      ST.clientes[rfc]={ id:rfc, nombre:nom, tel, email:mail, _row: Object.keys(ST.clientes).length+2 };
+      toast('ok',`Cliente "${nom}" agregado.`);
+    }
     populateClientes();
+    renderSisClientes();
     document.getElementById('fCliente').value=rfc;
     populateContactos(rfc);
     document.getElementById('addClienteModal').classList.remove('open');
-    toast('ok',`Cliente "${nom}" agregado.`);
   } catch(e){ toast('err','Error al guardar cliente: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Cliente';
 }
@@ -8071,9 +8493,9 @@ function resetViewTransitionState(){
 function switchTab(tab){
   resetViewTransitionState();
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'} };
+  const SIMPLE_TABS = { nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'} };
   if(SIMPLE_TABS[tab]){
-    ['tabCot','tabFac','tabOC','tabBal','tabNom','tabAsis','tabEmp'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabNom','tabAsis','tabEmp','tabSistemas'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -8091,12 +8513,15 @@ function switchTab(tab){
     const comSubNav=document.getElementById('comercialSubNav');
     const balSubNav=document.getElementById('balanceSubNav');
     const empSubNav=document.getElementById('empleadosSubNav');
+    const sisSubNav=document.getElementById('sistemasSubNav');
     if(comSubNav) comSubNav.style.display='none';
     if(balSubNav) balSubNav.style.display='none';
     if(empSubNav) empSubNav.style.display = tab==='emp' ? 'flex' : 'none';
+    if(sisSubNav) sisSubNav.style.display = tab==='sistemas' ? 'flex' : 'none';
     if(tab==='asis') renderAsistencia();
     if(tab==='nom') renderNominas();
     if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
+    if(tab==='sistemas') switchSistemasSubTab(ST.sisSubTab||'clientes');
     return;
   }
   document.getElementById('mainAddBtn').style.display='';
@@ -8145,13 +8570,15 @@ function switchTab(tab){
   // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
   // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
   // porque el bloque de arriba solo toggle-a Comercial/Balance.
-  ['navNomBtn','navAsisBtn','navEmpBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['navNomBtn','navAsisBtn','navEmpBtn','navSistemasBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   const empSubNav=document.getElementById('empleadosSubNav');
+  const sisSubNav=document.getElementById('sistemasSubNav');
   if(comSubNav) comSubNav.style.display = isComercial ? 'flex' : 'none';
   if(balSubNav) balSubNav.style.display = isComercial ? 'none' : 'flex';
   if(empSubNav) empSubNav.style.display='none';
+  if(sisSubNav) sisSubNav.style.display='none';
   const bcSection=document.getElementById('bcSection');
   if(bcSection) bcSection.textContent = isComercial ? 'Comercial' : 'Balance';
   ST.currentSection = isComercial ? 'comercial' : 'balance';
@@ -9413,11 +9840,14 @@ function renderDashboard(){
 localStorage.removeItem('customUnidades');
 function addCustomUnidad(val){ /* deshabilitado a propósito: ver comentario arriba */ }
 
-/* ─── NUEVO ARTÍCULO ─── */
+/* ─── NUEVO / EDITAR ARTÍCULO ─── */
 function openNewArticulo(){
   if(!requireAuth()) return;
+  ST.editArticuloId = null;
+  document.getElementById('newArticuloModalTitle').textContent='Nuevo Artículo al Catálogo';
   ['naName','naPrice','naUnit','naDesc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('naImpuesto').value='0.00%';
+  document.getElementById('saveArticuloBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar al catálogo';
   document.getElementById('newArticuloModal').classList.add('open');
 }
 
@@ -9432,12 +9862,22 @@ async function saveNewArticulo(){
   const btn = document.getElementById('saveArticuloBtn');
   btn.disabled=true; btn.textContent='Guardando…';
   try{
-    const id = 'ART'+Date.now().toString(36).toUpperCase();
-    await sheetsAppend('Articulos!A2:F',[[id,name,price,imp,desc,unit]]);
-    ST.articulos.push({id,nombre:name,precio:price,impuesto:imp,desc,unidad:unit});
-    addCustomUnidad(unit);
+    if(ST.editArticuloId){
+      const a = ST.articulos.find(x=>x.id===ST.editArticuloId);
+      if(a){
+        await sheetsUpdate(`Articulos!A${a._row}:F${a._row}`,[[a.id,name,price,imp,desc,unit]]);
+        a.nombre=name; a.precio=price; a.impuesto=imp; a.desc=desc; a.unidad=unit;
+      }
+      toast('ok',`Artículo "${name}" actualizado.`);
+    } else {
+      const id = 'ART'+Date.now().toString(36).toUpperCase();
+      await sheetsAppend('Articulos!A2:F',[[id,name,price,imp,desc,unit]]);
+      ST.articulos.push({id,nombre:name,precio:price,impuesto:imp,desc,unidad:unit,_row:ST.articulos.length+2});
+      addCustomUnidad(unit);
+      toast('ok',`Artículo "${name}" guardado al catálogo.`);
+    }
+    renderSisArticulos();
     document.getElementById('newArticuloModal').classList.remove('open');
-    toast('ok',`Artículo "${name}" guardado al catálogo.`);
   }catch(e){ toast('err','Error al guardar artículo: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false;
   btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar al catálogo';
