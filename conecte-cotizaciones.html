@@ -425,6 +425,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 /* ── STATS ── */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
 .stats.stats-5{grid-template-columns:repeat(5,1fr)}
+.stats.stats-3{grid-template-columns:repeat(3,1fr)}
 @media(max-width:1100px){.stats.stats-5{grid-template-columns:repeat(3,1fr)}}
 .stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:13px 15px}
 .stat-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:7px}
@@ -525,6 +526,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .tab-btn svg{width:13px;height:13px;flex-shrink:0}
 .tab-pane{display:none}
 .tab-pane.active{display:block}
+.emp-subpane{display:none}
+.emp-subpane.active{display:block}
 
 /* ── APP SHELL (sidebar + main column) ── */
 .app-shell{display:flex;flex:1;min-height:0;overflow:hidden}
@@ -770,10 +773,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <button class="sidebar-item" id="navBalanceBtn" onclick="switchSection('balance')" title="Balance">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h3V7H2zM6.5 12h3V4h-3zM11 12h3V9h-3z"/></svg>
           <span>Balance</span>
-        </button>
-        <button class="sidebar-item" id="navDocBtn" onclick="switchSection('doc')" title="Documentación">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h5.5L13 5v9.5H4V1.5z"/><path d="M9.5 1.5V5H13"/><path d="M6 8h4M6 10.5h4M6 13h2.5"/></svg>
-          <span>Documentación</span>
         </button>
         <button class="sidebar-item" id="navNomBtn" onclick="switchSection('nom')" title="Nóminas">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M11 8.5c1.8.3 3 1.8 3 3.3"/></svg>
@@ -1195,17 +1194,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
     </div><!-- /tabBal -->
 
-    <!-- ══ TAB: DOCUMENTACIÓN (vacía, próximamente) ══ -->
-    <div id="tabDoc" class="tab-pane">
-      <div class="card">
-        <div class="card-body" style="padding:60px 24px;text-align:center;color:var(--text3)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" width="42" height="42" style="margin:0 auto 14px;opacity:.5"><path d="M6 2h8l5 5v13H6V2z"/><path d="M14 2v5h5"/><path d="M9 12h6M9 15.5h6M9 19h3.5"/></svg>
-          <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px">Documentación</div>
-          <div style="font-size:12.5px">Esta sección está en construcción. Muy pronto podrás gestionar aquí tu documentación.</div>
-        </div>
-      </div>
-    </div><!-- /tabDoc -->
-
     <!-- ══ TAB: NÓMINAS ══ -->
     <div id="tabNom" class="tab-pane">
       <div class="stats stats-5" style="margin-bottom:16px">
@@ -1314,6 +1302,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
     <!-- ══ TAB: EMPLEADOS (panel administrativo sobre la hoja Personal) ══ -->
     <div id="tabEmp" class="tab-pane">
+      <!-- Sub-vistas de Empleados: Personal / Rostros / Documentación -->
+      <div class="filter-bar" style="margin-bottom:14px;gap:6px">
+        <button class="fchip on" id="empSubPersonalBtn" onclick="switchEmpSubTab('personal')">Personal</button>
+        <button class="fchip" id="empSubRostrosBtn" onclick="switchEmpSubTab('rostros')">Rostros</button>
+        <button class="fchip" id="empSubDocBtn" onclick="switchEmpSubTab('doc')">Documentación</button>
+      </div>
+
+      <div id="empSubPersonal" class="emp-subpane active">
       <div class="stats stats-5" style="margin-bottom:16px">
         <div class="stat cy"><div class="stat-lbl">Total en Personal</div><div class="stat-val" id="empTotal">—</div><div class="stat-delta">Todos los registros</div></div>
         <div class="stat cg"><div class="stat-lbl">Activos</div><div class="stat-val" id="empActivos">—</div><div class="stat-delta">Estado = Activo</div></div>
@@ -1356,7 +1352,53 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           </table>
         </div>
       </div>
+      </div><!-- /empSubPersonal -->
+
+      <!-- Sub-vista: ROSTROS — vinculada a la hoja "Rostros" (registro de reconocimiento
+           facial hecho desde la herramienta externa Enroll). Permite ver de un vistazo
+           a qué empleados ya se les registró el rostro y a cuáles todavía falta. -->
+      <div id="empSubRostros" class="emp-subpane">
+        <div class="filter-bar" style="justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:11.5px;color:var(--text3)" id="rostrosCount">0 registros</span>
+          <a href="https://constructora-conecte.github.io/Conecte/enroll.html" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg>
+            Registrar rostro (Enroll)
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
+          </a>
+        </div>
+        <div class="stats stats-3" style="margin-bottom:16px">
+          <div class="stat cy"><div class="stat-lbl">Total empleados</div><div class="stat-val" id="rosTotal">—</div><div class="stat-delta">Activos + bajas</div></div>
+          <div class="stat cg"><div class="stat-lbl">Con rostro registrado</div><div class="stat-val" id="rosRegistrados">—</div><div class="stat-delta">Encontrados en "Rostros"</div></div>
+          <div class="stat cr"><div class="stat-lbl">Pendientes</div><div class="stat-val" id="rosPendientes">—</div><div class="stat-delta">Aún sin registrar</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Rostros — estado por empleado</span></div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th></th><th>Nombre</th><th>Puesto</th><th>Estado</th><th>Fecha de registro</th></tr>
+              </thead>
+              <tbody id="rostrosTbody">
+                <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /empSubRostros -->
+
+      <!-- Sub-vista: DOCUMENTACIÓN — vacía por ahora, se llenará cuando se suban los
+           documentos de cada empleado (contratos, identificaciones, comprobantes, etc.). -->
+      <div id="empSubDoc" class="emp-subpane">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Documentación de empleados</span></div>
+          <div style="padding:40px 24px;text-align:center;color:var(--text3)">
+            <div style="font-size:13px;margin-bottom:6px">Todavía no hay documentos cargados aquí.</div>
+            <div style="font-size:12px">Cuando tengas listos los documentos de cada empleado (identificaciones, contratos, comprobantes, etc.), armamos juntos esta sección.</div>
+          </div>
+        </div>
+      </div><!-- /empSubDoc -->
     </div><!-- /tabEmp -->
+
 
     <!-- ══ MODAL: EMPLEADO (alta / edición completa sobre la hoja Personal) ══ -->
 <div class="modal-bg" id="empCardModal">
@@ -1716,14 +1758,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <!-- Fila: Cuenta / Forma de pago | Estado -->
         <div class="form-group">
           <label class="form-label">Cuenta / Forma de pago *</label>
-          <select class="form-select" id="bCuenta">
-            <option value="Tarjeta de crédito">Tarjeta de crédito</option>
-            <option value="Tarjeta de débito">Tarjeta de débito</option>
-            <option value="Efectivo">Efectivo</option>
-            <option value="Transferencia">Transferencia</option>
-            <option value="Pago a terminal">Pago a terminal</option>
-            <option value="Factoraje">Factoraje</option>
-          </select>
+          <select class="form-select" id="bCuenta"></select>
         </div>
         <div class="form-group">
           <label class="form-label">Estado</label>
@@ -3080,6 +3115,21 @@ async function loadAll() {
       ST.semanasError = semErr.result?.error?.message || semErr.message || String(semErr);
     }
 
+    /* Rostros — hoja "Rostros" (registro de reconocimiento facial hecho desde la
+       herramienta externa Enroll). Se asume: A = ID del empleado (igual que en
+       Personal!A), B = fecha de registro. Se carga en try/catch propio para no
+       romper el resto de la app si la hoja aún no existe. */
+    try{
+      const rosR = await sheetsGet('Rostros!A2:B');
+      ST.rostros = {};
+      (rosR||[]).forEach(r=>{ if(r[0]) ST.rostros[r[0]] = { fecha: r[1]||'' }; });
+      ST.rostrosError = null;
+    }catch(rosErr){
+      console.warn('[Empleados] No se pudo leer la hoja "Rostros" (créala para poder ver esta sub-vista):', rosErr);
+      ST.rostros = {};
+      ST.rostrosError = rosErr.result?.error?.message || rosErr.message || String(rosErr);
+    }
+
     /* Nominas — hoja "Nominas" (37 cols: A=ID_Nomina … AF=Fecha_Firma, AG:AK = campos nuevos).
        Columnas renombradas (solo etiqueta, misma posición) para eliminar la ambigüedad
        de "Descuento"/"Neto" repetidos en cada bloque:
@@ -3239,7 +3289,7 @@ async function loadAll() {
       fecha:      r[3]||'',
       concepto:   r[4]||'',
       total:      parseFloat((r[5]||'').toString().replace(/[$,]/g,''))||0,
-      metodo:     r[6]||'',
+      metodo:     normalizeMetodoPago(r[6]),
       estatus:    r[7]||'',
       notas:      r[8]||'',
       oc:         r[9]||'',           // legacy: primer id (compat hacia atrás)
@@ -3283,7 +3333,7 @@ async function loadAll() {
       fecha:       r[1]||'',
       concepto:    r[2]||'',
       monto:       parseFloat((r[3]||'').toString().replace(/[$,]/g,''))||0,
-      cuenta:      r[4]||'',
+      cuenta:      normalizeMetodoPago(r[4]),
       estado:      r[5]||'Pendiente',
       fechaLim:    r[6]||'',
       fechaPago:   r[7]||'',
@@ -3304,7 +3354,7 @@ async function loadAll() {
       fecha:       r[1]||'',
       concepto:    r[2]||'',
       monto:       parseFloat((r[3]||'').toString().replace(/[$,]/g,''))||0,
-      cuenta:      r[4]||'',
+      cuenta:      normalizeMetodoPago(r[4]),
       estado:      r[5]||'Pendiente',
       fechaLim:    r[6]||'',
       fechaPago:   r[7]||'',
@@ -3340,6 +3390,43 @@ async function loadAll() {
   }
 }
 
+/* ─── MÉTODOS DE PAGO — catálogo único y estandarizado ───
+   Antes cada módulo (Ingresos, Salidas, Facturas) tenía su propia lista de
+   opciones, algunas incompletas ("Transferencia" en vez de "Transferencia
+   electrónica", sin "Por definir", con "Pago a terminal" en minúsculas, etc.).
+   Ahora todos usan estas mismas listas, y normalizeMetodoPago() traduce
+   cualquier valor antiguo ya guardado en las hojas al nombre completo y
+   correcto, para que los datos existentes se muestren bien sin tener que
+   editarlos manualmente uno por uno. */
+const METODOS_PAGO_BASE = ['Transferencia electrónica','Efectivo','Tarjeta de débito','Tarjeta de crédito','Por definir'];
+const METODOS_PAGO_INGRESO = [...METODOS_PAGO_BASE, 'Factoraje', 'Pago a Terminal'];
+const METODO_PAGO_LEGACY_MAP = {
+  'transferencia':          'Transferencia electrónica',
+  'transferencia bancaria': 'Transferencia electrónica',
+  'tarjeta de credito':     'Tarjeta de crédito',
+  'tarjeta de débito ':     'Tarjeta de débito',
+  'tarjeta de debito':      'Tarjeta de débito',
+  'pago a terminal':        'Pago a Terminal',
+  'terminal':               'Pago a Terminal',
+  'por definir':            'Por definir',
+  'efectivo':               'Efectivo',
+  'factoraje':              'Factoraje',
+};
+function normalizeMetodoPago(v){
+  const s=String(v||'').trim();
+  if(!s) return s;
+  return METODO_PAGO_LEGACY_MAP[s.toLowerCase()] || s;
+}
+/* Llena un <select> de método de pago con el catálogo correcto según el
+   contexto (Ingresos tiene 2 opciones extra: Factoraje y Pago a Terminal). */
+function populateMetodoPagoSelect(selectEl, isIngreso, selected){
+  if(!selectEl) return;
+  const opts = isIngreso ? METODOS_PAGO_INGRESO : METODOS_PAGO_BASE;
+  const val = normalizeMetodoPago(selected) || 'Transferencia electrónica';
+  selectEl.innerHTML = opts.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  selectEl.value = opts.includes(val) ? val : opts[0];
+}
+
 /* ─── SHEETS HELPERS ─── */
 function sheetsGet(range) {
   return withGoogleAuth(
@@ -3363,6 +3450,55 @@ function sheetsUpdate(range, values) {
 }
 function sheetsClear(range) {
   return withGoogleAuth(gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId:SHEET_ID, range }));
+}
+
+/* ─── ELIMINAR FILAS DE VERDAD (no solo vaciar su contenido) ───
+   Antes, "eliminar" un registro solo vaciaba el contenido de la fila
+   (sheetsClear), dejando la fila física vacía en la hoja para siempre. Esto
+   generaba espacios en blanco en las tablas y, peor, podía confundir a Sheets
+   al calcular dónde debía ir la siguiente fila agregada (llegando a escribirla
+   en una columna incorrecta). sheetsDeleteRow() elimina la fila por completo
+   (como Ctrl+- en Sheets), recorriendo hacia arriba todo lo que estaba debajo,
+   así nunca quedan huecos. */
+let _sheetIdMapCache = null;
+async function getSheetIdMap(force){
+  if(_sheetIdMapCache && !force) return _sheetIdMapCache;
+  const res = await withGoogleAuth(gapi.client.sheets.spreadsheets.get({
+    spreadsheetId: SHEET_ID, fields: 'sheets.properties'
+  }));
+  const map = {};
+  (res.result.sheets||[]).forEach(s=>{ map[s.properties.title] = s.properties.sheetId; });
+  _sheetIdMapCache = map;
+  return map;
+}
+async function sheetsDeleteRow(sheetName, row){
+  if(!row) throw new Error(`No se puede eliminar en "${sheetName}": fila inválida.`);
+  let map = await getSheetIdMap();
+  if(map[sheetName]===undefined) map = await getSheetIdMap(true); // por si la hoja se creó después de cachear
+  const sheetId = map[sheetName];
+  if(sheetId===undefined) throw new Error(`No se encontró la hoja "${sheetName}".`);
+  return withGoogleAuth(gapi.client.sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SHEET_ID,
+    resource: { requests: [{ deleteDimension: { range: {
+      sheetId, dimension:'ROWS', startIndex: row-1, endIndex: row
+    } } }] }
+  }));
+}
+/* Tras eliminar físicamente la fila `deletedRow`, todo lo que estaba debajo se
+   recorre una posición hacia arriba: hay que reflejarlo en los arreglos en
+   memoria (_row) para que la próxima edición/eliminación apunte a la fila
+   correcta sin tener que recargar todo desde Sheets. */
+function shiftRowsAfterDelete(arr, deletedRow){
+  (arr||[]).forEach(item=>{ if(item && item._row>deletedRow) item._row--; });
+}
+/* Escribe una fila NUEVA en una posición exacta y conocida (en vez de usar
+   values.append, cuya detección automática de "siguiente fila libre" fue la
+   causa de que datos nuevos terminaran en columnas incorrectas cuando había
+   filas de por medio). `arrLen` es la cantidad de registros ya cargados en
+   memoria para esa hoja (asumiendo que ya no quedan huecos, ver arriba). */
+function sheetsWriteNewRow(sheetName, arrLen, colEnd, values){
+  const row = arrLen + 2; // fila 1 = encabezados
+  return sheetsUpdate(`${sheetName}!A${row}:${colEnd}${row}`, [values]).then(()=>row);
 }
 
 /* ─── STATS ─── */
@@ -3819,8 +3955,9 @@ async function confirmDel(){
   const btn=document.getElementById('delConfBtn');
   btn.disabled=true; btn.textContent='Eliminando…';
   try{
-    await sheetsClear(`Cotizaciones!A${ST.delRow}:Q${ST.delRow}`);
+    await sheetsDeleteRow('Cotizaciones', ST.delRow);
     ST.cotizaciones=ST.cotizaciones.filter(c=>c.id!==ST.delId);
+    shiftRowsAfterDelete(ST.cotizaciones, ST.delRow);
     updateStats(); applyFilter(); closeDel();
     toast('ok',`${ST.delId} eliminada.`);
   }catch(e){ toast('err','Error al eliminar: '+(e.result?.error?.message||e.message)); }
@@ -4244,58 +4381,11 @@ function buildNotasEstado(tipo, fecha){
   return fecha ? `${tipo} ${fecha}` : tipo;
 }
 
-function renderFacTable(){
-  const tbody=document.getElementById('facTbody');
-  if(!tbody) return;
-  const start=(ST.facPage-1)*ST.PAGE;
-  const slice=ST.facFiltered.slice(start,start+ST.PAGE);
-  document.getElementById('facCount').textContent=ST.facFiltered.length+' registros';
-
-  if(!slice.length){
-    tbody.innerHTML=`<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin resultados</td></tr>`;
-    renderFacPagi(); return;
-  }
-  const metodos=['','Transferencia','Efectivo','Factoraje'];
-  const estatusOpts=['Pendiente','Pagado','Cancelado'];
-  tbody.innerHTML=slice.map(r=>{
-    const cli=ST.clientes[r.id_cli]||{};
-    const fmtTot='$'+r.total.toLocaleString('es-MX',{minimumFractionDigits:2});
-    const conc=(r.concepto||'—').slice(0,45)+(r.concepto.length>45?'…':'');
-    const est=parseNotasEstado(r.notas);
-    return `<tr>
-      <td><span class="folio" style="cursor:default">${esc(r.folio||r.id)}</span></td>
-      <td>
-        <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
-        <div style="font-size:10.5px;color:var(--text3);font-family:var(--mono)">${esc(r.id_cli)}</div>
-      </td>
-      <td style="max-width:200px;font-size:12px;color:var(--text2)" title="${esc(r.concepto)}">${esc(conc)}</td>
-      <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
-      <td>
-        <select class="form-select" style="height:24px;font-size:11px;padding:0 4px" onchange="changeFacMetodo(${r._row},this.value)">
-          ${metodos.map(m=>`<option value="${esc(m)}" ${r.metodo===m?'selected':''}>${m||'— Método —'}</option>`).join('')}
-        </select>
-      </td>
-      <td>
-        <select class="form-select" style="height:24px;font-size:11px;padding:0 4px" onchange="changeFacEstatus(${r._row},this.value)">
-          ${estatusOpts.map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
-      <td style="font-size:11.5px;color:var(--blue);font-family:var(--mono)">${esc(r.oc||'—')}</td>
-      <td>
-        <div style="display:flex;gap:3px;align-items:center">
-          <select class="form-select" style="height:24px;font-size:10.5px;padding:0 2px;width:58px" onchange="changeFacNotas(${r._row},this.value,this.closest('div').querySelector('input').value)">
-            <option value="" ${!est.tipo?'selected':''}>—</option>
-            <option value="EPC" ${est.tipo==='EPC'?'selected':''}>EPC</option>
-            <option value="PPP" ${est.tipo==='PPP'?'selected':''}>PPP</option>
-          </select>
-          <input type="date" class="form-input" style="height:24px;font-size:10px;padding:0 3px;width:84px" value="${esc(est.fecha)}" onchange="changeFacNotas(${r._row},this.closest('div').querySelector('select').value,this.value)">
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-  renderFacPagi();
-}
+/* NOTA: aquí existía una función renderFacTable() antigua y duplicada que ya
+   no se llamaba desde ningún lado (fue reemplazada por renderFacTableFull()),
+   pero seguía teniendo su propia lista de métodos de pago desactualizada
+   (sin "Por definir", con "Transferencia" incompleta). Se eliminó para no
+   dejar código muerto y confuso. */
 
 async function changeFacEstatus(row,val){
   const f=ST.facturas.find(x=>x._row===row); if(!f) return;
@@ -5075,7 +5165,7 @@ function newIngresoFromFacLink(){
     fecha: todayISOBal(),
     concepto: `Pago ${f.folio||f.id} — ${f.concepto||''}`.trim().slice(0,120),
     monto: f.total,
-    cuenta: f.metodo||'Transferencia',
+    cuenta: f.metodo||'Transferencia electrónica',
     estado: f.estatus==='Pagado'?'Pagado':'Pendiente',
     fechaPago: f.estatus==='Pagado'?todayISOBal():'',
     cliente: f.id_cli,
@@ -5150,9 +5240,11 @@ async function deleteOC(ocId) {
   if (!oc) return;
   if (!confirm(`¿Eliminar la OC "${oc.numero}"? Esta acción no se puede deshacer.`)) return;
   try {
-    await sheetsClear(`Oc_Client!A${oc._row}:H${oc._row}`);
+    await sheetsDeleteRow('Oc_Client', oc._row);
     ST.ocList = ST.ocList.filter(o => o.id !== ocId);
     ST.ocAll  = ST.ocAll.filter(o => o.id !== ocId);
+    shiftRowsAfterDelete(ST.ocList, oc._row);
+    shiftRowsAfterDelete(ST.ocAll, oc._row);
     renderOCSection(true);
     toast('ok', `OC "${oc.numero}" eliminada.`);
   } catch (e) {
@@ -6273,6 +6365,7 @@ async function concluirSemana(fechaInicio, opts){
 
   const semRec = ST.semanas[fechaInicio] || null;
 
+  let _salidasNuevasCount = ST.salidas.length; // contador local: cada alta nueva ocupa la siguiente fila
   async function upsertSalida(idExistente, concepto, monto, metodo){
     const existente = idExistente ? ST.salidas.find(x=>x.id===idExistente) : null;
     const row = [
@@ -6285,15 +6378,16 @@ async function concluirSemana(fechaInicio, opts){
     if(existente){
       await sheetsUpdate(`Salidas!A${existente._row}:Q${existente._row}`, [row]);
     } else {
-      await sheetsAppend('Salidas!A2:Q', [row]);
+      await sheetsWriteNewRow('Salidas', _salidasNuevasCount, 'Q', row);
+      _salidasNuevasCount++;
     }
     return row[0];
   }
 
   ST.semanaConcluyendo = fechaInicio;
   try{
-    const idFiscal = await upsertSalida(semRec?.idSalidaFiscal, `Nomina Fiscal Semana ${semanaNum}`, totFiscal, 'Transferencia');
-    const idVales = await upsertSalida(semRec?.idSalidaVales, `Nomina Vales Semana ${semanaNum}`, totVales, 'Transferencia');
+    const idFiscal = await upsertSalida(semRec?.idSalidaFiscal, `Nomina Fiscal Semana ${semanaNum}`, totFiscal, 'Transferencia electrónica');
+    const idVales = await upsertSalida(semRec?.idSalidaVales, `Nomina Vales Semana ${semanaNum}`, totVales, 'Transferencia electrónica');
     const idEfectivo = await upsertSalida(semRec?.idSalidaEfectivo, `Nomina Efectivo Semana ${semanaNum}`, totEfectivo, 'Efectivo');
 
     const semRow = [fechaInicio, fFin, semanaAnio, 'Concluida', new Date().toISOString(), idFiscal, idVales, idEfectivo];
@@ -6384,6 +6478,67 @@ function normalizePhotoUrl(url){
   m = s.match(/drive\.google\.com\/(?:open|uc)\?.*[?&]id=([^&]+)/);
   if(m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
   return s;
+}
+
+/* ─── SUB-VISTAS DE EMPLEADOS: Personal / Rostros / Documentación ─── */
+function switchEmpSubTab(sub){
+  ST.empSubTab = sub;
+  ['empSubPersonal','empSubRostros','empSubDoc'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['empSubPersonalBtn','empSubRostrosBtn','empSubDocBtn'].forEach(id=>document.getElementById(id)?.classList.remove('on'));
+  const paneId = {personal:'empSubPersonal', rostros:'empSubRostros', doc:'empSubDoc'}[sub] || 'empSubPersonal';
+  const btnId  = {personal:'empSubPersonalBtn', rostros:'empSubRostrosBtn', doc:'empSubDocBtn'}[sub] || 'empSubPersonalBtn';
+  document.getElementById(paneId)?.classList.add('active');
+  document.getElementById(btnId)?.classList.add('on');
+  if(sub==='personal') renderEmpleados();
+  if(sub==='rostros') renderRostros();
+}
+
+/* Sub-vista "Rostros": compara la lista de empleados (hoja Personal) contra la
+   hoja "Rostros" (donde la herramienta externa Enroll registra los rostros ya
+   capturados) para mostrar de un vistazo a quién le falta registrarse.
+   Se asume que en "Rostros" la columna A guarda el mismo ID de empleado que en
+   Personal!A, y que puede haber una columna con la fecha de registro; si la
+   hoja todavía no existe se muestra un aviso en vez de romper la vista. */
+function renderRostros(){
+  const tbody=document.getElementById('rostrosTbody');
+  if(!tbody) return;
+  if(ST.rostrosError){
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">
+      ⚠️ No se pudo leer la hoja <strong>Rostros</strong> todavía (${esc(ST.rostrosError)}).<br>
+      Crea una hoja llamada exactamente <strong>Rostros</strong> con al menos: columna A = ID del empleado
+      (el mismo que en "Personal"), columna B = fecha de registro. En cuanto exista, esta vista
+      mostrará automáticamente quién ya tiene su rostro registrado.
+    </td></tr>`;
+    document.getElementById('rosTotal').textContent='—';
+    document.getElementById('rosRegistrados').textContent='—';
+    document.getElementById('rosPendientes').textContent='—';
+    document.getElementById('rostrosCount').textContent='0 registros';
+    return;
+  }
+  const todos = Object.values(ST.personal||{}).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  const registrados = todos.filter(p=>ST.rostros[p.id]);
+  document.getElementById('rosTotal').textContent = todos.length;
+  document.getElementById('rosRegistrados').textContent = registrados.length;
+  document.getElementById('rosPendientes').textContent = todos.length-registrados.length;
+  document.getElementById('rostrosCount').textContent = todos.length+' registros';
+  if(!todos.length){
+    tbody.innerHTML='<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">Sin empleados registrados.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = todos.map(p=>{
+    const ros = ST.rostros[p.id];
+    const fotoUrl = normalizePhotoUrl(p.fotografia);
+    const avatar = fotoUrl
+      ? `<img src="${esc(fotoUrl)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover" alt="">`
+      : `<div style="width:28px;height:28px;border-radius:50%;background:var(--bg3)"></div>`;
+    return `<tr>
+      <td>${avatar}</td>
+      <td style="font-weight:500;font-size:12.5px">${esc(p.nombre||p.id)}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(p.puesto||'—')}</td>
+      <td>${ros?'<span class="pill pill-acep">✅ Registrado</span>':'<span class="pill pill-pend">⚠️ Pendiente</span>'}</td>
+      <td style="font-size:11.5px;color:var(--text3);font-family:var(--mono)">${esc(ros?.fecha||'—')}</td>
+    </tr>`;
+  }).join('');
 }
 
 function renderEmpleados(){
@@ -7159,9 +7314,9 @@ function resetViewTransitionState(){
 function switchTab(tab){
   resetViewTransitionState();
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { doc:{pane:'tabDoc', label:'Documentación', navBtn:'navDocBtn'}, nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'} };
+  const SIMPLE_TABS = { nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'} };
   if(SIMPLE_TABS[tab]){
-    ['tabCot','tabFac','tabOC','tabBal','tabDoc','tabNom','tabAsis','tabEmp'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabNom','tabAsis','tabEmp'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -7182,7 +7337,7 @@ function switchTab(tab){
     if(balSubNav) balSubNav.style.display='none';
     if(tab==='asis') renderAsistencia();
     if(tab==='nom') renderNominas();
-    if(tab==='emp') renderEmpleados();
+    if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
     return;
   }
   document.getElementById('mainAddBtn').style.display='';
@@ -7231,7 +7386,7 @@ function switchTab(tab){
   // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
   // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
   // porque el bloque de arriba solo toggle-a Comercial/Balance.
-  ['navDocBtn','navNomBtn','navAsisBtn','navEmpBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['navNomBtn','navAsisBtn','navEmpBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   if(comSubNav) comSubNav.style.display = isComercial ? 'flex' : 'none';
@@ -7814,7 +7969,7 @@ function openBalModal(tipo, prefill){
   document.getElementById('bFecha').value     = prefill?.fecha || todayISOBal();
   document.getElementById('bConcepto').value  = prefill?.concepto||'';
   document.getElementById('bMonto').value     = prefill?.monto||'';
-  document.getElementById('bCuenta').value    = prefill?.cuenta||'Transferencia';
+  populateMetodoPagoSelect(document.getElementById('bCuenta'), isIng, prefill?.cuenta);
   document.getElementById('bEstado').value    = prefill?.estado||'Pendiente';
   document.getElementById('bFechaPago').value = prefill?.fechaPago||'';
   document.getElementById('bFechaLimite').value= '';
@@ -7881,7 +8036,7 @@ function openBalEdit(id, tipo){
   document.getElementById('bFecha').value      = b.fecha||'';
   document.getElementById('bConcepto').value   = b.concepto||'';
   document.getElementById('bMonto').value      = b.monto||'';
-  document.getElementById('bCuenta').value     = b.cuenta||'Transferencia';
+  populateMetodoPagoSelect(document.getElementById('bCuenta'), isIng, b.cuenta);
   document.getElementById('bEstado').value     = b.estado||'Pendiente';
   document.getElementById('bFechaPago').value  = b.fechaPago||'';
   document.getElementById('bFechaLimite').value= b.fechaLim||'';
@@ -8213,7 +8368,7 @@ async function saveBalEntry(){
         const b=ST.ingresos.find(x=>x.id===ST.balEditId);
         if(b) await sheetsUpdate(`Ingresos!A${b._row}:N${b._row}`,[row]);
       } else {
-        await sheetsAppend('Ingresos!A2:N',[row]);
+        await sheetsWriteNewRow('Ingresos', ST.ingresos.length, 'N', row);
         if(ST.balFacRef){
           const f=ST.facturas.find(x=>x.id===ST.balFacRef.id);
           if(f){ await sheetsUpdate(`Facturas!K${f._row}`,[[row[0]]]); f.id_ingreso=row[0]; }
@@ -8268,7 +8423,7 @@ async function saveBalEntry(){
         const b=ST.salidas.find(x=>x.id===ST.balEditId);
         if(b) await sheetsUpdate(`Salidas!A${b._row}:Q${b._row}`,[row]);
       } else {
-        await sheetsAppend('Salidas!A2:Q',[row]);
+        await sheetsWriteNewRow('Salidas', ST.salidas.length, 'Q', row);
       }
       toast('ok','Gasto guardado.');
       closeBalModal();
@@ -8284,9 +8439,10 @@ async function delBalEntry(id,row,tipo){
   if(!confirm('¿Eliminar este movimiento?')) return;
   const isIng=(tipo==='ing');
   try{
-    await sheetsClear(isIng?`Ingresos!A${row}:N${row}`:`Salidas!A${row}:Q${row}`);
+    await sheetsDeleteRow(isIng?'Ingresos':'Salidas', row);
     if(isIng) ST.ingresos=ST.ingresos.filter(b=>b.id!==id);
     else ST.salidas=ST.salidas.filter(b=>b.id!==id);
+    shiftRowsAfterDelete(isIng?ST.ingresos:ST.salidas, row);
     applyIngFilter(); applyGasFilter();
     renderDashboard();
     toast('ok','Movimiento eliminado.');
@@ -8345,7 +8501,7 @@ async function crearIngresoAutomaticoDesdeFactura(f){
   const cliNombreCompleto = ST.clientes[f.id_cli]?.nombre || f.id_cli || '';
   const clientePrimera = primeraPalabraCliente(cliNombreCompleto);
   const fechaPago = todayISOBal();
-  const metodo = f.metodo || 'Transferencia';
+  const metodo = f.metodo || 'Transferencia electrónica';
   const consecutivo = siguienteConsecutivoDelDia(fechaPago);
   const fechaFmt = fmtFechaDDMMYYYY(fechaPago);
   const concepto = `Pago - ${metodo} - ${fechaFmt} - ${consecutivo} - ${clientePrimera}`;
@@ -8368,7 +8524,7 @@ async function crearIngresoAutomaticoDesdeFactura(f){
     '', // Foto
   ];
   try{
-    await sheetsAppend('Ingresos!A2:N',[row]);
+    await sheetsWriteNewRow('Ingresos', ST.ingresos.length, 'N', row);
     await sheetsUpdate(`Facturas!K${f._row}`,[[nuevoId]]);
     f.id_ingreso = nuevoId;
     // Refleja el nuevo ingreso localmente de inmediato para que el próximo
@@ -9094,7 +9250,7 @@ function renderFacTableFull(){
   }
   const start=((ST.facPage||1)-1)*ST.PAGE;
   const slice=ST.facFiltered.slice(start,start+ST.PAGE);
-  const metodos=['','Transferencia','Efectivo','Factoraje'];
+  const metodos=['', ...METODOS_PAGO_BASE];
   const estatusOpts=['Pendiente','Pagado','Cancelado'];
   const groupedView = !ST.facSort || ST.facSort==='agrupado';
   const groupMeta={
