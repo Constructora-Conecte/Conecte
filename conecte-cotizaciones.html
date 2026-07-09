@@ -371,6 +371,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .status-select:hover{filter:brightness(1.15)}
 .status-select option{background:var(--bg3);color:var(--text)}
 
+/* Botón de ayuda ("?") y tarjeta informativa azul, usados junto a secciones
+   con varios botones/acciones para explicar qué hace cada uno. */
+.help-btn{
+  width:16px;height:16px;border-radius:50%;border:1px solid var(--blue);
+  background:transparent;color:var(--blue);font-size:10px;font-weight:700;
+  line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;padding:0;
+}
+.help-btn:hover{background:var(--blue-p)}
+.info-card{
+  background:var(--blue-p);border:1px solid rgba(90,150,255,.25);border-radius:var(--r8);
+  padding:10px 12px;margin-bottom:10px;font-size:11.5px;line-height:1.6;color:var(--text2);
+  display:flex;flex-direction:column;gap:4px;
+}
+.info-card strong{color:var(--text)}
+
 /* Group header row used in Facturas / OC tables to separate by estatus */
 .group-row td{
   padding:7px 14px!important;
@@ -1623,7 +1639,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 <!-- ══ FORM MODAL (Nueva / Editar) ══ -->
 <div class="modal-bg" id="formModal">
-  <div class="modal-lg" style="width:1040px">
+  <div class="modal-lg" style="width:1240px">
     <div class="mlg-head">
       <div>
         <div class="mlg-title" id="fmTitle">Nueva Cotización</div>
@@ -1634,56 +1650,68 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </button>
     </div>
     <div class="mlg-body">
-      <!-- Datos generales -->
-      <div class="form-grid" style="margin-bottom:16px;grid-template-columns:repeat(4,minmax(0,1fr))">
-        <div class="form-group">
-          <label class="form-label">Cliente (RFC / ID) *</label>
-          <div style="display:flex;gap:5px">
-            <select class="form-select" id="fCliente" style="flex:1"></select>
-            <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo cliente" onclick="openAddCliente()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
-            </button>
+      <!-- Datos generales: dividido en 2 secciones — izquierda datos cortos (cliente,
+           fechas, estatus), derecha texto libre (descripción, notas) — para que cada
+           campo tenga el espacio que realmente necesita. -->
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:20px;margin-bottom:16px">
+        <!-- Panel izquierdo: datos cortos -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Cliente (RFC / ID) *</label>
+            <div style="display:flex;gap:5px">
+              <select class="form-select" id="fCliente" style="flex:1"></select>
+              <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo cliente" onclick="openAddCliente()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contacto</label>
+            <div style="display:flex;gap:5px">
+              <select class="form-select" id="fContacto" style="flex:1"></select>
+              <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo contacto" onclick="openAddContacto()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              </button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label class="form-label">Fecha *</label>
+              <input type="date" class="form-input" id="fFecha">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vigencia (días)</label>
+              <input type="number" class="form-input" id="fVigencia" placeholder="30" min="1">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label class="form-label">Estatus</label>
+              <select class="form-select" id="fEstatus">
+                <option>Pendiente</option>
+                <option>Enviado</option>
+                <option>Seguimiento 1</option>
+                <option>Seguimiento 2</option>
+                <option>Aceptado</option>
+                <option>Rechazado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de envío</label>
+              <input type="date" class="form-input" id="fFechaEnvio">
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Contacto</label>
-          <div style="display:flex;gap:5px">
-            <select class="form-select" id="fContacto" style="flex:1"></select>
-            <button type="button" class="btn btn-ghost btn-sm" title="Agregar nuevo contacto" onclick="openAddContacto()" style="flex-shrink:0;width:28px;padding:0;display:flex;align-items:center;justify-content:center;">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
-            </button>
+        <!-- Panel derecho: texto libre -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Descripción / Trabajo *</label>
+            <input type="text" class="form-input" id="fDesc" placeholder="Ej. Mantenimiento a subestación eléctrica…">
           </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fecha *</label>
-          <input type="date" class="form-input" id="fFecha">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Vigencia (días)</label>
-          <input type="number" class="form-input" id="fVigencia" placeholder="30" min="1">
-        </div>
-        <div class="form-group full">
-          <label class="form-label">Descripción / Trabajo *</label>
-          <input type="text" class="form-input" id="fDesc" placeholder="Ej. Mantenimiento a subestación eléctrica…">
-        </div>
-        <div class="form-group full">
-          <label class="form-label">Notas adicionales</label>
-          <textarea class="form-textarea" id="fNotas" placeholder="Condiciones, tiempos de entrega, observaciones…"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Estatus</label>
-          <select class="form-select" id="fEstatus">
-            <option>Pendiente</option>
-            <option>Enviado</option>
-            <option>Seguimiento 1</option>
-            <option>Seguimiento 2</option>
-            <option>Aceptado</option>
-            <option>Rechazado</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fecha de envío</label>
-          <input type="date" class="form-input" id="fFechaEnvio">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Notas adicionales</label>
+            <textarea class="form-textarea" id="fNotas" placeholder="Condiciones, tiempos de entrega, observaciones…" style="min-height:84px;height:100%"></textarea>
+          </div>
         </div>
       </div>
 
@@ -1711,8 +1739,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
       <!-- Búsqueda de artículos del catálogo -->
       <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:11.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;">Partidas</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;">Partidas</span>
+          <button type="button" class="help-btn" onclick="toggleItemsHelp()" title="¿Cómo funciona esta sección?">?</button>
+        </div>
         <span style="font-size:11px;color:var(--text3);">Busca del catálogo o agrega manualmente</span>
+      </div>
+
+      <div id="itemsHelpCard" class="info-card" style="display:none">
+        <div><strong>Buscar concepto:</strong> escribe para encontrar un artículo ya guardado en tu catálogo y llenar la fila automáticamente con su nombre, unidad y precio.</div>
+        <div><strong>Nuevo artículo:</strong> guarda un artículo nuevo en el catálogo (para poder reutilizarlo en futuras cotizaciones).</div>
+        <div><strong>Agregar partida manual:</strong> agrega una fila vacía para escribir un concepto que no está en el catálogo; solo se guarda en esta cotización.</div>
+        <div><strong>P. Unitario / Unidad en blanco:</strong> se dejan vacíos a propósito para que no los confundas con un dato ya capturado — llénalos con el precio y la unidad reales (pza, m, kg, servicio…).</div>
+        <div><strong>✕:</strong> elimina esa partida de la cotización.</div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:flex-start">
@@ -3999,6 +4038,11 @@ function removeItem(i) {
   renderItems();
 }
 
+function toggleItemsHelp(){
+  const card=document.getElementById('itemsHelpCard');
+  if(card) card.style.display = card.style.display==='none' ? 'flex' : 'none';
+}
+
 function renderItems() {
   const tbody=document.getElementById('itemsTbody');
   if(!ST.items.length){
@@ -4012,11 +4056,11 @@ function renderItems() {
       <td><input class="item-inp num" type="number" min="0" step="any" value="${it.cant}"
         oninput="ST.items[${i}].cant=parseFloat(this.value)||0;recalcItem(${i})"></td>
       <td>
-        <input class="item-inp" list="unidadesList" value="${esc(it.unidad)}" placeholder="pza"
+        <input class="item-inp" list="unidadesList" value="${esc(it.unidad)}"
           onfocus="this.select()"
           oninput="ST.items[${i}].unidad=this.value;addCustomUnidad(this.value)">
       </td>
-      <td><input class="item-inp num" type="number" min="0" step="0.01" value="${it.precio}"
+      <td><input class="item-inp num" type="number" min="0" step="0.01" value="${it.precio||''}" placeholder="0.00"
         oninput="ST.items[${i}].precio=parseFloat(this.value)||0;recalcItem(${i})"></td>
       <td class="item-imp" id="imp${i}">${fmtMXN(it.imp)}</td>
       <td style="text-align:center">
