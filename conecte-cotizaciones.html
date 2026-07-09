@@ -3725,8 +3725,8 @@ async function loadAll() {
    cualquier valor antiguo ya guardado en las hojas al nombre completo y
    correcto, para que los datos existentes se muestren bien sin tener que
    editarlos manualmente uno por uno. */
-const METODOS_PAGO_BASE = ['Transferencia electrónica','Efectivo','Tarjeta de débito','Tarjeta de crédito','Por definir'];
-const METODOS_PAGO_INGRESO = [...METODOS_PAGO_BASE, 'Factoraje', 'Pago a Terminal'];
+const METODOS_PAGO_BASE = ['Transferencia electrónica','Efectivo','Tarjeta de débito','Tarjeta de crédito','Factoraje','Por definir'];
+const METODOS_PAGO_INGRESO = [...METODOS_PAGO_BASE, 'Pago a Terminal'];
 const METODO_PAGO_LEGACY_MAP = {
   'transferencia':          'Transferencia electrónica',
   'transferencia bancaria': 'Transferencia electrónica',
@@ -7029,7 +7029,7 @@ function renderSisClientes(){
     <td style="font-size:12px;color:var(--text2)">${esc(c.tel||'—')}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(c.email||'—')}</td>
     <td>
-      <div class="row-acts">
+      <div class="row-acts" style="opacity:1">
         <button class="btn-icon" title="Editar" onclick="openEditCliente('${esc(c.id)}')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
         </button>
@@ -7069,12 +7069,12 @@ function renderSisArticulos(){
     return;
   }
   tbody.innerHTML = list.map(a=>`<tr>
-    <td style="font-weight:500;font-size:12.5px">${esc(a.nombre||a.id)}</td>
+    <td style="font-weight:500;font-size:12.5px;max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(a.nombre||a.id)}">${esc(a.nombre||a.id)}</td>
     <td style="text-align:right;font-family:var(--mono);font-size:12px">${fmtMXN(a.precio||0)}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(a.unidad||'—')}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(a.impuesto||'—')}</td>
     <td>
-      <div class="row-acts">
+      <div class="row-acts" style="opacity:1">
         <button class="btn-icon" title="Editar" onclick="openEditArticulo('${esc(a.id)}')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
         </button>
@@ -7157,7 +7157,7 @@ function renderSisContrasenas(){
     </td>
     <td style="font-size:11.5px">${enlaceHref?`<a class="pwd-link" href="${esc(enlaceHref)}" target="_blank" rel="noopener noreferrer" title="Ir al sitio">${esc(c.enlace)} ↗</a>`:'<span style="color:var(--text3)">—</span>'}</td>
     <td>
-      <div class="row-acts">
+      <div class="row-acts" style="opacity:1">
         <button class="btn-icon" title="Editar" onclick="openEditContrasena('${esc(c.id)}')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
         </button>
@@ -10306,7 +10306,11 @@ function renderOCClienteTable(){
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
       <td style="font-size:12px;color:var(--text2);max-width:160px" title="${esc(r.concepto)}">${esc((r.concepto||'—').slice(0,40))+(r.concepto.length>40?'…':'')}</td>
       <td style="font-family:var(--mono);font-size:12px;text-align:right">${r.monto?fmtMXN(r.monto):'—'}</td>
-      <td><span class="pill ${stClass}">${esc(r.estatus)}</span></td>
+      <td>
+        <select class="status-select ${stClass}" onchange="changeOCEstatus(${r._row},this.value,this)">
+          ${['Pendiente','Facturado','Cancelado'].map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${esc(s)}</option>`).join('')}
+        </select>
+      </td>
       <td>${relHtml}</td>
       <td>
         ${hasPDF
@@ -10328,6 +10332,21 @@ function renderOCClienteTable(){
       </td>
     </tr>`;
   }).join('');
+}
+function ocPillClass(s){
+  return {Pendiente:'pill-pend',Facturado:'pill-acep',Cancelado:'pill-rech'}[s]||'pill-pend';
+}
+async function changeOCEstatus(row,val,selEl){
+  const r=ST.ocAll.find(o=>o._row===row); if(!r) return;
+  if(!requireAuth()) { renderOCClienteTable(); return; }
+  const prev=r.estatus;
+  try{
+    await sheetsUpdate(`Oc_Client!G${row}`,[[val]]);
+    r.estatus=val;
+    if(selEl) selEl.className='status-select '+ocPillClass(val);
+    toast('ok','Estatus de OC actualizado.');
+  }
+  catch(e){ r.estatus=prev; renderOCClienteTable(); toast('err','Error al actualizar estatus: '+(e.result?.error?.message||e.message)); }
 }
 
 function editOCCliente(id){
