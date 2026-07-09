@@ -359,6 +359,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .pill-rech{background:var(--red-p);color:var(--red)}
 .pill-seg{background:var(--orange-p);color:var(--orange)}
 
+/* Editable status <select> that keeps the same pill colors as the read-only
+   pill (used in Comercial/Cotizaciones and Facturas so status can be changed
+   right from the list, without losing the color coding). */
+.status-select{
+  border:none;border-radius:4px;padding:3px 7px;height:23px;
+  font-family:var(--font);font-size:11px;font-weight:500;
+  cursor:pointer;outline:none;
+  transition:filter .15s;
+}
+.status-select:hover{filter:brightness(1.15)}
+.status-select option{background:var(--bg3);color:var(--text)}
+
 /* Group header row used in Facturas / OC tables to separate by estatus */
 .group-row td{
   padding:7px 14px!important;
@@ -828,6 +840,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         </button>
       </nav>
 
+      <!-- SUB-TABS DE EMPLEADOS: Personal, Rostros, Documentación (mismo diseño, fijo arriba) -->
+      <nav class="bal-nav" id="empleadosSubNav" style="display:none">
+        <button class="bal-tab active" id="empPersonalBtn" onclick="switchEmpSubTab('personal')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
+          Personal
+        </button>
+        <button class="bal-tab" id="empRostrosBtn" onclick="switchEmpSubTab('rostros')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2.5"/><circle cx="8" cy="7" r="2"/><path d="M4.5 12.5c.7-1.8 2-2.7 3.5-2.7s2.8.9 3.5 2.7"/></svg>
+          Rostros
+        </button>
+        <button class="bal-tab" id="empDocBtn" onclick="switchEmpSubTab('doc')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h6l3 3v10h-9z"/><path d="M10 1.5v3h3M5.5 8h5M5.5 10.5h5"/></svg>
+          Documentación
+        </button>
+      </nav>
+
       <!-- CONTENT -->
       <div class="main-scroll">
       <div class="content">
@@ -880,13 +908,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
                 <th style="text-align:right">Total</th>
                 <th>Estatus</th>
                 <th>Fecha</th>
+                <th>F. Envío</th>
                 <th>OC</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="cotTbody">
               <tr class="loading-row">
-                <td colspan="9">
+                <td colspan="10">
                   <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
                   &nbsp;Cargando…
                 </td>
@@ -1302,13 +1331,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
     <!-- ══ TAB: EMPLEADOS (panel administrativo sobre la hoja Personal) ══ -->
     <div id="tabEmp" class="tab-pane">
-      <!-- Sub-vistas de Empleados: Personal / Rostros / Documentación -->
-      <div class="filter-bar" style="margin-bottom:14px;gap:6px">
-        <button class="fchip on" id="empSubPersonalBtn" onclick="switchEmpSubTab('personal')">Personal</button>
-        <button class="fchip" id="empSubRostrosBtn" onclick="switchEmpSubTab('rostros')">Rostros</button>
-        <button class="fchip" id="empSubDocBtn" onclick="switchEmpSubTab('doc')">Documentación</button>
-      </div>
-
       <div id="empSubPersonal" class="emp-subpane active">
       <div class="stats stats-5" style="margin-bottom:16px">
         <div class="stat cy"><div class="stat-lbl">Total en Personal</div><div class="stat-val" id="empTotal">—</div><div class="stat-delta">Todos los registros</div></div>
@@ -1601,7 +1623,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 <!-- ══ FORM MODAL (Nueva / Editar) ══ -->
 <div class="modal-bg" id="formModal">
-  <div class="modal-lg">
+  <div class="modal-lg" style="width:1040px">
     <div class="mlg-head">
       <div>
         <div class="mlg-title" id="fmTitle">Nueva Cotización</div>
@@ -1613,7 +1635,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     </div>
     <div class="mlg-body">
       <!-- Datos generales -->
-      <div class="form-grid" style="margin-bottom:16px">
+      <div class="form-grid" style="margin-bottom:16px;grid-template-columns:repeat(4,minmax(0,1fr))">
         <div class="form-group">
           <label class="form-label">Cliente (RFC / ID) *</label>
           <div style="display:flex;gap:5px">
@@ -1658,7 +1680,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
             <option>Aceptado</option>
             <option>Rechazado</option>
           </select>
-          <input type="hidden" id="fFechaEnvio" value="">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de envío</label>
+          <input type="date" class="form-input" id="fFechaEnvio">
         </div>
       </div>
 
@@ -1746,6 +1771,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <button class="btn btn-red" id="saveBtn" onclick="guardarCot()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3.5 3.5L13 5"/></svg>
         Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESUMEN RÁPIDO DE COTIZACIÓN (clic en Folio) ══ -->
+<div class="modal-bg" id="cotResumenModal">
+  <div class="modal-lg" style="width:720px">
+    <div class="mlg-head">
+      <div>
+        <div class="mlg-title" id="resTitle">Cotización</div>
+        <div class="mlg-sub" id="resSub">Resumen de la cotización</div>
+      </div>
+      <button class="close-x" onclick="closeCotResumen()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="mlg-body" id="resBody"></div>
+    <div class="mlg-foot">
+      <button class="btn btn-ghost" onclick="closeCotResumen()">Cerrar</button>
+      <button class="btn btn-ghost" style="color:var(--orange)" onclick="quickPDF(ST.resumenId)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/><path d="M10 1.5v3H13"/></svg>
+        PDF
+      </button>
+      <button class="btn btn-red" onclick="editFromResumen()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        Editar
       </button>
     </div>
   </div>
@@ -3013,7 +3065,7 @@ function doLogout() {
   setGoogleUI(false);
   // Clear data
   ST.cotizaciones=[]; ST.filtered=[];
-  document.getElementById('cotTbody').innerHTML='<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--text3)">Conecta Google para ver los datos</td></tr>';
+  document.getElementById('cotTbody').innerHTML='<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">Conecta Google para ver los datos</td></tr>';
   document.getElementById('pagiInfo').textContent='';
   document.getElementById('pagiBtns').innerHTML='';
   ['sTotal','sAcep','sPend','sMonto'].forEach(id=>document.getElementById(id).textContent='—');
@@ -3633,7 +3685,7 @@ function renderTable() {
   document.getElementById('cotCount').textContent=ST.filtered.length+' registros';
 
   if(!slice.length){
-    tbody.innerHTML=`<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin resultados</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3)">Sin resultados</td></tr>`;
     renderPagi();
     return;
   }
@@ -3655,7 +3707,7 @@ function renderTable() {
       lastGroup=r.estatus;
       const meta=cotGroupMeta[r.estatus]||{label:(r.estatus||'OTRO').toUpperCase(),cls:'g-pend'};
       const sum=ST.filtered.filter(x=>x.estatus===r.estatus).reduce((s,x)=>s+x.total,0);
-      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="9">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
+      groupHeader=`<tr class="group-row ${meta.cls}"><td colspan="10">${meta.label}<span class="g-sum">${fmtMXN(sum)}</span></td></tr>`;
     }
     const cli=ST.clientes[r.id_cli]||{};
     const pClass=pillClass(r.estatus);
@@ -3663,7 +3715,7 @@ function renderTable() {
     const fmtSub='$'+r.sub.toLocaleString('es-MX',{minimumFractionDigits:2});
     const desc=(r.desc||'—').slice(0,40)+(r.desc.length>40?'…':'');
     return groupHeader + `<tr data-id="${esc(r.id)}">
-      <td><button class="folio" onclick="openEdit('${esc(r.id)}',${r._row})">${esc(r.id)}</button></td>
+      <td><button class="folio" onclick="openCotResumen('${esc(r.id)}',${r._row})">${esc(r.id)}</button></td>
       <td>
         <div style="font-weight:500;font-size:12.5px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
         <div style="font-size:10.5px;color:var(--text3);font-family:var(--mono)">${esc(r.id_cli)}</div>
@@ -3671,8 +3723,15 @@ function renderTable() {
       <td style="max-width:180px;font-size:12px;color:var(--text2)" title="${esc(r.desc)}">${esc(desc)}</td>
       <td style="text-align:right;font-family:var(--mono);font-size:12px">${fmtSub}</td>
       <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
-      <td><span class="pill ${pClass}">${esc(r.estatus)}</span></td>
+      <td>
+        <select class="status-select ${pClass}" onchange="changeCotEstatus(${r._row},this.value,this)">
+          ${['Pendiente','Enviado','Seguimiento 1','Seguimiento 2','Aceptado','Rechazado'].map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${esc(s)}</option>`).join('')}
+        </select>
+      </td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
+      <td>
+        <input type="date" class="form-input" style="height:24px;font-size:10.5px;padding:0 4px;width:118px" value="${esc(r.fechaEnvio?isoDate(r.fechaEnvio):'')}" onchange="changeCotFechaEnvio(${r._row},this.value)">
+      </td>
       <td style="font-size:11.5px;color:var(--text3)">${(() => {
         const ocs = ST.ocAll.filter(o=>o.cotIds.includes(r.id));
         if(!ocs.length) return `<button type="button" class="btn-icon" title="Vincular OC" onclick="openRelacionPanel('cot','${esc(r.id)}')" style="color:var(--text3)">
@@ -3702,9 +3761,136 @@ function renderTable() {
   renderPagi();
 }
 
+/* ─── EDICIÓN RÁPIDA DESDE LA LISTA: Estatus y Fecha de Envío ───
+   Igual que en Facturas, se puede cambiar el estatus y la fecha de envío
+   directamente desde el listado, sin abrir el formulario completo. El
+   <select> de estatus conserva los mismos colores que el pill de solo
+   lectura (ver clase .status-select). */
+async function changeCotEstatus(row,val,selEl){
+  const r=ST.cotizaciones.find(c=>c._row===row); if(!r) return;
+  if(!requireAuth()) { renderTable(); return; }
+  const prevEstatus=r.estatus, prevFechaEnvio=r.fechaEnvio;
+  try{
+    if(val==='Enviado' && !r.fechaEnvio){
+      // Si se marca como Enviado y no había fecha de envío, se usa hoy automáticamente
+      // (igual se puede corregir después desde la misma lista).
+      const hoy=sheetDate(todayISO());
+      await sheetsUpdate(`Cotizaciones!O${row}:Q${row}`,[[val,'',hoy]]);
+      r.estatus=val; r.fechaEnvio=hoy;
+    } else {
+      await sheetsUpdate(`Cotizaciones!O${row}`,[[val]]);
+      r.estatus=val;
+    }
+    if(selEl) selEl.className='status-select '+pillClass(val);
+    updateStats();
+    toast('ok','Estatus actualizado.');
+  }
+  catch(e){ r.estatus=prevEstatus; r.fechaEnvio=prevFechaEnvio; renderTable(); toast('err','Error al actualizar estatus: '+(e.result?.error?.message||e.message)); }
+}
+async function changeCotFechaEnvio(row,val){
+  const r=ST.cotizaciones.find(c=>c._row===row); if(!r) return;
+  if(!requireAuth()) { renderTable(); return; }
+  const prev=r.fechaEnvio;
+  try{
+    const sheetVal=val?sheetDate(val):'';
+    await sheetsUpdate(`Cotizaciones!Q${row}`,[[sheetVal]]);
+    r.fechaEnvio=sheetVal;
+    toast('ok','Fecha de envío actualizada.');
+  }
+  catch(e){ r.fechaEnvio=prev; renderTable(); toast('err','Error al actualizar fecha de envío: '+(e.result?.error?.message||e.message)); }
+}
+
+/* ─── RESUMEN RÁPIDO DE COTIZACIÓN (clic en Folio) ───
+   Muestra un resumen de solo lectura de la cotización: cliente, contacto,
+   fechas, estatus, partidas y totales, con accesos rápidos a Editar / PDF. */
+function openCotResumen(id,rowNum){
+  const r=ST.cotizaciones.find(c=>c.id===id); if(!r) return;
+  ST.resumenId=id; ST.resumenRow=rowNum;
+  const cli=ST.clientes[r.id_cli]||{};
+  document.getElementById('resTitle').textContent=id;
+  document.getElementById('resSub').textContent='Resumen de la cotización';
+  const pClass=pillClass(r.estatus);
+  const items = (r.items&&r.items.length) ? r.items : [{desc:r.desc,cant:1,unidad:'',precio:r.sub,imp:r.sub}];
+  const itemsHtml = items.map(it=>`<tr>
+      <td style="font-size:12px;color:var(--text)">${esc(it.desc||'—')}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px">${(parseFloat(it.cant)||0).toLocaleString('es-MX')}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(it.unidad||'—')}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px">${fmtMXN(parseFloat(it.precio)||0)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtMXN(parseFloat(it.imp)||0)}</td>
+    </tr>`).join('');
+  const ocs = ST.ocAll.filter(o=>o.cotIds.includes(id));
+  document.getElementById('resBody').innerHTML=`
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <div style="font-size:13px;color:var(--text)">${esc(cli.nombre||r.id_cli||'—')}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${esc(r.id_cli)}</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contacto</label>
+        <div style="font-size:13px;color:var(--text)">${esc(ST.contactos[r.id_con]||'—')}</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <div style="font-size:13px;color:var(--text);font-family:var(--mono)">${fmtDate(r.fecha)}</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vigencia</label>
+        <div style="font-size:13px;color:var(--text)">${esc(r.vigencia||'30')} días</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estatus</label>
+        <div><span class="pill ${pClass}">${esc(r.estatus)}</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de envío</label>
+        <div style="font-size:13px;color:var(--text);font-family:var(--mono)">${r.fechaEnvio?fmtDate(r.fechaEnvio):'—'}</div>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Descripción / Trabajo</label>
+        <div style="font-size:13px;color:var(--text)">${esc(r.desc||'—')}</div>
+      </div>
+      ${r.notas?`<div class="form-group full">
+        <label class="form-label">Notas</label>
+        <div style="font-size:12.5px;color:var(--text2);white-space:pre-wrap">${esc(r.notas)}</div>
+      </div>`:''}
+      ${ocs.length?`<div class="form-group full">
+        <label class="form-label">Órdenes de Compra</label>
+        <div style="font-size:12.5px;font-family:var(--mono);color:var(--blue)">${ocs.map(o=>esc(o.numero)).join(', ')}</div>
+      </div>`:''}
+    </div>
+    <div style="margin-bottom:8px;font-size:11.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px">Partidas</div>
+    <div class="items-table-wrap" style="margin-bottom:16px">
+      <table class="items-table">
+        <thead><tr>
+          <th style="width:44%">Concepto / Descripción</th>
+          <th style="width:12%">Cant.</th>
+          <th style="width:14%">Unidad</th>
+          <th style="width:15%">P. Unitario</th>
+          <th style="width:15%">Importe</th>
+        </tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+    </div>
+    <div class="totals-box">
+      <div class="tot-row"><span class="tot-lbl">Subtotal</span><span class="tot-val">${fmtMXN(r.sub)}</span></div>
+      <div class="tot-row"><span class="tot-lbl">IVA (16%)</span><span class="tot-val">${fmtMXN(r.iva)}</span></div>
+      <div class="tot-row big"><span class="tot-lbl">TOTAL</span><span class="tot-val">${fmtMXN(r.total)}</span></div>
+    </div>`;
+  document.getElementById('cotResumenModal').classList.add('open');
+}
+function closeCotResumen(){
+  document.getElementById('cotResumenModal').classList.remove('open');
+}
+function editFromResumen(){
+  const id=ST.resumenId, row=ST.resumenRow;
+  closeCotResumen();
+  if(id) openEdit(id,row);
+}
+
 function setLoading(on) {
   if(!on) return;
-  document.getElementById('cotTbody').innerHTML=`<tr class="loading-row"><td colspan="9">
+  document.getElementById('cotTbody').innerHTML=`<tr class="loading-row"><td colspan="10">
     <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     &nbsp;Cargando cotizaciones…</td></tr>`;
 }
@@ -4453,13 +4639,14 @@ function buildNotasEstado(tipo, fecha){
    (sin "Por definir", con "Transferencia" incompleta). Se eliminó para no
    dejar código muerto y confuso. */
 
-async function changeFacEstatus(row,val){
+async function changeFacEstatus(row,val,selEl){
   const f=ST.facturas.find(x=>x._row===row); if(!f) return;
   if(!requireAuth()) { renderFacTableFull(); return; }
   const prev=f.estatus;
   try{
     await sheetsUpdate(`Facturas!H${row}`,[[val]]);
     f.estatus=val;
+    if(selEl) selEl.className='status-select '+facPillClass(val);
     markFacEdited();
     updateFacStats();
     toast('ok','Estatus actualizado.');
@@ -6550,11 +6737,11 @@ function normalizePhotoUrl(url){
 function switchEmpSubTab(sub){
   ST.empSubTab = sub;
   ['empSubPersonal','empSubRostros','empSubDoc'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['empSubPersonalBtn','empSubRostrosBtn','empSubDocBtn'].forEach(id=>document.getElementById(id)?.classList.remove('on'));
+  ['empPersonalBtn','empRostrosBtn','empDocBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const paneId = {personal:'empSubPersonal', rostros:'empSubRostros', doc:'empSubDoc'}[sub] || 'empSubPersonal';
-  const btnId  = {personal:'empSubPersonalBtn', rostros:'empSubRostrosBtn', doc:'empSubDocBtn'}[sub] || 'empSubPersonalBtn';
+  const btnId  = {personal:'empPersonalBtn', rostros:'empRostrosBtn', doc:'empDocBtn'}[sub] || 'empPersonalBtn';
   document.getElementById(paneId)?.classList.add('active');
-  document.getElementById(btnId)?.classList.add('on');
+  document.getElementById(btnId)?.classList.add('active');
   if(sub==='personal') renderEmpleados();
   if(sub==='rostros') renderRostros();
 }
@@ -7870,8 +8057,10 @@ function switchTab(tab){
     if(bcSection) bcSection.textContent = SIMPLE_TABS[tab].label;
     const comSubNav=document.getElementById('comercialSubNav');
     const balSubNav=document.getElementById('balanceSubNav');
+    const empSubNav=document.getElementById('empleadosSubNav');
     if(comSubNav) comSubNav.style.display='none';
     if(balSubNav) balSubNav.style.display='none';
+    if(empSubNav) empSubNav.style.display = tab==='emp' ? 'flex' : 'none';
     if(tab==='asis') renderAsistencia();
     if(tab==='nom') renderNominas();
     if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
@@ -7926,8 +8115,10 @@ function switchTab(tab){
   ['navNomBtn','navAsisBtn','navEmpBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
+  const empSubNav=document.getElementById('empleadosSubNav');
   if(comSubNav) comSubNav.style.display = isComercial ? 'flex' : 'none';
   if(balSubNav) balSubNav.style.display = isComercial ? 'none' : 'flex';
+  if(empSubNav) empSubNav.style.display='none';
   const bcSection=document.getElementById('bcSection');
   if(bcSection) bcSection.textContent = isComercial ? 'Comercial' : 'Balance';
   ST.currentSection = isComercial ? 'comercial' : 'balance';
@@ -9824,7 +10015,7 @@ function renderFacTableFull(){
         </select>
       </td>
       <td>
-        <select class="form-select" style="height:24px;font-size:11px;padding:0 4px" onchange="changeFacEstatus(${r._row},this.value)">
+        <select class="status-select ${facPillClass(r.estatus)}" onchange="changeFacEstatus(${r._row},this.value,this)">
           ${estatusOpts.map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${s}</option>`).join('')}
         </select>
       </td>
