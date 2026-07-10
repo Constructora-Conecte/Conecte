@@ -517,6 +517,39 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .close-x:hover{background:var(--bg3);color:var(--text)}
 .close-x svg{width:13px;height:13px}
 
+/* ── MODO IA (cotización por voz) ── */
+.modal-ia{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r12);
+  box-shadow:0 24px 80px rgba(0,0,0,.6);animation:mIn .22s ease both;
+  width:540px;max-width:96vw;height:min(680px,88vh);display:flex;flex-direction:column;overflow:hidden;
+}
+.ia-chatbox{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.ia-bubble{max-width:82%;padding:9px 13px;border-radius:14px;font-size:12.5px;line-height:1.55;white-space:pre-wrap}
+.ia-bubble.assistant{align-self:flex-start;background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
+.ia-bubble.user{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:4px}
+.ia-resumen{padding:14px 18px;border-top:1px solid var(--border);background:var(--bg3);flex-shrink:0}
+.ia-resumen-row{font-size:12px;color:var(--text2);margin-bottom:3px}
+.ia-resumen-row strong{color:var(--text);font-weight:600}
+.ia-footer{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.ia-status{font-size:11px;color:var(--text3);text-align:center;min-height:14px}
+.ia-inputrow{display:flex;gap:8px;align-items:center}
+.ia-mic-btn{
+  width:42px;height:42px;border-radius:50%;border:none;flex-shrink:0;cursor:pointer;
+  background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;
+  transition:transform .15s, box-shadow .15s;
+}
+.ia-mic-btn:hover{transform:scale(1.05)}
+.ia-mic-btn.listening{animation:iaPulse 1.1s ease-in-out infinite}
+@keyframes iaPulse{
+  0%{box-shadow:0 0 0 0 rgba(229,62,62,.55)}
+  70%{box-shadow:0 0 0 14px rgba(229,62,62,0)}
+  100%{box-shadow:0 0 0 0 rgba(229,62,62,0)}
+}
+.ia-text-input{
+  flex:1;height:38px;padding:0 12px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r8);font-family:var(--font);font-size:12.5px;color:var(--text);outline:none;
+}
+
 /* ── TOAST ── */
 .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px}
 .toast{
@@ -783,6 +816,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </button>
       <button class="btn btn-ghost btn-sm" title="Recargar datos" onclick="loadAll()" style="border-color:rgba(255,255,255,.2);color:#fff;">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8A5.5 5.5 0 112 8M13.5 8V5M13.5 8H10.5"/></svg>
+      </button>
+      <button class="btn btn-ghost btn-sm" id="iaModeBtn" onclick="abrirModoIA()" title="Modo IA — crear cotización hablando" style="border-color:rgba(255,255,255,.2);color:#fff;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1.5a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0v-4a2 2 0 0 1 2-2Z"/><path d="M4 8a4 4 0 0 0 8 0M8 12v2.5M6 14.5h4"/></svg>
+        <span>Modo IA</span>
       </button>
       <button class="btn btn-red btn-sm" id="mainAddBtn" onclick="mainAdd()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
@@ -2381,6 +2418,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeDel()">Cancelar</button>
       <button class="btn" style="background:var(--red);color:#fff" id="delConfBtn" onclick="confirmDel()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODO IA (cotización por voz) ══ -->
+<div class="modal-bg" id="iaModal">
+  <div class="modal-ia">
+    <div class="mlg-head">
+      <div>
+        <div class="mlg-title">🎙️ Modo IA — Cotización por voz</div>
+        <div class="mlg-sub" id="iaSub">Gratis: reconocimiento de voz del navegador + reglas locales</div>
+      </div>
+      <button class="close-x" onclick="cerrarModoIA()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="ia-chatbox" id="iaChatBox"></div>
+    <div class="ia-resumen" id="iaResumenBox" style="display:none"></div>
+    <div class="ia-footer">
+      <div class="ia-status" id="iaStatus">Toca el micrófono para comenzar</div>
+      <div class="ia-inputrow">
+        <button class="ia-mic-btn" id="iaMicBtn" onclick="toggleIAMic()" title="Hablar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" width="18" height="18"><path d="M8 1.5a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0v-4a2 2 0 0 1 2-2Z"/><path d="M4 8a4 4 0 0 0 8 0M8 12v2.5M6 14.5h4"/></svg>
+        </button>
+        <input class="ia-text-input" id="iaTextInput" placeholder="…o escribe tu respuesta aquí" onkeydown="if(event.key==='Enter')enviarIATexto()">
+        <button class="btn btn-red btn-sm" onclick="enviarIATexto()">Enviar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -4264,6 +4328,435 @@ function calcTotals() {
   document.getElementById('tSub').textContent=fmtMXN(sub);
   document.getElementById('tIva').textContent=fmtMXN(iva);
   document.getElementById('tTot').textContent=fmtMXN(tot);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODO IA — Asistente de cotizaciones por voz (VERSIÓN 100% GRATUITA)
+   Solo usa la Web Speech API del navegador (reconocimiento y síntesis
+   de voz), sin ninguna llamada a servicios de pago. El "cerebro" es
+   un motor de reglas local en JavaScript: reconoce clientes/contactos
+   por similitud de texto contra tu catálogo, convierte números
+   hablados a dígitos, y detecta sí/no/"no sé".
+
+   LIMITACIÓN ACEPTADA POR AHORA: como no hay un modelo de lenguaje
+   real detrás, el concepto de cada partida se guarda tal cual lo dicta
+   el usuario (con una limpieza básica), en vez de redactarse como texto
+   técnico profesional. El resto del flujo (cliente, contacto,
+   descripción, partidas, notas, resumen y confirmación) sí sigue el
+   guion completo del prompt maestro.
+
+   Si más adelante quieres reactivar la redacción profesional con IA,
+   solo hay que reemplazar generarConceptoIA() por una llamada a un
+   modelo (Claude u otro) — el resto del flujo no cambia.
+   ══════════════════════════════════════════════════════════════ */
+const IA_UNIDADES = ['Pza','Lote','Mts','Mts²','Mts³','Kg','Día','Lts','Hrs','Tramo','Juego','Servicio'];
+
+let iaState = {
+  paso: 'cliente',       // cliente | contacto | descripcion | concepto | unidad | cantidad | precio | otra_partida | notas_si | notas_texto | resumen | correccion_pregunta
+  campos: null,          // {cliente:{id,nombre}, contacto:{id,nombre}, descripcionTrabajo, partidas:[], notas}
+  partidaActual: null,   // {concepto, unidad, cantidad, precioUnitario} mientras se captura
+  recognition: null,
+  escuchando: false,
+  procesando: false
+};
+
+function iaCamposVacios(){
+  return { cliente:{id:'',nombre:''}, contacto:{id:'',nombre:''}, descripcionTrabajo:'', partidas:[], notas:'' };
+}
+
+/* ─── Abrir / cerrar ─── */
+function abrirModoIA(){
+  if(ST.currentTab && ST.currentTab!=='cot'){ toast('inf','Cambia primero a la pestaña de Cotizaciones.'); return; }
+  if(!requireAuth()) return;
+  iaState = { paso:'cliente', campos:iaCamposVacios(), partidaActual:null, recognition:iaState.recognition||null, escuchando:false, procesando:false };
+  document.getElementById('iaChatBox').innerHTML='';
+  document.getElementById('iaResumenBox').style.display='none';
+  document.getElementById('iaResumenBox').innerHTML='';
+  document.getElementById('iaTextInput').value='';
+  document.getElementById('iaModal').classList.add('open');
+  iniciarConversacionIA();
+}
+function cerrarModoIA(){
+  try{ iaState.recognition && iaState.recognition.stop(); }catch(e){}
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  document.getElementById('iaModal').classList.remove('open');
+}
+
+/* ─── Burbujas de chat / estado ─── */
+function agregarBurbujaIA(rol, texto){
+  if(!texto) return;
+  const box=document.getElementById('iaChatBox');
+  const div=document.createElement('div');
+  div.className='ia-bubble '+(rol==='user'?'user':'assistant');
+  div.textContent=texto;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+function actualizarEstadoIA(txt){
+  const el=document.getElementById('iaStatus');
+  if(el) el.textContent=txt||'';
+}
+
+/* ─── Voz: reconocimiento (STT) y síntesis (TTS) — gratis, del navegador ─── */
+function crearReconocedorIA(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return null;
+  const r = new SR();
+  r.lang='es-MX'; r.continuous=false; r.interimResults=false; r.maxAlternatives=1;
+  return r;
+}
+function toggleIAMic(){
+  if(iaState.procesando) return;
+  if(iaState.escuchando){ try{ iaState.recognition.stop(); }catch(e){} return; }
+  if(!iaState.recognition) iaState.recognition = crearReconocedorIA();
+  if(!iaState.recognition){ toast('err','Tu navegador no soporta reconocimiento de voz. Usa el campo de texto.'); return; }
+  const r = iaState.recognition;
+  const micBtn = document.getElementById('iaMicBtn');
+  r.onresult = (ev)=>{ const texto = ev.results[0][0].transcript; procesarTurnoIA(texto); };
+  r.onerror = ()=>{ iaState.escuchando=false; micBtn.classList.remove('listening'); actualizarEstadoIA('No se entendió. Intenta de nuevo o escribe tu respuesta.'); };
+  r.onend   = ()=>{ iaState.escuchando=false; micBtn.classList.remove('listening'); };
+  try{
+    r.start();
+    iaState.escuchando=true;
+    micBtn.classList.add('listening');
+    actualizarEstadoIA('Escuchando…');
+  }catch(e){ toast('err','No se pudo activar el micrófono: '+e.message); }
+}
+function hablarIA(texto){
+  if(!texto || !('speechSynthesis' in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang='es-MX'; u.rate=1.02;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ─── Utilidades de texto (sin IA, solo reglas) ─── */
+function iaNormalizar(s){
+  return (s||'').toString().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9\s]/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+function iaLevenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++)dp[i][0]=i;
+  for(let j=0;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){
+    dp[i][j]= a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]);
+  }
+  return dp[m][n];
+}
+function iaSimilitud(a,b){
+  a=iaNormalizar(a); b=iaNormalizar(b);
+  if(!a||!b) return 0;
+  if(a===b) return 1;
+  if(a.includes(b)||b.includes(a)) return 0.9;
+  const dist=iaLevenshtein(a,b);
+  return 1-dist/Math.max(a.length,b.length);
+}
+function iaMejorCoincidencia(texto, lista, getNombre, umbral){
+  umbral = umbral==null?0.45:umbral;
+  let mejor=null, mejorScore=0;
+  (lista||[]).forEach(item=>{
+    const score = iaSimilitud(texto, getNombre(item));
+    if(score>mejorScore){ mejorScore=score; mejor=item; }
+  });
+  return mejorScore>=umbral ? mejor : null;
+}
+function iaEsAfirmativo(texto){
+  const t=' '+iaNormalizar(texto)+' ';
+  if(/ no /.test(t)) return false;
+  return /(si|sip|claro|correcto|exacto|afirmativo|dale|adelante|procede|asi es|efectivamente|va|ok|okay)/.test(t);
+}
+function iaEsNegativo(texto){
+  const t=' '+iaNormalizar(texto)+' ';
+  return / no /.test(t) || /(nel|negativo|para nada|nop)/.test(t);
+}
+function iaEsNoSe(texto){
+  const t=iaNormalizar(texto);
+  return /(no se|no lo se|ni idea|siguiente|salta|sin dato|no tengo|no aplica)/.test(t);
+}
+function iaCapitalizar(s){
+  s=(s||'').trim();
+  return s ? s.charAt(0).toUpperCase()+s.slice(1) : s;
+}
+
+/* ─── Números hablados → dígitos (español) — sin IA, reglas fijas ─── */
+const IA_UNIDADES_NUM = {cero:0,un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,
+  diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,
+  dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,
+  veinte:20,veintiuno:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,
+  treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90};
+const IA_CENTENAS_NUM = {cien:100,ciento:100,doscientos:200,trescientos:300,cuatrocientos:400,quinientos:500,
+  seiscientos:600,setecientos:700,ochocientos:800,novecientos:900};
+
+function iaTextoANumero(texto){
+  if(texto==null) return null;
+  let t = String(texto).toLowerCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\bpesos?\b/g,'').replace(/\bmxn\b/g,'').replace(/\$/g,'').trim();
+
+  // ¿ya viene como número (con o sin comas de miles)?
+  const soloNumero = t.replace(/,/g,'');
+  if(/^-?\d+(\.\d+)?$/.test(soloNumero.trim())) return parseFloat(soloNumero);
+
+  const palabras = t.replace(/,/g,'').split(/\s+/).filter(Boolean);
+  if(!palabras.length) return null;
+
+  let total=0, actual=0, huboPalabraNumerica=false;
+  for(const p of palabras){
+    if(p==='y') continue;
+    if(IA_UNIDADES_NUM[p]!==undefined){ actual+=IA_UNIDADES_NUM[p]; huboPalabraNumerica=true; }
+    else if(IA_CENTENAS_NUM[p]!==undefined){ actual+=IA_CENTENAS_NUM[p]; huboPalabraNumerica=true; }
+    else if(p==='mil'){ actual=(actual||1)*1000; total+=actual; actual=0; huboPalabraNumerica=true; }
+    else if(p==='millon'||p==='millones'){ actual=(actual||1)*1000000; total+=actual; actual=0; huboPalabraNumerica=true; }
+    else if(/^\d+(\.\d+)?$/.test(p)){ actual+=parseFloat(p); huboPalabraNumerica=true; }
+  }
+  total+=actual;
+  return huboPalabraNumerica ? total : null;
+}
+
+/* ─── Preguntas del flujo (texto exacto del guion) ─── */
+function iaPreguntaCliente(){ return '¿Para qué cliente es esta cotización?'; }
+function iaPreguntaContacto(){ return '¿A nombre de quién va dirigida la cotización?'; }
+function iaPreguntaDescripcion(){ return 'Descríbeme brevemente el trabajo que se realizará.'; }
+function iaPreguntaConcepto(){ return iaState.campos.partidas.length ? 'Descríbeme la siguiente partida.' : 'Descríbeme la primera partida.'; }
+function iaPreguntaUnidad(){ return '¿Cuál es la unidad?'; }
+function iaPreguntaCantidad(){ return '¿Cuál es la cantidad?'; }
+function iaPreguntaPrecio(){ return '¿Cuál es el precio unitario?'; }
+function iaPreguntaOtraPartida(){ return '¿Deseas agregar otra partida?'; }
+function iaPreguntaNotasSi(){ return '¿Deseas agregar alguna nota?'; }
+function iaPreguntaNotasTexto(){ return '¿Cuáles son las notas?'; }
+
+/* ─── Avanzar de paso mostrando la siguiente pregunta ─── */
+function iaAvanzar(nuevoPaso){
+  iaState.paso = nuevoPaso;
+  let texto = '';
+  switch(nuevoPaso){
+    case 'cliente':       texto = iaPreguntaCliente(); break;
+    case 'contacto':      texto = iaPreguntaContacto(); break;
+    case 'descripcion':   texto = iaPreguntaDescripcion(); break;
+    case 'concepto':      iaState.partidaActual = {concepto:'',unidad:'',cantidad:null,precioUnitario:null}; texto = iaPreguntaConcepto(); break;
+    case 'unidad':        texto = iaPreguntaUnidad(); break;
+    case 'cantidad':      texto = iaPreguntaCantidad(); break;
+    case 'precio':        texto = iaPreguntaPrecio(); break;
+    case 'otra_partida':  texto = iaPreguntaOtraPartida(); break;
+    case 'notas_si':      texto = iaPreguntaNotasSi(); break;
+    case 'notas_texto':   texto = iaPreguntaNotasTexto(); break;
+    case 'resumen':       mostrarResumenIA(iaState.campos,false); actualizarEstadoIA('Revisa el resumen abajo'); return;
+  }
+  agregarBurbujaIA('assistant', texto);
+  hablarIA(texto);
+  actualizarEstadoIA('Toca el micrófono para responder');
+}
+
+function iniciarConversacionIA(){
+  const saludo = 'Hola. Voy a ayudarte a crear una nueva cotización. Iré haciéndote preguntas, puedes responder con naturalidad. Si algún dato no lo sabes, simplemente di "no sé" o "siguiente". Comencemos.';
+  agregarBurbujaIA('assistant', saludo);
+  hablarIA(saludo);
+  setTimeout(()=>iaAvanzar('cliente'), 300);
+}
+
+/* ─── Procesar cada turno del usuario (motor de reglas local) ─── */
+function procesarTurnoIA(textoUsuario){
+  if(!textoUsuario || !textoUsuario.trim() || iaState.procesando) return;
+  textoUsuario = textoUsuario.trim();
+  agregarBurbujaIA('user', textoUsuario);
+  iaState.procesando=true;
+
+  const campos = iaState.campos;
+  const paso = iaState.paso;
+
+  if(paso==='cliente'){
+    if(iaEsNoSe(textoUsuario)){ campos.cliente={id:'',nombre:''}; }
+    else {
+      const m = iaMejorCoincidencia(textoUsuario, Object.values(ST.clientes||{}), c=>c.nombre);
+      campos.cliente = m ? {id:m.id, nombre:m.nombre} : {id:'', nombre:iaCapitalizar(textoUsuario)};
+    }
+    iaState.procesando=false; iaAvanzar('contacto'); return;
+  }
+
+  if(paso==='contacto'){
+    if(iaEsNoSe(textoUsuario)){ campos.contacto={id:'',nombre:''}; }
+    else {
+      const contactosCli = (ST.contactosList||[]).filter(c=>c.id_cli===campos.cliente.id);
+      const m = iaMejorCoincidencia(textoUsuario, contactosCli, c=>c.nombre);
+      campos.contacto = m ? {id:m.id, nombre:m.nombre} : {id:'', nombre:iaCapitalizar(textoUsuario)};
+    }
+    iaState.procesando=false; iaAvanzar('descripcion'); return;
+  }
+
+  if(paso==='descripcion'){
+    campos.descripcionTrabajo = iaEsNoSe(textoUsuario) ? '' : iaCapitalizar(textoUsuario);
+    iaState.procesando=false; iaAvanzar('concepto'); return;
+  }
+
+  if(paso==='concepto'){
+    // Nota: sin un modelo de IA detrás, el concepto se guarda tal cual lo dicta
+    // el usuario (con limpieza básica), no se redacta en estilo técnico profesional.
+    iaState.partidaActual.concepto = iaCapitalizar(textoUsuario);
+    iaState.procesando=false; iaAvanzar('unidad'); return;
+  }
+
+  if(paso==='unidad'){
+    if(iaEsNoSe(textoUsuario)){ iaState.partidaActual.unidad=''; }
+    else {
+      const m = iaMejorCoincidencia(textoUsuario, IA_UNIDADES, u=>u, 0.4);
+      iaState.partidaActual.unidad = m || iaCapitalizar(textoUsuario);
+    }
+    iaState.procesando=false; iaAvanzar('cantidad'); return;
+  }
+
+  if(paso==='cantidad'){
+    iaState.partidaActual.cantidad = iaEsNoSe(textoUsuario) ? null : iaTextoANumero(textoUsuario);
+    iaState.procesando=false; iaAvanzar('precio'); return;
+  }
+
+  if(paso==='precio'){
+    iaState.partidaActual.precioUnitario = iaEsNoSe(textoUsuario) ? null : iaTextoANumero(textoUsuario);
+    campos.partidas.push(iaState.partidaActual);
+    iaState.partidaActual=null;
+    iaState.procesando=false; iaAvanzar('otra_partida'); return;
+  }
+
+  if(paso==='otra_partida'){
+    iaState.procesando=false;
+    if(iaEsAfirmativo(textoUsuario) && !iaEsNegativo(textoUsuario)) iaAvanzar('concepto');
+    else iaAvanzar('notas_si');
+    return;
+  }
+
+  if(paso==='notas_si'){
+    iaState.procesando=false;
+    if(iaEsAfirmativo(textoUsuario) && !iaEsNegativo(textoUsuario)) iaAvanzar('notas_texto');
+    else { campos.notas=''; iaAvanzar('resumen'); }
+    return;
+  }
+
+  if(paso==='notas_texto'){
+    campos.notas = iaCapitalizar(textoUsuario);
+    iaState.procesando=false; iaAvanzar('resumen'); return;
+  }
+
+  if(paso==='resumen'){
+    iaState.procesando=false;
+    if(iaEsNegativo(textoUsuario)){
+      document.getElementById('iaResumenBox').style.display='none';
+      corregirIA();
+    } else if(iaEsAfirmativo(textoUsuario)){
+      confirmarLlenadoIA();
+    } else {
+      const texto='No te entendí, ¿todo está correcto? Responde sí o no, o usa los botones de abajo.';
+      agregarBurbujaIA('assistant', texto); hablarIA(texto);
+    }
+    return;
+  }
+
+  if(paso==='correccion_pregunta'){
+    const t = iaNormalizar(textoUsuario);
+    iaState.procesando=false;
+    if(t.includes('client'))       iaAvanzar('cliente');
+    else if(t.includes('contact')) iaAvanzar('contacto');
+    else if(t.includes('descrip')) iaAvanzar('descripcion');
+    else if(t.includes('nota'))    iaAvanzar('notas_si');
+    else if(t.includes('partid')||t.includes('concepto')||t.includes('precio')||t.includes('cantidad')||t.includes('unidad')){
+      campos.partidas.pop();
+      iaAvanzar('concepto');
+    } else {
+      const texto='Dime qué quieres corregir: cliente, contacto, descripción, una partida o las notas.';
+      agregarBurbujaIA('assistant', texto); hablarIA(texto);
+    }
+    return;
+  }
+
+  iaState.procesando=false;
+}
+function enviarIATexto(){
+  const inp=document.getElementById('iaTextInput');
+  const v=inp.value.trim();
+  if(!v) return;
+  inp.value='';
+  procesarTurnoIA(v);
+}
+
+/* ─── Resumen final + llenado del formulario ─── */
+function mostrarResumenIA(campos, autoLlenar){
+  const box=document.getElementById('iaResumenBox');
+  if(!campos){ box.style.display='none'; return; }
+  const cliNom = campos.cliente?.nombre || '— sin definir —';
+  const conNom = campos.contacto?.nombre || '— sin definir —';
+  const partidas = Array.isArray(campos.partidas)?campos.partidas:[];
+  box.style.display='block';
+  box.innerHTML = `
+    <div class="ia-resumen-row"><strong>Cliente:</strong> ${esc(cliNom)}</div>
+    <div class="ia-resumen-row"><strong>Contacto:</strong> ${esc(conNom)}</div>
+    <div class="ia-resumen-row"><strong>Descripción:</strong> ${esc(campos.descripcionTrabajo||'—')}</div>
+    <div class="ia-resumen-row"><strong>Partidas:</strong> ${partidas.length}</div>
+    <div class="ia-resumen-row"><strong>Notas:</strong> ${esc(campos.notas||'—')}</div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-red btn-sm" onclick="confirmarLlenadoIA()">✓ Todo correcto, llenar formulario</button>
+      <button class="btn btn-ghost btn-sm" onclick="corregirIA()">Corregir algo</button>
+    </div>`;
+  if(autoLlenar) confirmarLlenadoIA();
+}
+function corregirIA(){
+  document.getElementById('iaResumenBox').style.display='none';
+  const texto='Sin problema. Dime qué quieres corregir: cliente, contacto, descripción, una partida o las notas.';
+  agregarBurbujaIA('assistant', texto); hablarIA(texto);
+  iaState.paso='correccion_pregunta';
+  actualizarEstadoIA('Toca el micrófono para responder');
+}
+function confirmarLlenadoIA(){
+  llenarFormularioDesdeIA(iaState.campos);
+  cerrarModoIA();
+}
+function llenarFormularioDesdeIA(campos){
+  if(!campos){ toast('err','No hay datos de la conversación para llenar.'); return; }
+  abrirNueva(); // abre el formulario en blanco (ya valida sesión de Google)
+
+  // Cliente: solo se acepta si el id existe realmente en el catálogo
+  let idCli = campos.cliente?.id;
+  if(idCli && !ST.clientes[idCli]) idCli='';
+  if(!idCli && campos.cliente?.nombre){
+    const m = Object.values(ST.clientes||{}).find(c=>(c.nombre||'').toLowerCase()===String(campos.cliente.nombre).toLowerCase());
+    if(m) idCli = m.id;
+  }
+  document.getElementById('fCliente').value = idCli||'';
+  populateContactos(idCli||'');
+
+  // Contacto: solo válido si pertenece al cliente seleccionado
+  let idCon = campos.contacto?.id;
+  const contactosDelCliente = (ST.contactosList||[]).filter(c=>c.id_cli===idCli);
+  if(idCon && !contactosDelCliente.some(c=>c.id===idCon)) idCon='';
+  if(!idCon && campos.contacto?.nombre){
+    const mc = contactosDelCliente.find(c=>(c.nombre||'').toLowerCase()===String(campos.contacto.nombre).toLowerCase());
+    if(mc) idCon = mc.id;
+  }
+  document.getElementById('fContacto').value = idCon||'';
+
+  document.getElementById('fDesc').value  = campos.descripcionTrabajo||'';
+  document.getElementById('fNotas').value = campos.notas||'';
+  document.getElementById('fFecha').value = todayISO();
+
+  const partidas = Array.isArray(campos.partidas)?campos.partidas:[];
+  ST.items = partidas.length ? partidas.map(p=>({
+    desc:   p.concepto || '',
+    cant:   (typeof p.cantidad==='number'?p.cantidad:parseFloat(p.cantidad))||0,
+    unidad: (typeof p.unidad==='string'?p.unidad:(p.unidad?.nombre||''))||'',
+    precio: (typeof p.precioUnitario==='number'?p.precioUnitario:parseFloat(p.precioUnitario))||0,
+    imp: 0
+  })) : [{ desc:'', cant:1, unidad:'', precio:0, imp:0 }];
+  ST.items.forEach(it=>{ it.imp=(it.cant||0)*(it.precio||0); });
+  ST.formDirty=true;
+  renderItems();
+
+  const faltantes = ST.items.filter(it=>!it.desc || !it.unidad || !it.cant || !it.precio).length;
+  toast('ok', faltantes
+    ? `Cotización generada por IA. ${faltantes} partida(s) quedaron incompletas, revísalas antes de guardar.`
+    : 'Cotización generada por IA. Revisa los datos y guarda.');
 }
 
 /* ─── OPEN FORM ─── */
