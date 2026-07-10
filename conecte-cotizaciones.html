@@ -184,6 +184,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
    (no basta con overflow-x:hidden, eso solo esconde el síntoma). */
 .form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;min-width:0}
 .form-grid-nom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:18px;row-gap:14px;min-width:0}
+@media(max-width:760px){
+  .form-grid-nom{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
 .form-group{display:flex;flex-direction:column;gap:5px;min-width:0}
 .form-group.full{grid-column:1/-1}
 .form-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);display:flex;align-items:center}
@@ -309,9 +312,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 /* ── ITEMS TABLE ── */
 .items-table-wrap{
   background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);
-  overflow:hidden;margin-bottom:12px;
+  overflow-x:auto;margin-bottom:12px;
 }
-.items-table{width:100%;border-collapse:collapse}
+.items-table{width:100%;min-width:540px;border-collapse:collapse}
 .items-table th{
   padding:7px 10px;font-size:10px;font-weight:600;text-transform:uppercase;
   letter-spacing:.6px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);
@@ -722,14 +725,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .dash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 @media(max-width:900px){.dash-grid,.dash-grid-3{grid-template-columns:1fr}.dash-kpi-grid{grid-template-columns:1fr 1fr}}
 
+/* ── MOBILE / TABLET: hamburger drawer instead of squeezed icon rail ── */
+.hamburger-btn{
+  display:none;width:32px;height:32px;flex-shrink:0;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.1);border-radius:var(--r4);cursor:pointer;
+  align-items:center;justify-content:center;color:#fff;
+}
+.hamburger-btn svg{width:16px;height:16px}
+.sidebar-backdrop{display:none;position:fixed;top:50px;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:140}
+.sidebar-backdrop.show{display:block}
+
 @media(max-width:900px){
   .stats{grid-template-columns:1fr 1fr}
   .stats.stats-5{grid-template-columns:repeat(3,1fr)}
   .content{padding:14px 14px 50px}
-  .sidebar{width:58px!important}
-  .sidebar .sidebar-item span,.sidebar .sidebar-toggle span{display:none}
-  .sidebar-item{justify-content:center;padding:10px 0}
-  .sidebar-toggle{justify-content:center;padding:9px 0}
+  .hamburger-btn{display:flex}
+  .sidebar{
+    position:fixed!important;top:50px;left:0;bottom:0;z-index:150;width:230px!important;
+    transform:translateX(-100%);transition:transform .18s ease;box-shadow:4px 0 28px rgba(0,0,0,.45);
+  }
+  .sidebar.mobile-open{transform:translateX(0)}
+  .sidebar .sidebar-item span,.sidebar .sidebar-toggle span{display:inline}
+  .sidebar-item{justify-content:flex-start;padding:10px 11px}
+  .sidebar-foot{display:none}
   .bal-nav{padding:0 8px;overflow-x:auto}
   .bal-tab{padding:0 10px}
 }
@@ -740,8 +758,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 }
 @media(max-width:600px){
   .form-grid,.form-grid-nom,.nom-grid{grid-template-columns:1fr!important}
-  .stats,.stats.stats-5,.stats.stats-3{grid-template-columns:1fr 1fr;gap:8px}
-  .stat{padding:10px 12px}
+  .stats,.stats.stats-5,.stats.stats-3{grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+  .stat{padding:9px 10px}
+  .stat-lbl{font-size:9px;margin-bottom:4px}
+  .stat-val{font-size:16px}
+  .stat-delta{font-size:9.5px}
   .topbar{padding:0 10px;gap:6px}
   .topbar-brand{font-size:12px}
   .topbar-page{display:none}
@@ -749,17 +770,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   .btn-google{padding:0 8px}
   .content{padding:10px 8px 40px}
   .modal,.modal-lg{width:94vw!important;max-width:94vw!important;padding:16px!important}
+  .mlg-head{padding:14px 16px}
+  .mlg-body{padding:14px 16px}
+  .mlg-foot{padding:11px 16px;flex-wrap:wrap}
   .filter-bar{gap:4px}
   .filter-bar input[type="text"]{width:100%!important;margin-top:6px}
   .card-header{flex-wrap:wrap;gap:8px}
   .card-header .card-title{width:100%}
   .card-header>div[style*="margin-left:auto"],.card-header button[style*="margin-left:auto"]{margin-left:0!important;width:100%}
   .card-header>div[style*="margin-left:auto"] .btn,.card-header button[style*="margin-left:auto"]{flex:1;justify-content:center}
-  .sidebar{width:46px!important}
-  #userChip{display:none}
 }
 @media(max-width:420px){
-  .stats,.stats.stats-5,.stats.stats-3{grid-template-columns:1fr}
+  .stats,.stats.stats-5,.stats.stats-3{grid-template-columns:1fr 1fr}
+  .stat-val{font-size:15px}
   .dash-kpi-grid{grid-template-columns:1fr}
 }
 /* ── ASISTENCIA: acordeón semanal / diario ── */
@@ -791,6 +814,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 <div id="appScreen">
   <!-- TOPBAR -->
   <header class="topbar">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileSidebar()" title="Menú" aria-label="Abrir menú">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h12M2 12h12" stroke-linecap="round"/></svg>
+    </button>
     <img src="https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png"
          alt="Conecte" style="height:30px;object-fit:contain;"
          onerror="this.style.display='none';document.getElementById('brandFallback').style.display='flex'">
@@ -830,11 +856,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <button class="btn btn-ghost btn-sm" title="Recargar datos" onclick="loadAll()" style="border-color:rgba(255,255,255,.2);color:#fff;">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8A5.5 5.5 0 112 8M13.5 8V5M13.5 8H10.5"/></svg>
       </button>
-      <div class="user-chip" id="userChipWrap" style="display:none">
-        <span class="user-dot"></span>
-        <span id="userChip">—</span>
-        <button onclick="doLogout()" style="background:none;border:none;color:inherit;cursor:pointer;font-size:11px;padding:0 0 0 6px;" title="Cerrar sesión">✕</button>
-      </div>
     </div>
   </header>
   <!-- OAuth hint bar (shows below topbar if error) -->
@@ -878,6 +899,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         </button>
       </div>
     </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar(false)"></div>
 
     <div class="main-col">
       <!-- SUB-TABS DE COMERCIAL: Cotizaciones, OC, Facturas (fijo arriba, no se mueve al cambiar de vista) -->
@@ -2454,7 +2476,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     <div class="mlg-head">
       <div>
         <div class="mlg-title">🎙️ Modo IA — Cotización por voz</div>
-        <div class="mlg-sub" id="iaSub">Gratis: reconocimiento de voz del navegador + reglas locales</div>
+        <div class="mlg-sub" id="iaSub">Gratis: reconocimiento de voz del navegador + búsqueda difusa con aprendizaje de alias</div>
       </div>
       <button class="close-x" onclick="cerrarModoIA()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
@@ -3270,17 +3292,13 @@ function handleAuthClick() {
 function setGoogleUI(connected) {
   const btn = document.getElementById('googleAuthBtn');
   const txt = document.getElementById('googleBtnTxt');
-  const chip = document.getElementById('userChipWrap');
   if (connected) {
     btn.classList.add('connected');
     txt.textContent = (ST.nombre||'').split(' ')[0] + ' ✓';
-    document.getElementById('userChip').textContent = ST.nombre || ST.usuario;
-    chip.style.display = 'flex';
   } else {
     btn.classList.remove('connected');
     btn.style.color = ''; btn.style.borderColor = '';
     txt.textContent = 'Conectar Google';
-    chip.style.display = 'none';
   }
 }
 
@@ -4378,12 +4396,18 @@ function calcTotals() {
 const IA_UNIDADES = ['Pza','Lote','Mts','Mts²','Mts³','Kg','Día','Lts','Hrs','Tramo','Juego','Servicio'];
 
 let iaState = {
-  paso: 'cliente',       // cliente | contacto | descripcion | concepto | unidad | cantidad | precio | otra_partida | notas_si | notas_texto | resumen | correccion_pregunta
+  paso: 'cliente',       // cliente | contacto | descripcion | concepto | unidad | cantidad | precio | otra_partida | notas_si | notas_texto | resumen | correccion_pregunta | desambiguar
   campos: null,          // {cliente:{id,nombre}, contacto:{id,nombre}, descripcionTrabajo, partidas:[], notas}
   partidaActual: null,   // {concepto, unidad, cantidad, precioUnitario} mientras se captura
   recognition: null,
   escuchando: false,
-  procesando: false
+  procesando: false,
+  speaking: false,          // true mientras el TTS está reproduciendo audio
+  reintentosNoSpeech: 0,    // reintentos automáticos de escucha cuando no se detecta voz
+  candidatos: null,         // lista de coincidencias cuando hay que desambiguar
+  tipoDesambiguar: null,    // 'cliente' | 'contacto'
+  pasoTrasDesambiguar: null,
+  textoAmbiguo: ''          // lo que dijo el usuario y generó la ambigüedad (para aprender el alias)
 };
 
 function iaCamposVacios(){
@@ -4394,7 +4418,9 @@ function iaCamposVacios(){
 function abrirModoIA(){
   if(ST.currentTab && ST.currentTab!=='cot'){ toast('inf','Cambia primero a la pestaña de Cotizaciones.'); return; }
   if(!requireAuth()) return;
-  iaState = { paso:'cliente', campos:iaCamposVacios(), partidaActual:null, recognition:iaState.recognition||null, escuchando:false, procesando:false };
+  iaState = { paso:'cliente', campos:iaCamposVacios(), partidaActual:null, recognition:iaState.recognition||null,
+    escuchando:false, procesando:false, speaking:false, reintentosNoSpeech:0,
+    candidatos:null, tipoDesambiguar:null, pasoTrasDesambiguar:null, textoAmbiguo:'' };
   document.getElementById('iaChatBox').innerHTML='';
   document.getElementById('iaResumenBox').style.display='none';
   document.getElementById('iaResumenBox').innerHTML='';
@@ -4407,6 +4433,7 @@ function abrirModoIA(){
 function cerrarModoIA(){
   try{ iaState.recognition && iaState.recognition.stop(); }catch(e){}
   try{ window.speechSynthesis.cancel(); }catch(e){}
+  iaState.escuchando=false; iaState.speaking=false; iaState.procesando=false;
   document.getElementById('iaModal').classList.remove('open');
 }
 
@@ -4447,6 +4474,8 @@ function crearReconocedorIA(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR) return null;
   const r = new SR();
+  // continuous=false: el navegador espera pausas naturales del habla y entrega
+  // el resultado completo cuando el usuario termina de hablar (no corta frases).
   r.lang='es-MX'; r.continuous=false; r.interimResults=false; r.maxAlternatives=1;
   return r;
 }
@@ -4458,7 +4487,7 @@ function iaMensajeError(codigo){
     case 'service-not-allowed':
       return 'El navegador bloqueó el micrófono, probablemente porque este archivo se abrió como file:// en vez de https:// o localhost. Sube el archivo a un hosting, o escribe tu respuesta abajo.';
     case 'no-speech':
-      return 'No detecté que dijeras algo. Intenta de nuevo hablando un poco más fuerte o cerca del micrófono.';
+      return 'No detecté que dijeras algo. Cuando quieras, intenta de nuevo o escribe tu respuesta abajo.';
     case 'audio-capture':
       return 'No encontré ningún micrófono conectado en esta computadora. Conecta uno o escribe tu respuesta.';
     case 'network':
@@ -4467,33 +4496,102 @@ function iaMensajeError(codigo){
       return 'No se entendió ('+(codigo||'error desconocido')+'). Intenta de nuevo o escribe tu respuesta.';
   }
 }
+/* Botón de micrófono: activación manual explícita del usuario (siempre
+   disponible como respaldo, además de la escucha automática). */
 function toggleIAMic(){
   if(iaState.procesando) return;
   if(iaState.escuchando){ try{ iaState.recognition.stop(); }catch(e){} return; }
+  if(iaState.speaking){ try{ window.speechSynthesis.cancel(); }catch(e){} iaState.speaking=false; }
+  iaState.reintentosNoSpeech=0;
+  iaComenzarReconocimiento(false);
+}
+/* Escucha automática: se dispara sola justo después de que la IA termina de
+   hablar (onend de la síntesis), sin necesidad de que el usuario toque nada.
+   auto=true habilita reintentos silenciosos y mensajes más suaves. */
+function iaEmpezarEscuchaAuto(){
+  if(!document.getElementById('iaModal').classList.contains('open')) return;
+  iaComenzarReconocimiento(true);
+}
+function iaComenzarReconocimiento(auto){
+  if(iaState.procesando || iaState.speaking || iaState.escuchando) return;
   const diag = iaDiagnosticoVoz();
-  if(diag){ toast('err', diag.replace(/^⚠️\s*/,'')); actualizarEstadoIA(diag); return; }
+  if(diag){
+    if(!auto) toast('err', diag.replace(/^⚠️\s*/,''));
+    actualizarEstadoIA('Escribe tu respuesta abajo ⌨️');
+    return;
+  }
   if(!iaState.recognition) iaState.recognition = crearReconocedorIA();
-  if(!iaState.recognition){ toast('err','Tu navegador no soporta reconocimiento de voz. Usa el campo de texto.'); return; }
+  if(!iaState.recognition){
+    actualizarEstadoIA('Tu navegador no soporta voz. Escribe tu respuesta abajo ⌨️');
+    return;
+  }
   const r = iaState.recognition;
   const micBtn = document.getElementById('iaMicBtn');
-  r.onresult = (ev)=>{ const texto = ev.results[0][0].transcript; procesarTurnoIA(texto); };
-  r.onerror = (ev)=>{ iaState.escuchando=false; micBtn.classList.remove('listening'); actualizarEstadoIA(iaMensajeError(ev && ev.error)); };
-  r.onend   = ()=>{ iaState.escuchando=false; micBtn.classList.remove('listening'); };
+  r.onresult = (ev)=>{
+    iaState.reintentosNoSpeech = 0;
+    let texto='';
+    for(let i=0;i<ev.results.length;i++){ texto += ev.results[i][0].transcript; }
+    procesarTurnoIA(texto.trim());
+  };
+  r.onerror = (ev)=>{
+    iaState.escuchando=false; micBtn && micBtn.classList.remove('listening');
+    const code = ev && ev.error;
+    // Recuperación automática: nunca se queda en silencio ni se bloquea. Si
+    // no detectó voz o se interrumpió, reintenta un par de veces sin
+    // molestar; solo después de varios intentos pide usar el teclado.
+    if((code==='no-speech' || code==='aborted') ){
+      iaState.reintentosNoSpeech = (iaState.reintentosNoSpeech||0)+1;
+      if(auto && iaState.reintentosNoSpeech<=2){
+        actualizarEstadoIA('¿Sigues ahí? Escuchando de nuevo…');
+        setTimeout(()=>iaComenzarReconocimiento(true), 500);
+        return;
+      }
+      actualizarEstadoIA('Toca el micrófono cuando quieras responder, o escribe abajo ⌨️');
+      return;
+    }
+    actualizarEstadoIA(iaMensajeError(code));
+  };
+  r.onend = ()=>{ iaState.escuchando=false; micBtn && micBtn.classList.remove('listening'); };
   try{
     r.start();
     iaState.escuchando=true;
-    micBtn.classList.add('listening');
-    actualizarEstadoIA('Escuchando…');
-  }catch(e){ toast('err','No se pudo activar el micrófono: '+e.message); }
+    micBtn && micBtn.classList.add('listening');
+    actualizarEstadoIA('🎙️ Escuchando…');
+  }catch(e){
+    iaState.escuchando=false;
+    if(!auto) toast('err','No se pudo activar el micrófono: '+e.message);
+    actualizarEstadoIA('Toca el micrófono para responder, o escribe abajo ⌨️');
+  }
 }
-function hablarIA(texto){
-  if(!texto || !('speechSynthesis' in window)) return;
-  try{
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(texto);
-    u.lang='es-MX'; u.rate=1.02;
-    window.speechSynthesis.speak(u);
-  }catch(e){}
+/* Síntesis de voz (TTS): garantiza que el reconocimiento de voz SOLO se
+   active después de que la IA terminó de hablar (onend), nunca antes, y
+   nunca mientras hay audio sonando. Si la síntesis falla o el navegador la
+   cancela, reintenta automáticamente en vez de dejar la conversación muda. */
+function hablarIA(texto, cb){
+  if(!texto){ if(cb) cb(); return; }
+  if(!('speechSynthesis' in window)){ if(cb) cb(); return; }
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  iaState.speaking = true;
+  let terminado = false;
+  const finalizar = ()=>{ if(terminado) return; terminado=true; iaState.speaking=false; if(cb) cb(); };
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang='es-MX'; u.rate=1.02;
+  u.onstart = ()=>{ iaState.speaking=true; actualizarEstadoIA('🔊 Hablando…'); };
+  u.onend   = finalizar;
+  u.onerror = ()=>{
+    if(!u._retried){
+      u._retried = true;
+      try{ window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
+      catch(e){ finalizar(); }
+    } else finalizar();
+  };
+  try{ window.speechSynthesis.speak(u); }
+  catch(e){ finalizar(); return; }
+  // Salvaguarda: algunos navegadores a veces nunca disparan onend (bug
+  // conocido). Si eso pasa, seguimos la conversación tras un tiempo prudente
+  // en vez de quedarnos bloqueados en silencio para siempre.
+  const esperaMax = Math.max(1500, texto.length*80) + 4000;
+  setTimeout(()=>{ if(!terminado) finalizar(); }, esperaMax);
 }
 
 /* ─── Utilidades de texto (sin IA, solo reglas) ─── */
@@ -4513,13 +4611,40 @@ function iaLevenshtein(a,b){
   }
   return dp[m][n];
 }
+/* Equivalencias fonéticas del español mexicano hablado: b/v, s/z/c/k/q, ll/y,
+   h muda, etc. Se usan como una segunda pasada de comparación (además de la
+   comparación literal) para tolerar errores típicos del reconocimiento de
+   voz y de pronunciación imperfecta. */
+function iaFonetizar(s){
+  let t = iaNormalizar(s);
+  t = t.replace(/\bh/g,'').replace(/h\b/g,'') // h al inicio/fin de palabra (muda)
+       .replace(/qu/g,'c')
+       .replace(/ll/g,'y')
+       .replace(/v/g,'b')
+       .replace(/z/g,'s')
+       .replace(/k/g,'c')
+       .replace(/x/g,'s')
+       .replace(/\s+/g,' ').trim();
+  return t;
+}
 function iaSimilitud(a,b){
-  a=iaNormalizar(a); b=iaNormalizar(b);
-  if(!a||!b) return 0;
-  if(a===b) return 1;
-  if(a.includes(b)||b.includes(a)) return 0.9;
-  const dist=iaLevenshtein(a,b);
-  return 1-dist/Math.max(a.length,b.length);
+  const an=iaNormalizar(a), bn=iaNormalizar(b);
+  if(!an||!bn) return 0;
+  if(an===bn) return 1;
+  let score=0;
+  if(an.includes(bn)||bn.includes(an)) score=Math.max(score,0.9);
+  const dist=iaLevenshtein(an,bn);
+  score=Math.max(score, 1-dist/Math.max(an.length,bn.length));
+  const af=iaFonetizar(a), bf=iaFonetizar(b);
+  if(af&&bf){
+    if(af===bf) score=Math.max(score,0.95);
+    else if(af.includes(bf)||bf.includes(af)) score=Math.max(score,0.88);
+    else{
+      const distf=iaLevenshtein(af,bf);
+      score=Math.max(score, 1-distf/Math.max(af.length,bf.length));
+    }
+  }
+  return score;
 }
 function iaMejorCoincidencia(texto, lista, getNombre, umbral){
   umbral = umbral==null?0.45:umbral;
@@ -4529,6 +4654,103 @@ function iaMejorCoincidencia(texto, lista, getNombre, umbral){
     if(score>mejorScore){ mejorScore=score; mejor=item; }
   });
   return mejorScore>=umbral ? mejor : null;
+}
+
+/* ─── Títulos profesionales a ignorar al comparar nombres de contacto ─── */
+const IA_TITULOS = ['ing','inge','ingeniero','ingeniera','lic','licenciado','licenciada',
+  'arq','arquitecto','arquitecta','biol','biologo','bioioga','doctor','doctora','dra','dr',
+  'don','dona','sr','sra','srita','cp','mtro','mtra'];
+function iaQuitarTitulos(s){
+  let t=iaNormalizar(s);
+  IA_TITULOS.forEach(tt=>{ t=t.replace(new RegExp('\\b'+tt+'\\b','g'),' '); });
+  return t.replace(/\s+/g,' ').trim();
+}
+
+/* ─── Búsqueda difusa: top-N coincidencias ordenadas por score ─── */
+function iaBuscarTop(texto, lista, getNombre, opts){
+  opts=opts||{};
+  const textoProc = opts.quitarTitulos ? iaQuitarTitulos(texto) : texto;
+  return (lista||[]).map(item=>{
+    const nombre=getNombre(item);
+    const nombreProc = opts.quitarTitulos ? iaQuitarTitulos(nombre) : nombre;
+    return {item, score: iaSimilitud(textoProc, nombreProc)};
+  }).sort((a,b)=>b.score-a.score);
+}
+
+/* Resuelve una entidad (cliente o contacto) contra una lista:
+   - directo: coincidencia clara (confianza alta o única por encima del umbral)
+   - multiple: varias coincidencias parecidas → hay que preguntar cuál
+   - nuevo: no se encontró nada parecido, se toma el texto tal cual */
+function iaResolver(texto, lista, getNombre, opts){
+  opts=opts||{};
+  const umbralAuto = opts.umbralAuto==null?0.90:opts.umbralAuto;
+  const umbralMinimo = opts.umbralMinimo==null?0.45:opts.umbralMinimo;
+  const umbralMultiple = opts.umbralMultiple==null?0.55:opts.umbralMultiple;
+  const scored = iaBuscarTop(texto, lista, getNombre, opts);
+  if(!scored.length || !scored[0].score) return {tipo:'nuevo'};
+  const top = scored[0];
+  if(top.score>=umbralAuto) return {tipo:'directo', item:top.item, score:top.score};
+  const cercanos = scored.filter(s=>s.score>=umbralMultiple && s.score>=top.score-0.18).slice(0,5);
+  if(cercanos.length>=2) return {tipo:'multiple', candidatos:cercanos.map(c=>c.item)};
+  if(top.score>=umbralMinimo) return {tipo:'directo', item:top.item, score:top.score};
+  return {tipo:'nuevo'};
+}
+
+/* ─── Alias aprendidos (localStorage) ─── */
+function iaCargarAliasesClientes(){ try{ return JSON.parse(localStorage.getItem('ia_alias_clientes')||'{}'); }catch(e){ return {}; } }
+function iaGuardarAliasCliente(textoDicho, idCliente){
+  if(!textoDicho||!idCliente) return;
+  const key=iaNormalizar(textoDicho); if(!key) return;
+  const m=iaCargarAliasesClientes(); m[key]=idCliente;
+  try{ localStorage.setItem('ia_alias_clientes', JSON.stringify(m)); }catch(e){}
+}
+function iaCargarAliasesContactos(){ try{ return JSON.parse(localStorage.getItem('ia_alias_contactos')||'{}'); }catch(e){ return {}; } }
+function iaGuardarAliasContacto(idCliente, textoDicho, idContacto){
+  if(!idCliente||!textoDicho||!idContacto) return;
+  const key=iaNormalizar(textoDicho); if(!key) return;
+  const m=iaCargarAliasesContactos();
+  m[idCliente]=m[idCliente]||{};
+  m[idCliente][key]=idContacto;
+  try{ localStorage.setItem('ia_alias_contactos', JSON.stringify(m)); }catch(e){}
+}
+
+/* Resuelve el CLIENTE: primero busca en alias aprendidos, luego fuzzy+fonético
+   contra todo el catálogo de clientes. */
+function iaResolverCliente(texto){
+  const aliasMap=iaCargarAliasesClientes();
+  const key=iaNormalizar(texto);
+  if(key && aliasMap[key] && ST.clientes && ST.clientes[aliasMap[key]]){
+    const c=ST.clientes[aliasMap[key]];
+    return {tipo:'directo', item:{id:c.id,nombre:c.nombre}, porAlias:true, score:1};
+  }
+  return iaResolver(texto, Object.values(ST.clientes||{}), c=>c.nombre, {umbralMinimo:0.45, umbralMultiple:0.55});
+}
+/* Resuelve el CONTACTO — regla obligatoria: SOLO busca entre los contactos
+   del cliente activo (idCliente). Ignora títulos profesionales. */
+function iaResolverContacto(texto, idCliente){
+  if(!idCliente) return {tipo:'nuevo'};
+  const aliasMap=iaCargarAliasesContactos();
+  const key=iaNormalizar(texto);
+  const mapCli=aliasMap[idCliente]||{};
+  if(key && mapCli[key]){
+    const c=(ST.contactosList||[]).find(x=>x.id===mapCli[key] && x.id_cli===idCliente);
+    if(c) return {tipo:'directo', item:c, porAlias:true, score:1};
+  }
+  const contactosCli=(ST.contactosList||[]).filter(c=>c.id_cli===idCliente);
+  return iaResolver(texto, contactosCli, c=>c.nombre, {umbralMinimo:0.40, umbralMultiple:0.50, quitarTitulos:true});
+}
+/* Detecta "el primero / la segunda / opción 2 / dos" etc. → índice 0-based */
+function iaDetectarOrdinal(texto){
+  const t=iaNormalizar(texto);
+  const map={primero:0,primer:0,primera:0,uno:0,una:0,
+    segundo:1,segunda:1,dos:1,
+    tercero:2,tercera:2,tercer:2,tres:2,
+    cuarto:3,cuarta:3,cuatro:3,
+    quinto:4,quinta:4,cinco:4};
+  for(const k in map){ if(new RegExp('\\b'+k+'\\b').test(t)) return map[k]; }
+  const mNum=t.match(/\b([1-9])\b/);
+  if(mNum) return parseInt(mNum[1],10)-1;
+  return null;
 }
 function iaEsAfirmativo(texto){
   const t=' '+iaNormalizar(texto)+' ';
@@ -4595,8 +4817,24 @@ function iaPreguntaOtraPartida(){ return '¿Deseas agregar otra partida?'; }
 function iaPreguntaNotasSi(){ return '¿Deseas agregar alguna nota?'; }
 function iaPreguntaNotasTexto(){ return '¿Cuáles son las notas?'; }
 
-/* ─── Avanzar de paso mostrando la siguiente pregunta ─── */
-function iaAvanzar(nuevoPaso){
+/* Arma una versión hablada, breve, del resumen (para leerlo en voz alta antes
+   de pedir la confirmación final). */
+function iaResumenHablado(campos){
+  const partes=[];
+  partes.push('Cliente: '+(campos.cliente?.nombre||'sin definir')+'.');
+  partes.push('Contacto: '+(campos.contacto?.nombre||'sin definir')+'.');
+  if(campos.descripcionTrabajo) partes.push('Descripción: '+campos.descripcionTrabajo+'.');
+  const n=(campos.partidas||[]).length;
+  partes.push(n===1 ? 'Se capturó una partida.' : `Se capturaron ${n} partidas.`);
+  if(campos.notas) partes.push('Notas: '+campos.notas+'.');
+  return partes.join(' ');
+}
+
+/* ─── Avanzar de paso mostrando la siguiente pregunta ───
+   prefijo: texto de confirmación de lo que se entendió en el turno anterior,
+   que se lee junto con la siguiente pregunta en una sola frase continua
+   (evita silencios y hace la conversación más fluida). */
+function iaAvanzar(nuevoPaso, prefijo){
   iaState.paso = nuevoPaso;
   let texto = '';
   switch(nuevoPaso){
@@ -4610,18 +4848,40 @@ function iaAvanzar(nuevoPaso){
     case 'otra_partida':  texto = iaPreguntaOtraPartida(); break;
     case 'notas_si':      texto = iaPreguntaNotasSi(); break;
     case 'notas_texto':   texto = iaPreguntaNotasTexto(); break;
-    case 'resumen':       mostrarResumenIA(iaState.campos,false); actualizarEstadoIA('Revisa el resumen abajo'); return;
+    case 'resumen': {
+      mostrarResumenIA(iaState.campos,false);
+      const full = (prefijo?prefijo+' ':'') + iaResumenHablado(iaState.campos) +
+        ' ¿Todo está correcto? Di "sí" para llenar el formulario, o "no" para corregir algo.';
+      agregarBurbujaIA('assistant', full);
+      hablarIA(full, iaEmpezarEscuchaAuto);
+      return;
+    }
   }
+  const full = (prefijo?prefijo+' ':'') + texto;
+  agregarBurbujaIA('assistant', full);
+  actualizarEstadoIA('🔊 Hablando…');
+  hablarIA(full, iaEmpezarEscuchaAuto);
+}
+
+/* Pregunta de desambiguación cuando hay varias coincidencias parecidas
+   (cliente o contacto). Guarda el estado necesario para resolverla en el
+   siguiente turno y para aprender el alias una vez resuelta. */
+function iaPreguntarDesambiguacion(tipo, candidatos){
+  iaState.paso='desambiguar';
+  iaState.tipoDesambiguar=tipo;
+  iaState.candidatos=candidatos;
+  const etiqueta = tipo==='cliente' ? 'clientes' : 'contactos';
+  const nombres = candidatos.map((c,i)=>(i+1)+'. '+c.nombre).join(', ');
+  const texto = `Encontré varios ${etiqueta} parecidos: ${nombres}. ¿Cuál deseas seleccionar? Puedes decir el nombre completo o el número de la opción.`;
   agregarBurbujaIA('assistant', texto);
-  hablarIA(texto);
-  actualizarEstadoIA('Toca el micrófono para responder');
+  actualizarEstadoIA('🔊 Hablando…');
+  hablarIA(texto, iaEmpezarEscuchaAuto);
 }
 
 function iniciarConversacionIA(){
-  const saludo = 'Hola. Voy a ayudarte a crear una nueva cotización. Iré haciéndote preguntas, puedes responder con naturalidad. Si algún dato no lo sabes, simplemente di "no sé" o "siguiente". Comencemos.';
+  const saludo = 'Hola. Voy a ayudarte a crear una nueva cotización por voz. Te iré haciendo preguntas, contesta con naturalidad; si algún dato no lo sabes, di "no sé" o "siguiente". Comencemos.';
   agregarBurbujaIA('assistant', saludo);
-  hablarIA(saludo);
-  setTimeout(()=>iaAvanzar('cliente'), 300);
+  hablarIA(saludo, ()=>iaAvanzar('cliente'));
 }
 
 /* ─── Procesar cada turno del usuario (motor de reglas local) ─── */
@@ -4635,22 +4895,82 @@ function procesarTurnoIA(textoUsuario){
   const paso = iaState.paso;
 
   if(paso==='cliente'){
-    if(iaEsNoSe(textoUsuario)){ campos.cliente={id:'',nombre:''}; }
-    else {
-      const m = iaMejorCoincidencia(textoUsuario, Object.values(ST.clientes||{}), c=>c.nombre);
-      campos.cliente = m ? {id:m.id, nombre:m.nombre} : {id:'', nombre:iaCapitalizar(textoUsuario)};
+    iaState.procesando=false;
+    if(iaEsNoSe(textoUsuario)){ campos.cliente={id:'',nombre:''}; iaAvanzar('contacto'); return; }
+    const r = iaResolverCliente(textoUsuario);
+    if(r.tipo==='directo'){
+      campos.cliente = {id:r.item.id, nombre:r.item.nombre};
+      iaGuardarAliasCliente(textoUsuario, r.item.id);
+      // Regla obligatoria: al fijar/cambiar el cliente, el contacto se
+      // reinicia — las búsquedas de contacto solo deben ocurrir dentro del
+      // nuevo cliente activo, nunca reutilizar un contacto de otro cliente.
+      campos.contacto = {id:'',nombre:''};
+      iaAvanzar('contacto', `Entendido, cliente: ${r.item.nombre}.`);
+      return;
     }
-    iaState.procesando=false; iaAvanzar('contacto'); return;
+    if(r.tipo==='multiple'){
+      iaState.textoAmbiguo = textoUsuario;
+      iaState.pasoTrasDesambiguar = 'contacto';
+      iaPreguntarDesambiguacion('cliente', r.candidatos);
+      return;
+    }
+    campos.cliente = {id:'', nombre:iaCapitalizar(textoUsuario)};
+    campos.contacto = {id:'',nombre:''};
+    iaAvanzar('contacto');
+    return;
   }
 
   if(paso==='contacto'){
-    if(iaEsNoSe(textoUsuario)){ campos.contacto={id:'',nombre:''}; }
-    else {
-      const contactosCli = (ST.contactosList||[]).filter(c=>c.id_cli===campos.cliente.id);
-      const m = iaMejorCoincidencia(textoUsuario, contactosCli, c=>c.nombre);
-      campos.contacto = m ? {id:m.id, nombre:m.nombre} : {id:'', nombre:iaCapitalizar(textoUsuario)};
+    iaState.procesando=false;
+    if(iaEsNoSe(textoUsuario)){ campos.contacto={id:'',nombre:''}; iaAvanzar('descripcion'); return; }
+    // Regla obligatoria: la búsqueda de contacto ocurre ÚNICAMENTE dentro
+    // de los contactos del cliente activo (campos.cliente.id).
+    const r = iaResolverContacto(textoUsuario, campos.cliente.id);
+    if(r.tipo==='directo'){
+      campos.contacto = {id:r.item.id, nombre:r.item.nombre};
+      if(campos.cliente.id) iaGuardarAliasContacto(campos.cliente.id, textoUsuario, r.item.id);
+      iaAvanzar('descripcion', `Entendido, contacto: ${r.item.nombre}.`);
+      return;
     }
-    iaState.procesando=false; iaAvanzar('descripcion'); return;
+    if(r.tipo==='multiple'){
+      iaState.textoAmbiguo = textoUsuario;
+      iaState.pasoTrasDesambiguar = 'descripcion';
+      iaPreguntarDesambiguacion('contacto', r.candidatos);
+      return;
+    }
+    campos.contacto = {id:'', nombre:iaCapitalizar(textoUsuario)};
+    iaAvanzar('descripcion');
+    return;
+  }
+
+  if(paso==='desambiguar'){
+    iaState.procesando=false;
+    const esContacto = iaState.tipoDesambiguar==='contacto';
+    let elegido=null;
+    const idx = iaDetectarOrdinal(textoUsuario);
+    if(idx!=null && iaState.candidatos[idx]) elegido=iaState.candidatos[idx];
+    if(!elegido){
+      const scored = iaBuscarTop(textoUsuario, iaState.candidatos, c=>c.nombre, {quitarTitulos:esContacto});
+      if(scored.length && scored[0].score>=0.5) elegido = scored[0].item;
+    }
+    if(!elegido){
+      const texto='No logré identificar la opción. Dime el nombre completo o el número de la lista: uno, dos, tres…';
+      agregarBurbujaIA('assistant', texto);
+      hablarIA(texto, iaEmpezarEscuchaAuto);
+      return;
+    }
+    if(esContacto){
+      campos.contacto = {id:elegido.id, nombre:elegido.nombre};
+      if(campos.cliente.id) iaGuardarAliasContacto(campos.cliente.id, iaState.textoAmbiguo, elegido.id);
+    } else {
+      campos.cliente = {id:elegido.id, nombre:elegido.nombre};
+      campos.contacto = {id:'',nombre:''};
+      iaGuardarAliasCliente(iaState.textoAmbiguo, elegido.id);
+    }
+    const siguientePaso = iaState.pasoTrasDesambiguar || (esContacto?'descripcion':'contacto');
+    iaState.candidatos=null; iaState.tipoDesambiguar=null; iaState.pasoTrasDesambiguar=null; iaState.textoAmbiguo='';
+    iaAvanzar(siguientePaso, `Perfecto, seleccioné ${elegido.nombre}.`);
+    return;
   }
 
   if(paso==='descripcion'){
@@ -4714,7 +5034,7 @@ function procesarTurnoIA(textoUsuario){
       confirmarLlenadoIA();
     } else {
       const texto='No te entendí, ¿todo está correcto? Responde sí o no, o usa los botones de abajo.';
-      agregarBurbujaIA('assistant', texto); hablarIA(texto);
+      agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
     }
     return;
   }
@@ -4722,7 +5042,13 @@ function procesarTurnoIA(textoUsuario){
   if(paso==='correccion_pregunta'){
     const t = iaNormalizar(textoUsuario);
     iaState.procesando=false;
-    if(t.includes('client'))       iaAvanzar('cliente');
+    if(t.includes('client')){
+      // Al corregir el cliente, el contacto queda obsoleto (pertenece al
+      // cliente anterior) y debe volver a preguntarse dentro del nuevo
+      // contexto de cliente.
+      campos.contacto = {id:'',nombre:''};
+      iaAvanzar('cliente');
+    }
     else if(t.includes('contact')) iaAvanzar('contacto');
     else if(t.includes('descrip')) iaAvanzar('descripcion');
     else if(t.includes('nota'))    iaAvanzar('notas_si');
@@ -4731,7 +5057,7 @@ function procesarTurnoIA(textoUsuario){
       iaAvanzar('concepto');
     } else {
       const texto='Dime qué quieres corregir: cliente, contacto, descripción, una partida o las notas.';
-      agregarBurbujaIA('assistant', texto); hablarIA(texto);
+      agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
     }
     return;
   }
@@ -4743,6 +5069,9 @@ function enviarIATexto(){
   const v=inp.value.trim();
   if(!v) return;
   inp.value='';
+  try{ iaState.recognition && iaState.escuchando && iaState.recognition.stop(); }catch(e){}
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  iaState.speaking=false;
   procesarTurnoIA(v);
 }
 
@@ -4768,10 +5097,10 @@ function mostrarResumenIA(campos, autoLlenar){
 }
 function corregirIA(){
   document.getElementById('iaResumenBox').style.display='none';
-  const texto='Sin problema. Dime qué quieres corregir: cliente, contacto, descripción, una partida o las notas.';
-  agregarBurbujaIA('assistant', texto); hablarIA(texto);
   iaState.paso='correccion_pregunta';
-  actualizarEstadoIA('Toca el micrófono para responder');
+  const texto='Sin problema. Dime qué quieres corregir: cliente, contacto, descripción, una partida o las notas.';
+  agregarBurbujaIA('assistant', texto);
+  hablarIA(texto, iaEmpezarEscuchaAuto);
 }
 function confirmarLlenadoIA(){
   llenarFormularioDesdeIA(iaState.campos);
@@ -9295,6 +9624,8 @@ function mainAdd(){
    "Comercial" agrupa Cotizaciones, Facturas y OC Clientes.
    "Balance" es su propia sección con Dashboard, Ingresos y Salidas. */
 function switchSection(section){
+  // En móvil, cerrar el menú hamburguesa al elegir una sección
+  toggleMobileSidebar(false);
   // Al entrar a un módulo principal desde el menú lateral, siempre se abre
   // su vista por defecto (Comercial → Cotizaciones, Balance → Dashboard),
   // sin importar en qué sub-pestaña se haya quedado la última vez.
@@ -9451,6 +9782,14 @@ function focusAsisMap(lat,lng,el){
 }
 
 /* ─── MENÚ LATERAL RETRÁCTIL (solo iconos cuando está contraído) ─── */
+function toggleMobileSidebar(force){
+  const sidebar=document.getElementById('sidebar');
+  const backdrop=document.getElementById('sidebarBackdrop');
+  if(!sidebar) return;
+  const open = typeof force==='boolean' ? force : !sidebar.classList.contains('mobile-open');
+  sidebar.classList.toggle('mobile-open', open);
+  if(backdrop) backdrop.classList.toggle('show', open);
+}
 function toggleSidebar(force){
   const sidebar=document.getElementById('sidebar');
   if(!sidebar) return;
