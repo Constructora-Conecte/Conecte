@@ -46,6 +46,10 @@
   --blue-p:  rgba(99,179,237,.15);
   --orange:  #ed8936;
   --orange-p:rgba(237,137,54,.15);
+  --purple:  #9f7aea;
+  --purple-p:rgba(159,122,234,.15);
+  --ia-glow: #f2ea02;
+  --ia-glow-d: #cfc900;
   --font:'Inter',sans-serif;
   --mono:'JetBrains Mono',monospace;
   --r4:4px; --r8:8px; --r12:12px;
@@ -155,6 +159,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--bg3);color:var(--text)}
 .btn-sm{height:26px;padding:0 10px;font-size:12px}
+/* Modo IA — botón de alto contraste para accesibilidad (usuarios con baja visión) */
+.btn-ia-highvis{
+  background:var(--ia-glow);color:#141414;border:1px solid var(--ia-glow-d);
+  font-weight:700;box-shadow:0 0 0 2px rgba(242,234,2,.18);
+}
+.btn-ia-highvis:hover{background:var(--ia-glow-d);color:#141414}
+.btn-ia-highvis svg{stroke:#141414}
+body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 .btn-icon{
   width:28px;height:28px;border:1px solid var(--border);background:transparent;
   border-radius:var(--r4);cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -361,6 +373,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .pill-acep{background:var(--green-p);color:var(--green)}
 .pill-rech{background:var(--red-p);color:var(--red)}
 .pill-seg{background:var(--orange-p);color:var(--orange)}
+.pill-canceladmin{background:var(--purple-p);color:var(--purple)}
 
 /* Editable status <select> that keeps the same pill colors as the read-only
    pill (used in Comercial/Cotizaciones and Facturas so status can be changed
@@ -401,6 +414,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .group-row.g-rech td{ background:var(--red-p); color:var(--red); }
 .group-row.g-blue td{ background:var(--blue-p); color:var(--blue); }
 .group-row.g-orange td{ background:var(--orange-p); color:var(--orange); }
+.group-row.g-purple td{ background:var(--purple-p); color:var(--purple); }
 .group-row .g-sum{ font-weight:500; opacity:.75; margin-left:8px; font-size:10.5px; }
 
 /* Password category badge + category group headers (Sistemas > Contraseñas) */
@@ -989,6 +1003,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <button class="fchip" onclick="setFilter('Seguimiento 1',this)">Seguimiento</button>
         <button class="fchip" id="cotChipAcep" onclick="setFilter('Aceptado',this)">Aceptado</button>
         <button class="fchip" onclick="setFilter('Rechazado',this)">Rechazado</button>
+        <button class="fchip" onclick="setFilter('Cancelación Administrativa',this)">Cancelación Admin.</button>
         <span class="fsep"></span>
         <input type="text" id="searchBar" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Folio, cliente, contacto, descripción u OC…" oninput="onSearch(this.value)">
         <select class="fsort" onchange="setSort(this.value)">
@@ -997,6 +1012,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <option value="fecha-asc">Fecha ↑</option>
           <option value="monto-desc">Monto ↓</option>
           <option value="monto-asc">Monto ↑</option>
+          <option value="actualizacion-desc">Actualización más reciente</option>
         </select>
       </div>
 
@@ -1007,7 +1023,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="cotCount">0</span>
           <span class="card-sub" id="lastUpd"></span>
           <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" id="iaModeBtn" onclick="abrirModoIA()" title="Modo IA — crear cotización hablando">
+            <button class="btn btn-ia-highvis btn-sm" id="iaModeBtn" onclick="abrirModoIA()" title="Modo IA — crear cotización hablando">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M8 1.5a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0v-4a2 2 0 0 1 2-2Z"/><path d="M4 8a4 4 0 0 0 8 0M8 12v2.5M6 14.5h4"/></svg>
               <span>Modo IA</span>
             </button>
@@ -3219,7 +3235,7 @@ function flashSyncIndicator(){
 
 /* ─── LOGO (para PDF) ─── */
 function preloadLogo(){
-  const url='https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/Logo.png';
+  const url='https://raw.githubusercontent.com/Constructora-Conecte/Conecte/main/Imagenes/logotiponuev.png';
   const img=new Image();
   img.crossOrigin='Anonymous';
   img.onload=()=>{
@@ -3748,6 +3764,10 @@ async function loadAll() {
         desc: r[8]||'', notas: r[9]||'', creacion: r[10]||'', id_usr: r[11]||'',
         id_con: r[12]||'', vigencia: r[13]||'', estatus: r[14]||'Pendiente',
         fechaEnvio: r[16]||'',
+        // Timestamps completos (fecha+hora) para poder ordenar por creación/actualización
+        // más reciente incluso cuando varias cotizaciones se crean el mismo día.
+        // Se guardan en columnas H y P, que antes estaban sin usar.
+        creacionTS: r[7]||'', actualizacionTS: r[15]||'',
       };
     }).filter(c=>c.id);
 
@@ -3941,7 +3961,10 @@ function updateStats() {
   const all  = ST.cotizaciones;
   const acep = all.filter(c=>c.estatus==='Aceptado').length;
   const pend = all.filter(c=>c.estatus==='Pendiente').length;
-  const mont = all.reduce((s,c)=>s+c.total,0);
+  // El monto total del dashboard solo debe reflejar cotizaciones vigentes/activas:
+  // se excluyen las Rechazadas y las de Cancelación Administrativa.
+  const mont = all.filter(c=>c.estatus!=='Rechazado' && c.estatus!=='Cancelación Administrativa')
+    .reduce((s,c)=>s+c.total,0);
   const pct  = all.length ? Math.round(acep/all.length*100) : 0;
   document.getElementById('sTotal').textContent = all.length;
   document.getElementById('sAcep').textContent  = acep;
@@ -3979,19 +4002,20 @@ function applyFilter() {
         ocTxt.toLowerCase().includes(q);
     });
   }
-  const cotEstatusOrder={Pendiente:0,Enviado:1,'Seguimiento 1':2,'Seguimiento 2':3,Aceptado:4,Rechazado:5};
+  const cotEstatusOrder={Pendiente:0,Enviado:1,'Seguimiento 1':2,'Seguimiento 2':3,Aceptado:4,Rechazado:5,'Cancelación Administrativa':6};
   rows.sort((a,b)=>{
     switch(ST.sort){
-      case 'fecha-asc':  return cmpDate(a.fecha,b.fecha);
-      case 'fecha-desc': return cmpDate(b.fecha,a.fecha);
+      case 'fecha-asc':  return cmpCreacion(a,b);
+      case 'fecha-desc': return cmpCreacion(b,a);
       case 'monto-desc': return b.total-a.total;
       case 'monto-asc':  return a.total-b.total;
+      case 'actualizacion-desc': return cmpActualizacion(b,a);
       default:
-        // Agrupado: Pendiente -> Enviado -> Seguimiento -> Aceptado -> Rechazado,
-        // y dentro de cada grupo, más reciente primero.
+        // Agrupado: Pendiente -> Enviado -> Seguimiento -> Aceptado -> Rechazado -> Cancelación Administrativa,
+        // y dentro de cada grupo, la más reciente (por fecha y hora de creación) primero.
         const oa=cotEstatusOrder[a.estatus]??6, ob=cotEstatusOrder[b.estatus]??6;
         if(oa!==ob) return oa-ob;
-        return cmpDate(b.fecha,a.fecha);
+        return cmpCreacion(b,a);
     }
   });
   ST.filtered=rows;
@@ -3999,6 +4023,21 @@ function applyFilter() {
 }
 
 function cmpDate(a,b){ return new Date(a)-new Date(b); }
+/* Compara por fecha+hora de creación real (creacionTS). Si algún registro
+   antiguo no tiene ese timestamp (creado antes de esta función), se usa como
+   respaldo su fecha de creación/fecha de cotización, para que nunca queden
+   fuera del orden. Así la cotización creada hace unos segundos siempre queda
+   primero, sin importar que otra tenga la misma fecha de calendario. */
+function cmpCreacion(a,b){
+  const ta=Date.parse(a.creacionTS)||new Date(a.creacion||a.fecha).getTime()||0;
+  const tb=Date.parse(b.creacionTS)||new Date(b.creacion||b.fecha).getTime()||0;
+  return ta-tb;
+}
+function cmpActualizacion(a,b){
+  const ta=Date.parse(a.actualizacionTS)||Date.parse(a.creacionTS)||new Date(a.creacion||a.fecha).getTime()||0;
+  const tb=Date.parse(b.actualizacionTS)||Date.parse(b.creacionTS)||new Date(b.creacion||b.fecha).getTime()||0;
+  return ta-tb;
+}
 
 /* ─── RENDER TABLE ─── */
 function renderTable() {
@@ -4021,6 +4060,7 @@ function renderTable() {
     'Seguimiento 2':{label:'SEGUIMIENTO 2',cls:'g-orange'},
     Aceptado:{label:'ACEPTADO',cls:'g-acep'},
     Rechazado:{label:'RECHAZADO',cls:'g-rech'},
+    'Cancelación Administrativa':{label:'CANCELACIÓN ADMINISTRATIVA',cls:'g-purple'},
   };
   let lastGroup=null;
 
@@ -4048,7 +4088,7 @@ function renderTable() {
       <td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:500">${fmtTot}</td>
       <td>
         <select class="status-select ${pClass}" onchange="changeCotEstatus(${r._row},this.value,this)">
-          ${['Pendiente','Enviado','Seguimiento 1','Seguimiento 2','Aceptado','Rechazado'].map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${esc(s)}</option>`).join('')}
+          ${['Pendiente','Enviado','Seguimiento 1','Seguimiento 2','Aceptado','Rechazado','Cancelación Administrativa'].map(s=>`<option value="${esc(s)}" ${r.estatus===s?'selected':''}>${esc(s)}</option>`).join('')}
         </select>
       </td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${fmtDate(r.fecha)}</td>
@@ -4073,6 +4113,9 @@ function renderTable() {
           </button>
           <button class="btn-icon" title="PDF" onclick="quickPDF('${esc(r.id)}')">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/><path d="M10 1.5v3H13"/></svg>
+          </button>
+          <button class="btn-icon" title="Duplicar" onclick="duplicateCot('${esc(r.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="5.5" width="8" height="9" rx="1.2"/><path d="M3 10.5V3.2A1.2 1.2 0 0 1 4.2 2h6.3"/></svg>
           </button>
           <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(r.id)}',${r._row})">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
@@ -4396,9 +4439,9 @@ function calcTotals() {
 const IA_UNIDADES = ['Pza','Lote','Mts','Mts²','Mts³','Kg','Día','Lts','Hrs','Tramo','Juego','Servicio'];
 
 let iaState = {
-  paso: 'cliente',       // cliente | contacto | descripcion | concepto | unidad | cantidad | precio | otra_partida | notas_si | notas_texto | resumen | correccion_pregunta | desambiguar
+  paso: 'cliente',       // cliente | contacto | descripcion | concepto | unidad | cantidad | precio | otra_partida | notas_si | notas_texto | resumen | correccion_pregunta | correccion_partida_cual | correccion_partida_campo | desambiguar
   campos: null,          // {cliente:{id,nombre}, contacto:{id,nombre}, descripcionTrabajo, partidas:[], notas}
-  partidaActual: null,   // {concepto, unidad, cantidad, precioUnitario} mientras se captura
+  partidaActual: null,   // {concepto, unidad, cantidad, precioUnitario} mientras se captura una partida NUEVA
   recognition: null,
   escuchando: false,
   procesando: false,
@@ -4407,7 +4450,16 @@ let iaState = {
   candidatos: null,         // lista de coincidencias cuando hay que desambiguar
   tipoDesambiguar: null,    // 'cliente' | 'contacto'
   pasoTrasDesambiguar: null,
-  textoAmbiguo: ''          // lo que dijo el usuario y generó la ambigüedad (para aprender el alias)
+  textoAmbiguo: '',         // lo que dijo el usuario y generó la ambigüedad (para aprender el alias)
+  /* ── Edición inteligente / corrección conversacional ──
+     Cuando el usuario, al final del formulario, pide corregir algo, la IA
+     entra en "modo edición": localiza exactamente el dato señalado,
+     pregunta únicamente lo necesario para corregirlo y regresa al resumen
+     sin repetir preguntas ya confirmadas. */
+  enCorreccion: false,        // true mientras se está corrigiendo algo (evita reencadenar el flujo normal de captura)
+  modoEdicion: null,          // null | 'partida_campo' (un solo dato de una partida) | 'partida_completa' (recaptura la partida)
+  campoPartidaObjetivo: null, // 'concepto' | 'unidad' | 'cantidad' | 'precio' — qué dato de la partida se está corrigiendo
+  partidaEditIndex: null      // índice (0-based) de la partida que se está corrigiendo; null = partida nueva
 };
 
 function iaCamposVacios(){
@@ -4420,7 +4472,8 @@ function abrirModoIA(){
   if(!requireAuth()) return;
   iaState = { paso:'cliente', campos:iaCamposVacios(), partidaActual:null, recognition:iaState.recognition||null,
     escuchando:false, procesando:false, speaking:false, reintentosNoSpeech:0,
-    candidatos:null, tipoDesambiguar:null, pasoTrasDesambiguar:null, textoAmbiguo:'' };
+    candidatos:null, tipoDesambiguar:null, pasoTrasDesambiguar:null, textoAmbiguo:'',
+    enCorreccion:false, modoEdicion:null, campoPartidaObjetivo:null, partidaEditIndex:null };
   document.getElementById('iaChatBox').innerHTML='';
   document.getElementById('iaResumenBox').style.display='none';
   document.getElementById('iaResumenBox').innerHTML='';
@@ -4805,6 +4858,69 @@ function iaTextoANumero(texto){
   return huboPalabraNumerica ? total : null;
 }
 
+/* ─── Reconocimiento inteligente de unidades ───
+   Cuando la IA está escuchando el campo Unidad, únicamente debe identificar
+   la unidad de medida existente en el catálogo, IGNORANDO por completo
+   cualquier cantidad que el usuario pronuncie junto con ella (p.ej. "diez
+   kilogramos" → unidad = Kg, se descarta "diez"). Siempre guarda el valor
+   oficial exacto registrado en el catálogo del formulario (IA_UNIDADES). */
+const IA_UNIDADES_SINONIMOS = {
+  pza:'Pza', pzas:'Pza', pieza:'Pza', piezas:'Pza',
+  lote:'Lote', lotes:'Lote',
+  mt:'Mts', mts:'Mts', metro:'Mts', metros:'Mts',
+  'm2':'Mts²', mt2:'Mts²', mts2:'Mts²', 'metro cuadrado':'Mts²', 'metros cuadrados':'Mts²', 'metro2':'Mts²',
+  'm3':'Mts³', mt3:'Mts³', mts3:'Mts³', 'metro cubico':'Mts³', 'metros cubicos':'Mts³',
+  kg:'Kg', kilo:'Kg', kilos:'Kg', kilogramo:'Kg', kilogramos:'Kg',
+  dia:'Día', dias:'Día',
+  lt:'Lts', lts:'Lts', litro:'Lts', litros:'Lts',
+  hr:'Hrs', hrs:'Hrs', hora:'Hrs', horas:'Hrs',
+  tramo:'Tramo', tramos:'Tramo',
+  juego:'Juego', juegos:'Juego',
+  servicio:'Servicio', servicios:'Servicio'
+};
+/* Quita del texto cualquier palabra que forme parte de una cantidad hablada
+   (números en palabra, dígitos, conectores) para que solo quede la unidad. */
+function iaQuitarCantidadHablada(texto){
+  const t = iaNormalizar(texto);
+  const palabras = t.split(/\s+/).filter(Boolean);
+  const restantes = palabras.filter(p=>{
+    if(p==='y'||p==='de'||p==='con') return false;
+    if(/^\d+(\.\d+)?$/.test(p)) return false;
+    if(IA_UNIDADES_NUM[p]!==undefined) return false;
+    if(IA_CENTENAS_NUM[p]!==undefined) return false;
+    if(p==='mil'||p==='millon'||p==='millones') return false;
+    return true;
+  });
+  return restantes.join(' ').trim();
+}
+/* Resuelve la UNIDAD a partir de lo dicho: ignora la cantidad pronunciada,
+   busca por sinónimo exacto y, si no hay coincidencia exacta, por similitud
+   difusa contra el catálogo (IA_UNIDADES) — igual que clientes/contactos. */
+function iaResolverUnidadDesdeTexto(texto){
+  const limpio = iaQuitarCantidadHablada(texto);
+  const base = limpio || iaNormalizar(texto);
+  if(!base) return iaCapitalizar(texto);
+  if(IA_UNIDADES_SINONIMOS[base]) return IA_UNIDADES_SINONIMOS[base];
+  const palabras = base.split(/\s+/);
+  const ultima = palabras[palabras.length-1];
+  if(IA_UNIDADES_SINONIMOS[ultima]) return IA_UNIDADES_SINONIMOS[ultima];
+  const m = iaMejorCoincidencia(base, IA_UNIDADES, u=>u, 0.4);
+  if(m) return m;
+  return iaCapitalizar(base);
+}
+
+/* ─── Detecta a qué DATO de una partida se refiere el usuario ───
+   ('concepto' = descripción/concepto, 'todo' = recapturar la partida entera) */
+function iaDetectarCampoPartida(texto){
+  const t = iaNormalizar(texto);
+  if(/todo/.test(t)) return 'todo';
+  if(/(descrip|concepto)/.test(t)) return 'concepto';
+  if(/cantidad/.test(t)) return 'cantidad';
+  if(/unidad/.test(t)) return 'unidad';
+  if(/precio/.test(t)) return 'precio';
+  return null;
+}
+
 /* ─── Preguntas del flujo (texto exacto del guion) ─── */
 function iaPreguntaCliente(){ return '¿Para qué cliente es esta cotización?'; }
 function iaPreguntaContacto(){ return '¿A nombre de quién va dirigida la cotización?'; }
@@ -4828,6 +4944,46 @@ function iaResumenHablado(campos){
   partes.push(n===1 ? 'Se capturó una partida.' : `Se capturaron ${n} partidas.`);
   if(campos.notas) partes.push('Notas: '+campos.notas+'.');
   return partes.join(' ');
+}
+
+/* ─── Edición contextual de una partida existente ───
+   Entra en modo edición sobre campos.partidas[iaState.partidaEditIndex] y
+   reutiliza los pasos 'concepto'/'unidad'/'cantidad'/'precio' del guion,
+   pero SIN tocar ningún otro dato del formulario. */
+function iaIniciarEdicionCampoPartida(campo){
+  iaState.modoEdicion = 'partida_campo';
+  iaState.campoPartidaObjetivo = campo;
+  const idx = iaState.partidaEditIndex;
+  const preguntas = {
+    concepto: '¿Cuál es la nueva descripción de esta partida?',
+    cantidad: '¿Cuál es la nueva cantidad?',
+    unidad:   '¿Cuál es la nueva unidad?',
+    precio:   '¿Cuál es el nuevo precio unitario?'
+  };
+  iaState.paso = campo; // reutiliza el paso existente ('concepto'|'cantidad'|'unidad'|'precio')
+  const texto = preguntas[campo] || '¿Cuál es el nuevo valor?';
+  agregarBurbujaIA('assistant', texto);
+  actualizarEstadoIA('🔊 Hablando…');
+  hablarIA(texto, iaEmpezarEscuchaAuto);
+}
+function iaIniciarEdicionCompletaPartida(){
+  iaState.modoEdicion = 'partida_completa';
+  iaState.campoPartidaObjetivo = null;
+  iaState.paso = 'concepto';
+  const texto = `Muy bien, vamos a volver a capturar la partida ${iaState.partidaEditIndex+1} completa. Descríbeme el concepto.`;
+  agregarBurbujaIA('assistant', texto);
+  actualizarEstadoIA('🔊 Hablando…');
+  hablarIA(texto, iaEmpezarEscuchaAuto);
+}
+/* Cierra el modo de edición de partida y regresa directo al resumen, sin
+   volver a preguntar nada que ya estaba confirmado. */
+function iaTerminarEdicionPartida(mensajeConfirmacion){
+  iaState.modoEdicion = null;
+  iaState.campoPartidaObjetivo = null;
+  iaState.partidaEditIndex = null;
+  iaState.enCorreccion = false;
+  iaState.procesando = false;
+  iaAvanzar('resumen', mensajeConfirmacion);
 }
 
 /* ─── Avanzar de paso mostrando la siguiente pregunta ───
@@ -4922,24 +5078,35 @@ function procesarTurnoIA(textoUsuario){
 
   if(paso==='contacto'){
     iaState.procesando=false;
-    if(iaEsNoSe(textoUsuario)){ campos.contacto={id:'',nombre:''}; iaAvanzar('descripcion'); return; }
+    // Al corregir (enCorreccion), el contacto es el último dato que depende
+    // del cliente: una vez capturado, se regresa directo al resumen sin
+    // volver a preguntar descripción, partidas ni notas (ya confirmados).
+    const siguientePaso = iaState.enCorreccion ? 'resumen' : 'descripcion';
+    if(iaEsNoSe(textoUsuario)){
+      campos.contacto={id:'',nombre:''};
+      if(iaState.enCorreccion){ iaState.enCorreccion=false; iaAvanzar('resumen', 'Listo, dejé el contacto sin definir.'); }
+      else iaAvanzar('descripcion');
+      return;
+    }
     // Regla obligatoria: la búsqueda de contacto ocurre ÚNICAMENTE dentro
     // de los contactos del cliente activo (campos.cliente.id).
     const r = iaResolverContacto(textoUsuario, campos.cliente.id);
     if(r.tipo==='directo'){
       campos.contacto = {id:r.item.id, nombre:r.item.nombre};
       if(campos.cliente.id) iaGuardarAliasContacto(campos.cliente.id, textoUsuario, r.item.id);
-      iaAvanzar('descripcion', `Entendido, contacto: ${r.item.nombre}.`);
+      if(iaState.enCorreccion){ iaState.enCorreccion=false; iaAvanzar('resumen', `Listo. Actualicé el contacto a ${r.item.nombre}.`); }
+      else iaAvanzar('descripcion', `Entendido, contacto: ${r.item.nombre}.`);
       return;
     }
     if(r.tipo==='multiple'){
       iaState.textoAmbiguo = textoUsuario;
-      iaState.pasoTrasDesambiguar = 'descripcion';
+      iaState.pasoTrasDesambiguar = siguientePaso;
       iaPreguntarDesambiguacion('contacto', r.candidatos);
       return;
     }
     campos.contacto = {id:'', nombre:iaCapitalizar(textoUsuario)};
-    iaAvanzar('descripcion');
+    if(iaState.enCorreccion){ iaState.enCorreccion=false; iaAvanzar('resumen', `Listo. Actualicé el contacto a ${campos.contacto.nombre}.`); }
+    else iaAvanzar('descripcion');
     return;
   }
 
@@ -4969,38 +5136,79 @@ function procesarTurnoIA(textoUsuario){
     }
     const siguientePaso = iaState.pasoTrasDesambiguar || (esContacto?'descripcion':'contacto');
     iaState.candidatos=null; iaState.tipoDesambiguar=null; iaState.pasoTrasDesambiguar=null; iaState.textoAmbiguo='';
+    if(siguientePaso==='resumen') iaState.enCorreccion=false;
     iaAvanzar(siguientePaso, `Perfecto, seleccioné ${elegido.nombre}.`);
     return;
   }
 
   if(paso==='descripcion'){
     campos.descripcionTrabajo = iaEsNoSe(textoUsuario) ? '' : iaCapitalizar(textoUsuario);
+    if(iaState.enCorreccion){ iaState.enCorreccion=false; iaState.procesando=false; iaAvanzar('resumen', 'Listo. Actualicé la descripción.'); return; }
     iaState.procesando=false; iaAvanzar('concepto'); return;
   }
 
   if(paso==='concepto'){
     // Nota: sin un modelo de IA detrás, el concepto se guarda tal cual lo dicta
     // el usuario (con limpieza básica), no se redacta en estilo técnico profesional.
-    iaState.partidaActual.concepto = iaCapitalizar(textoUsuario);
+    const valor = iaCapitalizar(textoUsuario);
+    if(iaState.modoEdicion==='partida_campo'){
+      campos.partidas[iaState.partidaEditIndex].concepto = valor;
+      iaTerminarEdicionPartida(`Listo. Actualicé la descripción de la partida ${iaState.partidaEditIndex+1}.`);
+      return;
+    }
+    if(iaState.modoEdicion==='partida_completa'){
+      campos.partidas[iaState.partidaEditIndex].concepto = valor;
+      iaState.procesando=false; iaAvanzar('unidad'); return;
+    }
+    iaState.partidaActual.concepto = valor;
     iaState.procesando=false; iaAvanzar('unidad'); return;
   }
 
   if(paso==='unidad'){
-    if(iaEsNoSe(textoUsuario)){ iaState.partidaActual.unidad=''; }
-    else {
-      const m = iaMejorCoincidencia(textoUsuario, IA_UNIDADES, u=>u, 0.4);
-      iaState.partidaActual.unidad = m || iaCapitalizar(textoUsuario);
+    // Reconocimiento inteligente: ignora cualquier cantidad pronunciada junto
+    // con la unidad (p.ej. "diez kilogramos" → Kg) y guarda el valor oficial.
+    const unidadVal = iaEsNoSe(textoUsuario) ? '' : iaResolverUnidadDesdeTexto(textoUsuario);
+    if(iaState.modoEdicion==='partida_campo'){
+      campos.partidas[iaState.partidaEditIndex].unidad = unidadVal;
+      iaTerminarEdicionPartida(`Listo. Actualicé la unidad de la partida ${iaState.partidaEditIndex+1} a ${unidadVal||'—'}.`);
+      return;
     }
+    if(iaState.modoEdicion==='partida_completa'){
+      campos.partidas[iaState.partidaEditIndex].unidad = unidadVal;
+      iaState.procesando=false; iaAvanzar('cantidad'); return;
+    }
+    iaState.partidaActual.unidad = unidadVal;
     iaState.procesando=false; iaAvanzar('cantidad'); return;
   }
 
   if(paso==='cantidad'){
-    iaState.partidaActual.cantidad = iaEsNoSe(textoUsuario) ? null : iaTextoANumero(textoUsuario);
+    const val = iaEsNoSe(textoUsuario) ? null : iaTextoANumero(textoUsuario);
+    if(iaState.modoEdicion==='partida_campo'){
+      campos.partidas[iaState.partidaEditIndex].cantidad = val;
+      iaTerminarEdicionPartida(`Listo. Actualicé la cantidad de la partida ${iaState.partidaEditIndex+1} a ${val!=null?val:'—'}.`);
+      return;
+    }
+    if(iaState.modoEdicion==='partida_completa'){
+      campos.partidas[iaState.partidaEditIndex].cantidad = val;
+      iaState.procesando=false; iaAvanzar('precio'); return;
+    }
+    iaState.partidaActual.cantidad = val;
     iaState.procesando=false; iaAvanzar('precio'); return;
   }
 
   if(paso==='precio'){
-    iaState.partidaActual.precioUnitario = iaEsNoSe(textoUsuario) ? null : iaTextoANumero(textoUsuario);
+    const val = iaEsNoSe(textoUsuario) ? null : iaTextoANumero(textoUsuario);
+    if(iaState.modoEdicion==='partida_campo'){
+      campos.partidas[iaState.partidaEditIndex].precioUnitario = val;
+      iaTerminarEdicionPartida(`Listo. Actualicé el precio unitario de la partida ${iaState.partidaEditIndex+1} a ${val!=null?val:'—'}.`);
+      return;
+    }
+    if(iaState.modoEdicion==='partida_completa'){
+      campos.partidas[iaState.partidaEditIndex].precioUnitario = val;
+      iaTerminarEdicionPartida(`Listo. Actualicé la partida ${iaState.partidaEditIndex+1} completa.`);
+      return;
+    }
+    iaState.partidaActual.precioUnitario = val;
     campos.partidas.push(iaState.partidaActual);
     iaState.partidaActual=null;
     iaState.procesando=false; iaAvanzar('otra_partida'); return;
@@ -5016,13 +5224,20 @@ function procesarTurnoIA(textoUsuario){
   if(paso==='notas_si'){
     iaState.procesando=false;
     if(iaEsAfirmativo(textoUsuario) && !iaEsNegativo(textoUsuario)) iaAvanzar('notas_texto');
-    else { campos.notas=''; iaAvanzar('resumen'); }
+    else {
+      campos.notas='';
+      const prefijo = iaState.enCorreccion ? 'Listo, quité las notas.' : undefined;
+      iaState.enCorreccion=false;
+      iaAvanzar('resumen', prefijo);
+    }
     return;
   }
 
   if(paso==='notas_texto'){
     campos.notas = iaCapitalizar(textoUsuario);
-    iaState.procesando=false; iaAvanzar('resumen'); return;
+    const prefijo = iaState.enCorreccion ? 'Listo. Actualicé las notas.' : undefined;
+    iaState.enCorreccion=false;
+    iaState.procesando=false; iaAvanzar('resumen', prefijo); return;
   }
 
   if(paso==='resumen'){
@@ -5040,25 +5255,114 @@ function procesarTurnoIA(textoUsuario){
   }
 
   if(paso==='correccion_pregunta'){
-    const t = iaNormalizar(textoUsuario);
     iaState.procesando=false;
-    if(t.includes('client')){
-      // Al corregir el cliente, el contacto queda obsoleto (pertenece al
-      // cliente anterior) y debe volver a preguntarse dentro del nuevo
-      // contexto de cliente.
-      campos.contacto = {id:'',nombre:''};
-      iaAvanzar('cliente');
+    const t = iaNormalizar(textoUsuario);
+
+    // "Todo está bien" / se arrepintió de pedir corrección → de regreso al resumen tal cual.
+    if(/(todo esta bien|todo esta correcto|todo bien|nada|ninguna|ningun cambio|asi esta bien|no hay nada)/.test(t)){
+      iaState.enCorreccion=false;
+      iaAvanzar('resumen', 'Perfecto, dejamos todo como está.');
+      return;
     }
-    else if(t.includes('contact')) iaAvanzar('contacto');
-    else if(t.includes('descrip')) iaAvanzar('descripcion');
-    else if(t.includes('nota'))    iaAvanzar('notas_si');
-    else if(t.includes('partid')||t.includes('concepto')||t.includes('precio')||t.includes('cantidad')||t.includes('unidad')){
-      campos.partidas.pop();
-      iaAvanzar('concepto');
-    } else {
-      const texto='Dime qué quieres corregir: cliente, contacto, descripción, una partida o las notas.';
+
+    const ordinal = iaDetectarOrdinal(t);
+    const campoPartida = iaDetectarCampoPartida(t);
+    const mencionaPartida = /partid/.test(t) || (ordinal!=null && campoPartida==null) || (ordinal!=null && /partid/.test(t));
+
+    // Campos de nivel de formulario (cliente, contacto, descripción, notas) —
+    // solo si el mensaje no está señalando además una partida específica.
+    if(!mencionaPartida && !campoPartida){
+      if(t.includes('client')){
+        // Regla obligatoria: al cambiar el cliente, el contacto queda
+        // obsoleto y se vuelve a preguntar; el resto (fecha, descripción,
+        // partidas, notas) NO se toca porque no cambió.
+        campos.contacto = {id:'',nombre:''};
+        iaAvanzar('cliente');
+        return;
+      }
+      if(t.includes('contact')){ iaAvanzar('contacto'); return; }
+      if(t.includes('descrip')){ iaAvanzar('descripcion'); return; }
+      if(t.includes('nota')||t.includes('observacion')){ iaAvanzar('notas_si'); return; }
+      if(t.includes('fecha')){
+        const texto='La fecha se registra automáticamente con el día de hoy al llenar el formulario; no es parte de esta conversación por voz, pero puedes cambiarla directamente en el formulario antes de guardar.';
+        agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+        return;
+      }
+    }
+
+    // Corrección de una partida (por número/ordinal y/o por dato específico:
+    // descripción, cantidad, unidad, precio o "todo el concepto").
+    if(mencionaPartida || campoPartida){
+      const partidas = campos.partidas||[];
+      if(!partidas.length){
+        const texto='Todavía no hay ninguna partida capturada para corregir.';
+        agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+        return;
+      }
+      let idx = ordinal!=null ? ordinal : (partidas.length===1 ? 0 : null);
+      if(idx!=null && (idx<0 || idx>=partidas.length)){
+        const texto=`Solo tienes ${partidas.length} partida${partidas.length===1?'':'s'} capturada${partidas.length===1?'':'s'}. ¿Cuál deseas corregir?`;
+        agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+        return;
+      }
+      if(idx==null){
+        // Varias partidas y no dijo cuál → preguntar el número, recordando
+        // (si ya lo dijo) qué dato quiere cambiar para no volver a preguntarlo.
+        iaState.campoPartidaObjetivo = campoPartida;
+        iaState.paso = 'correccion_partida_cual';
+        const texto = `Tienes ${partidas.length} partidas capturadas. ¿Cuál deseas corregir? Di primera, segunda, tercera…`;
+        agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+        return;
+      }
+      iaState.partidaEditIndex = idx;
+      if(campoPartida && campoPartida!=='todo') iaIniciarEdicionCampoPartida(campoPartida);
+      else if(campoPartida==='todo') iaIniciarEdicionCompletaPartida();
+      else {
+        iaState.paso = 'correccion_partida_campo';
+        const texto = `¿Qué deseas modificar de la partida ${idx+1}? ¿La descripción, la cantidad, la unidad o todo el concepto?`;
+        agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+      }
+      return;
+    }
+
+    const texto='Dime qué quieres corregir: cliente, contacto, descripción, una partida (por ejemplo "primera partida") o las notas.';
+    agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+    return;
+  }
+
+  // El usuario ya dijo cuál partida corregir (había varias); ahora se sabe
+  // el índice — si ya había indicado el dato a cambiar, se va directo a él.
+  if(paso==='correccion_partida_cual'){
+    iaState.procesando=false;
+    const partidas = campos.partidas||[];
+    const idx = iaDetectarOrdinal(textoUsuario);
+    if(idx==null || idx<0 || idx>=partidas.length){
+      const texto = `No identifiqué cuál partida. Tienes ${partidas.length} capturada${partidas.length===1?'':'s'}; dime primera, segunda, tercera…`;
+      agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+      return;
+    }
+    iaState.partidaEditIndex = idx;
+    if(iaState.campoPartidaObjetivo && iaState.campoPartidaObjetivo!=='todo') iaIniciarEdicionCampoPartida(iaState.campoPartidaObjetivo);
+    else if(iaState.campoPartidaObjetivo==='todo') iaIniciarEdicionCompletaPartida();
+    else {
+      iaState.paso = 'correccion_partida_campo';
+      const texto = `¿Qué deseas modificar de la partida ${idx+1}? ¿La descripción, la cantidad, la unidad o todo el concepto?`;
       agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
     }
+    return;
+  }
+
+  // Ya se sabe cuál partida; falta saber qué dato de ella corregir.
+  if(paso==='correccion_partida_campo'){
+    iaState.procesando=false;
+    const campo = iaDetectarCampoPartida(textoUsuario);
+    if(!campo){
+      const texto='No te entendí. Dime: descripción, cantidad, unidad, o todo el concepto.';
+      agregarBurbujaIA('assistant', texto); hablarIA(texto, iaEmpezarEscuchaAuto);
+      return;
+    }
+    if(campo==='todo') iaIniciarEdicionCompletaPartida();
+    else iaIniciarEdicionCampoPartida(campo);
     return;
   }
 
@@ -5082,12 +5386,20 @@ function mostrarResumenIA(campos, autoLlenar){
   const cliNom = campos.cliente?.nombre || '— sin definir —';
   const conNom = campos.contacto?.nombre || '— sin definir —';
   const partidas = Array.isArray(campos.partidas)?campos.partidas:[];
+  const partidasHtml = partidas.length
+    ? partidas.map((p,i)=>`<div class="ia-resumen-row" style="padding-left:10px">
+        <strong>${i+1}.</strong> ${esc(p.concepto||'—')}
+        — ${p.cantidad!=null?esc(String(p.cantidad)):'—'} ${esc(p.unidad||'')}
+        · P.U. ${p.precioUnitario!=null?esc(String(p.precioUnitario)):'—'}
+      </div>`).join('')
+    : '<div class="ia-resumen-row" style="padding-left:10px">— sin partidas —</div>';
   box.style.display='block';
   box.innerHTML = `
     <div class="ia-resumen-row"><strong>Cliente:</strong> ${esc(cliNom)}</div>
     <div class="ia-resumen-row"><strong>Contacto:</strong> ${esc(conNom)}</div>
     <div class="ia-resumen-row"><strong>Descripción:</strong> ${esc(campos.descripcionTrabajo||'—')}</div>
     <div class="ia-resumen-row"><strong>Partidas:</strong> ${partidas.length}</div>
+    ${partidasHtml}
     <div class="ia-resumen-row"><strong>Notas:</strong> ${esc(campos.notas||'—')}</div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-red btn-sm" onclick="confirmarLlenadoIA()">✓ Todo correcto, llenar formulario</button>
@@ -5098,7 +5410,11 @@ function mostrarResumenIA(campos, autoLlenar){
 function corregirIA(){
   document.getElementById('iaResumenBox').style.display='none';
   iaState.paso='correccion_pregunta';
-  const texto='Sin problema. Dime qué quieres corregir: cliente, contacto, descripción, una partida o las notas.';
+  iaState.enCorreccion=true;
+  iaState.modoEdicion=null;
+  iaState.campoPartidaObjetivo=null;
+  iaState.partidaEditIndex=null;
+  const texto='Sin problema. Dime qué quieres corregir: cliente, contacto, descripción, una partida (por ejemplo "primera partida") o las notas.';
   agregarBurbujaIA('assistant', texto);
   hablarIA(texto, iaEmpezarEscuchaAuto);
 }
@@ -5249,6 +5565,17 @@ async function guardarCot() {
   const fechaCreacion = registroExistente && registroExistente.creacion
     ? registroExistente.creacion
     : sheetDate(todayISO());
+  // Timestamp completo (fecha+hora) de creación: se conserva el original si ya
+  // existía. Si es un registro antiguo que aún no tiene este dato, se reconstruye
+  // a partir de su fecha de creación ya guardada (no de "ahora"), para que
+  // simplemente editarlo no lo salte al frente del orden por más reciente.
+  // Solo una cotización realmente nueva recibe el timestamp de "ahora".
+  const creacionTS = registroExistente
+    ? (registroExistente.creacionTS || new Date(isoDate(registroExistente.creacion)).toISOString())
+    : new Date().toISOString();
+  // Cada guardado (nuevo o edición) actualiza el timestamp de última actualización,
+  // usado por el criterio de orden "Actualización más reciente".
+  const actualizacionTS = new Date().toISOString();
 
   // Punto 9: si la descripción cambió en una cotización ya existente, el ID debe
   // sincronizarse automáticamente (solo la parte final, folio y RFC no cambian).
@@ -5273,8 +5600,8 @@ async function guardarCot() {
     newId, sheetDate(fecha), cliente,
     sub.toFixed(2), iva.toFixed(2), tot.toFixed(2),
     JSON.stringify(ST.items.map(it=>({desc: it.desc, cant: it.cant, unidad: it.unidad, precio: it.precio, imp: it.imp}))),
-    '', desc, notas, fechaCreacion,
-    ST.usuario||'', contacto, vigencia, estatus, '',
+    creacionTS, desc, notas, fechaCreacion,
+    ST.usuario||'', contacto, vigencia, estatus, actualizacionTS,
     fechaEnvio ? sheetDate(fechaEnvio) : ''
   ];
 
@@ -5303,6 +5630,51 @@ async function guardarCot() {
   }
   btn.disabled=false;
   btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
+}
+
+/* ─── DUPLICAR COTIZACIÓN ───
+   Crea una nueva cotización totalmente independiente a partir de otra ya
+   existente: copia cliente, contacto, partidas, cantidades, precios,
+   observaciones/notas, condiciones (vigencia), impuestos y descripción.
+   Lo único que cambia automáticamente es el folio (siguiente consecutivo),
+   las fechas/horas de creación y actualización, y el ID interno (fila). La
+   cotización original nunca se modifica. */
+async function duplicateCot(id){
+  if(!requireAuth()) return;
+  const r=ST.cotizaciones.find(c=>c.id===id);
+  if(!r){ toast('err','No se encontró la cotización a duplicar.'); return; }
+  if(!confirm(`¿Duplicar la cotización ${id}? Se creará una nueva cotización independiente con el siguiente folio disponible.`)) return;
+
+  try{
+    toast('ok','Duplicando cotización…');
+    const cliente = r.id_cli;
+    const desc    = r.desc;
+    const newId   = await genNextFolio(cliente, desc);
+    const nowISO  = new Date().toISOString();
+    const hoy     = sheetDate(todayISO());
+
+    // Se copian íntegramente las partidas (conceptos, cantidades, unidades,
+    // precios e importes) de la cotización original.
+    const itemsCopy = (r.items&&r.items.length)
+      ? r.items.map(it=>({desc: it.desc, cant: it.cant, unidad: it.unidad, precio: it.precio, imp: it.imp}))
+      : [{desc:r.desc, cant:1, unidad:'', precio:r.sub, imp:r.sub}];
+
+    const row = [
+      newId, sheetDate(todayISO()), cliente,
+      r.sub.toFixed(2), r.iva.toFixed(2), r.total.toFixed(2),
+      JSON.stringify(itemsCopy),
+      nowISO, desc, r.notas||'', hoy,
+      ST.usuario||'', r.id_con||'', r.vigencia||'30', r.estatus||'Pendiente', nowISO,
+      r.fechaEnvio||''
+    ];
+
+    await sheetsAppend('Cotizaciones!A2:Q', [row]);
+    await loadAll();
+    toast('ok',`${newId} creada a partir de ${id}.`);
+  } catch(e){
+    console.error(e);
+    toast('err','Error al duplicar: '+(e.result?.error?.message||e.message||'sin detalles'));
+  }
 }
 
 /* ─── DELETE ─── */
@@ -6647,7 +7019,8 @@ async function loadOCByCotizacion(id_cot) {
 /* ─── HELPERS ─── */
 function pillClass(s){
   return {Enviado:'pill-env',Aceptado:'pill-acep',Rechazado:'pill-rech',
-    Pendiente:'pill-pend','Seguimiento 1':'pill-seg','Seguimiento 2':'pill-seg'}[s]||'pill-pend';
+    Pendiente:'pill-pend','Seguimiento 1':'pill-seg','Seguimiento 2':'pill-seg',
+    'Cancelación Administrativa':'pill-canceladmin'}[s]||'pill-pend';
 }
 function fmtDate(d){
   if(!d) return '—';
