@@ -422,6 +422,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 /* ── COTIZACIONES TABLE ── */
 .cot-table-wrap{overflow-x:auto}
+/* Historial de Nóminas: el nombre del empleado debe verse en una sola línea,
+   no partirse en 2-3 renglones (se ve mal con el subrayado punteado) */
+#nomTablesWrap .fac-table th:first-child{width:auto;min-width:190px}
+#nomTablesWrap .fac-table td:first-child{white-space:nowrap}
 .cot-table{width:100%;border-collapse:collapse}
 .cot-table th{
   padding:7px 12px;font-size:10px;font-weight:600;text-transform:uppercase;
@@ -4374,12 +4378,31 @@ function abrirModoIA(){
   document.getElementById('iaResumenBox').innerHTML='';
   document.getElementById('iaTextInput').value='';
   document.getElementById('iaModal').classList.add('open');
+  const diag = iaDiagnosticoVoz();
+  if(diag) agregarBurbujaIA('assistant', diag);
   iniciarConversacionIA();
 }
 function cerrarModoIA(){
   try{ iaState.recognition && iaState.recognition.stop(); }catch(e){}
   try{ window.speechSynthesis.cancel(); }catch(e){}
   document.getElementById('iaModal').classList.remove('open');
+}
+
+/* Detecta por adelantado por qué el micrófono podría no funcionar en este
+   navegador/computadora, y devuelve un mensaje explicándolo (o null si todo
+   parece estar en orden). La causa más común: abrir el archivo .html
+   directamente (file://) en vez de un sitio con https:// o localhost — los
+   navegadores bloquean el micrófono por seguridad en ese caso, sin avisar
+   con claridad. */
+function iaDiagnosticoVoz(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    return '⚠️ Este navegador no soporta reconocimiento de voz (por ejemplo, Firefox aún no lo soporta bien). Usa Chrome o Edge, o simplemente escribe tus respuestas en el campo de texto de abajo.';
+  }
+  if(!window.isSecureContext){
+    return '⚠️ Parece que abriste este archivo directamente desde tu computadora (file://). Por seguridad, los navegadores bloquean el micrófono en ese caso y "no escucha" aunque toques el botón. Solución: sube este archivo a un hosting con https:// (o ábrelo en localhost) para que el micrófono funcione. Mientras tanto, puedes escribir tus respuestas en el campo de texto de abajo, todo el flujo funciona igual escribiendo.';
+  }
+  return null;
 }
 
 /* ─── Burbujas de chat / estado ─── */
@@ -4405,15 +4428,34 @@ function crearReconocedorIA(){
   r.lang='es-MX'; r.continuous=false; r.interimResults=false; r.maxAlternatives=1;
   return r;
 }
+function iaMensajeError(codigo){
+  switch(codigo){
+    case 'not-allowed':
+    case 'permission-denied':
+      return 'Bloqueaste el permiso del micrófono para esta página. Haz clic en el ícono de candado 🔒 junto a la dirección del navegador y permite el micrófono, luego intenta de nuevo.';
+    case 'service-not-allowed':
+      return 'El navegador bloqueó el micrófono, probablemente porque este archivo se abrió como file:// en vez de https:// o localhost. Sube el archivo a un hosting, o escribe tu respuesta abajo.';
+    case 'no-speech':
+      return 'No detecté que dijeras algo. Intenta de nuevo hablando un poco más fuerte o cerca del micrófono.';
+    case 'audio-capture':
+      return 'No encontré ningún micrófono conectado en esta computadora. Conecta uno o escribe tu respuesta.';
+    case 'network':
+      return 'Hubo un problema de red con el reconocimiento de voz. Intenta de nuevo o escribe tu respuesta.';
+    default:
+      return 'No se entendió ('+(codigo||'error desconocido')+'). Intenta de nuevo o escribe tu respuesta.';
+  }
+}
 function toggleIAMic(){
   if(iaState.procesando) return;
   if(iaState.escuchando){ try{ iaState.recognition.stop(); }catch(e){} return; }
+  const diag = iaDiagnosticoVoz();
+  if(diag){ toast('err', diag.replace(/^⚠️\s*/,'')); actualizarEstadoIA(diag); return; }
   if(!iaState.recognition) iaState.recognition = crearReconocedorIA();
   if(!iaState.recognition){ toast('err','Tu navegador no soporta reconocimiento de voz. Usa el campo de texto.'); return; }
   const r = iaState.recognition;
   const micBtn = document.getElementById('iaMicBtn');
   r.onresult = (ev)=>{ const texto = ev.results[0][0].transcript; procesarTurnoIA(texto); };
-  r.onerror = ()=>{ iaState.escuchando=false; micBtn.classList.remove('listening'); actualizarEstadoIA('No se entendió. Intenta de nuevo o escribe tu respuesta.'); };
+  r.onerror = (ev)=>{ iaState.escuchando=false; micBtn.classList.remove('listening'); actualizarEstadoIA(iaMensajeError(ev && ev.error)); };
   r.onend   = ()=>{ iaState.escuchando=false; micBtn.classList.remove('listening'); };
   try{
     r.start();
@@ -8026,22 +8068,29 @@ async function guardarEmpleado(){
   btn.disabled = false;
 }
 
+
 /* ══════════════════════════════════════════════════════════════════════════
-   GAFETE INSTITUCIONAL — generación automática de PDF imprimible (frente +
-   reverso lado a lado en una sola hoja, tamaño físico PVC 86×54mm cada lado).
+   GAFETE INSTITUCIONAL — generación automática de PDF imprimible.
+   Frente y reverso se generan como DOS TARJETAS VERTICALES independientes,
+   cada una perfectamente legible tal cual se ve en pantalla (sin espejo ni
+   inversión de ningún tipo). Se recortan por separado y se pegan espalda
+   con espalda (o se colocan en un porta-gafete de doble vista) — así no hay
+   que doblar nada ni adivinar orientaciones.
+   Tamaño físico por tarjeta: 54×86mm (formato vertical estándar tipo CR80,
+   igual al que usan la mayoría de gafetes con cordón/lanyard).
    Usa la hoja "Gafetes" (A:J) para llevar folio único, vigencia y control de
    reimpresiones por empleado. Diseño dibujado en <canvas> a 300 DPI y luego
    incrustado como imagen en un PDF (jsPDF) — así se pueden usar degradados,
    sombras y recortes circulares que jsPDF no soporta de forma nativa.
    ══════════════════════════════════════════════════════════════════════════ */
 
-const GAFETE_CARD_MM_W = 86;     // ancho final por lado (estándar PVC)
-const GAFETE_CARD_MM_H = 54;     // alto final por lado (estándar PVC)
-const GAFETE_GAP_MM    = 8;      // espacio entre frente y reverso (línea de doblez)
+const GAFETE_CARD_MM_W = 54;     // ancho final por tarjeta (formato vertical)
+const GAFETE_CARD_MM_H = 86;     // alto final por tarjeta (formato vertical)
+const GAFETE_GAP_MM    = 10;     // espacio entre las 2 tarjetas (línea de corte)
 const GAFETE_PX_MM     = 300/25.4; // px por mm a 300 DPI
-const GAFETE_CARD_PX_W = Math.round(GAFETE_CARD_MM_W*GAFETE_PX_MM); // 1016px
-const GAFETE_CARD_PX_H = Math.round(GAFETE_CARD_MM_H*GAFETE_PX_MM); // 638px
-const GAFETE_GAP_PX    = Math.round(GAFETE_GAP_MM*GAFETE_PX_MM);    // 94px
+const GAFETE_CARD_PX_W = Math.round(GAFETE_CARD_MM_W*GAFETE_PX_MM); // 638px
+const GAFETE_CARD_PX_H = Math.round(GAFETE_CARD_MM_H*GAFETE_PX_MM); // 1016px
+const GAFETE_GAP_PX    = Math.round(GAFETE_GAP_MM*GAFETE_PX_MM);    // 118px
 
 const GAFETE_C = { rojo:'#AF0D12', rojoOsc:'#7A0910', negro:'#1D1D1D', gris:'#6B6B6B', grisClaro:'#9A9A9A', blanco:'#FFFFFF' };
 
@@ -8104,18 +8153,49 @@ function gafeteHexagono(ctx,cx,cy,r){
   ctx.stroke();
 }
 /* Texto que reduce su tamaño automáticamente hasta caber en maxWidth (para
-   nombres largos), en vez de desbordarse o truncarse feo. */
+   nombres largos), en vez de desbordarse o truncarse feo. Alineado a la izquierda. */
 function gafeteTextoAjustado(ctx, text, x, y, maxWidth, baseSize, weight){
   let size = baseSize;
   ctx.font = (weight||'700')+' '+size+'px Arial, sans-serif';
-  while(ctx.measureText(text).width > maxWidth && size > 18){
+  while(ctx.measureText(text).width > maxWidth && size > 16){
     size -= 2;
     ctx.font = (weight||'700')+' '+size+'px Arial, sans-serif';
   }
+  ctx.textAlign='left';
   ctx.fillText(text, x, y);
 }
+/* Misma idea pero centrado horizontalmente en cx (para el diseño vertical,
+   casi todo el frente queda centrado). */
+function gafeteTextoAjustadoCentrado(ctx, text, cx, y, maxWidth, baseSize, weight){
+  let size = baseSize;
+  ctx.font = (weight||'700')+' '+size+'px Arial, sans-serif';
+  while(ctx.measureText(text).width > maxWidth && size > 14){
+    size -= 2;
+    ctx.font = (weight||'700')+' '+size+'px Arial, sans-serif';
+  }
+  ctx.textAlign='center';
+  ctx.fillText(text, cx, y);
+  ctx.textAlign='left';
+}
+/* Envuelve un párrafo en varias líneas dentro de maxWidth (en vez de cortar
+   manualmente el texto a mano). Devuelve la Y final tras el párrafo. */
+function gafeteTextoEnvuelto(ctx, text, x, y, maxWidth, lineHeight){
+  const palabras = String(text||'').split(/\s+/).filter(Boolean);
+  let linea = '', yy = y;
+  for(const palabra of palabras){
+    const prueba = linea ? linea+' '+palabra : palabra;
+    if(ctx.measureText(prueba).width > maxWidth && linea){
+      ctx.fillText(linea, x, yy);
+      linea = palabra; yy += lineHeight;
+    } else {
+      linea = prueba;
+    }
+  }
+  if(linea) { ctx.fillText(linea, x, yy); yy += lineHeight; }
+  return yy;
+}
 
-/* ── FRENTE del gafete ── */
+/* ── FRENTE del gafete (vertical) ── */
 async function gafeteDibujarFrente(p, registro){
   const W = GAFETE_CARD_PX_W, H = GAFETE_CARD_PX_H;
   const canvas = document.createElement('canvas');
@@ -8126,53 +8206,47 @@ async function gafeteDibujarFrente(p, registro){
   ctx.fillStyle = C.blanco; ctx.fillRect(0,0,W,H);
 
   // Banda superior roja con corte diagonal (identidad corporativa)
-  const bandH = H*0.40;
+  const bandH = H*0.255;
   const grad = ctx.createLinearGradient(0,0,W,bandH);
   grad.addColorStop(0,C.rojoOsc); grad.addColorStop(1,C.rojo);
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.moveTo(0,0); ctx.lineTo(W,0); ctx.lineTo(W,bandH*0.72); ctx.lineTo(0,bandH);
+  ctx.moveTo(0,0); ctx.lineTo(W,0); ctx.lineTo(W,bandH*0.74); ctx.lineTo(0,bandH);
   ctx.closePath(); ctx.fill();
 
   // Líneas técnicas discretas dentro de la banda (detalle industrial)
   ctx.save();
   ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 2;
-  for(let i=0;i<6;i++){
+  for(let i=0;i<8;i++){
     ctx.beginPath();
-    ctx.moveTo(W*0.5+i*30,0);
-    ctx.lineTo(W*0.5+i*30-bandH*0.5,bandH);
+    ctx.moveTo(i*40,0);
+    ctx.lineTo(i*40-bandH*0.45,bandH);
     ctx.stroke();
   }
   ctx.restore();
 
-  // Polígono geométrico discreto en la esquina inferior derecha
-  ctx.save();
-  ctx.globalAlpha = 0.055; ctx.fillStyle = C.rojo;
-  ctx.beginPath();
-  ctx.moveTo(W,H); ctx.lineTo(W*0.68,H); ctx.lineTo(W,H*0.55);
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-
-  // Logo + nombre de la empresa dentro de la banda
+  // Logo + nombre de la empresa centrados dentro de la banda
   const logoImg = await gafeteCargarImagen(ST.logoDataUrl, 4000);
-  const chipX = 46, chipY = 32, chipH = bandH*0.52;
-  let dw = 0;
+  const chipH = bandH*0.40;
+  let dw = chipH, dh = chipH;
   if(logoImg){
     const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
-    let dh = chipH; dw = dh*(dim.w/dim.h);
-    if(dw>chipH*1.7){ dw=chipH*1.7; dh=dw*(dim.h/dim.w); }
-    const pad = 10;
-    gafeteRoundRect(ctx, chipX-pad, chipY-pad, dw+pad*2, dh+pad*2, 9);
+    dh = chipH; dw = dh*(dim.w/dim.h);
+    if(dw>chipH*1.9){ dw=chipH*1.9; dh=dw*(dim.h/dim.w); }
+  }
+  const chipY = 30;
+  if(logoImg){
+    const pad = 9;
+    gafeteRoundRect(ctx, W/2-dw/2-pad, chipY-pad, dw+pad*2, dh+pad*2, 9);
     ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.fill();
-    ctx.drawImage(logoImg, chipX, chipY, dw, dh);
+    ctx.drawImage(logoImg, W/2-dw/2, chipY, dw, dh);
   }
   ctx.fillStyle = C.blanco;
-  ctx.font = '700 32px Arial, sans-serif';
-  ctx.fillText('CONSTRUCTORA CONECTE', chipX + (logoImg? dw+34 : 0), chipY+chipH*0.68);
+  gafeteTextoAjustadoCentrado(ctx, 'CONSTRUCTORA CONECTE', W/2, chipY+dh+34, W-60, 24, '700');
 
-  // Fotografía circular — borde rojo corporativo + sombra ligera
-  const photoR = H*0.225;
-  const photoCX = W*0.235, photoCY = bandH+4;
+  // Fotografía circular — centrada, superpuesta al borde inferior de la banda
+  const photoR = W*0.285;
+  const photoCX = W/2, photoCY = bandH;
   const fotoImg = await gafeteCargarImagen(normalizePhotoUrl(p.fotografia), 6000);
 
   ctx.save();
@@ -8199,44 +8273,47 @@ async function gafeteDibujarFrente(p, registro){
   ctx.beginPath(); ctx.arc(photoCX,photoCY,photoR+3,0,Math.PI*2);
   ctx.lineWidth = 7; ctx.strokeStyle = C.rojo; ctx.stroke();
 
-  // Datos del empleado
-  const textX = W*0.235 + photoR + 46;
-  let ty = photoCY - photoR*0.3;
+  // Nombre y puesto — centrados, debajo de la foto (esto es lo más legible
+  // para un gafete vertical con cordón)
+  let ty = photoCY + photoR + 58;
   ctx.fillStyle = C.negro;
-  gafeteTextoAjustado(ctx, (p.nombre||'NO REGISTRADO').toUpperCase(), textX, ty, W-textX-40, 40, '700');
-  ty += 48;
-  ctx.fillStyle = C.rojo; ctx.font = '600 22px Arial, sans-serif';
-  ctx.fillText((p.puesto||'No registrado').toUpperCase(), textX, ty);
+  gafeteTextoAjustadoCentrado(ctx, (p.nombre||'NO REGISTRADO').toUpperCase(), W/2, ty, W-70, 34, '700');
+  ty += 38;
+  ctx.fillStyle = C.rojo; ctx.font = '600 20px Arial, sans-serif'; ctx.textAlign='center';
+  ctx.fillText((p.puesto||'No registrado').toUpperCase(), W/2, ty);
+  ctx.textAlign='left';
 
-  ty += 44;
+  ty += 34;
   ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(textX,ty); ctx.lineTo(W-40,ty); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(46,ty); ctx.lineTo(W-46,ty); ctx.stroke();
 
+  // Datos del empleado — alineados a la izquierda, en dos renglones grandes
+  // y bien espaciados (fáciles de leer de un vistazo)
   const campoRow = (label, valor, yy)=>{
     ctx.fillStyle = C.grisClaro; ctx.font = '700 14px Arial, sans-serif';
-    ctx.fillText(label, textX, yy);
-    ctx.fillStyle = C.negro; ctx.font = '600 20px "Courier New", monospace';
-    ctx.fillText(valOrNoRegistrado(valor), textX, yy+23);
+    ctx.fillText(label, 46, yy);
+    ctx.fillStyle = C.negro; ctx.font = '600 24px "Courier New", monospace';
+    ctx.fillText(valOrNoRegistrado(valor), 46, yy+28);
   };
-  campoRow('NSS', p.nss, ty+30);
-  campoRow('CURP', p.curp, ty+78);
+  campoRow('NSS', p.nss, ty+42);
+  campoRow('CURP', p.curp, ty+100);
 
-  // Franja inferior — número de emergencia
-  const footH = H*0.135;
+  // Franja inferior — número de emergencia + folio
+  const footH = H*0.105;
   ctx.fillStyle = C.negro; ctx.fillRect(0,H-footH,W,footH);
   ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,9,footH);
   ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.font='700 13px Arial';
-  ctx.fillText('EMERGENCIAS', 46, H-footH+28);
-  ctx.fillStyle = C.blanco; ctx.font='700 25px Arial';
-  ctx.fillText('999 908 9592', 46, H-footH+60);
+  ctx.fillText('EMERGENCIAS', 40, H-footH+26);
+  ctx.fillStyle = C.blanco; ctx.font='700 24px Arial';
+  ctx.fillText('999 908 9592', 40, H-footH+58);
   ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font='600 12px Arial'; ctx.textAlign='right';
-  ctx.fillText(registro.idGafete, W-40, H-footH+28);
+  ctx.fillText(registro.idGafete, W-40, H-footH+58);
   ctx.textAlign='left';
 
   return canvas;
 }
 
-/* ── REVERSO del gafete (sin QR — elemento gráfico decorativo en su lugar) ── */
+/* ── REVERSO del gafete (vertical, sin espejo — se lee normal tal cual se ve) ── */
 async function gafeteDibujarReverso(p, registro){
   const W = GAFETE_CARD_PX_W, H = GAFETE_CARD_PX_H;
   const canvas = document.createElement('canvas');
@@ -8244,19 +8321,19 @@ async function gafeteDibujarReverso(p, registro){
   const ctx = canvas.getContext('2d');
   const C = GAFETE_C;
 
-  const bg = ctx.createLinearGradient(0,0,W,H);
+  const bg = ctx.createLinearGradient(0,0,0,H);
   bg.addColorStop(0,'#FAFAFA'); bg.addColorStop(1,'#EFEFEF');
   ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
 
-  // Patrón hexagonal discreto (reemplaza al QR con un elemento gráfico elegante)
+  // Patrón hexagonal discreto (elemento gráfico, sin QR)
   ctx.save();
   ctx.globalAlpha = 0.05; ctx.strokeStyle = C.rojo; ctx.lineWidth = 2;
-  const hexR = 30;
-  for(let row=0; row<6; row++){
-    for(let col=0; col<9; col++){
-      const cx = 50 + col*hexR*1.75 + (row%2? hexR*0.9:0);
+  const hexR = 26;
+  for(let row=0; row<10; row++){
+    for(let col=0; col<6; col++){
+      const cx = 40 + col*hexR*1.75 + (row%2? hexR*0.9:0);
       const cy = 34 + row*hexR*1.5;
-      if(cx>W-30 || cy>H*0.6) continue;
+      if(cx>W-30 || cy>H*0.42) continue;
       gafeteHexagono(ctx, cx, cy, hexR*0.5);
     }
   }
@@ -8266,112 +8343,117 @@ async function gafeteDibujarReverso(p, registro){
   const logoImg = await gafeteCargarImagen(ST.logoDataUrl, 4000);
   if(logoImg){
     const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
-    const wmW = W*0.4, wmH = wmW*(dim.h/dim.w);
-    ctx.save(); ctx.globalAlpha = 0.07;
-    ctx.drawImage(logoImg, W/2-wmW/2, H/2-wmH/2-14, wmW, wmH);
+    const wmW = W*0.55, wmH = wmW*(dim.h/dim.w);
+    ctx.save(); ctx.globalAlpha = 0.06;
+    ctx.drawImage(logoImg, W/2-wmW/2, H*0.34-wmH/2, wmW, wmH);
     ctx.restore();
   }
 
   ctx.fillStyle = C.rojo; ctx.fillRect(0,0,W,9);
 
   let y = 54;
-  ctx.fillStyle = C.negro; ctx.font = '700 21px Arial';
-  ctx.fillText('CONSTRUCTORA CONECTE', 46, y);
-  ctx.fillStyle = C.rojo; ctx.fillRect(46, y+11, 64, 4);
+  ctx.fillStyle = C.negro; ctx.font = '700 22px Arial';
+  gafeteTextoAjustado(ctx, 'CONSTRUCTORA CONECTE', 40, y, W-80, 22, '700');
+  ctx.fillStyle = C.rojo; ctx.fillRect(40, y+13, 60, 4);
 
-  y += 52;
+  y += 46;
   ctx.fillStyle = '#333'; ctx.font = '400 17px Arial';
-  ctx.fillText('Este gafete acredita al portador como colaborador', 46, y);
-  ctx.fillText('autorizado de Constructora Conecte.', 46, y+24);
+  y = gafeteTextoEnvuelto(ctx, 'Este gafete acredita al portador como colaborador autorizado de Constructora Conecte.', 40, y, W-80, 24);
 
-  y += 58;
+  y += 20;
   ctx.fillStyle = '#555'; ctx.font = '400 15px Arial';
-  ctx.fillText('En caso de encontrar este gafete favor de comunicarse al:', 46, y);
-  ctx.fillStyle = C.rojo; ctx.font = '700 22px Arial';
-  ctx.fillText('999 908 9592', 46, y+28);
+  y = gafeteTextoEnvuelto(ctx, 'En caso de encontrar este gafete favor de comunicarse al:', 40, y, W-80, 20);
+  ctx.fillStyle = C.rojo; ctx.font = '700 24px Arial';
+  ctx.fillText('999 908 9592', 40, y+8);
+  y += 40;
 
-  // Vigencia — caja con borde
-  y += 54;
-  const boxW = W-92, boxH = 88;
-  gafeteRoundRect(ctx,46,y,boxW,boxH,10);
+  // Vigencia — caja con borde, emisión y vencimiento apilados (más legible
+  // en una tarjeta angosta que ponerlos uno junto al otro)
+  y += 26;
+  const boxW = W-80, boxH = 132;
+  gafeteRoundRect(ctx,40,y,boxW,boxH,10);
   ctx.fillStyle = 'rgba(175,13,18,0.03)'; ctx.fill();
-  gafeteRoundRect(ctx,46,y,boxW,boxH,10);
+  gafeteRoundRect(ctx,40,y,boxW,boxH,10);
   ctx.strokeStyle = 'rgba(0,0,0,0.16)'; ctx.lineWidth = 2; ctx.stroke();
 
-  const colW = boxW/2;
   ctx.fillStyle = C.grisClaro; ctx.font = '700 12px Arial';
-  ctx.fillText('FECHA DE EMISIÓN', 46+20, y+28);
-  ctx.fillText('FECHA DE VENCIMIENTO', 46+colW+20, y+28);
-  ctx.fillStyle = C.negro; ctx.font = '700 20px Arial';
-  ctx.fillText(gafeteFmtFecha(registro.fechaEmision), 46+20, y+58);
-  ctx.fillStyle = C.rojo;
-  ctx.fillText(gafeteFmtFecha(registro.fechaVencimiento), 46+colW+20, y+58);
+  ctx.fillText('FECHA DE EMISIÓN', 40+20, y+30);
+  ctx.fillStyle = C.negro; ctx.font = '700 21px Arial';
+  ctx.fillText(gafeteFmtFecha(registro.fechaEmision), 40+20, y+58);
+
   ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(46+colW,y+12); ctx.lineTo(46+colW,y+boxH-12); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(40+16,y+boxH/2); ctx.lineTo(40+boxW-16,y+boxH/2); ctx.stroke();
+
+  ctx.fillStyle = C.grisClaro; ctx.font = '700 12px Arial';
+  ctx.fillText('FECHA DE VENCIMIENTO', 40+20, y+boxH/2+30);
+  ctx.fillStyle = C.rojo; ctx.font = '700 21px Arial';
+  ctx.fillText(gafeteFmtFecha(registro.fechaVencimiento), 40+20, y+boxH/2+58);
 
   // Identificador único
-  y += boxH+32;
+  y += boxH+38;
   ctx.fillStyle = C.grisClaro; ctx.font = '700 12px Arial';
-  ctx.fillText('IDENTIFICADOR ÚNICO', 46, y);
-  ctx.fillStyle = C.negro; ctx.font = '700 26px "Courier New", monospace';
-  ctx.fillText(registro.idGafete, 46, y+28);
+  ctx.fillText('IDENTIFICADOR ÚNICO', 40, y);
+  ctx.fillStyle = C.negro; ctx.font = '700 24px "Courier New", monospace';
+  ctx.fillText(registro.idGafete, 40, y+28);
 
   // Pie — franja roja + logo pequeño
-  const footH = 44;
+  const footH = 50;
   ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,W,footH);
   if(logoImg){
     const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
-    const lh = footH*0.58, lw = lh*(dim.w/dim.h);
-    ctx.drawImage(logoImg, 30, H-footH+footH*0.21, lw, lh);
-    ctx.fillStyle = C.blanco; ctx.font='700 15px Arial';
-    ctx.fillText('Constructora Conecte', 30+lw+14, H-footH/2+6);
+    const lh = footH*0.5, lw = lh*(dim.w/dim.h);
+    ctx.drawImage(logoImg, 26, H-footH+footH*0.25, lw, lh);
+    ctx.fillStyle = C.blanco; ctx.font='700 13px Arial';
+    ctx.fillText('Constructora Conecte', 26+lw+12, H-footH/2+5);
   } else {
-    ctx.fillStyle = C.blanco; ctx.font='700 15px Arial';
-    ctx.fillText('Constructora Conecte', 30, H-footH/2+6);
+    ctx.fillStyle = C.blanco; ctx.font='700 13px Arial';
+    ctx.fillText('Constructora Conecte', 26, H-footH/2+5);
   }
 
   return canvas;
 }
 
-/* Une frente + reverso en UNA sola imagen (lado a lado, con espacio de
-   doblez en medio). El reverso se dibuja reflejado horizontalmente: así,
-   al recortar el contorno completo y doblar exactamente por la línea
-   central, ambos lados quedan alineados y legibles (no al revés). */
+/* Coloca frente + reverso como DOS TARJETAS INDEPENDIENTES lado a lado, cada
+   una NORMAL y legible tal cual se ve (nada de espejo/inversión). Se recorta
+   cada una por su propia guía punteada; luego se pegan espalda con espalda o
+   se insertan en un porta-gafete transparente de doble cara. */
 async function gafeteConstruirImagenes(p, registro){
   const [frente, reverso] = await Promise.all([
     gafeteDibujarFrente(p, registro),
     gafeteDibujarReverso(p, registro),
   ]);
 
+  const capH = 46; // franja de etiqueta arriba de cada tarjeta — solo referencia visual, no es parte del gafete
   const totalW = GAFETE_CARD_PX_W*2 + GAFETE_GAP_PX;
-  const totalH = GAFETE_CARD_PX_H;
+  const totalH = GAFETE_CARD_PX_H + capH;
   const combo = document.createElement('canvas');
   combo.width = totalW; combo.height = totalH;
   const ctx = combo.getContext('2d');
 
   ctx.fillStyle = '#f3f3f3'; ctx.fillRect(0,0,totalW,totalH);
-  ctx.drawImage(frente, 0, 0);
 
-  ctx.save();
-  const rx = GAFETE_CARD_PX_W + GAFETE_GAP_PX;
-  ctx.translate(rx+GAFETE_CARD_PX_W, 0);
-  ctx.scale(-1,1);
-  ctx.drawImage(reverso, 0, 0);
-  ctx.restore();
+  ctx.fillStyle = '#666'; ctx.font = '700 22px Arial'; ctx.textAlign = 'center';
+  ctx.fillText('FRENTE', GAFETE_CARD_PX_W/2, capH*0.68);
+  ctx.fillText('REVERSO', GAFETE_CARD_PX_W + GAFETE_GAP_PX + GAFETE_CARD_PX_W/2, capH*0.68);
+  ctx.textAlign = 'left';
 
-  // Guía visual de doblez (solo referencia en pantalla/impresión, no forma parte del diseño)
+  ctx.drawImage(frente, 0, capH);
+  ctx.drawImage(reverso, GAFETE_CARD_PX_W+GAFETE_GAP_PX, capH);
+
+  // Guías de corte alrededor de CADA tarjeta por separado (referencia, no
+  // forman parte del diseño impreso dentro del contorno)
   ctx.save();
   ctx.strokeStyle = 'rgba(120,120,120,0.55)'; ctx.setLineDash([7,7]); ctx.lineWidth = 2;
-  const midX = GAFETE_CARD_PX_W + GAFETE_GAP_PX/2;
-  ctx.beginPath(); ctx.moveTo(midX,0); ctx.lineTo(midX,totalH); ctx.stroke();
+  ctx.strokeRect(0, capH, GAFETE_CARD_PX_W, GAFETE_CARD_PX_H);
+  ctx.strokeRect(GAFETE_CARD_PX_W+GAFETE_GAP_PX, capH, GAFETE_CARD_PX_W, GAFETE_CARD_PX_H);
   ctx.restore();
 
   const mmPerPx = 25.4/300;
   return { dataUrl: combo.toDataURL('image/png',1.0), wMM: totalW*mmPerPx, hMM: totalH*mmPerPx };
 }
 
-/* Arma el PDF final: imagen combinada centrada en una hoja A4 horizontal,
-   más guías discretas de corte y doblez, en alta resolución (300 DPI). */
+/* Arma el PDF final: imagen combinada (2 tarjetas independientes) centrada
+   en una hoja A4 horizontal, en alta resolución (300 DPI). */
 function gafeteConstruirPDF(combinado){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'landscape' });
@@ -8380,15 +8462,8 @@ function gafeteConstruirPDF(combinado){
 
   doc.addImage(combinado.dataUrl,'PNG',x,y,combinado.wMM,combinado.hMM,undefined,'FAST');
 
-  doc.setDrawColor(175,175,175); doc.setLineWidth(0.15);
-  if(doc.setLineDashPattern) doc.setLineDashPattern([1.2,1],0);
-  doc.rect(x,y,combinado.wMM,combinado.hMM);
-  const midX = x+combinado.wMM/2;
-  doc.line(midX,y-4,midX,y+combinado.hMM+4);
-  if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
-
   doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140,140,140);
-  doc.text('Recortar por el contorno · Doblar exactamente por la línea central · Laminar o colocar en porta gafete', PW/2, y+combinado.hMM+10, {align:'center'});
+  doc.text('Recorta cada gafete por su propia línea punteada (son 2 piezas independientes, ninguna va invertida) · Pégalas espalda con espalda o colócalas en un porta-gafete de doble vista', PW/2, y+combinado.hMM+10, {align:'center', maxWidth:PW-20});
 
   return doc;
 }
