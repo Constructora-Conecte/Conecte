@@ -7319,15 +7319,17 @@ function aplicarNomPdfExtract(ex){
     }
   }
 
-  // Deducciones del PDF (columna "Deducciones" del CFDI: ISR + otras retenciones
-  // fiscales) → se colocan en "Retención fiscal extra". Solo si el usuario no había
+  // Deducciones del PDF (columna "Deducciones" del CFDI: "Descuentos" + "Retenciones")
+  // → se SUMAN y se colocan juntas en "Retención fiscal extra". En el CFDI vienen
+  // como 2 renglones separados, pero en el sistema son el mismo concepto (ajuste
+  // fiscal que no toca el efectivo ni los vales), así que aquí se combinan en un
+  // solo monto — nunca se toma solo uno de los dos. Solo si el usuario no había
   // capturado ya un valor manual en ese campo, igual que con la Transferencia.
-  // Esto SOLO afecta lo fiscal (nunca el efectivo ni los vales), tal como ya
-  // funciona el campo "Retención fiscal extra" en el resto del sistema.
-  if(ex.descuentos || ex.retenciones){
+  const deduccionFiscalPdf = (ex.descuentos||0) + (ex.retenciones||0);
+  if(deduccionFiscalPdf){
     const campoRet = document.getElementById('nRetencionExtra');
     if(!parseFloat(campoRet.value)){
-      campoRet.value = ex.descuentos || ex.retenciones;
+      campoRet.value = deduccionFiscalPdf;
     }
   }
 
@@ -7338,7 +7340,7 @@ function aplicarNomPdfExtract(ex){
   const detalles = [];
   if(ex.isr) detalles.push(`ISR $${ex.isr.toFixed(2)}`);
   if(ex.ajusteNeto) detalles.push(`Ajuste al neto $${ex.ajusteNeto.toFixed(2)}`);
-  if(ex.descuentos) detalles.push(`Deducciones $${ex.descuentos.toFixed(2)} (colocadas en Retención fiscal)`);
+  if(deduccionFiscalPdf) detalles.push(`Descuentos $${(ex.descuentos||0).toFixed(2)} + Retenciones $${(ex.retenciones||0).toFixed(2)} = $${deduccionFiscalPdf.toFixed(2)} (colocado en Retención fiscal)`);
   if(ex.dias!=null) detalles.push(`Días de pago fiscal: ${ex.dias}`);
   if(ex.netoRecibo) detalles.push(`Neto del recibo: $${ex.netoRecibo.toFixed(2)}`);
   const obs = document.getElementById('nObs');
