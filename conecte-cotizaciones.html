@@ -2457,7 +2457,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
               <div class="nom-receipt-sec">Percepciones</div>
               <div class="nom-receipt-row"><span>Sueldo fiscal (neto)</span><span id="nrFiscal">$0.00</span></div>
               <div class="nom-receipt-row"><span>Vales de despensa</span><span id="nrVales">$0.00</span></div>
-              <div class="nom-receipt-row"><span>Efectivo (neto)</span><span id="nrEfectivo">$0.00</span></div>
+              <div class="nom-receipt-row"><span>Gratificación (Neto)</span><span id="nrEfectivo">$0.00</span></div>
               <div class="nom-receipt-row" id="nrBonosRow" style="display:none"><span>Bonos</span><span id="nrBonos">$0.00</span></div>
               <div class="nom-receipt-row" id="nrExtraRow" style="display:none"><span>Extra en efectivo</span><span id="nrExtra">$0.00</span></div>
 
@@ -9405,10 +9405,11 @@ async function generarPDFNomina(idNomina){
     setF('bold',9,C.ink); txt(`${nomFmtFechaLarga(n.fechaInicio)} — ${nomFmtFechaLarga(n.fechaFin)}`,col2X,y);
     y+=4.5;
     setF('normal',7.6,C.sub);
-    txt('CURP: '+(emp.curp||'—')+'   Fecha de ingreso: '+(nomFmtFechaLarga(emp.fechaIngreso)||'—'),ML,y);
+    txt('CURP: '+(emp.curp||'—'),ML,y);
     txt('Puesto: '+(emp.puesto||'—'),col2X,y);
     y+=4;
     txt('RFC: '+(emp.rfc||'—')+'   NSS: '+(emp.nss||'—'),ML,y);
+    txt('Fecha de ingreso: '+(nomFmtFechaLarga(emp.fechaIngreso)||'—'),col2X,y);
     y+=6;
     hline(ML,MR,y,C.lineSoft,0.3); y+=6;
 
@@ -9469,7 +9470,7 @@ async function generarPDFNomina(idNomina){
     seccionHeader('Percepciones — lo que se te paga esta semana');
     fila('Sueldo fiscal (neto)', n.fiscalNeto, 'Parte de tu pago que se transfiere a tu cuenta y aparece en tu recibo fiscal (CFDI) que emite el contador.', 'Se transfiere a tu cuenta (CFDI del contador).');
     fila('Vales de despensa (neto)', n.valesNeto, 'Vale de despensa de la semana. Nunca se descuenta por faltas, sin importar cuántas tengas.', 'Nunca se descuenta por faltas.');
-    fila('Efectivo (neto)', n.efectivoNeto, 'Resto de tu sueldo acordado que se te entrega en efectivo, ya con el descuento de faltas de esta sección aplicado.', 'Resto de tu sueldo, ya con faltas aplicadas.');
+    fila('Gratificación (Neto)', n.efectivoNeto, 'Resto de tu sueldo acordado, ya con el descuento de faltas de esta sección aplicado.', 'Resto de tu sueldo, ya con faltas aplicadas.');
     if(n.bonos) fila('Bonos', n.bonos, 'Bono o gratificación extra de esta semana. Se suma directo al efectivo que se te entrega.', 'Se suma directo al efectivo.');
     if(n.extraEfectivo) fila('Extra en efectivo', n.extraEfectivo, 'Apoyo adicional entregado solo en efectivo, aparte del sueldo normal de la semana.', 'Apoyo adicional en efectivo.');
     totalLinea('Total percepciones', n.subtotalPago+n.bonos);
