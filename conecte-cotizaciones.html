@@ -3628,12 +3628,15 @@ async function loadAll() {
          AU = Subtotal_PDF_Importado (NUEVA — "Subtotal" del recibo fiscal en PDF; decide
               en calcularNomina si la diferencia contra la Transferencia la absorbe la
               Transferencia (>$2,500) o el Efectivo (≤$2,500))
+         AV = Fecha_Ultima_Actualizacion (NUEVA — se pisa cada vez que se guarda la
+              nómina, a diferencia de Fecha_Registro que conserva la fecha de creación;
+              se usa para ordenar el listado por última nómina modificada)
        IMPORTANTE: el rango de lectura debe llegar SIEMPRE hasta la última columna usada
-       (hoy AU). Antes llegaba solo hasta AN, por lo que Modo_Manual/Ajuste_Manual/
+       (hoy AV). Antes llegaba solo hasta AN, por lo que Modo_Manual/Ajuste_Manual/
        Monto_Acordado_Manual/Faltas_Justificadas (AN–AS) nunca se recuperaban al reabrir
        una nómina ya guardada — ese bug queda corregido aquí. */
     try{
-      const nomR = await sheetsGet('Nominas!A2:AU');
+      const nomR = await sheetsGet('Nominas!A2:AV');
       ST.nominas = (nomR||[]).map((r,i)=>({
         _row: i+2,
         idNomina: r[0]||'',
@@ -3696,6 +3699,10 @@ async function loadAll() {
         // todavía no tiene esta columna, llega vacía y se usa 0 (comportamiento: el
         // Efectivo absorbe la diferencia, igual que antes de este cambio).
         subtotalPdfImportado: parseFloat(r[46])||0,
+        // AV — NUEVA: Fecha de última actualización. Si la hoja todavía no tiene esta
+        // columna, o la fila es de antes de este cambio, se usa Fecha_Registro como
+        // respaldo para que el ordenamiento por "última actualización" siga funcionando.
+        fechaActualizacion: r[47] || r[7] || '',
       })).filter(n=>n.idNomina);
       ST.nominasError = null;
     }catch(nomErr){
@@ -7621,7 +7628,10 @@ function renderNominas(){
       ST.nomWeekCollapsed = ST.nomWeekCollapsed || {};
 
       tbody.innerHTML = keysOrdenadas.map(key=>{
-        const grupo = semanas[key].slice().sort((a,b)=> (a.nombreEmpleado||'').localeCompare(b.nombreEmpleado||''));
+        // Orden dentro de la semana: la nómina modificada/creada más recientemente va
+        // primero (arriba), en vez de orden alfabético por nombre — así el usuario ve
+        // de inmediato en qué empleado trabajó por última vez.
+        const grupo = semanas[key].slice().sort((a,b)=> String(b.fechaActualizacion||'').localeCompare(String(a.fechaActualizacion||'')));
         const primero = grupo[0];
         const activos = grupo.filter(n=>n.estatus!=='Cancelado');
         const totFiscal = activos.reduce((s,n)=>s+n.fiscalNeto,0);
@@ -7678,7 +7688,7 @@ function renderNominas(){
           </tr>`;
         }).join('');
 
-        const totalRow = `<tr style="font-weight:700;border-top:1px solid var(--border2)">
+        const totalRow = `<tr style="font-weight:700;border-bottom:1px solid var(--border2)">
           <td colspan="2" style="color:var(--green,#38a169)">TOTAL SEMANA</td>
           <td style="text-align:right;color:var(--green,#38a169)">${fmtMXN(totFiscal)}</td>
           <td style="text-align:right;color:var(--green,#38a169)">${fmtMXN(totVales)}</td>
@@ -7687,7 +7697,7 @@ function renderNominas(){
           <td colspan="3"></td>
         </tr>`;
 
-        return headerRow + filas + totalRow;
+        return headerRow + totalRow + filas;
       }).join('');
     }
   }
@@ -8113,14 +8123,20 @@ async function guardarNomina(){
     // la diferencia contra la Transferencia (>$2,500 → Transferencia, ≤$2,500 → Efectivo).
     // Agrega esta columna a la hoja "Nominas" si aún no existe.
     parseFloat(subtotalPdf)||0,
+    // AV — NUEVA: Fecha_Ultima_Actualizacion. Se pisa con "ahora" CADA VEZ que se guarda
+    // la nómina (nueva o editada) — a diferencia de Fecha_Registro (columna H), que
+    // conserva la fecha de creación original y nunca cambia. Sirve para ordenar el
+    // listado por "última nómina modificada" en vez de por nombre de empleado.
+    // Agrega esta columna a la hoja "Nominas" si aún no existe.
+    new Date().toISOString(),
   ];
 
   document.getElementById('nomSaveBtn').disabled = true;
   try{
     if(ST.nomEditRow){
-      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AU${ST.nomEditRow}`, [row]);
+      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AV${ST.nomEditRow}`, [row]);
     } else {
-      await sheetsAppend('Nominas!A2:AU', [row]);
+      await sheetsAppend('Nominas!A2:AV', [row]);
     }
     // NOTA: ya no se genera ningún movimiento individual en "Salidas" al guardar una nómina.
     // Los movimientos de caja se generan únicamente cuando la semana completa se marca
