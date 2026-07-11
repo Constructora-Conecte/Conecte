@@ -1033,6 +1033,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
             </button>
           </div>
         </div>
+        <div class="pagi">
+          <span class="pagi-info" id="pagiInfoTop">—</span>
+          <div class="pagi-btns" id="pagiBtnsTop"></div>
+        </div>
         <div class="cot-table-wrap">
           <table class="cot-table">
             <thead>
@@ -1114,6 +1118,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
             Nueva Factura
           </button>
+        </div>
+        <div class="pagi">
+          <span class="pagi-info" id="facPagiInfoTop">—</span>
+          <div class="pagi-btns" id="facPagiBtnsTop"></div>
         </div>
         <div class="cot-table-wrap">
           <table class="fac-table">
@@ -1241,12 +1249,21 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <select class="form-select" id="ingFAnio" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()"><option value="">Año: todos</option></select>
           <select class="form-select" id="ingFCliente" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()"><option value="">Cliente: todos</option></select>
           <select class="form-select" id="ingFCuenta" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()"><option value="">Método de pago: todos</option></select>
+          <span class="fsep"></span>
+          <span style="font-size:11.5px;color:var(--text3)">Fecha de pago:</span>
+          <input type="date" id="ingFPagoDesde" class="form-input" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()" title="Fecha de pago — desde">
+          <span style="font-size:11.5px;color:var(--text3)">a</span>
+          <input type="date" id="ingFPagoHasta" class="form-input" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyIngFilter()" title="Fecha de pago — hasta">
           <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosIng()">Limpiar filtros</button>
         </div>
         <div class="card">
           <div class="card-header">
             <span class="card-title">Registro de Ingresos</span>
             <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="ingCount">0</span>
+          </div>
+          <div class="pagi">
+            <span class="pagi-info" id="ingPagiInfoTop">—</span>
+            <div class="pagi-btns" id="ingPagiBtnsTop"></div>
           </div>
           <div class="cot-table-wrap">
             <table class="bal-table">
@@ -1294,12 +1311,21 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <select class="form-select" id="gasFAnio" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()"><option value="">Año: todos</option></select>
           <select class="form-select" id="gasFProveedor" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()"><option value="">Proveedor: todos</option></select>
           <select class="form-select" id="gasFCategoria" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()"><option value="">Categoría: todas</option></select>
+          <span class="fsep"></span>
+          <span style="font-size:11.5px;color:var(--text3)">Fecha de pago:</span>
+          <input type="date" id="gasFPagoDesde" class="form-input" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()" title="Fecha de pago — desde">
+          <span style="font-size:11.5px;color:var(--text3)">a</span>
+          <input type="date" id="gasFPagoHasta" class="form-input" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="applyGasFilter()" title="Fecha de pago — hasta">
           <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosGas()">Limpiar filtros</button>
         </div>
         <div class="card">
           <div class="card-header">
             <span class="card-title">Registro de Gastos</span>
             <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="gasCount">0</span>
+          </div>
+          <div class="pagi">
+            <span class="pagi-info" id="gasPagiInfoTop">—</span>
+            <div class="pagi-btns" id="gasPagiBtnsTop"></div>
           </div>
           <div class="cot-table-wrap">
             <table class="bal-table">
@@ -3185,6 +3211,7 @@ window.onload = () => {
     });
     // Load public/read-only data immediately using just API key (no auth needed for reading)
     await loadAll();
+    restoreLastView();
     startAutoRefresh();
   });
   preloadLogo();
@@ -3376,6 +3403,8 @@ function doLogout() {
   document.getElementById('cotTbody').innerHTML='<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">Conecta Google para ver los datos</td></tr>';
   document.getElementById('pagiInfo').textContent='';
   document.getElementById('pagiBtns').innerHTML='';
+  document.getElementById('pagiInfoTop').textContent='';
+  document.getElementById('pagiBtnsTop').innerHTML='';
   ['sTotal','sAcep','sPend','sMonto'].forEach(id=>document.getElementById(id).textContent='—');
   toast('inf','Sesión cerrada.');
 }
@@ -4261,12 +4290,18 @@ function setLoading(on) {
     &nbsp;Cargando cotizaciones…</td></tr>`;
 }
 
-/* ─── PAGINATION ─── */
+/* ─── PAGINATION ───
+   Cada lista paginada (Cotizaciones, Facturas, Ingresos, Gastos) tiene ahora
+   una barra de paginación arriba de la tabla (id + "Top") además de la de
+   abajo, para no tener que bajar hasta el final para cambiar de página.
+   setPagiUI() pinta el mismo contenido en ambas a la vez. */
+function setPagiUI(baseInfoId, baseWrapId, infoText, btnsHTML){
+  [baseInfoId, baseInfoId+'Top'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=infoText; });
+  [baseWrapId, baseWrapId+'Top'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=btnsHTML; });
+}
 function renderPagi() {
   const total=ST.filtered.length;
   const pages=Math.ceil(total/ST.PAGE)||1;
-  document.getElementById('pagiInfo').textContent=`Pág ${ST.page}/${pages} · ${total} registros`;
-  const wrap=document.getElementById('pagiBtns');
   let h=`<button class="pbtn" onclick="goPage(${ST.page-1})" ${ST.page===1?'disabled':''}>‹</button>`;
   for(let i=1;i<=pages;i++){
     if(pages>7&&Math.abs(i-ST.page)>2&&i!==1&&i!==pages){
@@ -4276,7 +4311,7 @@ function renderPagi() {
     h+=`<button class="pbtn ${i===ST.page?'on':''}" onclick="goPage(${i})">${i}</button>`;
   }
   h+=`<button class="pbtn" onclick="goPage(${ST.page+1})" ${ST.page===pages?'disabled':''}>›</button>`;
-  wrap.innerHTML=h;
+  setPagiUI('pagiInfo','pagiBtns',`Pág ${ST.page}/${pages} · ${total} registros`,h);
 }
 function goPage(p){ const pages=Math.ceil(ST.filtered.length/ST.PAGE)||1; if(p<1||p>pages)return; ST.page=p; renderTable(); }
 
@@ -5864,9 +5899,9 @@ function generarPDF(id, itemsOverride) {
     // aunque el bloque de texto (nombre/RFC/dirección/tel) es más corto (~19mm),
     // dejando un espacio en blanco muy grande antes de "Dirigida a". Ahora el
     // piso es la altura real del bloque de texto, y los márgenes se redujeron.
-    const headerBottom=Math.max(logoBottom,TOPY+19)+2.2;
+    const headerBottom=Math.max(logoBottom,TOPY+19)+6.3;
     hline(ML,MR,headerBottom,C.line,0.4);
-    return headerBottom+3;
+    return headerBottom+3.6;
   }
 
   // ── PIE DE PÁGINA ──
@@ -5944,21 +5979,22 @@ function generarPDF(id, itemsOverride) {
   y=drawInfoGrid(y);
   y=drawItemsHeader(y);
 
+  const descLineH=4.3; // interlineado explícito de la descripción (evita que las líneas/letras se sientan pegadas)
   items.forEach((it)=>{
-    const lines=doc.splitTextToSize(it.desc||'—',cDescW-2);
-    const rh=Math.max(lines.length*4.3+4,9);
+    const lines=doc.splitTextToSize(it.desc||'—',cDescW-6);
+    const rh=Math.max(lines.length*descLineH+4,9);
     if(y+rh>BOTY){
       doc.addPage(); pg++;
       y=pageHeader(pg,1); pageFooter();
       y=drawItemsHeader(y);
     }
-    const textBlockH=lines.length*4.3;
+    const textBlockH=lines.length*descLineH;
     const descTop=y+rh/2-textBlockH/2+3.4;
     const midSingle=y+rh/2+1.6;
 
     setF('normal',8.4,C.ink);
     txt(String(it.cant||1),xCant,midSingle);
-    doc.text(lines,xDesc,descTop);
+    lines.forEach((ln,i)=>txt(ln,xDesc,descTop+i*descLineH));
     setF('normal',8.4,C.sub);
     txt(it.unidad||'—',xUnid+cUnidW,midSingle,{align:'right'});
     txt(money(it.precio),xPrec+cPrecW,midSingle,{align:'right'});
@@ -6184,10 +6220,7 @@ async function changeFacNotas(row,tipo,fecha){
 function renderFacPagi(){
   const total=ST.facFiltered.length;
   const pages=Math.ceil(total/ST.PAGE)||1;
-  const info=document.getElementById('facPagiInfo');
-  const wrap=document.getElementById('facPagiBtns');
-  if(!info||!wrap) return;
-  info.textContent=`Pág ${ST.facPage}/${pages} · ${total} registros`;
+  if(!document.getElementById('facPagiBtns')) return;
   let h=`<button class="pbtn" onclick="goFacPage(${ST.facPage-1})" ${ST.facPage===1?'disabled':''}>‹</button>`;
   for(let i=1;i<=pages;i++){
     if(pages>7&&Math.abs(i-ST.facPage)>2&&i!==1&&i!==pages){
@@ -6197,7 +6230,7 @@ function renderFacPagi(){
     h+=`<button class="pbtn ${i===ST.facPage?'on':''}" onclick="goFacPage(${i})">${i}</button>`;
   }
   h+=`<button class="pbtn" onclick="goFacPage(${ST.facPage+1})" ${ST.facPage===pages?'disabled':''}>›</button>`;
-  wrap.innerHTML=h;
+  setPagiUI('facPagiInfo','facPagiBtns',`Pág ${ST.facPage}/${pages} · ${total} registros`,h);
 }
 function goFacPage(p){const pages=Math.ceil(ST.facFiltered.length/ST.PAGE)||1;if(p<1||p>pages)return;ST.facPage=p;renderFacTableFull();}
 
@@ -8253,6 +8286,7 @@ function switchEmpSubTab(sub){
   document.getElementById(btnId)?.classList.add('active');
   if(sub==='personal') renderEmpleados();
   if(sub==='rostros') renderRostros();
+  saveLastView();
 }
 
 /* ─── SUB-VISTAS DE SISTEMAS: Clientes / Artículos / Contraseñas ───
@@ -8270,6 +8304,7 @@ function switchSistemasSubTab(sub){
   if(sub==='clientes') renderSisClientes();
   if(sub==='articulos') renderSisArticulos();
   if(sub==='contrasenas') renderSisContrasenas();
+  saveLastView();
 }
 
 /* ── CLIENTES (Sistemas) ── */
@@ -9370,8 +9405,8 @@ async function generarPDFNomina(idNomina){
     setF('bold',9,C.ink); txt(`${nomFmtFechaLarga(n.fechaInicio)} — ${nomFmtFechaLarga(n.fechaFin)}`,col2X,y);
     y+=4.5;
     setF('normal',7.6,C.sub);
-    txt('Puesto: '+(emp.puesto||'—'),ML,y);
-    txt('Estatus: '+n.estatus,col2X,y);
+    txt('CURP: '+(emp.curp||'—')+'   Fecha de ingreso: '+(nomFmtFechaLarga(emp.fechaIngreso)||'—'),ML,y);
+    txt('Puesto: '+(emp.puesto||'—'),col2X,y);
     y+=4;
     txt('RFC: '+(emp.rfc||'—')+'   NSS: '+(emp.nss||'—'),ML,y);
     y+=6;
@@ -9869,6 +9904,35 @@ function resetViewTransitionState(){
   resetFloatingUIState();
 }
 
+/* ─── RECORDAR LA ÚLTIMA VISTA (para que recargar la página no mande siempre
+   a Comercial > Cotizaciones) ───
+   Cada vez que se cambia de módulo o de sub-pestaña se guarda en localStorage
+   en qué vista quedó el usuario; al recargar, restoreLastView() la reconstruye
+   antes de que se note el "salto" a la vista por defecto. */
+function saveLastView(){
+  try{
+    localStorage.setItem('conecte_last_view', JSON.stringify({
+      section: ST.currentSection||'comercial',
+      comercialTab: ST.currentComercialTab||'cot',
+      balTab: ST.currentBalTab||'dash',
+      empSubTab: ST.empSubTab||'personal',
+      sisSubTab: ST.sisSubTab||'clientes'
+    }));
+  }catch(e){}
+}
+function restoreLastView(){
+  let v=null;
+  try{ v=JSON.parse(localStorage.getItem('conecte_last_view')||'null'); }catch(e){}
+  if(!v) return; // nada guardado todavía: se queda con la vista inicial (Comercial > Cotizaciones)
+  ST.currentComercialTab = v.comercialTab||'cot';
+  ST.currentBalTab = v.balTab||'dash';
+  ST.empSubTab = v.empSubTab||'personal';
+  ST.sisSubTab = v.sisSubTab||'clientes';
+  if(v.section==='balance') switchTab('bal');
+  else if(v.section==='emp'||v.section==='nom'||v.section==='asis'||v.section==='sistemas') switchTab(v.section);
+  else switchTab(ST.currentComercialTab);
+}
+
 function switchTab(tab){
   resetViewTransitionState();
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
@@ -9901,6 +9965,7 @@ function switchTab(tab){
     if(tab==='nom') renderNominas();
     if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
     if(tab==='sistemas') switchSistemasSubTab(ST.sisSubTab||'clientes');
+    saveLastView();
     return;
   }
   document.getElementById('mainAddBtn')?.style.setProperty('display','');
@@ -9961,6 +10026,7 @@ function switchTab(tab){
   const bcSection=document.getElementById('bcSection');
   if(bcSection) bcSection.textContent = isComercial ? 'Comercial' : 'Balance';
   ST.currentSection = isComercial ? 'comercial' : 'balance';
+  saveLastView();
 }
 
 function mainAdd(){
@@ -10173,6 +10239,7 @@ function switchBalTab(sub){
   const bcPage=document.getElementById('bcPage');
   if(bcPage) bcPage.textContent = {dash:'Dashboard', ing:'Ingresos', gas:'Salidas'}[sub] || 'Balance';
   if(sub==='dash') setTimeout(renderDashboard,80);
+  saveLastView();
 }
 
 /* ─── HELPERS ─── */
@@ -10202,6 +10269,8 @@ function applyIngFilter(){
   const fAnio = document.getElementById('ingFAnio')?.value||'';
   const fCliente = document.getElementById('ingFCliente')?.value||'';
   const fCuenta = document.getElementById('ingFCuenta')?.value||'';
+  const fPagoDesde = document.getElementById('ingFPagoDesde')?.value||'';
+  const fPagoHasta = document.getElementById('ingFPagoHasta')?.value||'';
   let rows=ST.ingresos.slice();
   if(ST.ingFilter!=='all') rows=rows.filter(b=>b.estado===ST.ingFilter);
   // Punto 10: filtros avanzados combinables — todos se aplican con AND entre sí
@@ -10210,6 +10279,10 @@ function applyIngFilter(){
   if(fAnio) rows=rows.filter(b=>String(b.fecha||'').slice(0,4)===fAnio);
   if(fCliente) rows=rows.filter(b=>b.cliente===fCliente);
   if(fCuenta) rows=rows.filter(b=>b.cuenta===fCuenta);
+  // Filtro por Fecha de Pago (rango): un registro sin fecha de pago no
+  // aparece si se está filtrando por este campo, ya que no tiene con qué comparar.
+  if(fPagoDesde) rows=rows.filter(b=>b.fechaPago && b.fechaPago>=fPagoDesde);
+  if(fPagoHasta) rows=rows.filter(b=>b.fechaPago && b.fechaPago<=fPagoHasta);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||b.cliente.toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
   rows.sort((a,b)=>{
     const da=a.fechaPago||a.fecha||'', db=b.fechaPago||b.fecha||'';
@@ -10247,7 +10320,7 @@ function poblarFiltrosAvanzadosIng(){
   }
 }
 function limpiarFiltrosIng(){
-  ['ingFMes','ingFAnio','ingFCliente','ingFCuenta'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['ingFMes','ingFAnio','ingFCliente','ingFCuenta','ingFPagoDesde','ingFPagoHasta'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   applyIngFilter();
 }
 function updateIngStats(){
@@ -10400,16 +10473,14 @@ function facRelCardOpenXML(){ if(ST._facRelCardId) openFacXML(ST._facRelCardId);
 
 function renderIngPagi(){
   const total=ST.ingFiltered.length,pages=Math.ceil(total/20)||1;
-  const info=document.getElementById('ingPagiInfo'),wrap=document.getElementById('ingPagiBtns');
-  if(!info||!wrap) return;
-  info.textContent=`Pág ${ST.ingPage}/${pages} · ${total} registros`;
+  if(!document.getElementById('ingPagiBtns')) return;
   let h=`<button class="pbtn" onclick="goIngPage(${ST.ingPage-1})" ${ST.ingPage===1?'disabled':''}>‹</button>`;
   for(let i=1;i<=pages;i++){
     if(pages>7&&Math.abs(i-ST.ingPage)>2&&i!==1&&i!==pages){ if(i===2||i===pages-1) h+=`<button class="pbtn" disabled>…</button>`; continue; }
     h+=`<button class="pbtn ${i===ST.ingPage?'on':''}" onclick="goIngPage(${i})">${i}</button>`;
   }
   h+=`<button class="pbtn" onclick="goIngPage(${ST.ingPage+1})" ${ST.ingPage===pages?'disabled':''}>›</button>`;
-  wrap.innerHTML=h;
+  setPagiUI('ingPagiInfo','ingPagiBtns',`Pág ${ST.ingPage}/${pages} · ${total} registros`,h);
 }
 function goIngPage(p){ const pages=Math.ceil(ST.ingFiltered.length/20)||1; ST.ingPage=Math.max(1,Math.min(p,pages)); renderIngTable(); }
 
@@ -10427,6 +10498,8 @@ function applyGasFilter(){
   const fAnio = document.getElementById('gasFAnio')?.value||'';
   const fProveedor = document.getElementById('gasFProveedor')?.value||'';
   const fCategoria = document.getElementById('gasFCategoria')?.value||'';
+  const fPagoDesde = document.getElementById('gasFPagoDesde')?.value||'';
+  const fPagoHasta = document.getElementById('gasFPagoHasta')?.value||'';
   let rows=ST.salidas.slice();
   if(ST.gasFilter!=='all') rows=rows.filter(b=>b.estado===ST.gasFilter);
   // Punto 10: filtros avanzados combinables — todos se aplican con AND entre sí
@@ -10435,6 +10508,9 @@ function applyGasFilter(){
   if(fAnio) rows=rows.filter(b=>String(b.fecha||'').slice(0,4)===fAnio);
   if(fProveedor) rows=rows.filter(b=>b.proveedor===fProveedor);
   if(fCategoria) rows=rows.filter(b=>b.categoria===fCategoria);
+  // Filtro por Fecha de Pago (rango): sin fecha de pago no entra si se filtra por este campo.
+  if(fPagoDesde) rows=rows.filter(b=>b.fechaPago && b.fechaPago>=fPagoDesde);
+  if(fPagoHasta) rows=rows.filter(b=>b.fechaPago && b.fechaPago<=fPagoHasta);
   if(q) rows=rows.filter(b=>b.concepto.toLowerCase().includes(q)||(b.proveedor||'').toLowerCase().includes(q)||b.cuenta.toLowerCase().includes(q));
   rows.sort((a,b)=>{
     const da=a.fechaPago||a.fecha||'', db=b.fechaPago||b.fecha||'';
@@ -10475,7 +10551,7 @@ function poblarFiltrosAvanzadosGas(){
   }
 }
 function limpiarFiltrosGas(){
-  ['gasFMes','gasFAnio','gasFProveedor','gasFCategoria'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['gasFMes','gasFAnio','gasFProveedor','gasFCategoria','gasFPagoDesde','gasFPagoHasta'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   applyGasFilter();
 }
 function updateGasStats(){
@@ -10522,16 +10598,14 @@ function renderGasTable(){
 }
 function renderGasPagi(){
   const total=ST.gasFiltered.length,pages=Math.ceil(total/20)||1;
-  const info=document.getElementById('gasPagiInfo'),wrap=document.getElementById('gasPagiBtns');
-  if(!info||!wrap) return;
-  info.textContent=`Pág ${ST.gasPage}/${pages} · ${total} registros`;
+  if(!document.getElementById('gasPagiBtns')) return;
   let h=`<button class="pbtn" onclick="goGasPage(${ST.gasPage-1})" ${ST.gasPage===1?'disabled':''}>‹</button>`;
   for(let i=1;i<=pages;i++){
     if(pages>7&&Math.abs(i-ST.gasPage)>2&&i!==1&&i!==pages){ if(i===2||i===pages-1) h+=`<button class="pbtn" disabled>…</button>`; continue; }
     h+=`<button class="pbtn ${i===ST.gasPage?'on':''}" onclick="goGasPage(${i})">${i}</button>`;
   }
   h+=`<button class="pbtn" onclick="goGasPage(${ST.gasPage+1})" ${ST.gasPage===pages?'disabled':''}>›</button>`;
-  wrap.innerHTML=h;
+  setPagiUI('gasPagiInfo','gasPagiBtns',`Pág ${ST.gasPage}/${pages} · ${total} registros`,h);
 }
 function goGasPage(p){ const pages=Math.ceil(ST.gasFiltered.length/20)||1; ST.gasPage=Math.max(1,Math.min(p,pages)); renderGasTable(); }
 
@@ -11121,9 +11195,13 @@ function destroyChart(id){ if(ST._charts[id]){ ST._charts[id].destroy(); delete 
 function renderDashboard(){
   if(document.getElementById('balDash')?.classList.contains('active')===false) return;
   // Populate / refrescar el selector de año (por si llegan años nuevos tras cargar datos)
+  // El Dashboard se basa en la FECHA DE PAGO (no en la fecha de registro/emisión):
+  // un ingreso o gasto sin fecha de pago todavía no se puede considerar dentro del
+  // periodo en el que realmente entró/salió el dinero, así que se excluye por
+  // completo de aquí (sigue apareciendo normal en los listados de Ingresos/Salidas).
   const ySel=document.getElementById('dashYear');
   if(ySel){
-    const years=[...new Set([...ST.ingresos,...ST.salidas].map(b=>b.fecha?.slice(0,4)).filter(Boolean))].sort().reverse();
+    const years=[...new Set([...ST.ingresos,...ST.salidas].map(b=>b.fechaPago?.slice(0,4)).filter(Boolean))].sort().reverse();
     if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
     const existing=new Set([...ySel.options].map(o=>o.value));
     if(years.some(y=>!existing.has(y))){
@@ -11135,11 +11213,11 @@ function renderDashboard(){
   }
   const year=parseInt(ySel?.value)||new Date().getFullYear();
 
-  const ing=ST.ingresos.filter(b=>b.fecha?.startsWith(year));
-  const gas=ST.salidas.filter(b=>b.fecha?.startsWith(year));
+  const ing=ST.ingresos.filter(b=>b.fechaPago && b.fechaPago.startsWith(year));
+  const gas=ST.salidas.filter(b=>b.fechaPago && b.fechaPago.startsWith(year));
   const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
-  function sumByMonth(arr){ return meses.map((_,mi)=>arr.filter(b=>parseInt(b.fecha?.slice(5,7))===mi+1).reduce((s,b)=>s+b.monto,0)); }
+  function sumByMonth(arr){ return meses.map((_,mi)=>arr.filter(b=>parseInt(b.fechaPago?.slice(5,7))===mi+1).reduce((s,b)=>s+b.monto,0)); }
   const ingM=sumByMonth(ing), gasM=sumByMonth(gas);
 
   // KPIs
