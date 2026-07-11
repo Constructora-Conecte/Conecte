@@ -8923,7 +8923,13 @@ function gafeteTextoEnvuelto(ctx, text, x, y, maxWidth, lineHeight){
   return yy;
 }
 
-/* ── FRENTE del gafete (vertical) ── */
+/* ── FRENTE del gafete (vertical) ──
+   Diseño nuevo (sustituye por completo al anterior): banda negra + acento
+   rojo con corte diagonal limpio (sin tramas internas, para que no se vea
+   pixelado al imprimir), el LOGO real de la empresa es el único elemento de
+   marca — va dentro de un círculo blanco con borde rojo, sin ninguna
+   palabra sobrepuesta encima ni logotipo adicional en otra parte de la
+   tarjeta. El frente solo lleva foto, nombre y puesto: ningún otro dato. */
 async function gafeteDibujarFrente(p, registro){
   const W = GAFETE_CARD_PX_W, H = GAFETE_CARD_PX_H;
   const canvas = document.createElement('canvas');
@@ -8933,56 +8939,45 @@ async function gafeteDibujarFrente(p, registro){
 
   ctx.fillStyle = C.blanco; ctx.fillRect(0,0,W,H);
 
-  // Banda superior roja con corte diagonal (identidad corporativa)
-  const bandH = H*0.275;
-  const grad = ctx.createLinearGradient(0,0,W,bandH);
-  grad.addColorStop(0,C.rojoOsc); grad.addColorStop(1,C.rojo);
-  ctx.fillStyle = grad;
+  // Banda superior negra con corte diagonal + acento rojo (un solo corte
+  // nítido, vectorial — nada de líneas finas que pixeleen al imprimir)
+  const bandH = H*0.24;
+  ctx.fillStyle = C.negro;
   ctx.beginPath();
-  ctx.moveTo(0,0); ctx.lineTo(W,0); ctx.lineTo(W,bandH*0.74); ctx.lineTo(0,bandH);
+  ctx.moveTo(0,0); ctx.lineTo(W,0); ctx.lineTo(W,bandH*0.6); ctx.lineTo(0,bandH);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = C.rojo;
+  ctx.beginPath();
+  ctx.moveTo(0,bandH); ctx.lineTo(W,bandH*0.6); ctx.lineTo(W,bandH*0.6+22); ctx.lineTo(0,bandH+22);
   ctx.closePath(); ctx.fill();
 
-  // Líneas técnicas discretas dentro de la banda (detalle industrial)
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 2;
-  for(let i=0;i<8;i++){
-    ctx.beginPath();
-    ctx.moveTo(i*40,0);
-    ctx.lineTo(i*40-bandH*0.45,bandH);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Logo — círculo blanco holgado detrás para que el emblema (redondo, con
-  // el rayo y "CONECTE") se vea completo y nítido, sin recortarse ni
-  // deformarse. Se ajusta siempre "contain" (nunca estira ni distorsiona).
-  // Diámetro y posición calculados para dejar SIEMPRE un espacio libre antes
-  // de la fotografía, así el logo nunca vuelve a quedar tapado por ella.
+  // Logo institucional — círculo blanco con borde rojo, imagen real cargada
+  // en alta resolución y con suavizado activo (nítida, no pixelada). Es el
+  // ÚNICO logo del frente; no se repite en ninguna otra parte de la tarjeta.
   const logoImg = await gafeteCargarImagen(ST.logoDataUrl, 4000);
-  const logoD = H*0.115;               // diámetro visible del logo
-  const logoCX = W/2, logoCY = 16+logoD/2;
+  const logoD = H*0.155;
+  const logoCX = W/2, logoCY = 26+logoD/2;
   ctx.save();
-  ctx.shadowColor='rgba(0,0,0,0.25)'; ctx.shadowBlur=10; ctx.shadowOffsetY=3;
-  ctx.beginPath(); ctx.arc(logoCX,logoCY,logoD/2+10,0,Math.PI*2);
-  ctx.fillStyle='rgba(255,255,255,0.96)'; ctx.fill();
+  ctx.shadowColor='rgba(0,0,0,0.3)'; ctx.shadowBlur=12; ctx.shadowOffsetY=4;
+  ctx.beginPath(); ctx.arc(logoCX,logoCY,logoD/2+8,0,Math.PI*2);
+  ctx.fillStyle=C.blanco; ctx.fill();
   ctx.restore();
+  ctx.beginPath(); ctx.arc(logoCX,logoCY,logoD/2+8,0,Math.PI*2);
+  ctx.lineWidth=5; ctx.strokeStyle=C.rojo; ctx.stroke();
   if(logoImg){
     const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
-    const s = Math.min(logoD/dim.w, logoD/dim.h);
+    const s = Math.min((logoD*0.86)/dim.w, (logoD*0.86)/dim.h);
     const lw = dim.w*s, lh = dim.h*s;
     ctx.save();
     ctx.beginPath(); ctx.arc(logoCX,logoCY,logoD/2,0,Math.PI*2); ctx.clip();
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(logoImg, logoCX-lw/2, logoCY-lh/2, lw, lh);
     ctx.restore();
   }
-  ctx.fillStyle = C.blanco;
-  gafeteTextoAjustadoCentrado(ctx, 'CONSTRUCTORA CONECTE', W/2, logoCY+logoD/2+38, W-50, 30, '700');
 
   // Fotografía circular — centrada, superpuesta al borde inferior de la banda.
-  // Radio y posición ajustados para que SIEMPRE quede separada del logo
-  // (nunca lo cubre), sin importar el tamaño del logo cargado.
   const photoR = W*0.235;
-  const photoCX = W/2, photoCY = bandH+45;
+  const photoCX = W/2, photoCY = bandH+70;
   const fotoImg = await gafeteCargarImagen(normalizePhotoUrl(p.fotografia), 6000);
 
   ctx.save();
@@ -8993,6 +8988,7 @@ async function gafeteDibujarFrente(p, registro){
 
   ctx.save();
   ctx.beginPath(); ctx.arc(photoCX,photoCY,photoR,0,Math.PI*2); ctx.closePath(); ctx.clip();
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   if(fotoImg){
     const s = Math.max((photoR*2)/fotoImg.width, (photoR*2)/fotoImg.height);
     const iw = fotoImg.width*s, ih = fotoImg.height*s;
@@ -9009,57 +9005,47 @@ async function gafeteDibujarFrente(p, registro){
   ctx.beginPath(); ctx.arc(photoCX,photoCY,photoR+3,0,Math.PI*2);
   ctx.lineWidth = 7; ctx.strokeStyle = C.rojo; ctx.stroke();
 
-  // Nombre — centrado, debajo de la foto
-  let ty = photoCY + photoR + 62;
+  // Nombre y puesto — ÚNICA información que lleva el frente (sin NSS/CURP/
+  // RFC ni ningún otro dato: eso ahora vive en el reverso)
+  let ty = photoCY + photoR + 70;
   ctx.fillStyle = C.negro;
   gafeteTextoAjustadoCentrado(ctx, (p.nombre||'NO REGISTRADO').toUpperCase(), W/2, ty, W-64, 40, '700');
 
-  // Puesto — en su propia píldora de color, bien visible y separada del
-  // nombre (para que nunca pase desapercibido)
-  ty += 28;
+  ty += 30;
   ctx.font = '700 24px Arial, sans-serif';
   const puestoTxt = (p.puesto||'No registrado').toUpperCase();
   const puestoW = Math.min(ctx.measureText(puestoTxt).width+48, W-70);
-  const puestoH = 42;
-  gafeteRoundRect(ctx, W/2-puestoW/2, ty, puestoW, puestoH, 21);
-  ctx.fillStyle = 'rgba(175,13,18,0.09)'; ctx.fill();
-  ctx.fillStyle = C.rojo;
-  gafeteTextoAjustadoCentrado(ctx, puestoTxt, W/2, ty+28, puestoW-24, 24, '700');
+  const puestoH = 44;
+  gafeteRoundRect(ctx, W/2-puestoW/2, ty, puestoW, puestoH, 22);
+  ctx.fillStyle = C.rojo; ctx.fill();
+  ctx.fillStyle = C.blanco;
+  gafeteTextoAjustadoCentrado(ctx, puestoTxt, W/2, ty+29, puestoW-24, 24, '700');
 
-  ty += puestoH+32;
-  ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(44,ty); ctx.lineTo(W-44,ty); ctx.stroke();
+  // Espacio inferior — marca de agua muy sutil del logo, para que la zona
+  // blanca no quede vacía (no es texto ni dato, solo textura de marca)
+  const footH = H*0.06;
+  if(logoImg){
+    const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
+    const wmMaxW = W*0.42;
+    const s = Math.min(wmMaxW/dim.w, wmMaxW/dim.h);
+    const wmW = dim.w*s, wmH = dim.h*s;
+    ctx.save(); ctx.globalAlpha = 0.05;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(logoImg, W/2-wmW/2, H-footH-wmH-50, wmW, wmH);
+    ctx.restore();
+  }
 
-  // Datos del empleado — alineados a la izquierda, grandes y bien espaciados.
-  // Se agrega el RFC junto a NSS y CURP para aprovechar el espacio antes del
-  // pie del gafete, en vez de dejarlo vacío.
-  const campoRow = (label, valor, yy)=>{
-    ctx.fillStyle = C.grisClaro; ctx.font = '700 16px Arial, sans-serif';
-    ctx.fillText(label, 44, yy);
-    ctx.fillStyle = C.negro; ctx.font = '700 29px "Courier New", monospace';
-    ctx.fillText(valOrNoRegistrado(valor), 44, yy+32);
-  };
-  campoRow('NSS', p.nss, ty+46);
-  campoRow('CURP', p.curp, ty+110);
-  campoRow('RFC', p.rfc, ty+174);
-
-  // Franja inferior — número de emergencia + folio
-  const footH = H*0.115;
+  // Franja inferior — solo detalle de marca (negro + acento rojo), sin texto
   ctx.fillStyle = C.negro; ctx.fillRect(0,H-footH,W,footH);
-  ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,9,footH);
-  ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.font='700 15px Arial';
-  ctx.fillText('EMERGENCIAS', 40, H-footH+29);
-  ctx.fillStyle = C.blanco; ctx.font='700 30px Arial';
-  ctx.fillText('999 908 9592', 40, H-footH+64);
-  ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font='600 14px Arial'; ctx.textAlign='right';
-  ctx.fillText(registro.idGafete, W-40, H-footH+64);
-  ctx.textAlign='left';
+  ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,W,6);
 
   return canvas;
 }
 
-/* ── REVERSO del gafete ── se dibuja y se muestra SIEMPRE en orientación
-   normal y legible, igual que el frente (ya no se refleja/invierte). ── */
+/* ── REVERSO del gafete ── fondo BLANCO con detalles negro y rojo (ya no
+   negro/gris como antes). Aquí vive toda la información del colaborador:
+   fecha de ingreso, CURP, RFC, NSS y teléfono de emergencia, más la
+   vigencia (fecha de emisión / vencimiento) en su recuadro. ── */
 async function gafeteDibujarReverso(p, registro){
   const W = GAFETE_CARD_PX_W, H = GAFETE_CARD_PX_H;
   const canvas = document.createElement('canvas');
@@ -9067,98 +9053,88 @@ async function gafeteDibujarReverso(p, registro){
   const ctx = canvas.getContext('2d');
   const C = GAFETE_C;
 
-  const bg = ctx.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#FAFAFA'); bg.addColorStop(1,'#EFEFEF');
-  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = C.blanco; ctx.fillRect(0,0,W,H);
 
-  // Patrón hexagonal discreto (elemento gráfico, sin QR) — se extiende por
-  // buena parte de la tarjeta para que la parte baja no se vea vacía.
-  ctx.save();
-  ctx.globalAlpha = 0.05; ctx.strokeStyle = C.rojo; ctx.lineWidth = 2;
-  const hexR = 27;
-  for(let row=0; row<20; row++){
-    for(let col=0; col<6; col++){
-      const cx = 40 + col*hexR*1.75 + (row%2? hexR*0.9:0);
-      const cy = 34 + row*hexR*1.5;
-      if(cx>W-30 || cy>H*0.86) continue;
-      gafeteHexagono(ctx, cx, cy, hexR*0.5);
-    }
-  }
-  ctx.restore();
+  // Encabezado rojo plano + acento negro (sin tramas ni patrones — limpio)
+  const headH = 150;
+  ctx.fillStyle = C.rojo; ctx.fillRect(0,0,W,headH);
+  ctx.fillStyle = C.negro; ctx.fillRect(0,headH,W,8);
 
-  // Marca de agua — logo en baja opacidad, centrado
+  ctx.fillStyle = C.blanco;
+  gafeteTextoAjustadoCentrado(ctx, 'CONSTRUCTORA CONECTE', W/2, 68, W-60, 32, '700');
+  ctx.font = '700 18px Arial, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('CREDENCIAL DE COLABORADOR', W/2, 104);
+  ctx.textAlign='left';
+
+  // Marca de agua — logo real cargado en alta resolución, muy sutil, detrás
+  // de los datos (aporta marca sin competir con la legibilidad del texto)
   const logoImg = await gafeteCargarImagen(ST.logoDataUrl, 4000);
   if(logoImg){
     const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
-    const s = Math.min((W*0.5)/dim.w, (W*0.5)/dim.h);
+    const s = Math.min((W*0.46)/dim.w, (W*0.46)/dim.h);
     const wmW = dim.w*s, wmH = dim.h*s;
-    ctx.save(); ctx.globalAlpha = 0.07;
-    ctx.drawImage(logoImg, W/2-wmW/2, H*0.32-wmH/2, wmW, wmH);
+    ctx.save(); ctx.globalAlpha = 0.06;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(logoImg, W/2-wmW/2, H*0.62-wmH/2, wmW, wmH);
     ctx.restore();
   }
 
-  ctx.fillStyle = C.rojo; ctx.fillRect(0,0,W,9);
+  // Campos del colaborador — etiqueta en rojo, valor en negro monoespaciado
+  // (letra grande y clara), separados por una línea gris tenue
+  const campoRow = (label, valor, yy)=>{
+    ctx.fillStyle = C.rojo; ctx.font = '700 20px Arial, sans-serif';
+    ctx.fillText(label, 42, yy);
+    ctx.fillStyle = C.negro; ctx.font = '700 27px "Courier New", monospace';
+    ctx.fillText(valOrNoRegistrado(valor), 42, yy+34);
+    ctx.strokeStyle = 'rgba(0,0,0,0.14)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(42,yy+52); ctx.lineTo(W-42,yy+52); ctx.stroke();
+  };
 
-  let y = 70;
-  ctx.fillStyle = C.negro; ctx.font = '700 29px Arial';
-  gafeteTextoAjustado(ctx, 'CONSTRUCTORA CONECTE', 40, y, W-80, 29, '700');
-  ctx.fillStyle = C.rojo; ctx.fillRect(40, y+18, 74, 6);
+  let y = headH + 54;
+  campoRow('FECHA DE INGRESO', gafeteFmtFecha(p.fechaIngreso), y); y += 88;
+  campoRow('CURP', p.curp, y); y += 88;
+  campoRow('RFC', p.rfc, y); y += 88;
+  campoRow('NSS', p.nss, y); y += 88;
+  campoRow('TELÉFONO DE EMERGENCIA', '999 908 9592', y); y += 88;
 
-  y += 80;
-  ctx.fillStyle = '#333'; ctx.font = '400 22px Arial';
-  y = gafeteTextoEnvuelto(ctx, 'Este gafete acredita al portador como colaborador autorizado de Constructora Conecte.', 40, y, W-80, 32);
-
-  y += 46;
-  ctx.fillStyle = '#555'; ctx.font = '400 19px Arial';
-  y = gafeteTextoEnvuelto(ctx, 'En caso de encontrar este gafete favor de comunicarse al:', 40, y, W-80, 26);
-  ctx.fillStyle = C.rojo; ctx.font = '700 31px Arial';
-  ctx.fillText('999 908 9592', 40, y+18);
-  y += 70;
-
-  // Vigencia — caja con borde, emisión y vencimiento apilados (más legible
-  // en una tarjeta angosta que ponerlos uno junto al otro). Caja más alta y
-  // con letras más grandes para aprovechar el espacio de la tarjeta.
-  y += 60;
-  const boxW = W-80, boxH = 240;
-  gafeteRoundRect(ctx,40,y,boxW,boxH,14);
-  ctx.fillStyle = 'rgba(175,13,18,0.03)'; ctx.fill();
-  gafeteRoundRect(ctx,40,y,boxW,boxH,14);
-  ctx.strokeStyle = 'rgba(0,0,0,0.16)'; ctx.lineWidth = 2; ctx.stroke();
-
-  ctx.fillStyle = C.grisClaro; ctx.font = '700 15px Arial';
-  ctx.fillText('FECHA DE EMISIÓN', 40+24, y+42);
-  ctx.fillStyle = C.negro; ctx.font = '700 30px Arial';
-  ctx.fillText(gafeteFmtFecha(registro.fechaEmision), 40+24, y+84);
-
-  ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(40+20,y+boxH/2); ctx.lineTo(40+boxW-20,y+boxH/2); ctx.stroke();
+  // Vigencia — recuadro con borde negro y acento rojo superior; emisión y
+  // vencimiento apilados para máxima legibilidad
+  y += 20;
+  const boxW = W-84, boxH = 190;
+  gafeteRoundRect(ctx,42,y,boxW,boxH,14);
+  ctx.fillStyle = C.blanco; ctx.fill();
+  gafeteRoundRect(ctx,42,y,boxW,boxH,14);
+  ctx.strokeStyle = C.negro; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = C.rojo; ctx.fillRect(42,y,boxW,7);
 
   ctx.fillStyle = C.grisClaro; ctx.font = '700 15px Arial';
-  ctx.fillText('FECHA DE VENCIMIENTO', 40+24, y+boxH/2+42);
-  ctx.fillStyle = C.rojo; ctx.font = '700 30px Arial';
-  ctx.fillText(gafeteFmtFecha(registro.fechaVencimiento), 40+24, y+boxH/2+84);
+  ctx.fillText('FECHA DE EMISIÓN', 42+24, y+42);
+  ctx.fillStyle = C.negro; ctx.font = '700 28px Arial';
+  ctx.fillText(gafeteFmtFecha(registro.fechaEmision), 42+24, y+80);
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(42+20,y+boxH/2); ctx.lineTo(42+boxW-20,y+boxH/2); ctx.stroke();
+
+  ctx.fillStyle = C.grisClaro; ctx.font = '700 15px Arial';
+  ctx.fillText('FECHA DE VENCIMIENTO', 42+24, y+boxH/2+38);
+  ctx.fillStyle = C.rojo; ctx.font = '700 28px Arial';
+  ctx.fillText(gafeteFmtFecha(registro.fechaVencimiento), 42+24, y+boxH/2+76);
 
   // Identificador único
-  y += boxH+70;
-  ctx.fillStyle = C.grisClaro; ctx.font = '700 15px Arial';
-  ctx.fillText('IDENTIFICADOR ÚNICO', 40, y);
-  ctx.fillStyle = C.negro; ctx.font = '700 31px "Courier New", monospace';
-  ctx.fillText(registro.idGafete, 40, y+38);
+  y += boxH+40;
+  ctx.fillStyle = C.grisClaro; ctx.font = '700 14px Arial';
+  ctx.fillText('IDENTIFICADOR ÚNICO', 42, y);
+  ctx.fillStyle = C.negro; ctx.font = '700 26px "Courier New", monospace';
+  ctx.fillText(registro.idGafete, 42, y+32);
 
-  // Pie — franja roja + logo pequeño
-  const footH = 64;
-  ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,W,footH);
-  if(logoImg){
-    const dim = ST.logoDims||{w:logoImg.width,h:logoImg.height};
-    const s = Math.min((footH*0.56)/dim.w, (footH*0.56)/dim.h);
-    const lw = dim.w*s, lh = dim.h*s;
-    ctx.drawImage(logoImg, 26, H-footH+(footH-lh)/2, lw, lh);
-    ctx.fillStyle = C.blanco; ctx.font='700 16px Arial';
-    ctx.fillText('Constructora Conecte', 26+lw+14, H-footH/2+6);
-  } else {
-    ctx.fillStyle = C.blanco; ctx.font='700 16px Arial';
-    ctx.fillText('Constructora Conecte', 26, H-footH/2+6);
-  }
+  // Pie — franja negra con acento rojo (el logo ya aparece en el frente y
+  // como marca de agua aquí arriba; no se repite para no saturar)
+  const footH = 50;
+  ctx.fillStyle = C.negro; ctx.fillRect(0,H-footH,W,footH);
+  ctx.fillStyle = C.rojo; ctx.fillRect(0,H-footH,W,6);
+  ctx.fillStyle = C.blanco; ctx.font='700 15px Arial'; ctx.textAlign='center';
+  ctx.fillText('Constructora Conecte', W/2, H-footH/2+6);
+  ctx.textAlign='left';
 
   return canvas;
 }
