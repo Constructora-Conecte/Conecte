@@ -2372,6 +2372,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
             <div id="nModoManualFields" style="display:none;margin-top:10px">
               <label class="form-label">Transferencia (manual)</label>
               <input type="number" class="form-input" id="nTransferenciaManual" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
+              <label class="form-label" style="margin-top:8px">Subtotal del recibo PDF
+                <span class="fh" tabindex="0" data-tip="Se llena solo al importar el recibo fiscal en PDF (campo &quot;Subtotal&quot;). Define quién absorbe la diferencia contra la transferencia: si es mayor a $2,500 la absorbe la Transferencia (el efectivo no cambia); si es $2,500 o menos la absorbe el Efectivo. Puedes corregirlo a mano si hace falta.">?</span>
+              </label>
+              <input type="number" class="form-input" id="nSubtotalPdf" min="0" step="0.01" value="0" oninput="recalcNomPreview()">
             </div>
           </div>
 
@@ -3621,12 +3625,15 @@ async function loadAll() {
          AN–AS = Modo_Manual, Transferencia_Manual, Monto_Acordado_Manual, Ajuste_Manual_Activo,
                  Total_Manual_Override, Faltas_Justificadas
          AT = Faltas_Con_Castigo (NUEVA — sistema de 3 tipos de falta)
+         AU = Subtotal_PDF_Importado (NUEVA — "Subtotal" del recibo fiscal en PDF; decide
+              en calcularNomina si la diferencia contra la Transferencia la absorbe la
+              Transferencia (>$2,500) o el Efectivo (≤$2,500))
        IMPORTANTE: el rango de lectura debe llegar SIEMPRE hasta la última columna usada
-       (hoy AT). Antes llegaba solo hasta AN, por lo que Modo_Manual/Ajuste_Manual/
+       (hoy AU). Antes llegaba solo hasta AN, por lo que Modo_Manual/Ajuste_Manual/
        Monto_Acordado_Manual/Faltas_Justificadas (AN–AS) nunca se recuperaban al reabrir
        una nómina ya guardada — ese bug queda corregido aquí. */
     try{
-      const nomR = await sheetsGet('Nominas!A2:AT');
+      const nomR = await sheetsGet('Nominas!A2:AU');
       ST.nominas = (nomR||[]).map((r,i)=>({
         _row: i+2,
         idNomina: r[0]||'',
@@ -3685,6 +3692,10 @@ async function loadAll() {
         faltasJustificadas: parseFloat(r[44])||0,
         // AT — NUEVA: Faltas con Castigo (descuenta todos los días faltados + séptimo día completo).
         faltasCastigo: parseFloat(r[45])||0,
+        // AU — NUEVA: Subtotal del recibo PDF importado (o capturado a mano). Si la hoja
+        // todavía no tiene esta columna, llega vacía y se usa 0 (comportamiento: el
+        // Efectivo absorbe la diferencia, igual que antes de este cambio).
+        subtotalPdfImportado: parseFloat(r[46])||0,
       })).filter(n=>n.idNomina);
       ST.nominasError = null;
     }catch(nomErr){
@@ -7319,6 +7330,13 @@ function aplicarNomPdfExtract(ex){
     }
   }
 
+  // Subtotal del recibo → determina quién absorbe la diferencia contra la Transferencia
+  // (regla de negocio en calcularNomina: >$2,500 lo absorbe la Transferencia, ≤$2,500 lo
+  // absorbe el Efectivo). Siempre se actualiza con el subtotal del PDF recién importado.
+  if(ex.subtotal){
+    document.getElementById('nSubtotalPdf').value = ex.subtotal;
+  }
+
   // Deducciones del PDF (columna "Deducciones" del CFDI: "Descuentos" + "Retenciones")
   // → se SUMAN y se colocan juntas en "Retención fiscal extra". En el CFDI vienen
   // como 2 renglones separados, pero en el sistema son el mismo concepto (ajuste
@@ -7356,7 +7374,7 @@ function aplicarNomPdfExtract(ex){
               retencionExtra, extraEfectivo }
    NOTA IMPORTANTE (dato principal del sistema): "efectivoRealEntregar" es el efectivo
    físico que hay que sacar de caja. Ya NO se usa Sueldo_Total como indicador principal. */
-function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, prestamo, bonos, descuentos, retencionExtra, extraEfectivo, recibeValesOverride, recibeFiscalOverride, valesEn0, montoAcordadoOverride, modoManual, transferenciaManual, ajusteManualActivo, totalManualOverride }){
+function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, prestamo, bonos, descuentos, retencionExtra, extraEfectivo, recibeValesOverride, recibeFiscalOverride, valesEn0, montoAcordadoOverride, modoManual, transferenciaManual, ajusteManualActivo, totalManualOverride, subtotalPdf }){
   faltas = Math.max(0, parseFloat(faltas)||0);
   faltasJustificadas = Math.max(0, parseFloat(faltasJustificadas)||0);
   faltasCastigo = Math.max(0, parseFloat(faltasCastigo)||0);
@@ -7494,27 +7512,36 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
   // Ahora la Transferencia se respeta tal cual se capturó/importó.
   //
   // CASO VACACIONES/AGUINALDO/EXTRAS FISCALES (semanas donde el recibo CFDI trae más
-  // dinero de lo normal, ej. días de vacaciones pagados dentro del mismo recibo):
-  // se compara la Transferencia real contra el Fiscal_Neto "de una semana normal"
-  // (fiscalNeto, calculado sobre el sueldo acordado de siempre). Si la Transferencia
-  // real es MAYOR, ese excedente es dinero extra que ya se pagó por la vía fiscal —
-  // se queda ÍNTEGRO en la transferencia y se SUMA al total de la semana; el Efectivo
-  // NO se reduce por esto, sigue siendo el mismo que le toca cualquier semana normal.
-  // Si la Transferencia real es MENOR O IGUAL a la esperada, el comportamiento es
-  // EXACTAMENTE el de siempre (sin ningún cambio): el Efectivo absorbe la diferencia
-  // contra el total fijo de la semana, tal cual funcionaba antes de este ajuste.
+  // o menos dinero de lo normal): quién absorbe la diferencia entre la Transferencia
+  // real (importada del PDF o capturada a mano) y el Fiscal_Neto "de una semana normal"
+  // (fiscalNeto, calculado sobre el sueldo acordado de siempre) YA NO se decide
+  // comparando si la Transferencia es mayor o menor a lo esperado — esa regla estaba
+  // mal, porque hacía que el Efectivo absorbiera la diferencia tanto si la
+  // Transferencia era menor COMO si era mayor en ciertos casos límite, sin relación
+  // con el monto real del recibo.
+  //
+  // La regla correcta se basa en el "Subtotal" del recibo fiscal en PDF:
+  //   - Subtotal > $2,500  → la Transferencia absorbe la diferencia (sea excedente o
+  //     faltante): el Efectivo NO se toca, sigue siendo el mismo de una semana normal,
+  //     y el Total de la semana se ajusta para reflejar exactamente lo que trae el recibo.
+  //   - Subtotal ≤ $2,500 (o no hay Subtotal capturado) → el Efectivo absorbe la
+  //     diferencia contra el total fijo de la semana, tal cual funcionaba antes.
   let transferenciaFinalDisplay = fiscalNeto;
   let efectivoFinalDisplay = efectivoRealEntregar;
   let totalFinalDisplay = totalFinalDisplayBase;
   if(modoManual){
     transferenciaFinalDisplay = +transferenciaManual.toFixed(2);
     const extraTransferencia = +(transferenciaFinalDisplay - fiscalNeto).toFixed(2);
-    if(extraTransferencia > 0){
-      // Extra por vacaciones/aguinaldo/etc.: el efectivo no cambia, el total sí crece.
+    const subtotalRecibo = Math.max(0, parseFloat(subtotalPdf)||0);
+    const transferenciaAbsorbe = subtotalRecibo > 2500;
+    if(transferenciaAbsorbe){
+      // Subtotal > $2,500: la Transferencia absorbe la diferencia. El Efectivo no cambia,
+      // el total se ajusta (crece o baja) para cuadrar contra lo que trae el recibo.
       efectivoFinalDisplay = efectivoRealEntregar;
       if(!hayAjusteManualTotal) totalFinalDisplay = +(totalFinalDisplayBase + extraTransferencia).toFixed(2);
     } else {
-      // Transferencia normal o menor a lo esperado: comportamiento original, sin tocar.
+      // Subtotal ≤ $2,500 (o sin Subtotal capturado): el Efectivo absorbe la diferencia
+      // contra el total fijo de la semana, comportamiento original.
       efectivoFinalDisplay = +(totalFinalDisplayBase - valesNeto - transferenciaFinalDisplay).toFixed(2);
     }
   }
@@ -7529,6 +7556,7 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
     diasDescJustificada, diasDescNormal, diasDescCastigo, montoAcordadoOverride,
     modoManual, transferenciaManual, transferenciaFinalDisplay, efectivoFinalDisplay,
     ajusteManualActivo, totalManualOverride, totalFinalDisplay,
+    subtotalPdf: Math.max(0, parseFloat(subtotalPdf)||0),
   };
 }
 
@@ -7707,7 +7735,7 @@ function openNomModal(idNomina){
   document.getElementById('nomModalSub').textContent = existente ? existente.idNomina : 'Registra la semana en la hoja Nominas';
 
   const disabled = existente && existente.estatus!=='Pendiente';
-  ['nEmpleado','nFechaInicio','nFaltas','nFaltasJustificadas','nFaltasCastigo','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs','nRecibeVales','nRecibeFiscal','nValesEn0','nMontoAcordadoManual','nModoManual','nTransferenciaManual','nAjusteManualActivo','nTotalManualOverride'].forEach(id=>{
+  ['nEmpleado','nFechaInicio','nFaltas','nFaltasJustificadas','nFaltasCastigo','nPrestamo','nBonos','nDescuentos','nRetencionExtra','nExtraEfectivo','nObs','nRecibeVales','nRecibeFiscal','nValesEn0','nMontoAcordadoManual','nModoManual','nTransferenciaManual','nSubtotalPdf','nAjusteManualActivo','nTotalManualOverride'].forEach(id=>{
     document.getElementById(id).disabled = !!disabled;
   });
   document.getElementById('nEstatus').value = existente ? existente.estatus : 'Pendiente';
@@ -7728,6 +7756,7 @@ function openNomModal(idNomina){
     document.getElementById('nMontoAcordadoManual').value = existente.montoAcordadoManual||0;
     document.getElementById('nModoManual').checked = !!existente.modoManual;
     document.getElementById('nTransferenciaManual').value = existente.transferenciaManual||0;
+    document.getElementById('nSubtotalPdf').value = existente.subtotalPdfImportado||0;
     document.getElementById('nAjusteManualActivo').checked = !!existente.ajusteManualActivo;
     document.getElementById('nTotalManualOverride').value = existente.totalManualOverride||0;
     document.getElementById('nModoManualFields').style.display = existente.modoManual ? '' : 'none';
@@ -7756,6 +7785,7 @@ function openNomModal(idNomina){
     document.getElementById('nMontoAcordadoManual').value = 0;
     document.getElementById('nModoManual').checked = false;
     document.getElementById('nTransferenciaManual').value = 0;
+    document.getElementById('nSubtotalPdf').value = 0;
     document.getElementById('nAjusteManualActivo').checked = false;
     document.getElementById('nTotalManualOverride').value = 0;
     document.getElementById('nModoManualFields').style.display = 'none';
@@ -7865,6 +7895,7 @@ function recalcNomPreview(){
     transferenciaManual: document.getElementById('nTransferenciaManual').value,
     ajusteManualActivo: document.getElementById('nAjusteManualActivo').checked,
     totalManualOverride: document.getElementById('nTotalManualOverride').value,
+    subtotalPdf: document.getElementById('nSubtotalPdf').value,
   });
   const set=(id,v)=>{document.getElementById(id).textContent=v;};
   const warnEl = document.getElementById('nomNoTrabajoWarn');
@@ -8034,6 +8065,7 @@ async function guardarNomina(){
   const montoAcordadoManual = document.getElementById('nMontoAcordadoManual').value;
   const modoManual = document.getElementById('nModoManual').checked;
   const transferenciaManual = document.getElementById('nTransferenciaManual').value;
+  const subtotalPdf = document.getElementById('nSubtotalPdf').value;
   const ajusteManualActivo = document.getElementById('nAjusteManualActivo').checked;
   const totalManualOverride = document.getElementById('nTotalManualOverride').value;
 
@@ -8041,7 +8073,7 @@ async function guardarNomina(){
     empleado, faltas, faltasJustificadas, faltasCastigo, prestamo, bonos, descuentos, retencionExtra, extraEfectivo,
     recibeValesOverride: recibeValesSemana, recibeFiscalOverride: recibeFiscalSemana, valesEn0,
     montoAcordadoOverride: montoAcordadoManual, modoManual, transferenciaManual,
-    ajusteManualActivo, totalManualOverride,
+    ajusteManualActivo, totalManualOverride, subtotalPdf,
   });
 
   const existente = ST.nomEditId ? ST.nominas.find(n=>n.idNomina===ST.nomEditId) : null;
@@ -8077,14 +8109,19 @@ async function guardarNomina(){
     ajusteManualActivo, parseFloat(totalManualOverride)||0, parseFloat(faltasJustificadas)||0,
     // AT — NUEVA: Faltas con Castigo. Agrega esta columna a la hoja "Nominas" si aún no existe.
     parseFloat(faltasCastigo)||0,
+    // AU — NUEVA: Subtotal_PDF_Importado. Guarda el "Subtotal" leído del recibo fiscal en
+    // PDF (o capturado/corregido a mano); es lo que decide en calcularNomina quién absorbe
+    // la diferencia contra la Transferencia (>$2,500 → Transferencia, ≤$2,500 → Efectivo).
+    // Agrega esta columna a la hoja "Nominas" si aún no existe.
+    parseFloat(subtotalPdf)||0,
   ];
 
   document.getElementById('nomSaveBtn').disabled = true;
   try{
     if(ST.nomEditRow){
-      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AT${ST.nomEditRow}`, [row]);
+      await sheetsUpdate(`Nominas!A${ST.nomEditRow}:AU${ST.nomEditRow}`, [row]);
     } else {
-      await sheetsAppend('Nominas!A2:AT', [row]);
+      await sheetsAppend('Nominas!A2:AU', [row]);
     }
     // NOTA: ya no se genera ningún movimiento individual en "Salidas" al guardar una nómina.
     // Los movimientos de caja se generan únicamente cuando la semana completa se marca
