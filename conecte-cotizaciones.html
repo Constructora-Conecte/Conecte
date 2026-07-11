@@ -7477,7 +7477,8 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
 
   // Punto 5: Ajuste manual / Total final — para corregir diferencias de centavos contra
   // el recibo fiscal sin tocar el resto del cálculo. Solo cambia el TOTAL mostrado/guardado.
-  const totalFinalDisplay = (ajusteManualActivo && totalManualOverride>0) ? +totalManualOverride.toFixed(2) : totalFinal;
+  const hayAjusteManualTotal = ajusteManualActivo && totalManualOverride>0;
+  const totalFinalDisplayBase = hayAjusteManualTotal ? +totalManualOverride.toFixed(2) : totalFinal;
 
   // Punto 1: Modo Manual — el usuario indica cuánto se paga por Transferencia y el
   // sistema calcula el Efectivo automáticamente para que siempre se cumpla:
@@ -7490,14 +7491,32 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
   // poco o nada en el total de la semana. Antes, si el total (ya con el préstamo
   // restado) era menor que la Transferencia, el código recortaba la Transferencia
   // para "cuadrar" y el Efectivo se quedaba en $0 en vez de reflejar la deuda real.
-  // Ahora la Transferencia se respeta tal cual se capturó/importó, y es el Efectivo
-  // el que absorbe cualquier diferencia — incluso en negativo si el empleado queda
-  // debiendo — que es exactamente donde el préstamo siempre debe descontarse.
+  // Ahora la Transferencia se respeta tal cual se capturó/importó.
+  //
+  // CASO VACACIONES/AGUINALDO/EXTRAS FISCALES (semanas donde el recibo CFDI trae más
+  // dinero de lo normal, ej. días de vacaciones pagados dentro del mismo recibo):
+  // se compara la Transferencia real contra el Fiscal_Neto "de una semana normal"
+  // (fiscalNeto, calculado sobre el sueldo acordado de siempre). Si la Transferencia
+  // real es MAYOR, ese excedente es dinero extra que ya se pagó por la vía fiscal —
+  // se queda ÍNTEGRO en la transferencia y se SUMA al total de la semana; el Efectivo
+  // NO se reduce por esto, sigue siendo el mismo que le toca cualquier semana normal.
+  // Si la Transferencia real es MENOR O IGUAL a la esperada, el comportamiento es
+  // EXACTAMENTE el de siempre (sin ningún cambio): el Efectivo absorbe la diferencia
+  // contra el total fijo de la semana, tal cual funcionaba antes de este ajuste.
   let transferenciaFinalDisplay = fiscalNeto;
   let efectivoFinalDisplay = efectivoRealEntregar;
+  let totalFinalDisplay = totalFinalDisplayBase;
   if(modoManual){
     transferenciaFinalDisplay = +transferenciaManual.toFixed(2);
-    efectivoFinalDisplay = +(totalFinalDisplay - valesNeto - transferenciaFinalDisplay).toFixed(2);
+    const extraTransferencia = +(transferenciaFinalDisplay - fiscalNeto).toFixed(2);
+    if(extraTransferencia > 0){
+      // Extra por vacaciones/aguinaldo/etc.: el efectivo no cambia, el total sí crece.
+      efectivoFinalDisplay = efectivoRealEntregar;
+      if(!hayAjusteManualTotal) totalFinalDisplay = +(totalFinalDisplayBase + extraTransferencia).toFixed(2);
+    } else {
+      // Transferencia normal o menor a lo esperado: comportamiento original, sin tocar.
+      efectivoFinalDisplay = +(totalFinalDisplayBase - valesNeto - transferenciaFinalDisplay).toFixed(2);
+    }
   }
 
   return {
