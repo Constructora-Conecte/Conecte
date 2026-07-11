@@ -7315,18 +7315,19 @@ function aplicarNomPdfExtract(ex){
     document.getElementById('nFechaInicio').value = nomMondayOf(ex.fecha);
   }
 
-  // Neto del recibo → Transferencia real en "Modo Manual" (solo si el usuario no
-  // había capturado ya un valor manual). El efectivo restante lo calcula el
-  // sistema solo; el "Monto acordado", los vales y las faltas no se tocan.
+  // Neto del recibo → Transferencia real en "Modo Manual". SIEMPRE se sobrescribe con
+  // lo que trae ESTE PDF: el recibo fiscal recién importado es la fuente de verdad de
+  // la semana, así que un valor previo (de una semana anterior, o de un import viejo)
+  // nunca debe quedarse "pegado" y hacer que la Transferencia no coincida con el recibo
+  // que el usuario acaba de subir. El efectivo restante lo calcula el sistema solo;
+  // el "Monto acordado", los vales y las faltas no se tocan.
   if(ex.netoRecibo){
     const campoTransferencia = document.getElementById('nTransferenciaManual');
-    if(!parseFloat(campoTransferencia.value)){
-      campoTransferencia.value = ex.netoRecibo;
-      const chkModoManual = document.getElementById('nModoManual');
-      if(!chkModoManual.checked){
-        chkModoManual.checked = true;
-        onModoManualToggle();
-      }
+    campoTransferencia.value = ex.netoRecibo;
+    const chkModoManual = document.getElementById('nModoManual');
+    if(!chkModoManual.checked){
+      chkModoManual.checked = true;
+      onModoManualToggle();
     }
   }
 
@@ -7341,14 +7342,12 @@ function aplicarNomPdfExtract(ex){
   // → se SUMAN y se colocan juntas en "Retención fiscal extra". En el CFDI vienen
   // como 2 renglones separados, pero en el sistema son el mismo concepto (ajuste
   // fiscal que no toca el efectivo ni los vales), así que aquí se combinan en un
-  // solo monto — nunca se toma solo uno de los dos. Solo si el usuario no había
-  // capturado ya un valor manual en ese campo, igual que con la Transferencia.
+  // solo monto — nunca se toma solo uno de los dos. SIEMPRE se sobrescribe con lo
+  // que trae ESTE PDF, por la misma razón que la Transferencia: el recibo recién
+  // importado es la fuente de verdad de la semana, un valor previo no debe quedarse.
   const deduccionFiscalPdf = (ex.descuentos||0) + (ex.retenciones||0);
   if(deduccionFiscalPdf){
-    const campoRet = document.getElementById('nRetencionExtra');
-    if(!parseFloat(campoRet.value)){
-      campoRet.value = deduccionFiscalPdf;
-    }
+    document.getElementById('nRetencionExtra').value = deduccionFiscalPdf;
   }
 
   // Deja constancia en observaciones de lo que trae el recibo fiscal (ISR, ajuste
