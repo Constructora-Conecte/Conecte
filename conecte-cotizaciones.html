@@ -1019,6 +1019,14 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L1.5 13.5h13z"/><path d="M8 6.5v3.2M8 11.5v.1"/></svg>
           Alertas
         </button>
+        <button class="bal-tab" id="finObjBtn" onclick="switchFinSubTab('objetivos')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.6"/></svg>
+          Objetivos
+        </button>
+        <button class="bal-tab" id="finProyBtn" onclick="switchFinSubTab('proy')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13.5L6 8l3 2.5L14 4"/><path d="M10.5 4H14v3.5"/></svg>
+          Proyecciones
+        </button>
         <button class="bal-tab" id="finCronoBtn" onclick="switchFinSubTab('crono')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
           Cronograma
@@ -1889,6 +1897,36 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <div id="finAlertList"></div>
       </div><!-- /finSubAlertas -->
 
+      <!-- Sub-vista: OBJETIVOS -->
+      <div id="finSubObjetivos" class="emp-subpane">
+        <div class="info-card" style="margin-bottom:12px"><div>🎯 Cada objetivo captura tu punto de partida al crearlo y compara contra el valor actual en vivo para calcular el progreso.</div></div>
+        <div id="finObjList"></div>
+      </div><!-- /finSubObjetivos -->
+
+      <!-- Sub-vista: PROYECCIONES -->
+      <div id="finSubProy" class="emp-subpane">
+        <div class="dash-kpi-grid" id="finProyKpis" style="margin-bottom:14px"></div>
+        <div class="dash-grid" style="margin-bottom:14px">
+          <div class="dash-card">
+            <div class="dash-card-title">Ingresos futuros conectados</div>
+            <div style="padding:4px 2px" id="finProyIngresos"></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Compromisos mensuales conectados</div>
+            <div style="padding:4px 2px" id="finProyCompromisos"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Proyección por acreedor</span></div>
+          <div class="cot-table-wrap">
+            <table class="bal-table">
+              <thead><tr><th>Acreedor</th><th style="text-align:right">Saldo actual</th><th style="text-align:right">Intereses restantes est.</th><th>Fecha estimada de liquidación</th></tr></thead>
+              <tbody id="finProyTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /finSubProy -->
+
       <!-- Sub-vista: CRONOGRAMA -->
       <div id="finSubCrono" class="emp-subpane">
         <div class="info-card" style="margin-bottom:12px"><div>📅 Próximos pagos calculados a partir de la fecha de inicio, frecuencia y estado de cada acreedor. Los pagos vencidos aparecen en rojo, los de esta semana en amarillo.</div></div>
@@ -2126,6 +2164,53 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <div class="mlg-foot">
           <button class="btn btn-ghost btn-sm" onclick="closeEscenarioModal()">Cancelar</button>
           <button class="btn btn-red btn-sm" id="escSaveBtn" onclick="guardarEscenario()">Guardar escenario</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: OBJETIVO FINANCIERO (hoja Objetivos_Financieros) ══ -->
+    <div class="modal-bg" id="objetivoModal">
+      <div class="modal-lg" style="width:480px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title" id="objModalTitle">Nuevo Objetivo</div>
+            <div class="mlg-sub">Conectado a la hoja "Objetivos_Financieros"</div>
+          </div>
+          <button class="close-x" onclick="closeObjetivoModal()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label class="form-label">Título *</label>
+              <input type="text" class="form-input" id="objTitulo" placeholder="Ej. Bajar la deuda total a menos de $500,000">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Tipo de meta</label>
+              <select class="form-select" id="objTipo" onchange="onObjTipoChange()">
+                <option>Reducir deuda total</option>
+                <option>Eliminar créditos bancarios</option>
+                <option>Eliminar pagos de intereses</option>
+                <option>Reducir pagos mensuales</option>
+                <option>Llegar a cierto flujo libre</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Valor meta</label>
+              <input type="number" class="form-input" id="objMeta" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha límite</label>
+              <input type="date" class="form-input" id="objFecha">
+            </div>
+            <div class="form-group full" id="objBaselineNote" style="font-size:11px;color:var(--text3)"></div>
+          </div>
+        </div>
+        <div class="mlg-foot">
+          <button class="btn btn-ghost btn-sm" id="objDelBtn" style="margin-right:auto;display:none" onclick="eliminarObjetivo()">Eliminar</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeObjetivoModal()">Cancelar</button>
+          <button class="btn btn-red btn-sm" id="objSaveBtn" onclick="guardarObjetivo()">Guardar</button>
         </div>
       </div>
     </div>
@@ -3617,6 +3702,9 @@ const ST = {
   deudasError: null,
   escenarios: [],         // hoja "Escenarios" (Fase 2 — simulador)
   escenariosError: null,
+  objetivos: [],          // hoja "Objetivos_Financieros" (Fase 3 — metas)
+  objetivosError: null,
+  objetivoEditId: null,
   finSubTab: 'dash',
   deudaEditId: null,
   deudaFilter: 'all',
@@ -4036,6 +4124,27 @@ async function loadAll() {
     }catch(escErr){
       ST.escenarios=[];
       ST.escenariosError = escErr.result?.error?.message || escErr.message || String(escErr);
+    }
+
+    /* Objetivos financieros — hoja "Objetivos_Financieros" (Fase 3). Se carga aparte
+       para no romper el resto del módulo si aún no existe. */
+    ST.objetivosError = null;
+    try{
+      const objR = await sheetsGet('Objetivos_Financieros!A2:H');
+      ST.objetivos = (objR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('OBJ'+(i+2)),
+        titulo: r[1]||'',
+        tipo: r[2]||'Reducir deuda total',
+        valorMeta: parseFloat(r[3])||0,
+        valorActual: parseFloat(r[4])||0,
+        fechaLimite: r[5]||'',
+        estado: r[6]||'Activo',
+        fechaCreacion: r[7]||'',
+      })).filter(o=>o.titulo);
+    }catch(objErr){
+      ST.objetivos=[];
+      ST.objetivosError = objErr.result?.error?.message || objErr.message || String(objErr);
     }
 
     /* Personal — hoja "Personal" (20 cols: A=ID_Usuarios … R=Estado, S=Recibe_Vales, T=Recibe_Fiscal).
@@ -8925,6 +9034,7 @@ function genDeudaId(){ return 'DEU'+Date.now().toString(36).toUpperCase()+Math.r
 function genPagoId(){ return 'PAG'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 function genEventoId(){ return 'EVT'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 function genEscenarioId(){ return 'ESC'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function genObjetivoId(){ return 'OBJ'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 
 function setEmpFilter(val, btn){
   ST.empFilterEstado = val;
@@ -8986,18 +9096,23 @@ function switchSistemasSubTab(sub){
 /* ─── SUB-VISTAS DE CENTRO FINANCIERO: Dashboard / Acreedores / Cronograma / Timeline / Historial ─── */
 function switchFinSubTab(sub){
   ST.finSubTab = sub;
-  ['finSubDash','finSubAcreedores','finSubSim','finSubAlertas','finSubCrono','finSubTimeline','finSubHist'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['finDashBtn','finAcreedoresBtn','finSimBtn','finAlertasBtn','finCronoBtn','finTimelineBtn','finHistBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {dash:'finSubDash', acreedores:'finSubAcreedores', sim:'finSubSim', alertas:'finSubAlertas', crono:'finSubCrono', timeline:'finSubTimeline', hist:'finSubHist'}[sub] || 'finSubDash';
-  const btnId  = {dash:'finDashBtn', acreedores:'finAcreedoresBtn', sim:'finSimBtn', alertas:'finAlertasBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finDashBtn';
+  ['finSubDash','finSubAcreedores','finSubSim','finSubAlertas','finSubObjetivos','finSubProy','finSubCrono','finSubTimeline','finSubHist'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['finDashBtn','finAcreedoresBtn','finSimBtn','finAlertasBtn','finObjBtn','finProyBtn','finCronoBtn','finTimelineBtn','finHistBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {dash:'finSubDash', acreedores:'finSubAcreedores', sim:'finSubSim', alertas:'finSubAlertas', objetivos:'finSubObjetivos', proy:'finSubProy', crono:'finSubCrono', timeline:'finSubTimeline', hist:'finSubHist'}[sub] || 'finSubDash';
+  const btnId  = {dash:'finDashBtn', acreedores:'finAcreedoresBtn', sim:'finSimBtn', alertas:'finAlertasBtn', objetivos:'finObjBtn', proy:'finProyBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finDashBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
   const addBtn = document.getElementById('mainAddBtn');
-  if(addBtn) addBtn.style.display = sub==='acreedores' ? '' : 'none';
+  const addTxt = document.getElementById('mainAddTxt');
+  if(addBtn) addBtn.style.display = (sub==='acreedores'||sub==='objetivos') ? '' : 'none';
+  if(addTxt && sub==='objetivos') addTxt.textContent = '+ Nuevo Objetivo';
+  else if(addTxt && sub==='acreedores') addTxt.textContent = '+ Nuevo Acreedor';
   if(sub==='dash') renderFinDashboard();
   if(sub==='acreedores') renderAcreedores();
   if(sub==='sim') renderSimulador();
   if(sub==='alertas') renderFinAlertas();
+  if(sub==='objetivos') renderObjetivos();
+  if(sub==='proy') renderProyecciones();
   if(sub==='crono') renderCronograma();
   if(sub==='timeline') renderFinTimeline();
   if(sub==='hist') renderFinHistorial();
@@ -10812,7 +10927,10 @@ function mainAdd(){
   else if(tab==='bal') openBalModal(ST.currentBalTab==='gas'?'gas':'ing');
   else if(tab==='nom') openNomModal(null);
   else if(tab==='emp') openEmpModal(null);
-  else if(tab==='fin') openDeudaModal(null);
+  else if(tab==='fin') {
+    if(ST.finSubTab==='objetivos') openObjetivoModal(null);
+    else openDeudaModal(null);
+  }
 }
 
 /* ─── SECCIÓN: COMERCIAL ↔ BALANCE ───
@@ -12848,6 +12966,268 @@ function renderFinAlertas(){
 }
 
 /* ─── CENTRO DE ESTRATEGIA FINANCIERA — Fase 2 end ─── */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CENTRO DE ESTRATEGIA FINANCIERA — Fase 3
+   Objetivos con progreso (hoja "Objetivos_Financieros"), Proyecciones
+   generales y la integración cruzada visible con Cotizaciones/Facturas/
+   Nóminas — leyendo lo ya cargado por Comercial/Balance/Nóminas, sin
+   duplicar ninguna información.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── OBJETIVOS ── */
+/* Valor "en vivo" de la métrica que corresponde a cada tipo de objetivo. */
+function finObjetivoMetric(tipo){
+  const today=new Date(new Date().toDateString());
+  switch(tipo){
+    case 'Reducir deuda total':
+      return ST.deudas.reduce((s,d)=>s+d.saldoActual,0);
+    case 'Eliminar créditos bancarios':
+      return ST.deudas.filter(d=>d.tipo==='Banco' && d.estado!=='Liquidada').reduce((s,d)=>s+d.saldoActual,0);
+    case 'Eliminar pagos de intereses': {
+      const recientes=ST.deudasPagos.filter(p=>{ const f=finParseDate(p.fecha); if(!f) return false; return (today-f)/86400000<=90; });
+      const totCap=recientes.reduce((s,p)=>s+p.montoCapital,0);
+      const totInt=recientes.reduce((s,p)=>s+p.montoInteres,0);
+      return (totCap+totInt)>0 ? (totInt/(totCap+totInt))*100 : 0; // % de interés sobre lo pagado (últimos 90 días)
+    }
+    case 'Reducir pagos mensuales':
+      return ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida').reduce((s,d)=>s+d.pagoProgramado,0);
+    case 'Llegar a cierto flujo libre': {
+      const ym=today.toISOString().slice(0,7);
+      const mesComprometido=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida').reduce((s,d)=>{ const n=finNextPago(d,today); if(n&&(n-today)/86400000<=30) return s+d.pagoProgramado; return s; },0);
+      const ingresosMesActual=(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(ym) && b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
+      return ingresosMesActual - mesComprometido;
+    }
+    default: return 0;
+  }
+}
+function finObjetivoEsAumento(tipo){ return tipo==='Llegar a cierto flujo libre'; }
+function finObjetivoFmt(tipo, val){ return tipo==='Eliminar pagos de intereses' ? (val||0).toFixed(1)+'%' : fmtMXNBal(val||0); }
+
+function finObjetivoProgreso(obj){
+  const actual=finObjetivoMetric(obj.tipo);
+  const baseline=obj.valorActual;
+  const meta=obj.valorMeta;
+  let pct;
+  if(finObjetivoEsAumento(obj.tipo)){
+    pct = meta===baseline ? (actual>=meta?100:0) : ((actual-baseline)/(meta-baseline))*100;
+  } else {
+    pct = baseline===meta ? (actual<=meta?100:0) : ((baseline-actual)/(baseline-meta))*100;
+  }
+  pct=Math.max(0, Math.min(100, pct));
+  return {actual, baseline, meta, pct};
+}
+
+function renderObjetivos(){
+  toggleFinSheetsWarning();
+  const wrap=document.getElementById('finObjList');
+  if(!wrap) return;
+  if(!ST.objetivos.length){
+    wrap.innerHTML=`<div style="padding:30px;text-align:center;color:var(--text3);font-size:12.5px">Sin objetivos definidos todavía. Usa "+ Nuevo Objetivo" para establecer tu primera meta.</div>`;
+    return;
+  }
+  wrap.innerHTML=ST.objetivos.map(o=>{
+    const {actual,baseline,meta,pct}=finObjetivoProgreso(o);
+    const cumplido=pct>=100;
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="padding:14px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px">
+          <div>
+            <div style="font-size:13.5px;font-weight:600;color:var(--text)">${esc(o.titulo)}</div>
+            <div style="font-size:11px;color:var(--text3)">${esc(o.tipo)}${o.fechaLimite?(' · Meta para '+esc(o.fechaLimite)):''}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            ${cumplido?'<span class="pill pill-acep">Cumplido</span>':`<span class="pill pill-pend">${pct.toFixed(0)}%</span>`}
+            <button class="btn-icon" onclick="openObjetivoModal('${esc(o.id)}')" title="Editar">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="fin-progress-track"><div class="fin-progress-bar" style="width:${pct}%;background:${cumplido?'var(--green)':'var(--blue)'}"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--text3);flex-wrap:wrap;gap:6px">
+          <span>Inicio: ${finObjetivoFmt(o.tipo,baseline)}</span>
+          <span>Actual: <strong style="color:var(--text2)">${finObjetivoFmt(o.tipo,actual)}</strong></span>
+          <span>Meta: ${finObjetivoFmt(o.tipo,meta)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onObjTipoChange(){
+  const tipo=document.getElementById('objTipo').value;
+  const note=document.getElementById('objBaselineNote');
+  if(!note) return;
+  // Si se está editando un objetivo existente, la línea base ya quedó fija desde su creación.
+  if(ST.objetivoEditId){
+    const existente=ST.objetivos.find(o=>o.id===ST.objetivoEditId);
+    note.textContent = existente ? `Línea base capturada al crear este objetivo: ${finObjetivoFmt(existente.tipo, existente.valorActual)} (no cambia al editar).` : '';
+  } else {
+    const valorHoy=finObjetivoMetric(tipo);
+    note.textContent = `Se capturará como línea base tu valor actual: ${finObjetivoFmt(tipo, valorHoy)}.`;
+  }
+}
+
+function openObjetivoModal(id){
+  if(!requireAuth()) return;
+  const modal=document.getElementById('objetivoModal');
+  if(!modal) return;
+  const existente = id ? ST.objetivos.find(o=>o.id===id) : null;
+  ST.objetivoEditId = existente ? existente.id : null;
+  document.getElementById('objModalTitle').textContent = existente ? 'Editar Objetivo' : 'Nuevo Objetivo';
+  document.getElementById('objDelBtn').style.display = existente ? '' : 'none';
+  document.getElementById('objTitulo').value = existente?.titulo||'';
+  document.getElementById('objTipo').value = existente?.tipo||'Reducir deuda total';
+  document.getElementById('objMeta').value = existente ? existente.valorMeta : '';
+  document.getElementById('objFecha').value = existente?.fechaLimite||'';
+  onObjTipoChange();
+  modal.classList.add('open');
+}
+function closeObjetivoModal(){ document.getElementById('objetivoModal').classList.remove('open'); }
+
+async function guardarObjetivo(){
+  if(!requireAuth()) return;
+  const titulo=document.getElementById('objTitulo').value.trim();
+  if(!titulo){ toast('err','Ponle un título al objetivo.'); return; }
+  const tipo=document.getElementById('objTipo').value;
+  const meta=parseFloat(document.getElementById('objMeta').value);
+  if(isNaN(meta)){ toast('err','Define un valor meta.'); return; }
+  const fechaLimite=document.getElementById('objFecha').value;
+  const existente = ST.objetivoEditId ? ST.objetivos.find(o=>o.id===ST.objetivoEditId) : null;
+  const id = existente ? existente.id : genObjetivoId();
+  const baseline = existente ? existente.valorActual : finObjetivoMetric(tipo);
+  const now=new Date().toISOString();
+  const btn=document.getElementById('objSaveBtn');
+  btn.disabled=true;
+  try{
+    const row=[id, titulo, tipo, meta, baseline, fechaLimite, existente?existente.estado:'Activo', existente?existente.fechaCreacion:now.slice(0,10)];
+    if(existente) await sheetsUpdate(`Objetivos_Financieros!A${existente._row}:H${existente._row}`, [row]);
+    else await sheetsAppend('Objetivos_Financieros!A2:H', [row]);
+    toast('ok', existente?'Objetivo actualizado.':'Objetivo creado.');
+    closeObjetivoModal();
+    await loadAll();
+    renderObjetivos();
+  }catch(e){
+    console.error(e);
+    toast('err','Error al guardar el objetivo: '+(e.result?.error?.message||e.message||e));
+  }
+  btn.disabled=false;
+}
+
+async function eliminarObjetivo(){
+  const existente=ST.objetivoEditId?ST.objetivos.find(o=>o.id===ST.objetivoEditId):null;
+  if(!existente) return;
+  if(!confirm(`¿Eliminar el objetivo "${existente.titulo}"?`)) return;
+  try{
+    await sheetsDeleteRow('Objetivos_Financieros', existente._row);
+    ST.objetivos = ST.objetivos.filter(o=>o.id!==existente.id);
+    shiftRowsAfterDelete(ST.objetivos, existente._row);
+    closeObjetivoModal();
+    renderObjetivos();
+    toast('ok','Objetivo eliminado.');
+  }catch(e){
+    toast('err','Error al eliminar: '+(e.result?.error?.message||e.message));
+  }
+}
+
+/* ── PROYECCIONES + INTEGRACIÓN CRUZADA ── */
+function renderProyecciones(){
+  toggleFinSheetsWarning();
+  const kpiWrap=document.getElementById('finProyKpis');
+  const ingWrap=document.getElementById('finProyIngresos');
+  const compWrap=document.getElementById('finProyCompromisos');
+  const tbody=document.getElementById('finProyTbody');
+  if(!kpiWrap) return;
+
+  const activas=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida');
+  const today=new Date(new Date().toDateString());
+
+  /* Proyección base (sin cambios) de cada deuda activa */
+  const proy = activas.map(d=>{
+    const sim=finSimulateDebt(d, {});
+    return { d, interesRestante: sim.totalInteres, fechaFin: finPeriodosAFecha(sim.periodos, d.frecuencia), sinPago: sim.periodos===0 && sim.saldoFinal>0.5 };
+  }).sort((a,b)=>a.fechaFin-b.fechaFin);
+
+  const fechaFinTodo = proy.length ? proy.reduce((max,p)=>p.fechaFin>max?p.fechaFin:max, proy[0].fechaFin) : null;
+  const interesTotalRestante = proy.reduce((s,p)=>s+p.interesRestante,0);
+  const capitalRestante = activas.reduce((s,d)=>s+d.saldoActual,0);
+
+  const fmtFecha = d => d ? d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+  kpiWrap.innerHTML = `
+    <div class="stat cb"><div class="stat-lbl">¿Cuándo termino de pagar todo?</div><div class="stat-val" style="font-size:16px">${fmtFecha(fechaFinTodo)}</div><div class="stat-delta">Sin cambios, ritmo actual</div></div>
+    <div class="stat cr"><div class="stat-lbl">Intereses totales restantes</div><div class="stat-val">${fmtMXNBal(interesTotalRestante)}</div><div class="stat-delta">Si no cambia nada</div></div>
+    <div class="stat cy"><div class="stat-lbl">Capital restante</div><div class="stat-val">${fmtMXNBal(capitalRestante)}</div><div class="stat-delta">Suma de saldos actuales</div></div>
+    <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">¿Cuánto ahorro si pago antes?</div><div class="stat-val" style="font-size:13px;color:var(--blue);cursor:pointer" onclick="switchFinSubTab('sim')">Pruébalo en el Simulador →</div><div class="stat-delta">Abonos extra / aumento %</div></div>
+  `;
+
+  if(tbody){
+    if(!proy.length){
+      tbody.innerHTML = `<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin deudas activas para proyectar.</td></tr>`;
+    } else {
+      tbody.innerHTML = proy.map(p=>`<tr>
+        <td style="font-size:12.5px">${esc(p.d.nombre)}</td>
+        <td style="text-align:right;font-size:12px">${fmtMXNBal(p.d.saldoActual)}</td>
+        <td style="text-align:right;font-size:12px;color:var(--red)">${fmtMXNBal(p.interesRestante)}</td>
+        <td style="font-size:11.5px;color:var(--text2)">${p.sinPago ? 'Sin pago programado — no se puede proyectar' : fmtFecha(p.fechaFin)}</td>
+      </tr>`).join('');
+    }
+  }
+
+  /* Integración cruzada visible: ingresos futuros ya registrados en Comercial/Balance */
+  const cotAceptadas = (ST.cotizaciones||[]).filter(c=>c.estatus==='Aceptado');
+  const facPendientes = (ST.facturas||[]).filter(f=>f.estatus && f.estatus!=='Pagado');
+  const totCot = cotAceptadas.reduce((s,c)=>s+(c.total||0),0);
+  const totFac = facPendientes.reduce((s,f)=>s+(f.total||0),0);
+  if(ingWrap){
+    ingWrap.innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--text2)">Cotizaciones aceptadas (${cotAceptadas.length})</span>
+        <strong style="font-size:12.5px;color:var(--green)">${fmtMXNBal(totCot)}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--text2)">Facturas por cobrar (${facPendientes.length})</span>
+        <strong style="font-size:12.5px;color:var(--green)">${fmtMXNBal(totFac)}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0 0">
+        <span style="font-size:12.5px;font-weight:600;color:var(--text)">Total ingresos futuros esperados</span>
+        <strong style="font-size:13.5px;color:var(--green)">${fmtMXNBal(totCot+totFac)}</strong>
+      </div>
+      <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Tomado directamente de Comercial → Cotizaciones y Facturas, sin duplicar datos.</div>
+    `;
+  }
+
+  /* Compromisos mensuales conectados: deuda + nómina reciente + gastos fijos pendientes del mes */
+  const compDeuda = activas.reduce((s,d)=>{ const n=finNextPago(d,today); if(n&&(n-today)/86400000<=30) return s+d.pagoProgramado; return s; },0);
+  const nominasRecientes = (ST.nominas||[]).slice().sort((a,b)=>(b.fechaFin||'').localeCompare(a.fechaFin||'')).slice(0,4);
+  const compNomina = nominasRecientes.reduce((s,n)=>s+(n.totalFinal||0),0);
+  const ym=today.toISOString().slice(0,7);
+  const compGastos = (ST.salidas||[]).filter(g=>g.fechaLim && g.fechaLim.startsWith(ym) && g.estado!=='Pagado').reduce((s,g)=>s+g.monto,0);
+  const totalComprometido = compDeuda+compNomina+compGastos;
+  const disponible = (totCot+totFac) - totalComprometido;
+  if(compWrap){
+    compWrap.innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--text2)">Deuda (próximos 30 días)</span>
+        <strong style="font-size:12.5px;color:var(--red)">${fmtMXNBal(compDeuda)}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--text2)">Nómina (aprox., últimas ${nominasRecientes.length} semanas)</span>
+        <strong style="font-size:12.5px;color:var(--red)">${fmtMXNBal(compNomina)}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--text2)">Gastos fijos pendientes este mes</span>
+        <strong style="font-size:12.5px;color:var(--red)">${fmtMXNBal(compGastos)}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0 0">
+        <span style="font-size:12.5px;font-weight:600;color:var(--text)">Disponible (ingresos − compromisos)</span>
+        <strong style="font-size:13.5px;color:${disponible>=0?'var(--green)':'var(--red)'}">${fmtMXNBal(disponible)}</strong>
+      </div>
+      <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Nómina tomada de Nóminas, gastos de Balance → Salidas.</div>
+    `;
+  }
+}
+
+/* ─── CENTRO DE ESTRATEGIA FINANCIERA — Fase 3 end ─── */
 
 /* ─── UNIDADES ───
    Las únicas sugerencias válidas son las 12 definidas originalmente en el
