@@ -2713,9 +2713,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <div class="nom-section-title">Archivo adjunto</div>
         <div class="nom-grid">
           <div class="form-group full">
-            <label class="form-label">Archivo (PDF de la OC)</label>
-            <input type="file" class="form-input" id="ocPdfFile" accept=".pdf,application/pdf">
-            <span style="font-size:10.5px;color:var(--text3)">Se guarda como base64 en la hoja. Podrás verlo desde la tabla de OC.</span>
+            <label class="form-label">Archivo (PDF de la OC) <span style="font-weight:400;text-transform:none;color:var(--text3)">— al subirlo se analiza automáticamente</span></label>
+            <input type="file" class="form-input" id="ocPdfFile" accept=".pdf,application/pdf" onchange="onOCPdfSelected(this)">
+            <span style="font-size:10.5px;color:var(--text3)">Se guarda como archivo adjunto y podrás verlo desde la tabla de OC. Al analizarlo se intentan llenar folio, fecha, cliente, concepto y monto — revisa y corrige lo que haga falta antes de guardar.</span>
+            <div id="ocPdfImportPreview" style="display:none;margin-top:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);padding:10px;font-size:11.5px;color:var(--text2);line-height:1.6"></div>
           </div>
         </div>
       </div>
@@ -3947,6 +3948,17 @@ function sheetsUpdate(range, values) {
   return withGoogleAuth(gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID, range,
     valueInputOption: 'USER_ENTERED',
+    resource: { range, majorDimension:'ROWS', values }
+  }));
+}
+/* Igual que sheetsUpdate pero con valueInputOption:'RAW' — Google Sheets guarda el
+   valor EXACTAMENTE tal cual, sin intentar interpretarlo como fórmula, fecha o número.
+   Se usa para contenido que debe preservarse íntegro y sin cambios, como el XML de
+   una factura (para no arriesgar que Sheets le "corrija" el formato). */
+function sheetsUpdateRaw(range, values) {
+  return withGoogleAuth(gapi.client.sheets.spreadsheets.values.update({
+    spreadsheetId: SHEET_ID, range,
+    valueInputOption: 'RAW',
     resource: { range, majorDimension:'ROWS', values }
   }));
 }
@@ -6745,6 +6757,11 @@ async function procesarFacturaUpload(){
   if(!xmlFile){ toast('err','Selecciona el archivo XML.'); return; }
   if(!pdfFile){ toast('err','Selecciona el archivo PDF.'); return; }
   if(!ST.facExtract){ toast('err','No se pudieron extraer datos del XML.'); return; }
+  const folioNuevoFac = (ST.facExtract.folio||'').trim().toLowerCase();
+  if(folioNuevoFac && ST.facturas.some(f=>(f.folio||'').trim().toLowerCase()===folioNuevoFac)){
+    toast('err','Ya existe una factura registrada con el folio "'+ST.facExtract.folio+'".');
+    return;
+  }
   const ocIds = ST.facOcLinks.map(l=>l.id);
   const ocId  = joinIds(ocIds);
   const btn=document.getElementById('saveFacUploadBtn');
@@ -6752,6 +6769,9 @@ async function procesarFacturaUpload(){
   try{
     const ex = ST.facExtract;
     const xmlText = await xmlFile.text();
+    if(xmlText.length > 45000){
+      toast('err','Aviso: este XML es muy grande ('+xmlText.length+' caracteres) y podría acercarse al límite de una celda de Sheets. Se intentará guardar completo, pero verifica el archivo después de guardar.');
+    }
     // El PDF se sube a Drive (ConecteApp/Facturas) y solo se guarda el link en la hoja;
     // antes se guardaba el PDF completo en base64 directo en la celda (rompía el límite
     // de 50,000 caracteres de Sheets con cualquier archivo de tamaño normal).
@@ -6764,11 +6784,16 @@ async function procesarFacturaUpload(){
     const row = [
       id, ex.folio||id, ex.rfcCli||ex.cliente||'', sheetDate(ex.fecha), ex.concepto,
       ex.total, '', 'Pendiente', '', ocId, '', '', sheetDate(todayISO()),
-      pdfB64, ex.folio||'', xmlText
+      pdfB64, ex.folio||'', ''
     ];
     await sheetsAppend('Facturas!A2:P', [row]);
+    const newRow = ST.facturas.length+2;
+    // El XML se escribe en una llamada aparte con valueInputOption:'RAW' para
+    // garantizar que Sheets lo guarde EXACTAMENTE tal cual, sin intentar
+    // reinterpretarlo como fórmula, fecha o número (ver sheetsUpdateRaw).
+    if(xmlText) await sheetsUpdateRaw(`Facturas!P${newRow}`, [[xmlText]]);
     const newFac={
-      _row: ST.facturas.length+2, id, folio: row[1], id_cli: row[2], fecha: sheetDate(ex.fecha),
+      _row: newRow, id, folio: row[1], id_cli: row[2], fecha: sheetDate(ex.fecha),
       concepto: ex.concepto, total: ex.total, metodo:'', estatus:'Pendiente', notas:'',
       oc: ocIds[0]||'', ocIds, pdfB64, xmlContent: xmlText
     };
@@ -6878,6 +6903,11 @@ async function saveFacEdit(){
   const concepto=document.getElementById('feConcepto').value.trim();
   const monto=parseFloat(document.getElementById('feMonto').value)||0;
   if(!folio||!fecha||!id_cli||!monto){ toast('err','Folio, fecha, cliente y monto son requeridos.'); return; }
+  const folioEditNorm = folio.trim().toLowerCase();
+  if(ST.facturas.some(x=>x.id!==f.id && (x.folio||'').trim().toLowerCase()===folioEditNorm)){
+    toast('err','Ya existe otra factura registrada con el folio "'+folio+'".');
+    return;
+  }
   const btn=document.getElementById('saveFacEditBtn');
   btn.disabled=true; btn.textContent='Guardando…';
   try{
@@ -6892,13 +6922,18 @@ async function saveFacEdit(){
     if(xmlFile){
       btn.textContent='Leyendo XML…';
       xmlText = ST.facEditExtract?.xmlText || await xmlFile.text();
+      if(xmlText.length > 45000){
+        toast('err','Aviso: este XML es muy grande ('+xmlText.length+' caracteres) y podría acercarse al límite de una celda de Sheets.');
+      }
     }
     btn.textContent='Guardando…';
     const sheetFecha=sheetDate(fecha);
     await sheetsUpdate(`Facturas!B${f._row}:F${f._row}`,[[folio, id_cli, sheetFecha, concepto, monto]]);
     await sheetsUpdate(`Facturas!N${f._row}`,[[pdfLink||'']]);
     await sheetsUpdate(`Facturas!O${f._row}`,[[folio]]);
-    await sheetsUpdate(`Facturas!P${f._row}`,[[xmlText||'']]);
+    // valueInputOption:'RAW' — se guarda el XML exactamente tal cual, sin que Sheets
+    // intente reinterpretarlo (ver sheetsUpdateRaw).
+    await sheetsUpdateRaw(`Facturas!P${f._row}`,[[xmlText||'']]);
     f.folio=folio; f.id_cli=id_cli; f.fecha=sheetFecha; f.concepto=concepto; f.total=monto;
     f.pdfB64=pdfLink; f.xmlContent=xmlText;
     if(id_cli && !ST.clientes[id_cli]) ST.clientes[id_cli]={id:id_cli,nombre:id_cli};
@@ -11439,6 +11474,7 @@ function openAddOC(){
   document.getElementById('ocContext').value='form';
   populateOCClienteSel(ST.editId ? document.getElementById('fCliente').value : '');
   document.getElementById('ocPdfFile').value='';
+  resetOCPdfPreview();
   if(ST.editId){
     setOCCotLinks([ST.editId]);
   } else {
@@ -11463,6 +11499,7 @@ function openNewOCCliente(){
   document.getElementById('ocContext').value='tab';
   populateOCClienteSel('');
   document.getElementById('ocPdfFile').value='';
+  resetOCPdfPreview();
   clearOCCotLink();
   setOCFacTag('');
   document.getElementById('ocModal').classList.add('open');
@@ -11584,6 +11621,203 @@ function closeOCModal(force){
   document.getElementById('ocModal').classList.remove('open');
 }
 
+/* ─── ANÁLISIS AUTOMÁTICO DE PDF DE OC ───
+   Al subir el PDF de una Orden de Compra se lee su texto con pdf.js (reconstruyendo
+   líneas por posición, como una extracción "-layout"), y si el PDF no trae texto
+   embebido (imagen escaneada) se usa OCR con Tesseract — mismo patrón que ya se usa
+   para los recibos de nómina. Se identifican: folio/número de pedido, fecha, cliente,
+   un concepto y el monto total. Todo queda editable en el formulario antes de guardar;
+   el archivo igualmente se adjunta a la OC como siempre. */
+
+function resetOCPdfPreview(){
+  ST.ocPdfExtract = null;
+  const prev = document.getElementById('ocPdfImportPreview');
+  if(prev){ prev.style.display='none'; prev.innerHTML=''; }
+}
+
+async function pdfExtractTextLayout(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  let fullText = '';
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    // Reconstruye líneas agrupando los fragmentos de texto por su coordenada Y
+    // (con tolerancia) y ordenándolos por X dentro de cada línea — similar a una
+    // extracción con preservación de formato ("-layout"), necesaria para que
+    // patrones como "Fecha: 01.07.2026" o "No. | 4510422415" queden en un mismo renglón.
+    const lines = [];
+    content.items.forEach(it=>{
+      const y = Math.round(it.transform[5]);
+      let line = lines.find(l=>Math.abs(l.y-y)<=2);
+      if(!line){ line={y,items:[]}; lines.push(line); }
+      line.items.push(it);
+    });
+    lines.sort((a,b)=>b.y-a.y);
+    lines.forEach(l=>{
+      l.items.sort((a,b)=>a.transform[4]-b.transform[4]);
+      fullText += l.items.map(it=>it.str).join(' ').replace(/[ \t]+/g,' ').trim() + '\n';
+    });
+    fullText += '\n';
+  }
+  // Si el PDF no trae texto embebido (escaneado como imagen), usar OCR sobre la primera página.
+  if(fullText.trim().length < 20){
+    if(typeof Tesseract==='undefined') throw new Error('Este PDF no tiene texto legible y el motor de OCR no está disponible.');
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({scale:2});
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+    const {data} = await Tesseract.recognize(canvas,'spa');
+    fullText = data.text || '';
+  }
+  return fullText;
+}
+
+function ocFechaToISO(str){
+  if(!str) return null;
+  const m = str.match(/^(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{2,4})$/);
+  if(!m) return null;
+  let [, d, mo, y] = m;
+  if(y.length===2) y = (parseInt(y,10)<70 ? '20':'19') + y;
+  d = d.padStart(2,'0'); mo = mo.padStart(2,'0');
+  return `${y}-${mo}-${d}`;
+}
+
+function detectClienteOC(t){
+  // 1. Formato SAP genérico: "PEDIDO DE COMPRA PARA <cliente>" (Campi, Bachoco, etc.)
+  let m = t.match(/PEDIDO DE COMPRA PARA\s+([^\n]+)/i);
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 2. Formato SAP Ariba: bloque "Dirección fiscal" seguido de la razón social (Pilgrim's)
+  m = t.match(/Direcci[oó]n fiscal\s*\n?\s*\d*\s*-?\s*([A-ZÁÉÍÓÚÑ.,&\s]{5,60})/i);
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 3. Encabezado superior en mayúsculas (ej. "GRUPO ALPURA", "GRUPO AVÍCOLA FERNANDEZ")
+  const lines = t.split('\n').map(l=>l.trim()).filter(Boolean).slice(0,6);
+  for(const line of lines){
+    const clean = line.replace(/\s+(Pedido|Orden)\s+de\s+Compra.*/i,'').trim();
+    if(/^[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ.\s]{4,40}$/.test(clean) && !/^(PEDIDO|ORDEN|COMPRA|FACTURA|N[UÚ]MERO)/i.test(clean)){
+      return clean;
+    }
+  }
+  return '';
+}
+
+function extractMontoOC(t){
+  const patterns = [
+    /GRAN\s*TOTAL[^\d\n]{0,25}([\d,]+\.\d+)/i,
+    /Importe\s*Total\s*:?[^\d\n]{0,10}([\d,]+\.\d+)/i,
+    /TOTAL\s*\(=\)\s*[^\d\n]{0,10}([\d,]+\.\d+)/i,
+    /Valor\s*Total\s*:?[^\d\n]{0,10}([\d,]+\.\d+)/i,
+  ];
+  for(const re of patterns){ const m=t.match(re); if(m) return parseFloat(m[1].replace(/,/g,'')); }
+  // Último recurso: última línea que diga "Total" (y no "Subtotal") seguida de un monto
+  const lines = t.split('\n');
+  for(let i=lines.length-1;i>=0;i--){
+    const l = lines[i];
+    if(/\btotal\b/i.test(l) && !/sub\s*total/i.test(l)){
+      const m = l.match(/([\d,]+\.\d+)\s*(?:MXN|MXP)?\s*$/i);
+      if(m) return parseFloat(m[1].replace(/,/g,''));
+    }
+  }
+  return null;
+}
+
+function detectConceptoOC(t){
+  // 1. Formato Pilgrim's / SAP Ariba: renglones "GENERICO - GENERICO - ..."
+  let m = t.match(/GENERICO\s*-\s*GENERICO\s*-\s*([^\n]{5,120})/i);
+  if(m) return m[1].trim().replace(/\s{2,}/g,' ').slice(0,120);
+  // 2. Tabla con código + descripción + cantidad/unidad + precio (CRIO, Campi, Bachoco)
+  m = t.match(/^\s*\d{2,6}\s+(?:\d{5,10}\s+)?([A-Za-zÁÉÍÓÚÑñ][A-Za-zÁÉÍÓÚÑñ0-9.,#x\/\-'\s]{5,90}?)\s{2,}[\d.]+\s+[A-Za-z]{1,12}\.?\s+[\d,]+\.\d/m);
+  if(m) return m[1].trim().replace(/\s{2,}/g,' ');
+  // 3. Formato Alpura: la descripción va en la línea previa al renglón de requisición
+  m = t.match(/([^\n]{5,120})\n\s*\d{4,8}-\d+\s+\d+\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/);
+  if(m) return m[1].trim().replace(/\s{2,}/g,' ');
+  // 4. Heurística genérica: primera línea "descriptiva" razonable, solo en la mitad
+  //    superior del documento (evita capturar texto de cláusulas/condiciones legales)
+  const lines = t.split('\n').map(l=>l.trim()).slice(0,80);
+  const skipWords = /PROVEEDOR|FECHA|DIRECCION|DIRECCIÓN|TELEFONO|TELÉFONO|R\.F\.C|RFC|CONDICIONES|OBLIGACIONES|DECLARA|ART[ÍI]CULO|PRECIO|IMPORTE|SUBTOTAL|SUB TOTAL|TOTAL|P[ÁA]GINA|FOLIO|ENTREGA|CONTACTO|E-?MAIL|GRUPO|ORDEN DE COMPRA|PEDIDO DE COMPRA|DATOS DEL|MONEDA|INCOTERM|CONTRATO|USOCFDI|C\.P|CIUDAD|COTIZACI[ÓO]N|DESCUENTO|COND\.|N[ÚU]MERO|C[ÓO]DIGO|SOLICITUD|PROYECTO|EMITIDO|HORA|P[ÁA]G\.|CURP|C[ÉE]DULA|CALLE|AVENIDA|COLONIA|^COL\.|KM\.|CARRETERA|C[ÓO]DIGO POSTAL|Descripci[oó]n|Denominaci[oó]n|^Producto$|Cantidad|Cant\.|Unid|U\/M|Solicitante|Departamento|Requisici[oó]n|CONSTRUCTORA CONECTE|Ingreso de facturas|liga\s*:|http/i;
+  for(const line of lines){
+    if(!line) continue;
+    const letters=(line.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]/g)||[]).length;
+    if(line.length>=12 && line.length<=140 && letters/line.length>0.55 && !skipWords.test(line) && !/^\d/.test(line)){
+      return line.replace(/\s{2,}/g,' ');
+    }
+  }
+  return '';
+}
+
+function parseOCPdfText(t){
+  const str = (re, txt)=>{ const mm=txt.match(re); return mm ? mm[1].trim().replace(/\s+/g,' ') : null; };
+  const out = {};
+  out.folio = str(/No\.\s*Orden:\s*(\d{4,})/i, t) ||
+              str(/Orden de Compra\s+(\d{6,})/i, t) ||
+              str(/No\.\s*\|\s*(\d{6,})/i, t) ||
+              str(/N[uú]mero\s+(\d{6,})/i, t) ||
+              str(/(?:Folio|Pedido)[:\s]*[A-Z\-]*\s*(\d{5,})/i, t);
+  const fechaRaw = str(/Fecha\s*[:\|]?\s*(\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4})/i, t);
+  out.fechaRaw = fechaRaw;
+  out.fecha    = fechaRaw ? ocFechaToISO(fechaRaw) : null;
+  out.cliente  = detectClienteOC(t);
+  out.monto    = extractMontoOC(t);
+  out.concepto = detectConceptoOC(t);
+  return out;
+}
+
+/* Intenta hacer match del nombre de cliente detectado contra los clientes ya
+   registrados en ST.clientes (comparación flexible, sin acentos/mayúsculas),
+   para preseleccionarlo en el <select>. Si no hay coincidencia, se deja el
+   select en blanco y se muestra el nombre detectado como sugerencia en el
+   preview, para que el usuario lo seleccione o registre manualmente. */
+function matchClienteOC(nombreDetectado){
+  if(!nombreDetectado) return null;
+  const norm = s => (s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/g,' ').trim();
+  const target = norm(nombreDetectado);
+  if(!target) return null;
+  const firstWord = target.split(' ')[0];
+  let best = null;
+  Object.values(ST.clientes).forEach(cli=>{
+    const nombreNorm = norm(cli.nombre);
+    if(!nombreNorm) return;
+    if(nombreNorm.includes(target) || target.includes(nombreNorm) ||
+       (firstWord.length>=4 && nombreNorm.includes(firstWord))){
+      if(!best) best = cli;
+    }
+  });
+  return best;
+}
+
+async function onOCPdfSelected(input){
+  const file = input.files[0];
+  const prev = document.getElementById('ocPdfImportPreview');
+  if(!file){ resetOCPdfPreview(); return; }
+  prev.style.display='block';
+  prev.innerHTML = '<span style="color:var(--text3)">Leyendo el PDF…</span>';
+  try{
+    if(typeof pdfjsLib==='undefined') throw new Error('El lector de PDF no está disponible (revisa tu conexión a internet).');
+    const text = await pdfExtractTextLayout(file);
+    const ex = parseOCPdfText(text);
+    const cliMatch = matchClienteOC(ex.cliente);
+    ST.ocPdfExtract = { ...ex, clienteMatchId: cliMatch ? cliMatch.id : null };
+
+    if(ex.folio) document.getElementById('ocNumero').value = ex.folio;
+    if(ex.fecha) document.getElementById('ocFecha').value = ex.fecha;
+    if(ex.concepto) document.getElementById('ocConcepto').value = ex.concepto;
+    if(ex.monto!=null && !isNaN(ex.monto)) document.getElementById('ocMonto').value = ex.monto;
+    if(cliMatch) document.getElementById('ocClienteSel').value = cliMatch.id;
+
+    const rows = [];
+    rows.push(`Folio/Pedido: <b>${esc(ex.folio||'—')}</b>`);
+    rows.push(`Fecha: <b>${esc(ex.fechaRaw||'—')}</b>`);
+    rows.push(`Cliente: <b>${esc(ex.cliente||'—')}</b>${cliMatch?` (vinculado a "${esc(cliMatch.nombre)}")`:(ex.cliente?' — no encontrado en tu lista, selecciónalo manualmente':'')}`);
+    rows.push(`Concepto: <b>${esc(ex.concepto||'—')}</b>`);
+    rows.push(`Monto total: <b>${ex.monto!=null?fmtMXN(ex.monto):'—'}</b>`);
+    prev.innerHTML = `<strong style="color:var(--text)">Datos detectados en el PDF</strong> (revisa y corrige si hace falta):<br>` + rows.join(' &nbsp;·&nbsp; ');
+  }catch(e){
+    ST.ocPdfExtract = null;
+    prev.innerHTML = `<span style="color:var(--red)">No se pudo analizar el PDF: ${esc(e.message||e)}. Puedes llenar el formulario manualmente; el archivo se adjuntará igual.</span>`;
+  }
+}
+
 async function saveOC(){
   const numero  = document.getElementById('ocNumero').value.trim();
   const fecha   = document.getElementById('ocFecha').value;
@@ -11599,6 +11833,11 @@ async function saveOC(){
   const editRow = document.getElementById('ocEditRow').value;
 
   if(!numero){ toast('err','El folio/número de OC es obligatorio.'); return; }
+  const numeroNorm = numero.toLowerCase();
+  if(ST.ocAll.some(o=>(o.numero||'').trim().toLowerCase()===numeroNorm && o.id!==editId)){
+    toast('err','Ya existe una OC registrada con el folio "'+numero+'".');
+    return;
+  }
   if(!ST.token){ toast('err','Conecta Google para guardar.'); return; }
 
   const btn=document.getElementById('saveOCBtn');
@@ -11840,6 +12079,7 @@ function editOCCliente(id){
   document.getElementById('ocEditRow').value=r._row||'';
   document.getElementById('ocContext').value='tab';
   document.getElementById('ocPdfFile').value='';
+  resetOCPdfPreview();
   populateOCClienteSel(r.id_cli||'');
   if(r.cotIds && r.cotIds.length){ setOCCotLinks(r.cotIds); } else { clearOCCotLink(); }
   const fac=ST.facturas.find(f=>f.ocIds.includes(r.id));
