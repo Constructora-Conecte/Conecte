@@ -1518,7 +1518,11 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <div class="card-header">
           <span class="card-title">Personal — panel administrativo</span>
           <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="empCount">0</span>
-          <button class="btn btn-red btn-sm" style="margin-left:auto" onclick="openEmpModal(null)">
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="imprimirListaEmpleadosActivos()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M4 6V2h8v4M4 12h8v3H4v-3ZM2 6h12a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v-2H3v2H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
+            Imprimir
+          </button>
+          <button class="btn btn-red btn-sm" onclick="openEmpModal(null)">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
             Nuevo Empleado
           </button>
@@ -7602,10 +7606,27 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
 }
 
 /* ── RENDER: listado + stats de la pestaña Nóminas ── */
-/* Punto 7: expandir/contraer un grupo semanal de Nóminas */
+/* El historial de nóminas se muestra agrupado por semana y CADA semana empieza
+   OCULTA/colapsada por defecto (solo se ve el encabezado con los totales) hasta
+   que el usuario le da clic a la flechita para desplegarla — igual que estaba
+   antes de concluirla o no. Ese estado (expandida/colapsada) se guarda en
+   localStorage por semana, así que se recuerda aunque recargues la página. */
+const NOM_WEEK_COLLAPSED_KEY = 'conecte_nomWeekCollapsed';
+function loadNomWeekCollapsedMap(){
+  try{
+    const raw = localStorage.getItem(NOM_WEEK_COLLAPSED_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveNomWeekCollapsedMap(map){
+  try{ localStorage.setItem(NOM_WEEK_COLLAPSED_KEY, JSON.stringify(map)); }catch(e){ /* localStorage no disponible: se sigue funcionando solo en memoria */ }
+}
 function toggleNomSemana(key){
-  ST.nomWeekCollapsed = ST.nomWeekCollapsed || {};
-  ST.nomWeekCollapsed[key] = !ST.nomWeekCollapsed[key];
+  ST.nomWeekCollapsed = ST.nomWeekCollapsed || loadNomWeekCollapsedMap();
+  // Por defecto (si nunca se tocó esta semana) se considera COLAPSADA (oculta).
+  const estaColapsada = ST.nomWeekCollapsed[key] !== false;
+  ST.nomWeekCollapsed[key] = !estaColapsada; // false = expandida, true = colapsada
+  saveNomWeekCollapsedMap(ST.nomWeekCollapsed);
   renderNominas();
 }
 
@@ -7660,7 +7681,7 @@ function renderNominas(){
         semanas[key].push(n);
       });
       const keysOrdenadas = Object.keys(semanas).sort((a,b)=> b.localeCompare(a));
-      ST.nomWeekCollapsed = ST.nomWeekCollapsed || {};
+      ST.nomWeekCollapsed = ST.nomWeekCollapsed || loadNomWeekCollapsedMap();
 
       tbody.innerHTML = keysOrdenadas.map(key=>{
         // Orden dentro de la semana: la nómina modificada/creada más recientemente va
@@ -7676,7 +7697,7 @@ function renderNominas(){
 
         const semKey = key;
         const semKeyJs = String(key).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        const collapsed = !!ST.nomWeekCollapsed[semKey];
+        const collapsed = ST.nomWeekCollapsed[semKey] !== false;
         const semRec = ST.semanas[semKey];
         const semConcluida = semRec && semRec.estado==='Concluida';
         const busy = ST.semanaConcluyendo===semKey;
@@ -7689,8 +7710,9 @@ function renderNominas(){
             ? `<button class="btn btn-ghost btn-sm" style="padding:3px 8px" ${busy?'disabled':''} onclick="reabrirSemana('${semKey}')" title="Reabrir semana para seguir editando nóminas">↺ Reabrir semana</button>`
             : `<button class="btn btn-red btn-sm" style="padding:3px 10px" ${busy?'disabled':''} onclick="concluirSemana('${semKey}')" title="Generar los 3 movimientos globales en Salidas (Fiscal, Vales, Efectivo) para toda la semana">${busy?'Generando…':'Concluir semana →'}</button>`;
 
-        // Punto 7: flecha para expandir/contraer el grupo semanal (el estado se
-        // conserva en ST.nomWeekCollapsed mientras dure la sesión).
+        // Flecha para expandir/contraer el grupo semanal. Colapsada por defecto;
+        // el estado (expandida/colapsada) se guarda en localStorage por semana
+        // (ver toggleNomSemana), así que se recuerda entre recargas de la página.
         const headerRow = `<tr style="background:var(--bg3)">
           <td colspan="6" style="padding:8px 10px;font-weight:700;font-size:12px;cursor:pointer" onclick="toggleNomSemana('${semKeyJs}')" title="Expandir / contraer semana">
             <span style="display:inline-block;width:14px;color:var(--text3)">${collapsed?'▶':'▼'}</span>
@@ -7757,9 +7779,9 @@ function onNomSearch(v){ ST.nomSearch=v; renderNominas(); }
 function openNomModal(idNomina){
   if(!requireAuth()) return;
   if(ST.personalError){ toast('err','No se puede capturar nómina: falta la hoja "Personal". '+ST.personalError); return; }
+  const existente = idNomina ? ST.nominas.find(n=>n.idNomina===idNomina) : null;
   const modal = document.getElementById('nomModal');
   if(!modal) return;
-  const existente = idNomina ? ST.nominas.find(n=>n.idNomina===idNomina) : null;
   ST.nomEditId = existente ? existente.idNomina : null;
   ST.nomEditRow = existente ? existente._row : null;
 
@@ -8696,6 +8718,78 @@ function renderRostros(){
     html += pendientes.map(rowHtml).join('');
   }
   tbody.innerHTML = html;
+}
+
+/* Genera un PDF simple e imprimible con la lista de empleados activos
+   (ST.personalList ya contiene solo Estado = Activo) y lo abre en una pestaña
+   nueva, lista para imprimir o guardar. */
+function imprimirListaEmpleadosActivos(){
+  if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
+  const activos = (ST.personalList||[]).slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  if(!activos.length){ toast('err','No hay empleados activos para imprimir.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const C = { red:[175,13,18], ink:[26,26,26], sub:[120,120,120], line:[222,222,222], head:[245,245,245] };
+  const PW=210, ML=14, MR=196, CW=MR-ML, BOTY=282;
+  function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
+  function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
+
+  // Columnas: Nombre | Puesto | Nivel | Sueldo total | Tipo de pago | Fecha ingreso
+  const cols = [
+    {label:'Nombre',        w:52, get:p=>p.nombre||'—'},
+    {label:'Puesto',        w:38, get:p=>p.puesto||'—'},
+    {label:'Nivel',         w:18, get:p=>p.nivel||'—'},
+    {label:'Sueldo total',  w:26, get:p=>fmtMXN(p.sueldoTotalAcordado||0), align:'right'},
+    {label:'Tipo de pago',  w:26, get:p=>p.tipoPago||'—'},
+    {label:'Fecha ingreso', w:22, get:p=>p.fechaIngreso||'—'},
+  ];
+  const colX = []; let acc = ML;
+  cols.forEach(c=>{ colX.push(acc); acc += c.w; });
+
+  function pageHeader(pg,total){
+    doc.setFillColor(...C.red); doc.rect(0,0,PW,2.2,'F');
+    setF('bold',15); doc.text('Lista de Empleados Activos', ML, 16);
+    setF('normal',8.5,C.sub);
+    doc.text('Constructora Conecte  ·  Generado el '+todayISO()+'  ·  '+activos.length+' empleado(s) activo(s)', ML, 22);
+    doc.text(`Página ${pg} de ${total}`, MR, 22, {align:'right'});
+    hline(26);
+    // Encabezado de tabla
+    doc.setFillColor(...C.head); doc.rect(ML,29,CW,7,'F');
+    setF('bold',8.2,C.ink);
+    cols.forEach((c,i)=> doc.text(c.label, c.align==='right'?colX[i]+c.w-2:colX[i]+1.5, 34, c.align==='right'?{align:'right'}:{}));
+    hline(36);
+    return 40;
+  }
+
+  let y = pageHeader(1,1);
+  const rowH = 7;
+  setF('normal',8.3,C.ink);
+  activos.forEach((p,i)=>{
+    if(y > BOTY){ doc.addPage(); y = pageHeader(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages()); }
+    if(i%2===1){ doc.setFillColor(250,250,250); doc.rect(ML,y-4.6,CW,rowH,'F'); }
+    cols.forEach((c,ci)=>{
+      const val = String(c.get(p));
+      const x = c.align==='right' ? colX[ci]+c.w-2 : colX[ci]+1.5;
+      doc.text(val.length>34?val.slice(0,33)+'…':val, x, y, c.align==='right'?{align:'right'}:{});
+    });
+    y += rowH;
+    doc.setDrawColor(...C.line); doc.setLineWidth(0.15); doc.line(ML,y-4.8,MR,y-4.8);
+  });
+
+  // Repaginar el número total de páginas en los encabezados ya generados
+  const totalPages = doc.internal.getNumberOfPages();
+  if(totalPages>1){
+    for(let p=1;p<=totalPages;p++){
+      doc.setPage(p);
+      setF('normal',8.5,C.sub);
+      doc.setFillColor(255,255,255); doc.rect(MR-30,18,30,6,'F');
+      doc.text(`Página ${p} de ${totalPages}`, MR, 22, {align:'right'});
+    }
+  }
+
+  const blobUrl = doc.output('bloburl');
+  window.open(blobUrl,'_blank');
 }
 
 function renderEmpleados(){
@@ -11704,10 +11798,10 @@ function detectClienteOC(t){
 
 function extractMontoOC(t){
   const patterns = [
-    /GRAN\s*TOTAL[^\d\n]{0,25}([\d,]+\.\d+)/i,
-    /Importe\s*Total\s*:?[^\d\n]{0,10}([\d,]+\.\d+)/i,
-    /TOTAL\s*\(=\)\s*[^\d\n]{0,10}([\d,]+\.\d+)/i,
-    /Valor\s*Total\s*:?[^\d\n]{0,10}([\d,]+\.\d+)/i,
+    /GRAN\s*TOTAL[^\d\n]{0,60}([\d,]+\.\d+)/i,
+    /Importe\s*Total\s*:?[^\d\n]{0,60}([\d,]+\.\d+)/i,
+    /TOTAL\s*\(=\)\s*[^\d\n]{0,60}([\d,]+\.\d+)/i,
+    /Valor\s*Total\s*:?[^\d\n]{0,60}([\d,]+\.\d+)/i,
   ];
   for(const re of patterns){ const m=t.match(re); if(m) return parseFloat(m[1].replace(/,/g,'')); }
   // Último recurso: última línea que diga "Total" (y no "Subtotal") seguida de un monto
@@ -11726,6 +11820,10 @@ function detectConceptoOC(t){
   // 1. Formato Pilgrim's / SAP Ariba: renglones "GENERICO - GENERICO - ..."
   let m = t.match(/GENERICO\s*-\s*GENERICO\s*-\s*([^\n]{5,120})/i);
   if(m) return m[1].trim().replace(/\s{2,}/g,' ').slice(0,120);
+  // 1.b Formato Pilgrim's / SAP Ariba con partidas reales: código de material largo
+  //     seguido de guion y descripción (ej. "000000000700107538 - MATERIALES DE...")
+  m = t.match(/(\d{9,20}\s*-\s*[A-ZÁÉÍÓÚÑ][^\n]{5,150})/);
+  if(m) return m[1].trim().replace(/\s{2,}/g,' ').slice(0,140);
   // 2. Tabla con código + descripción + cantidad/unidad + precio (CRIO, Campi, Bachoco)
   m = t.match(/^\s*\d{2,6}\s+(?:\d{5,10}\s+)?([A-Za-zÁÉÍÓÚÑñ][A-Za-zÁÉÍÓÚÑñ0-9.,#x\/\-'\s]{5,90}?)\s{2,}[\d.]+\s+[A-Za-z]{1,12}\.?\s+[\d,]+\.\d/m);
   if(m) return m[1].trim().replace(/\s{2,}/g,' ');
