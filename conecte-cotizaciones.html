@@ -748,6 +748,13 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 .fin-tl-years{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:6px;padding-left:160px}
 .fin-progress-track{width:100%;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .fin-progress-bar{height:100%;background:var(--blue);border-radius:4px}
+.fin-alert{display:flex;gap:12px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:var(--r8);padding:12px 14px;margin-bottom:8px}
+.fin-alert-crit{border-left-color:var(--red)}
+.fin-alert-warn{border-left-color:var(--yellow)}
+.fin-alert-ok{border-left-color:var(--green)}
+.fin-alert-icon{font-size:16px;line-height:1;flex-shrink:0;margin-top:1px}
+.fin-alert-msg{font-size:12.5px;color:var(--text2);line-height:1.5}
+.fin-alert-msg strong{color:var(--text)}
 
 /* ── MOBILE / TABLET: hamburger drawer instead of squeezed icon rail ── */
 .hamburger-btn{
@@ -1003,6 +1010,14 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <button class="bal-tab" id="finAcreedoresBtn" onclick="switchFinSubTab('acreedores')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.3"/><path d="M1.8 13c0-2.4 1.6-4 3.7-4s3.7 1.6 3.7 4"/><circle cx="11.5" cy="6" r="1.8"/><path d="M9.7 9.3c1.7.2 3 1.5 3.3 3.2"/></svg>
           Acreedores
+        </button>
+        <button class="bal-tab" id="finSimBtn" onclick="switchFinSubTab('sim')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13V9M8 13V5M13 13v-6"/><path d="M2 4l4 3 3-2 5 3"/></svg>
+          Simulador
+        </button>
+        <button class="bal-tab" id="finAlertasBtn" onclick="switchFinSubTab('alertas')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L1.5 13.5h13z"/><path d="M8 6.5v3.2M8 11.5v.1"/></svg>
+          Alertas
         </button>
         <button class="bal-tab" id="finCronoBtn" onclick="switchFinSubTab('crono')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
@@ -1810,6 +1825,70 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         </div>
       </div><!-- /finSubAcreedores -->
 
+      <!-- Sub-vista: SIMULADOR INTELIGENTE -->
+      <div id="finSubSim" class="emp-subpane">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><span class="card-title">Simulador inteligente</span></div>
+          <div style="padding:16px 22px">
+            <div class="form-grid" style="margin-bottom:14px">
+              <div class="form-group full">
+                <label class="form-label">Aplicar a</label>
+                <select class="form-select" id="simDeudaSel" onchange="onSimChange()">
+                  <option value="__all__">Todas las deudas activas (agregado)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Abono extra único ($)</label>
+                <input type="number" class="form-input" id="simAbonoExtra" step="0.01" min="0" value="0" oninput="renderSimulador()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aumento en pagos programados (%)</label>
+                <input type="number" class="form-input" id="simAumentoPct" step="1" min="0" value="0" oninput="renderSimulador()">
+              </div>
+            </div>
+            <div class="dash-kpi-grid" id="simResultados" style="margin-bottom:10px"></div>
+            <div id="simAllNote" class="info-card" style="display:none;margin-bottom:10px">
+              <div>ℹ️ Con "Todas las deudas activas" seleccionado, el abono extra se aplica completo a la deuda de mayor prioridad y el aumento % se aplica a todos los pagos programados. Para ver el detalle mes a mes, elige un acreedor específico.</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" id="simDetalleBtn" onclick="toggleSimDetalle()">Ver detalle mes a mes</button>
+              <button class="btn btn-red btn-sm" onclick="openEscenarioModal()">💾 Guardar como escenario</button>
+            </div>
+            <div id="simDetalleWrap" style="display:none">
+              <div class="cot-table-wrap">
+                <table class="bal-table">
+                  <thead><tr><th>#</th><th>Fecha aprox.</th><th style="text-align:right">Interés</th><th style="text-align:right">Capital</th><th style="text-align:right">Saldo restante (simulado)</th></tr></thead>
+                  <tbody id="simDetalleTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Escenarios guardados</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="finEscCount">0</span>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="bal-table">
+              <thead><tr><th>Nombre</th><th>Tipo</th><th>Aplicado a</th><th style="text-align:right">Ahorro en intereses</th><th>Nueva fecha fin</th><th>Notas</th><th></th></tr></thead>
+              <tbody id="finEscTbody"><tr><td colspan="7" style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Sin escenarios guardados todavía.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /finSubSim -->
+
+      <!-- Sub-vista: ALERTAS INTELIGENTES -->
+      <div id="finSubAlertas" class="emp-subpane">
+        <div class="stats" id="finAlertStats">
+          <div class="stat cr"><div class="stat-lbl">Críticas</div><div class="stat-val" id="finAlertCrit">—</div><div class="stat-delta">Requieren acción</div></div>
+          <div class="stat cy"><div class="stat-lbl">Advertencias</div><div class="stat-val" id="finAlertWarn">—</div><div class="stat-delta">Vigilar</div></div>
+          <div class="stat cg"><div class="stat-lbl">Oportunidades</div><div class="stat-val" id="finAlertOpp">—</div><div class="stat-delta">Buenas noticias</div></div>
+        </div>
+        <div id="finAlertList"></div>
+      </div><!-- /finSubAlertas -->
+
       <!-- Sub-vista: CRONOGRAMA -->
       <div id="finSubCrono" class="emp-subpane">
         <div class="info-card" style="margin-bottom:12px"><div>📅 Próximos pagos calculados a partir de la fecha de inicio, frecuencia y estado de cada acreedor. Los pagos vencidos aparecen en rojo, los de esta semana en amarillo.</div></div>
@@ -2010,6 +2089,43 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
             Registrar pago
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: GUARDAR ESCENARIO (hoja Escenarios) ══ -->
+    <div class="modal-bg" id="escenarioModal">
+      <div class="modal-lg" style="width:460px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title">Guardar escenario</div>
+            <div class="mlg-sub">Guarda esta simulación para comparar después</div>
+          </div>
+          <button class="close-x" onclick="closeEscenarioModal()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label class="form-label">Nombre del escenario *</label>
+              <input type="text" class="form-input" id="escNombre" placeholder="Ej. Liquidar BBVA con bono de diciembre">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Tipo</label>
+              <select class="form-select" id="escTipo">
+                <option>Conservador</option><option>Normal</option><option>Agresivo</option><option>Optimista</option><option>Personalizado</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Notas</label>
+              <textarea class="form-textarea" id="escNotas" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="mlg-foot">
+          <button class="btn btn-ghost btn-sm" onclick="closeEscenarioModal()">Cancelar</button>
+          <button class="btn btn-red btn-sm" id="escSaveBtn" onclick="guardarEscenario()">Guardar escenario</button>
         </div>
       </div>
     </div>
@@ -3499,11 +3615,16 @@ const ST = {
   deudasPagos: [],       // hoja "Deudas_Pagos" (historial de pagos/abonos)
   deudasHistorial: [],   // hoja "Deudas_Historial" (bitácora de eventos)
   deudasError: null,
+  escenarios: [],         // hoja "Escenarios" (Fase 2 — simulador)
+  escenariosError: null,
   finSubTab: 'dash',
   deudaEditId: null,
   deudaFilter: 'all',
   deudaSearch: '',
   pagoDeudaId: null,
+  simSeleccion: '__all__',
+  simDetalleAbierto: false,
+  simUltimoResultado: null,
 
   /* ── NÓMINAS ── */
   personal: {},        // hoja "Personal" {id:{...}} (todos, incluye bajas)
@@ -3894,6 +4015,27 @@ async function loadAll() {
     }catch(deuErr){
       ST.deudas = []; ST.deudasPagos = []; ST.deudasHistorial = [];
       ST.deudasError = deuErr.result?.error?.message || deuErr.message || String(deuErr);
+    }
+
+    /* Escenarios — hoja "Escenarios" (Fase 2 del Centro Financiero). Se carga aparte
+       para que, si aún no existe, el resto del módulo (Dashboard/Acreedores/etc.)
+       siga funcionando igual. */
+    ST.escenariosError = null;
+    try{
+      const escR = await sheetsGet('Escenarios!A2:G');
+      ST.escenarios = (escR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('ESC'+(i+2)),
+        nombre: r[1]||'',
+        tipo: r[2]||'Personalizado',
+        parametros: (()=>{ try{ return JSON.parse(r[3]||'{}'); }catch(e){ return {}; } })(),
+        resultado: (()=>{ try{ return JSON.parse(r[4]||'{}'); }catch(e){ return {}; } })(),
+        fechaCreacion: r[5]||'',
+        notas: r[6]||'',
+      })).filter(e=>e.nombre);
+    }catch(escErr){
+      ST.escenarios=[];
+      ST.escenariosError = escErr.result?.error?.message || escErr.message || String(escErr);
     }
 
     /* Personal — hoja "Personal" (20 cols: A=ID_Usuarios … R=Estado, S=Recibe_Vales, T=Recibe_Fiscal).
@@ -8782,6 +8924,7 @@ function genEmpId(){ return 'EMP'+Date.now().toString(36).toUpperCase()+Math.ran
 function genDeudaId(){ return 'DEU'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 function genPagoId(){ return 'PAG'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 function genEventoId(){ return 'EVT'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function genEscenarioId(){ return 'ESC'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 
 function setEmpFilter(val, btn){
   ST.empFilterEstado = val;
@@ -8843,16 +8986,18 @@ function switchSistemasSubTab(sub){
 /* ─── SUB-VISTAS DE CENTRO FINANCIERO: Dashboard / Acreedores / Cronograma / Timeline / Historial ─── */
 function switchFinSubTab(sub){
   ST.finSubTab = sub;
-  ['finSubDash','finSubAcreedores','finSubCrono','finSubTimeline','finSubHist'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['finDashBtn','finAcreedoresBtn','finCronoBtn','finTimelineBtn','finHistBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {dash:'finSubDash', acreedores:'finSubAcreedores', crono:'finSubCrono', timeline:'finSubTimeline', hist:'finSubHist'}[sub] || 'finSubDash';
-  const btnId  = {dash:'finDashBtn', acreedores:'finAcreedoresBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finDashBtn';
+  ['finSubDash','finSubAcreedores','finSubSim','finSubAlertas','finSubCrono','finSubTimeline','finSubHist'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['finDashBtn','finAcreedoresBtn','finSimBtn','finAlertasBtn','finCronoBtn','finTimelineBtn','finHistBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {dash:'finSubDash', acreedores:'finSubAcreedores', sim:'finSubSim', alertas:'finSubAlertas', crono:'finSubCrono', timeline:'finSubTimeline', hist:'finSubHist'}[sub] || 'finSubDash';
+  const btnId  = {dash:'finDashBtn', acreedores:'finAcreedoresBtn', sim:'finSimBtn', alertas:'finAlertasBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finDashBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
   const addBtn = document.getElementById('mainAddBtn');
   if(addBtn) addBtn.style.display = sub==='acreedores' ? '' : 'none';
   if(sub==='dash') renderFinDashboard();
   if(sub==='acreedores') renderAcreedores();
+  if(sub==='sim') renderSimulador();
+  if(sub==='alertas') renderFinAlertas();
   if(sub==='crono') renderCronograma();
   if(sub==='timeline') renderFinTimeline();
   if(sub==='hist') renderFinHistorial();
@@ -12378,7 +12523,331 @@ function renderFinDashboard(){
   });
 }
 
-/* ─── CENTRO DE ESTRATEGIA FINANCIERA — end (Fase 1) ─── */
+/* ─── CENTRO DE ESTRATEGIA FINANCIERA — Fase 1 end ─── */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CENTRO DE ESTRATEGIA FINANCIERA — Fase 2
+   Simulador inteligente (con detalle mes a mes), Escenarios guardables/
+   comparables (hoja "Escenarios") y Alertas inteligentes generadas a partir
+   de los mismos datos de "Deudas" / "Deudas_Pagos" — sin duplicar nada.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Amortiza UNA deuda desde su saldo actual (menos un posible abono extra) usando
+   su tasa/frecuencia/comportamiento de interés, hasta llegar a $0 o 100 años.
+   opts.pagoExtra: abono único aplicado hoy al capital.
+   opts.pagoMensualMult: multiplicador sobre el pago programado (1 = sin cambio, 1.15 = +15%). */
+function finSimulateDebt(deuda, opts){
+  opts = opts||{};
+  const pagoExtra = opts.pagoExtra||0;
+  const mult = opts.pagoMensualMult||1;
+  let saldo = Math.max(0, (deuda.saldoActual||0) - pagoExtra);
+  const tasaAnual = deuda.tasa||0;
+  const periodosPorAnio = {Semanal:52, Quincenal:24, Mensual:12, Anual:1, Único:1, Revolvente:12}[deuda.frecuencia]||12;
+  const tasaPeriodo = (tasaAnual/100)/periodosPorAnio;
+  const pago = (deuda.pagoProgramado||0) * mult;
+  let totalInteres=0, totalCapital=0, periodos=0;
+  const detalle=[];
+  const MAX_PERIODOS=1200;
+  const sinInteres = deuda.compInteres==='Sin intereses' || tasaAnual<=0;
+  while(saldo>0.5 && periodos<MAX_PERIODOS){
+    if(pago<=0) break; // sin pago programado no se puede proyectar más
+    const interesPeriodo = sinInteres ? 0 : saldo*tasaPeriodo;
+    let abonoCapital = pago - interesPeriodo;
+    if(abonoCapital<=0){
+      // el pago programado no alcanza a cubrir ni el interés: no baja el saldo, se detiene
+      // la proyección aquí para no entrar en un ciclo infinito (típico de "solo intereses").
+      detalle.push({periodo:periodos+1, interes:interesPeriodo, capital:0, saldo, noBaja:true});
+      totalInteres += interesPeriodo;
+      periodos++;
+      break;
+    }
+    if(abonoCapital>saldo) abonoCapital=saldo;
+    saldo -= abonoCapital;
+    totalInteres += interesPeriodo;
+    totalCapital += abonoCapital;
+    periodos++;
+    detalle.push({periodo:periodos, interes:interesPeriodo, capital:abonoCapital, saldo});
+  }
+  return {periodos, totalInteres, totalCapital, saldoFinal:saldo, detalle, liquidada: saldo<=0.5};
+}
+
+/* Convierte una cantidad de periodos (en la frecuencia de la deuda) a una fecha
+   calendario aproximada, avanzando desde hoy. */
+function finPeriodosAFecha(periodos, frecuencia){
+  let d=new Date(new Date().toDateString());
+  for(let i=0;i<periodos;i++) d=finAddInterval(d, frecuencia);
+  return d;
+}
+
+function finCompararSimulacion(deuda, opts){
+  const base = finSimulateDebt(deuda, {});
+  const sim = finSimulateDebt(deuda, opts);
+  return {
+    base, sim,
+    baseDate: finPeriodosAFecha(base.periodos, deuda.frecuencia),
+    simDate: finPeriodosAFecha(sim.periodos, deuda.frecuencia),
+    ahorroInteres: base.totalInteres - sim.totalInteres,
+  };
+}
+
+/* Simulación agregada de cartera: el abono extra se aplica completo a la deuda
+   de mayor prioridad (score), el aumento % se aplica al pago programado de
+   TODAS las deudas activas/vencidas. */
+function finPortfolioSimulacion(opts){
+  const activas = ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida');
+  if(!activas.length) return null;
+  const prioritaria = activas.slice().sort((a,b)=>finScoreDeuda(b)-finScoreDeuda(a))[0];
+  let totalIntBase=0, totalIntSim=0, maxDateBase=null, maxDateSim=null;
+  activas.forEach(d=>{
+    const extra = (d.id===prioritaria.id) ? (opts.pagoExtra||0) : 0;
+    const base=finSimulateDebt(d,{});
+    const sim=finSimulateDebt(d,{pagoExtra:extra, pagoMensualMult:opts.pagoMensualMult||1});
+    totalIntBase+=base.totalInteres; totalIntSim+=sim.totalInteres;
+    const bd=finPeriodosAFecha(base.periodos, d.frecuencia);
+    const sd=finPeriodosAFecha(sim.periodos, d.frecuencia);
+    if(!maxDateBase||bd>maxDateBase) maxDateBase=bd;
+    if(!maxDateSim||sd>maxDateSim) maxDateSim=sd;
+  });
+  return { totalIntBase, totalIntSim, ahorroInteres: totalIntBase-totalIntSim, fechaFinBase:maxDateBase, fechaFinSim:maxDateSim, prioritaria };
+}
+
+/* ── SIMULADOR: UI ── */
+function populateSimDeudaSelect(){
+  const sel=document.getElementById('simDeudaSel');
+  if(!sel) return;
+  const current=sel.value||ST.simSeleccion||'__all__';
+  const activas=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida');
+  sel.innerHTML = '<option value="__all__">Todas las deudas activas (agregado)</option>' +
+    activas.map(d=>`<option value="${esc(d.id)}">${esc(d.nombre)} — ${fmtMXNBal(d.saldoActual)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===current)) sel.value=current;
+}
+function onSimChange(){
+  ST.simSeleccion = document.getElementById('simDeudaSel').value;
+  ST.simDetalleAbierto = false;
+  renderSimulador();
+}
+function toggleSimDetalle(){ ST.simDetalleAbierto = !ST.simDetalleAbierto; renderSimulador(); }
+
+function renderSimulador(){
+  toggleFinSheetsWarning();
+  populateSimDeudaSelect();
+  const sel=document.getElementById('simDeudaSel');
+  const seleccion = sel ? sel.value : '__all__';
+  ST.simSeleccion = seleccion;
+  const abonoExtra = parseFloat(document.getElementById('simAbonoExtra').value)||0;
+  const aumentoPct = parseFloat(document.getElementById('simAumentoPct').value)||0;
+  const mult = 1 + (aumentoPct/100);
+
+  const kpiWrap=document.getElementById('simResultados');
+  const allNote=document.getElementById('simAllNote');
+  const detalleBtn=document.getElementById('simDetalleBtn');
+  const detalleWrap=document.getElementById('simDetalleWrap');
+  if(!kpiWrap) return;
+
+  const fmtFecha = d => d ? d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+
+  if(seleccion==='__all__'){
+    allNote.style.display='';
+    detalleBtn.style.display='none';
+    detalleWrap.style.display='none';
+    const port=finPortfolioSimulacion({pagoExtra:abonoExtra, pagoMensualMult:mult});
+    if(!port){
+      kpiWrap.innerHTML=`<div style="grid-column:1/-1;padding:14px;color:var(--text3);font-size:12.5px;text-align:center">No hay deudas activas para simular.</div>`;
+      ST.simUltimoResultado=null;
+      renderEscenarios();
+      return;
+    }
+    kpiWrap.innerHTML=`
+      <div class="stat cg"><div class="stat-lbl">Ahorro en intereses</div><div class="stat-val">${fmtMXNBal(port.ahorroInteres)}</div><div class="stat-delta">vs. sin cambios</div></div>
+      <div class="stat cb"><div class="stat-lbl">Todo liquidado (antes)</div><div class="stat-val" style="font-size:15px">${fmtFecha(port.fechaFinBase)}</div><div class="stat-delta">Sin cambios</div></div>
+      <div class="stat cb"><div class="stat-lbl">Todo liquidado (simulado)</div><div class="stat-val" style="font-size:15px">${fmtFecha(port.fechaFinSim)}</div><div class="stat-delta">Con este escenario</div></div>
+      <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Abono extra aplicado a</div><div class="stat-val" style="font-size:14px">${esc(port.prioritaria.nombre)}</div><div class="stat-delta">Mayor prioridad</div></div>`;
+    ST.simUltimoResultado = {tipo:'portfolio', seleccion:'__all__', abonoExtra, aumentoPct, ahorroInteres:port.ahorroInteres, fechaFinBase:port.fechaFinBase?.toISOString().slice(0,10)||'', fechaFinSim:port.fechaFinSim?.toISOString().slice(0,10)||'', aplicadoA:'Todas las deudas activas'};
+    renderEscenarios();
+    return;
+  }
+
+  allNote.style.display='none';
+  detalleBtn.style.display='';
+  const deuda=ST.deudas.find(d=>d.id===seleccion);
+  if(!deuda){
+    kpiWrap.innerHTML=`<div style="grid-column:1/-1;padding:14px;color:var(--text3);font-size:12.5px;text-align:center">Selecciona un acreedor.</div>`;
+    renderEscenarios();
+    return;
+  }
+  const cmp=finCompararSimulacion(deuda, {pagoExtra:abonoExtra, pagoMensualMult:mult});
+  kpiWrap.innerHTML=`
+    <div class="stat cg"><div class="stat-lbl">Ahorro en intereses</div><div class="stat-val">${fmtMXNBal(cmp.ahorroInteres)}</div><div class="stat-delta">vs. sin cambios</div></div>
+    <div class="stat cb"><div class="stat-lbl">Fecha fin (antes)</div><div class="stat-val" style="font-size:15px">${fmtFecha(cmp.baseDate)}</div><div class="stat-delta">${cmp.base.periodos} pagos</div></div>
+    <div class="stat cb"><div class="stat-lbl">Fecha fin (simulado)</div><div class="stat-val" style="font-size:15px">${fmtFecha(cmp.simDate)}</div><div class="stat-delta">${cmp.sim.periodos} pagos</div></div>
+    <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Plazo reducido</div><div class="stat-val" style="font-size:15px">${Math.max(0,cmp.base.periodos-cmp.sim.periodos)} pagos</div><div class="stat-delta">${esc(deuda.frecuencia)}</div></div>`;
+  ST.simUltimoResultado = {tipo:'individual', seleccion:deuda.id, nombreDeuda:deuda.nombre, abonoExtra, aumentoPct, ahorroInteres:cmp.ahorroInteres, fechaFinBase:cmp.baseDate.toISOString().slice(0,10), fechaFinSim:cmp.simDate.toISOString().slice(0,10), aplicadoA:deuda.nombre};
+
+  if(ST.simDetalleAbierto){
+    detalleWrap.style.display='';
+    detalleBtn.textContent='Ocultar detalle mes a mes';
+    const tbody=document.getElementById('simDetalleTbody');
+    tbody.innerHTML = cmp.sim.detalle.map(row=>{
+      const fecha=finPeriodosAFecha(row.periodo, deuda.frecuencia);
+      return `<tr>
+        <td>${row.periodo}</td>
+        <td style="font-size:11.5px;color:var(--text2)">${fmtFecha(fecha)}</td>
+        <td style="text-align:right;font-size:12px;color:var(--red)">${fmtMXNBal(row.interes)}</td>
+        <td style="text-align:right;font-size:12px;color:var(--green)">${fmtMXNBal(row.capital)}</td>
+        <td style="text-align:right;font-size:12px">${fmtMXNBal(row.saldo)}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="5" style="padding:14px;text-align:center;color:var(--text3);font-size:12px">Esta deuda ya está liquidada o no tiene pago programado.</td></tr>`;
+  } else {
+    detalleWrap.style.display='none';
+    detalleBtn.textContent='Ver detalle mes a mes';
+  }
+  renderEscenarios();
+}
+
+/* ── ESCENARIOS: guardar / comparar / eliminar ── */
+function openEscenarioModal(){
+  if(!requireAuth()) return;
+  if(!ST.simUltimoResultado){ toast('err','Calcula una simulación antes de guardarla.'); return; }
+  document.getElementById('escNombre').value='';
+  document.getElementById('escTipo').value='Personalizado';
+  document.getElementById('escNotas').value='';
+  document.getElementById('escenarioModal').classList.add('open');
+}
+function closeEscenarioModal(){ document.getElementById('escenarioModal').classList.remove('open'); }
+
+async function guardarEscenario(){
+  if(!requireAuth()) return;
+  const nombre=document.getElementById('escNombre').value.trim();
+  if(!nombre){ toast('err','Ponle un nombre al escenario.'); return; }
+  if(!ST.simUltimoResultado){ toast('err','Calcula una simulación antes de guardarla.'); return; }
+  const btn=document.getElementById('escSaveBtn');
+  btn.disabled=true;
+  try{
+    const now=new Date().toISOString();
+    const row=[
+      genEscenarioId(), nombre, document.getElementById('escTipo').value,
+      JSON.stringify({seleccion:ST.simUltimoResultado.seleccion, abonoExtra:ST.simUltimoResultado.abonoExtra, aumentoPct:ST.simUltimoResultado.aumentoPct}),
+      JSON.stringify(ST.simUltimoResultado),
+      now.slice(0,10),
+      document.getElementById('escNotas').value.trim(),
+    ];
+    await sheetsAppend('Escenarios!A2:G', [row]);
+    toast('ok','Escenario guardado.');
+    closeEscenarioModal();
+    await loadAll();
+    renderSimulador();
+  }catch(e){
+    console.error(e);
+    toast('err','Error al guardar el escenario: '+(e.result?.error?.message||e.message||e));
+  }
+  btn.disabled=false;
+}
+
+async function eliminarEscenario(id, row){
+  if(!confirm('¿Eliminar este escenario guardado?')) return;
+  try{
+    await sheetsDeleteRow('Escenarios', row);
+    ST.escenarios = ST.escenarios.filter(e=>e.id!==id);
+    shiftRowsAfterDelete(ST.escenarios, row);
+    renderEscenarios();
+    toast('ok','Escenario eliminado.');
+  }catch(e){
+    toast('err','Error al eliminar: '+(e.result?.error?.message||e.message));
+  }
+}
+
+function renderEscenarios(){
+  const tbody=document.getElementById('finEscTbody');
+  if(!tbody) return;
+  const countEl=document.getElementById('finEscCount');
+  if(countEl) countEl.textContent=ST.escenarios.length;
+  if(!ST.escenarios.length){
+    tbody.innerHTML=`<tr><td colspan="7" style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Sin escenarios guardados todavía. Calcula una simulación arriba y presiona "Guardar como escenario".</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=ST.escenarios.slice().sort((a,b)=>(b.fechaCreacion||'').localeCompare(a.fechaCreacion||'')).map(e=>{
+    const r=e.resultado||{};
+    return `<tr>
+      <td style="font-size:12.5px">${esc(e.nombre)}</td>
+      <td><span class="pill pill-seg">${esc(e.tipo)}</span></td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(r.aplicadoA||'—')}</td>
+      <td style="text-align:right;font-size:12px;color:var(--green)">${r.ahorroInteres!=null?fmtMXNBal(r.ahorroInteres):'—'}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(r.fechaFinSim||'—')}</td>
+      <td style="font-size:11.5px;color:var(--text2);max-width:200px">${esc(e.notas||'—')}</td>
+      <td><button class="btn-icon del" onclick="eliminarEscenario('${esc(e.id)}',${e._row})" title="Eliminar">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── ALERTAS INTELIGENTES ── */
+function finGenerarAlertas(){
+  const alerts=[];
+  const today=new Date(new Date().toDateString());
+  const activas=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida');
+
+  activas.forEach(d=>{
+    if(d.estado==='Vencida'){
+      alerts.push({sev:'crit', icon:'⛔', msg:`<strong>${esc(d.nombre)}</strong> está marcada como vencida. Revisa el pago pendiente lo antes posible.`});
+    }
+    const pagosDeuda=ST.deudasPagos.filter(p=>p.idDeuda===d.id).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+    let mesesSoloInteres=0;
+    for(const p of pagosDeuda){
+      if(p.montoCapital<=0 && p.montoInteres>0) mesesSoloInteres++;
+      else break;
+    }
+    if(mesesSoloInteres>=3){
+      alerts.push({sev:'crit', icon:'🌀', msg:`Llevas <strong>${mesesSoloInteres} pagos consecutivos</strong> pagando solo intereses en <strong>${esc(d.nombre)}</strong>. Esta deuda no está bajando.`});
+    }
+    if(pagosDeuda.length>=3 && d.saldoOriginal>0 && d.saldoActual >= d.saldoOriginal*0.97){
+      alerts.push({sev:'crit', icon:'📉', msg:`<strong>${esc(d.nombre)}</strong> prácticamente no ha bajado de saldo después de ${pagosDeuda.length} pagos registrados.`});
+    }
+    const totCap=pagosDeuda.reduce((s,p)=>s+p.montoCapital,0);
+    const totInt=pagosDeuda.reduce((s,p)=>s+p.montoInteres,0);
+    if(pagosDeuda.length>=2 && (totCap+totInt)>0 && totInt/(totCap+totInt) > 0.5){
+      alerts.push({sev:'warn', icon:'💸', msg:`En <strong>${esc(d.nombre)}</strong>, el ${Math.round(totInt/(totCap+totInt)*100)}% de lo pagado hasta ahora ha sido interés, no capital.`});
+    }
+    const score=finScoreDeuda(d);
+    if(score>=60){
+      alerts.push({sev:'warn', icon:'🎯', msg:`<strong>${esc(d.nombre)}</strong> tiene una puntuación de prioridad de ${score}/100 — debería ser de las primeras en liquidarse.`});
+    }
+    if(d.pagoProgramado>0 && d.saldoActual>0 && d.saldoActual <= d.pagoProgramado*2){
+      alerts.push({sev:'ok', icon:'🏁', msg:`<strong>${esc(d.nombre)}</strong> está a 1-2 pagos de liquidarse por completo.`});
+    }
+  });
+
+  const compromisos30 = activas.reduce((s,d)=>{ const n=finNextPago(d,today); if(n && (n-today)/86400000<=30) return s+d.pagoProgramado; return s; },0);
+  const meses3=[0,1,2].map(k=>{ const dt=new Date(today.getFullYear(), today.getMonth()-k,1); return dt.toISOString().slice(0,7); });
+  const ingresosRecientes = meses3.map(ym=>(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(ym) && b.estado==='Pagado').reduce((s,b)=>s+b.monto,0));
+  const promedioIngreso = ingresosRecientes.reduce((a,b)=>a+b,0)/3;
+  if(promedioIngreso>0 && compromisos30>promedioIngreso){
+    alerts.push({sev:'crit', icon:'📉', msg:`Tus compromisos de deuda en los próximos 30 días (${fmtMXNBal(compromisos30)}) superan tu ingreso promedio mensual reciente (${fmtMXNBal(promedioIngreso)}). Tu flujo podría ser negativo.`});
+  }
+  return alerts;
+}
+
+function renderFinAlertas(){
+  toggleFinSheetsWarning();
+  const list=document.getElementById('finAlertList');
+  if(!list) return;
+  const alerts=finGenerarAlertas();
+  document.getElementById('finAlertCrit').textContent=alerts.filter(a=>a.sev==='crit').length;
+  document.getElementById('finAlertWarn').textContent=alerts.filter(a=>a.sev==='warn').length;
+  document.getElementById('finAlertOpp').textContent=alerts.filter(a=>a.sev==='ok').length;
+  if(!alerts.length){
+    list.innerHTML=`<div style="padding:30px;text-align:center;color:var(--text3);font-size:12.5px">✅ No se detectaron alertas por ahora. Todo se ve bajo control.</div>`;
+    return;
+  }
+  const order={crit:0, warn:1, ok:2};
+  list.innerHTML = alerts.slice().sort((a,b)=>order[a.sev]-order[b.sev]).map(a=>`
+    <div class="fin-alert fin-alert-${a.sev}">
+      <div class="fin-alert-icon">${a.icon}</div>
+      <div class="fin-alert-msg">${a.msg}</div>
+    </div>`).join('');
+}
+
+/* ─── CENTRO DE ESTRATEGIA FINANCIERA — Fase 2 end ─── */
 
 /* ─── UNIDADES ───
    Las únicas sugerencias válidas son las 12 definidas originalmente en el
