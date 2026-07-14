@@ -11783,9 +11783,20 @@ function detectClienteOC(t){
   let m = t.match(/PEDIDO DE COMPRA PARA\s+([^\n]+)/i);
   if(m) return m[1].trim().replace(/\s+/g,' ');
   // 2. Formato SAP Ariba: bloque "Dirección fiscal" seguido de la razón social (Pilgrim's)
-  m = t.match(/Direcci[oó]n fiscal\s*\n?\s*\d*\s*-?\s*([A-ZÁÉÍÓÚÑ.,&\s]{5,60})/i);
+  m = t.match(/Direcci[oó]n fiscal\s*\n?\s*\d*\s*-?\s*([A-ZÁÉÍÓÚÑ.,&][A-ZÁÉÍÓÚÑ.,& ]{3,58})/i);
   if(m) return m[1].trim().replace(/\s+/g,' ');
-  // 3. Encabezado superior en mayúsculas (ej. "GRUPO ALPURA", "GRUPO AVÍCOLA FERNANDEZ")
+  // 3. Formato "Facturar A:" (Alpura) — la razón social real de a quién se factura,
+  //    NO el nombre del grupo/logo (ej. "GRUPO ALPURA" es solo el encabezado visual).
+  m = t.match(/Facturar\s*A:\s*([^\n]{5,90}?)(?:\s+Entrega\s*A:|\n|$)/i);
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 4. Formato CRIO: bajo "GRUPO AVÍCOLA FERNANDEZ" va la razón social específica que
+  //    cambia según la planta (Productora Nacional de Huevo / Pollo Industrializado de
+  //    México / Forrajes y Alimentos del Mayab / etc.), justo antes de su "R.F.C.:".
+  //    Se acota la búsqueda a los primeros ~150 caracteres tras el encabezado para no
+  //    llegar hasta el R.F.C. del PROVEEDOR (Constructora Conecte), que aparece después.
+  m = t.match(/GRUPO AV[IÍ]COLA FERNANDEZ[\s\S]{0,150}?\n\s*([A-Za-zÁÉÍÓÚÑñáéíóú][A-Za-zÁÉÍÓÚÑñáéíóú .]{4,60})\s*\n\s*R\.F\.C\.:/i);
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 5. Encabezado superior en mayúsculas (ej. "GRUPO ALPURA", "GRUPO AVÍCOLA FERNANDEZ")
   const lines = t.split('\n').map(l=>l.trim()).filter(Boolean).slice(0,6);
   for(const line of lines){
     const clean = line.replace(/\s+(Pedido|Orden)\s+de\s+Compra.*/i,'').trim();
@@ -11804,6 +11815,18 @@ function extractMontoOC(t){
     /Valor\s*Total\s*:?[^\d\n]{0,60}([\d,]+\.\d+)/i,
   ];
   for(const re of patterns){ const m=t.match(re); if(m) return parseFloat(m[1].replace(/,/g,'')); }
+  // Formato CRIO: a veces las etiquetas (Subtotal, Descuentos, Fletes, Seguro, IVA,
+  // TOTAL, Descuento, GRAN TOTAL) se extraen agrupadas y sus valores llegan después
+  // en un bloque aparte, en el mismo orden. En ese caso "GRAN TOTAL" no tiene su
+  // número pegado al lado — se toma el ÚLTIMO monto dentro de una ventana razonable
+  // después de la etiqueta, ya que al ser la última etiqueta del bloque, su valor
+  // también es el último de la lista de montos que le sigue.
+  const gtIdx = t.search(/GRAN\s*TOTAL/i);
+  if(gtIdx>=0){
+    const windowText = t.slice(gtIdx, gtIdx+400);
+    const nums = [...windowText.matchAll(/([\d,]+\.\d{2,6})/g)].map(mm=>parseFloat(mm[1].replace(/,/g,'')));
+    if(nums.length) return nums[nums.length-1];
+  }
   // Último recurso: última línea que diga "Total" (y no "Subtotal") seguida de un monto
   const lines = t.split('\n');
   for(let i=lines.length-1;i>=0;i--){
@@ -11817,20 +11840,34 @@ function extractMontoOC(t){
 }
 
 function detectConceptoOC(t){
-  // 1. Formato Pilgrim's / SAP Ariba: renglones "GENERICO - GENERICO - ..."
-  let m = t.match(/GENERICO\s*-\s*GENERICO\s*-\s*([^\n]{5,120})/i);
-  if(m) return m[1].trim().replace(/\s{2,}/g,' ').slice(0,120);
+  // 1. Formato Pilgrim's / SAP Ariba: renglones "GENERICO - GENERICO - ...". La
+  //    descripción suele envolverse en varias líneas dentro de la celda, así que se
+  //    captura todo hasta encontrar una línea en blanco, "Solicitud:" o una línea que
+  //    empiece con dígito (la fila de cantidades que viene después).
+  let m = t.match(/GENERICO\s*-\s*GENERICO\s*-\s*([\s\S]{5,300}?)(?:\n\s*\n|\nSolicitud:|\n\d)/i);
+  if(m) return m[1].trim().replace(/\s+/g,' ').slice(0,220);
   // 1.b Formato Pilgrim's / SAP Ariba con partidas reales: código de material largo
   //     seguido de guion y descripción (ej. "000000000700107538 - MATERIALES DE...")
   m = t.match(/(\d{9,20}\s*-\s*[A-ZÁÉÍÓÚÑ][^\n]{5,150})/);
-  if(m) return m[1].trim().replace(/\s{2,}/g,' ').slice(0,140);
-  // 2. Tabla con código + descripción + cantidad/unidad + precio (CRIO, Campi, Bachoco)
+  if(m) return m[1].trim().replace(/\s+/g,' ').slice(0,140);
+  // 2. Formato SAP Bachoco/Campi: "la posición contiene los servicios siguientes:"
+  //    seguido de "<pos>  <descripción>" en una línea y cantidad/precio en la
+  //    siguiente (la partida se reparte en dos renglones).
+  m = t.match(/contiene los servicios siguientes:\s*\n\s*\d+\s+([^\n]{5,140})/i);
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 3. Tabla CRIO (Pos | Código | Solicitud | Descripción | Cant. | Unid. | Precio):
+  //    la descripción puede envolverse en 1-2 líneas antes de llegar a cantidad/unidad/precio.
+  m = t.match(/^\s*\d{1,4}\s+\d{5,10}\s+([\s\S]{3,150}?)\s+[\d]+\.\d{1,3}\s+[A-Za-z]{1,10}\.?\s+[\d,]+\.\d{2,6}/m);
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 4. Tabla Alpura (No.Requisición | No Línea | Fecha Entrega | Código | Descripción |
+  //    U/M | Cantidad...): se ancla en la fecha "DD-MMM-AA" que antecede al código de
+  //    artículo y la descripción, ya que ésta puede envolverse en 2 líneas.
+  m = t.match(/\d{1,2}-[A-Z]{3}-\d{2,4}\s+\S+\s+([\s\S]{5,150}?)\s+[a-zA-Z]{1,6}\s+[\d.]+\s+[\d,]+\.\d{2,6}/i);
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 5. Tabla genérica con código + descripción + cantidad/unidad + precio, todo en una línea
   m = t.match(/^\s*\d{2,6}\s+(?:\d{5,10}\s+)?([A-Za-zÁÉÍÓÚÑñ][A-Za-zÁÉÍÓÚÑñ0-9.,#x\/\-'\s]{5,90}?)\s{2,}[\d.]+\s+[A-Za-z]{1,12}\.?\s+[\d,]+\.\d/m);
-  if(m) return m[1].trim().replace(/\s{2,}/g,' ');
-  // 3. Formato Alpura: la descripción va en la línea previa al renglón de requisición
-  m = t.match(/([^\n]{5,120})\n\s*\d{4,8}-\d+\s+\d+\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/);
-  if(m) return m[1].trim().replace(/\s{2,}/g,' ');
-  // 4. Heurística genérica: primera línea "descriptiva" razonable, solo en la mitad
+  if(m) return m[1].trim().replace(/\s+/g,' ');
+  // 6. Heurística genérica: primera línea "descriptiva" razonable, solo en la mitad
   //    superior del documento (evita capturar texto de cláusulas/condiciones legales)
   const lines = t.split('\n').map(l=>l.trim()).slice(0,80);
   const skipWords = /PROVEEDOR|FECHA|DIRECCION|DIRECCIÓN|TELEFONO|TELÉFONO|R\.F\.C|RFC|CONDICIONES|OBLIGACIONES|DECLARA|ART[ÍI]CULO|PRECIO|IMPORTE|SUBTOTAL|SUB TOTAL|TOTAL|P[ÁA]GINA|FOLIO|ENTREGA|CONTACTO|E-?MAIL|GRUPO|ORDEN DE COMPRA|PEDIDO DE COMPRA|DATOS DEL|MONEDA|INCOTERM|CONTRATO|USOCFDI|C\.P|CIUDAD|COTIZACI[ÓO]N|DESCUENTO|COND\.|N[ÚU]MERO|C[ÓO]DIGO|SOLICITUD|PROYECTO|EMITIDO|HORA|P[ÁA]G\.|CURP|C[ÉE]DULA|CALLE|AVENIDA|COLONIA|^COL\.|KM\.|CARRETERA|C[ÓO]DIGO POSTAL|Descripci[oó]n|Denominaci[oó]n|^Producto$|Cantidad|Cant\.|Unid|U\/M|Solicitante|Departamento|Requisici[oó]n|CONSTRUCTORA CONECTE|Ingreso de facturas|liga\s*:|http/i;
@@ -11838,7 +11875,7 @@ function detectConceptoOC(t){
     if(!line) continue;
     const letters=(line.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]/g)||[]).length;
     if(line.length>=12 && line.length<=140 && letters/line.length>0.55 && !skipWords.test(line) && !/^\d/.test(line)){
-      return line.replace(/\s{2,}/g,' ');
+      return line.replace(/\s+/g,' ');
     }
   }
   return '';
@@ -11851,8 +11888,15 @@ function parseOCPdfText(t){
               str(/Orden de Compra\s+(\d{6,})/i, t) ||
               str(/No\.\s*\|\s*(\d{6,})/i, t) ||
               str(/N[uú]mero\s+(\d{6,})/i, t) ||
+              // CRIO a veces extrae las etiquetas del recuadro "PEDIDO" agrupadas
+              // (Número/Fecha/Proveedor/…) separadas de sus valores, en vez de en la
+              // misma línea; se permite una ventana de hasta ~80 caracteres entre
+              // "Número" y el primer número de 6-10 dígitos que aparezca después.
+              str(/N[uú]mero[\s\S]{0,80}?(\d{6,10})\b/i, t) ||
               str(/(?:Folio|Pedido)[:\s]*[A-Z\-]*\s*(\d{5,})/i, t);
-  const fechaRaw = str(/Fecha\s*[:\|]?\s*(\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4})/i, t);
+  const fechaRaw = str(/Fecha\s*[:\|]?\s*(\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4})/i, t) ||
+                    // Mismo caso de etiquetas/valores separados en bloques (CRIO)
+                    str(/Fecha[\s\S]{0,80}?(\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4})/i, t);
   out.fechaRaw = fechaRaw;
   out.fecha    = fechaRaw ? ocFechaToISO(fechaRaw) : null;
   out.cliente  = detectClienteOC(t);
