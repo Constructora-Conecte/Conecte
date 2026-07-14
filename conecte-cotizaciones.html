@@ -739,6 +739,16 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 .dash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 @media(max-width:900px){.dash-grid,.dash-grid-3{grid-template-columns:1fr}.dash-kpi-grid{grid-template-columns:1fr 1fr}}
 
+/* ── Centro de Estrategia Financiera: timeline ── */
+.fin-tl-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.fin-tl-row:last-child{border-bottom:none}
+.fin-tl-label{flex:0 0 150px;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fin-tl-track{flex:1;position:relative;height:18px;background:var(--bg3);border-radius:9px;overflow:hidden}
+.fin-tl-bar{position:absolute;top:0;bottom:0;border-radius:9px;display:flex;align-items:center;padding:0 8px;font-size:9.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden}
+.fin-tl-years{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:6px;padding-left:160px}
+.fin-progress-track{width:100%;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.fin-progress-bar{height:100%;background:var(--blue);border-radius:4px}
+
 /* ── MOBILE / TABLET: hamburger drawer instead of squeezed icon rail ── */
 .hamburger-btn{
   display:none;width:32px;height:32px;flex-shrink:0;border:1px solid rgba(255,255,255,.25);
@@ -905,6 +915,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
           <span>Sistemas</span>
         </button>
+        <button class="sidebar-item" id="navFinBtn" onclick="switchSection('fin')" title="Centro Financiero">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M11.5 4.2c0-1.3-1.4-2.2-3.5-2.2s-3.5 1-3.5 2.4c0 3 7 1.4 7 4.3 0 1.5-1.5 2.4-3.5 2.4s-3.6-.9-3.6-2.3"/></svg>
+          <span>Centro Financiero</span>
+        </button>
       </nav>
       <div class="sidebar-foot">
         <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Contraer / expandir menú">
@@ -977,6 +991,30 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <button class="bal-tab" id="sisContrasenasBtn" onclick="switchSistemasSubTab('contrasenas')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
           Contraseñas
+        </button>
+      </nav>
+
+      <!-- SUB-TABS DE CENTRO FINANCIERO: Dashboard, Acreedores, Cronograma, Timeline, Historial -->
+      <nav class="bal-nav" id="finSubNav" style="display:none">
+        <button class="bal-tab active" id="finDashBtn" onclick="switchFinSubTab('dash')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
+          Dashboard
+        </button>
+        <button class="bal-tab" id="finAcreedoresBtn" onclick="switchFinSubTab('acreedores')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.3"/><path d="M1.8 13c0-2.4 1.6-4 3.7-4s3.7 1.6 3.7 4"/><circle cx="11.5" cy="6" r="1.8"/><path d="M9.7 9.3c1.7.2 3 1.5 3.3 3.2"/></svg>
+          Acreedores
+        </button>
+        <button class="bal-tab" id="finCronoBtn" onclick="switchFinSubTab('crono')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
+          Cronograma
+        </button>
+        <button class="bal-tab" id="finTimelineBtn" onclick="switchFinSubTab('timeline')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h7M2 8h10M2 12h4"/></svg>
+          Timeline
+        </button>
+        <button class="bal-tab" id="finHistBtn" onclick="switchFinSubTab('hist')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>
+          Historial
         </button>
       </nav>
 
@@ -1684,6 +1722,297 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 
     </div><!-- /tabSistemas -->
 
+    <!-- ══ TAB: CENTRO DE ESTRATEGIA FINANCIERA ══ -->
+    <div id="tabFin" class="tab-pane">
+
+      <!-- Aviso si las hojas todavía no existen -->
+      <div id="finSheetsWarning" style="display:none" class="info-card" style="margin-bottom:12px">
+        <div>⚠️ No se pudieron cargar las hojas del Centro Financiero: <span id="finSheetsWarningMsg"></span>. Verifica que existan las pestañas <strong>Deudas</strong>, <strong>Deudas_Pagos</strong> y <strong>Deudas_Historial</strong> en tu spreadsheet, con los encabezados correctos.</div>
+      </div>
+
+      <!-- Sub-vista: DASHBOARD -->
+      <div id="finSubDash" class="emp-subpane active">
+        <div class="dash-kpi-grid" id="finKpis">
+          <div class="stat cr"><div class="stat-lbl">Deuda Total</div><div class="stat-val" id="finKDeudaTotal">—</div><div class="stat-delta">Saldo actual</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pago comprometido del mes</div><div class="stat-val" id="finKPagoMes">—</div><div class="stat-delta">Este mes</div></div>
+          <div class="stat cb"><div class="stat-lbl">Intereses del mes</div><div class="stat-val" id="finKInteresMes">—</div><div class="stat-delta">Estimado</div></div>
+          <div class="stat cg"><div class="stat-lbl">Capital amortizado</div><div class="stat-val" id="finKCapitalMes">—</div><div class="stat-delta">Este mes</div></div>
+          <div class="stat cg"><div class="stat-lbl">Flujo libre</div><div class="stat-val" id="finKFlujoLibre">—</div><div class="stat-delta">Ingresos − compromisos</div></div>
+          <div class="stat cr"><div class="stat-lbl">Deuda vencida</div><div class="stat-val" id="finKVencida">—</div><div class="stat-delta" id="finKVencidaN">—</div></div>
+          <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Deudas activas</div><div class="stat-val" id="finKActivas">—</div><div class="stat-delta">Acreedores</div></div>
+          <div class="stat" style="border-color:var(--blue)"><div class="stat-lbl" style="color:var(--blue)">Compromisos futuros</div><div class="stat-val" id="finKFuturos">—</div><div class="stat-delta">Saldo restante total</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pagos esta semana</div><div class="stat-val" id="finKSemana">—</div><div class="stat-delta">Programados</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pagos este mes</div><div class="stat-val" id="finKMes">—</div><div class="stat-delta">Programados</div></div>
+          <div class="stat cb"><div class="stat-lbl">Pagos este año</div><div class="stat-val" id="finKAnio">—</div><div class="stat-delta">Programados</div></div>
+        </div>
+        <div class="dash-grid" style="margin-bottom:14px">
+          <div class="dash-card">
+            <div class="dash-card-title">Deuda por Acreedor</div>
+            <div class="dash-chart-wrap"><canvas id="finChartAcreedor"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Intereses vs Capital (pagos registrados)</div>
+            <div class="dash-chart-wrap"><canvas id="finChartIntCap"></canvas></div>
+          </div>
+        </div>
+        <div class="dash-grid-3">
+          <div class="dash-card">
+            <div class="dash-card-title">Distribución de Pasivos por Tipo</div>
+            <div class="dash-chart-wrap"><canvas id="finChartTipo"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Deudas por Estado</div>
+            <div class="dash-chart-wrap"><canvas id="finChartEstado"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Pagos por Mes (histórico)</div>
+            <div class="dash-chart-wrap"><canvas id="finChartPagosMes"></canvas></div>
+          </div>
+        </div>
+      </div><!-- /finSubDash -->
+
+      <!-- Sub-vista: ACREEDORES -->
+      <div id="finSubAcreedores" class="emp-subpane">
+        <div class="stats" id="finAcreStats">
+          <div class="stat cr"><div class="stat-lbl">Saldo total</div><div class="stat-val" id="finAcreSaldo">—</div><div class="stat-delta">Todos los acreedores</div></div>
+          <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Activas</div><div class="stat-val" id="finAcreActivas">—</div><div class="stat-delta">En curso</div></div>
+          <div class="stat cr"><div class="stat-lbl">Vencidas</div><div class="stat-val" id="finAcreVencidas">—</div><div class="stat-delta">Requieren atención</div></div>
+          <div class="stat cg"><div class="stat-lbl">Liquidadas</div><div class="stat-val" id="finAcreLiquidadas">—</div><div class="stat-delta">Pagadas por completo</div></div>
+        </div>
+        <div class="filter-bar">
+          <button class="fchip on" onclick="setDeudaFilter('all',this)">Todas</button>
+          <button class="fchip" onclick="setDeudaFilter('Activa',this)">Activas</button>
+          <button class="fchip" onclick="setDeudaFilter('Vencida',this)">Vencidas</button>
+          <button class="fchip" onclick="setDeudaFilter('Liquidada',this)">Liquidadas</button>
+          <button class="fchip" onclick="setDeudaFilter('Renegociada',this)">Renegociadas</button>
+          <span class="fsep"></span>
+          <input type="text" id="finSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:220px;" placeholder="🔍  Buscar acreedor…" oninput="onDeudaSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Acreedores</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="finAcreCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openDeudaModal(null)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Acreedor
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="bal-table">
+              <thead><tr>
+                <th>Acreedor</th><th>Tipo</th><th style="text-align:right">Saldo actual</th>
+                <th style="text-align:right">Pago programado</th><th>Frecuencia</th>
+                <th>Próximo pago</th><th>Prioridad</th><th>Estado</th><th></th>
+              </tr></thead>
+              <tbody id="finAcreTbody"><tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div> Cargando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /finSubAcreedores -->
+
+      <!-- Sub-vista: CRONOGRAMA -->
+      <div id="finSubCrono" class="emp-subpane">
+        <div class="info-card" style="margin-bottom:12px"><div>📅 Próximos pagos calculados a partir de la fecha de inicio, frecuencia y estado de cada acreedor. Los pagos vencidos aparecen en rojo, los de esta semana en amarillo.</div></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Cronograma de pagos</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="finCronoCount">0</span>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="bal-table">
+              <thead><tr><th>Acreedor</th><th>Próximo pago</th><th style="text-align:right">Monto</th><th>Frecuencia</th><th>Días restantes</th><th>Estado</th></tr></thead>
+              <tbody id="finCronoTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /finSubCrono -->
+
+      <!-- Sub-vista: TIMELINE -->
+      <div id="finSubTimeline" class="emp-subpane">
+        <div class="info-card" style="margin-bottom:12px"><div>📈 Vista visual de cuándo termina cada deuda, desde su fecha de inicio hasta su fecha final estimada.</div></div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Línea del tiempo de deudas</span></div>
+          <div style="padding:18px 22px" id="finTimelineWrap"></div>
+        </div>
+      </div><!-- /finSubTimeline -->
+
+      <!-- Sub-vista: HISTORIAL -->
+      <div id="finSubHist" class="emp-subpane">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Historial de movimientos</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="finHistCount">0</span>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="bal-table">
+              <thead><tr><th>Fecha</th><th>Acreedor</th><th>Tipo</th><th>Detalle</th><th style="text-align:right">Monto</th></tr></thead>
+              <tbody id="finHistTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /finSubHist -->
+
+    </div><!-- /tabFin -->
+
+    <!-- ══ MODAL: ACREEDOR / DEUDA (alta / edición sobre la hoja Deudas) ══ -->
+    <div class="modal-bg" id="deudaModal">
+      <div class="modal-lg" style="width:720px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title" id="deudaModalTitle">Nuevo Acreedor</div>
+            <div class="mlg-sub">Conectado directamente a la hoja "Deudas"</div>
+          </div>
+          <button class="close-x" onclick="closeDeudaModal()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label class="form-label">Nombre del acreedor *</label>
+              <input type="text" class="form-input" id="dNombre" placeholder="Ej. BBVA, Proveedor XYZ, SAT…">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo</label>
+              <select class="form-select" id="dTipo">
+                <option>Banco</option><option>Financiera</option><option>Proveedor</option>
+                <option>Préstamo personal</option><option>Crédito revolvente</option>
+                <option>SAT</option><option>IMSS</option><option>Infonavit</option><option>Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="dEstado">
+                <option>Activa</option><option>Vencida</option><option>Liquidada</option><option>Renegociada</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Comportamiento de pago</label>
+              <select class="form-select" id="dCompPago">
+                <option>Fijo</option><option>Variable</option><option>Solo intereses</option><option>Pago único</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Comportamiento de interés</label>
+              <select class="form-select" id="dCompInteres">
+                <option>Sin intereses</option><option>Interés fijo</option><option>Interés compuesto</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Frecuencia de pago</label>
+              <select class="form-select" id="dFrecuencia">
+                <option>Semanal</option><option>Quincenal</option><option>Mensual</option>
+                <option>Anual</option><option>Único</option><option>Revolvente</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tasa de interés anual (%)</label>
+              <input type="number" class="form-input" id="dTasa" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Saldo original</label>
+              <input type="number" class="form-input" id="dSaldoOriginal" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Saldo actual</label>
+              <input type="number" class="form-input" id="dSaldoActual" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pago programado</label>
+              <input type="number" class="form-input" id="dPagoProgramado" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de inicio</label>
+              <input type="date" class="form-input" id="dFechaInicio">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha final estimada</label>
+              <input type="date" class="form-input" id="dFechaFinEst">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prioridad manual (0 = automática)</label>
+              <input type="number" class="form-input" id="dPrioridadManual" step="1" min="0" max="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Documentos (enlaces, separados por coma)</label>
+              <input type="text" class="form-input" id="dDocumentos" placeholder="https://drive.google.com/...">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Observaciones</label>
+              <textarea class="form-textarea" id="dObservaciones" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="mlg-foot">
+          <button class="btn btn-ghost btn-sm" id="deudaDelBtn" style="margin-right:auto;display:none" onclick="eliminarDeuda()">Eliminar</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeDeudaModal()">Cancelar</button>
+          <button class="btn btn-red btn-sm" id="deudaSaveBtn" onclick="guardarDeuda()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: REGISTRAR PAGO / ABONO (hoja Deudas_Pagos) ══ -->
+    <div class="modal-bg" id="pagoModal">
+      <div class="modal-lg" style="width:480px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title">Registrar pago / abono</div>
+            <div class="mlg-sub" id="pagoModalSub">—</div>
+          </div>
+          <button class="close-x" onclick="closePagoModal()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Fecha</label>
+              <input type="date" class="form-input" id="pFecha">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo de pago</label>
+              <select class="form-select" id="pTipo">
+                <option>Pago programado</option><option>Abono extra</option><option>Renegociación</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Monto total</label>
+              <input type="number" class="form-input" id="pMonto" step="0.01" min="0" oninput="pagoRecalc()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Método</label>
+              <input type="text" class="form-input" id="pMetodo" placeholder="Transferencia, efectivo…">
+            </div>
+            <div class="form-group">
+              <label class="form-label">De ese monto, capital</label>
+              <input type="number" class="form-input" id="pCapital" step="0.01" min="0" oninput="pagoRecalc()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">De ese monto, interés</label>
+              <input type="number" class="form-input" id="pInteres" step="0.01" min="0" oninput="pagoRecalc()">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Comprobante (enlace)</label>
+              <input type="text" class="form-input" id="pComprobante" placeholder="https://drive.google.com/...">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Nota</label>
+              <textarea class="form-textarea" id="pNota" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="mlg-foot">
+          <button class="btn btn-ghost btn-sm" onclick="closePagoModal()">Cancelar</button>
+          <button class="btn btn-red btn-sm" id="pagoSaveBtn" onclick="guardarPago()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+            Registrar pago
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- ══ MODAL: EMPLEADO (alta / edición completa sobre la hoja Personal) ══ -->
 <div class="modal-bg" id="empCardModal">
@@ -3165,6 +3494,17 @@ const ST = {
   _bGastoFuenteExisting: '', // link de Drive existente al editar
   _charts: {},
 
+  /* ── CENTRO DE ESTRATEGIA FINANCIERA ── */
+  deudas: [],            // hoja "Deudas" (acreedores)
+  deudasPagos: [],       // hoja "Deudas_Pagos" (historial de pagos/abonos)
+  deudasHistorial: [],   // hoja "Deudas_Historial" (bitácora de eventos)
+  deudasError: null,
+  finSubTab: 'dash',
+  deudaEditId: null,
+  deudaFilter: 'all',
+  deudaSearch: '',
+  pagoDeudaId: null,
+
   /* ── NÓMINAS ── */
   personal: {},        // hoja "Personal" {id:{...}} (todos, incluye bajas)
   personalList: [],     // hoja "Personal" solo activos, para selects
@@ -3495,6 +3835,66 @@ async function loadAll() {
       ST.registrosError = regErr.result?.error?.message || regErr.message || String(regErr);
     }
     renderAsistencia();
+
+    /* Centro de Estrategia Financiera — hojas "Deudas", "Deudas_Pagos" y "Deudas_Historial".
+       Se cargan en try/catch propio (igual que Registros/Personal) para que si aún no
+       se han creado, el resto de la app siga funcionando y el módulo muestre el aviso
+       explicando qué hoja falta en vez de romper la carga general. */
+    ST.deudasError = null;
+    try{
+      const [deuR, pagR, histR] = await Promise.all([
+        sheetsGet('Deudas!A2:R'),
+        sheetsGet('Deudas_Pagos!A2:K'),
+        sheetsGet('Deudas_Historial!A2:F'),
+      ]);
+      ST.deudas = (deuR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('DEU'+(i+2)),
+        nombre: r[1]||'',
+        tipo: r[2]||'Otro',
+        compPago: r[3]||'Fijo',
+        compInteres: r[4]||'Sin intereses',
+        frecuencia: r[5]||'Mensual',
+        tasa: parseFloat(r[6])||0,
+        saldoOriginal: parseFloat(r[7])||0,
+        saldoActual: parseFloat(r[8])||0,
+        pagoProgramado: parseFloat(r[9])||0,
+        fechaInicio: r[10]||'',
+        fechaFinEst: r[11]||'',
+        prioridadManual: r[12]!==undefined && r[12]!=='' ? parseFloat(r[12]) : 0,
+        estado: r[13]||'Activa',
+        observaciones: r[14]||'',
+        documentos: r[15]||'',
+        fechaCreacion: r[16]||'',
+        ultimaActualizacion: r[17]||'',
+      })).filter(d=>d.nombre);
+      ST.deudasPagos = (pagR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('PAG'+(i+2)),
+        idDeuda: r[1]||'',
+        fecha: r[2]||'',
+        monto: parseFloat(r[3])||0,
+        montoCapital: parseFloat(r[4])||0,
+        montoInteres: parseFloat(r[5])||0,
+        tipoPago: r[6]||'Pago programado',
+        metodo: r[7]||'',
+        nota: r[8]||'',
+        comprobante: r[9]||'',
+        fechaRegistro: r[10]||'',
+      })).filter(p=>p.idDeuda);
+      ST.deudasHistorial = (histR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('EVT'+(i+2)),
+        idDeuda: r[1]||'',
+        fecha: r[2]||'',
+        tipoEvento: r[3]||'',
+        descripcion: r[4]||'',
+        fechaRegistro: r[5]||'',
+      })).filter(h=>h.idDeuda);
+    }catch(deuErr){
+      ST.deudas = []; ST.deudasPagos = []; ST.deudasHistorial = [];
+      ST.deudasError = deuErr.result?.error?.message || deuErr.message || String(deuErr);
+    }
 
     /* Personal — hoja "Personal" (20 cols: A=ID_Usuarios … R=Estado, S=Recibe_Vales, T=Recibe_Fiscal).
        Se carga en try/catch propio para no romper el resto de la app si la hoja
@@ -8379,6 +8779,9 @@ async function cambiarEstatusNomina(idNomina, nuevoEstatus){
    Compensacion_Efectivo, Tipo_Pago, Fecha_Ingreso, Fecha_Baja, Estado, Recibe_Vales.
    ══════════════════════════════════════════════════════════════════ */
 function genEmpId(){ return 'EMP'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function genDeudaId(){ return 'DEU'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function genPagoId(){ return 'PAG'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function genEventoId(){ return 'EVT'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 
 function setEmpFilter(val, btn){
   ST.empFilterEstado = val;
@@ -8434,6 +8837,25 @@ function switchSistemasSubTab(sub){
   if(sub==='clientes') renderSisClientes();
   if(sub==='articulos') renderSisArticulos();
   if(sub==='contrasenas') renderSisContrasenas();
+  saveLastView();
+}
+
+/* ─── SUB-VISTAS DE CENTRO FINANCIERO: Dashboard / Acreedores / Cronograma / Timeline / Historial ─── */
+function switchFinSubTab(sub){
+  ST.finSubTab = sub;
+  ['finSubDash','finSubAcreedores','finSubCrono','finSubTimeline','finSubHist'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['finDashBtn','finAcreedoresBtn','finCronoBtn','finTimelineBtn','finHistBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {dash:'finSubDash', acreedores:'finSubAcreedores', crono:'finSubCrono', timeline:'finSubTimeline', hist:'finSubHist'}[sub] || 'finSubDash';
+  const btnId  = {dash:'finDashBtn', acreedores:'finAcreedoresBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finDashBtn';
+  document.getElementById(paneId)?.classList.add('active');
+  document.getElementById(btnId)?.classList.add('active');
+  const addBtn = document.getElementById('mainAddBtn');
+  if(addBtn) addBtn.style.display = sub==='acreedores' ? '' : 'none';
+  if(sub==='dash') renderFinDashboard();
+  if(sub==='acreedores') renderAcreedores();
+  if(sub==='crono') renderCronograma();
+  if(sub==='timeline') renderFinTimeline();
+  if(sub==='hist') renderFinHistorial();
   saveLastView();
 }
 
@@ -10119,7 +10541,8 @@ function saveLastView(){
       comercialTab: ST.currentComercialTab||'cot',
       balTab: ST.currentBalTab||'dash',
       empSubTab: ST.empSubTab||'personal',
-      sisSubTab: ST.sisSubTab||'clientes'
+      sisSubTab: ST.sisSubTab||'clientes',
+      finSubTab: ST.finSubTab||'dash'
     }));
   }catch(e){}
 }
@@ -10131,17 +10554,18 @@ function restoreLastView(){
   ST.currentBalTab = v.balTab||'dash';
   ST.empSubTab = v.empSubTab||'personal';
   ST.sisSubTab = v.sisSubTab||'clientes';
+  ST.finSubTab = v.finSubTab||'dash';
   if(v.section==='balance') switchTab('bal');
-  else if(v.section==='emp'||v.section==='nom'||v.section==='asis'||v.section==='sistemas') switchTab(v.section);
+  else if(v.section==='emp'||v.section==='nom'||v.section==='asis'||v.section==='sistemas'||v.section==='fin') switchTab(v.section);
   else switchTab(ST.currentComercialTab);
 }
 
 function switchTab(tab){
   resetViewTransitionState();
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'} };
+  const SIMPLE_TABS = { nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn', addLabel:'+ Nuevo Acreedor'} };
   if(SIMPLE_TABS[tab]){
-    ['tabCot','tabFac','tabOC','tabBal','tabNom','tabAsis','tabEmp','tabSistemas'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabNom','tabAsis','tabEmp','tabSistemas','tabFin'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -10160,14 +10584,17 @@ function switchTab(tab){
     const balSubNav=document.getElementById('balanceSubNav');
     const empSubNav=document.getElementById('empleadosSubNav');
     const sisSubNav=document.getElementById('sistemasSubNav');
+    const finSubNav=document.getElementById('finSubNav');
     if(comSubNav) comSubNav.style.display='none';
     if(balSubNav) balSubNav.style.display='none';
     if(empSubNav) empSubNav.style.display = tab==='emp' ? 'flex' : 'none';
     if(sisSubNav) sisSubNav.style.display = tab==='sistemas' ? 'flex' : 'none';
+    if(finSubNav) finSubNav.style.display = tab==='fin' ? 'flex' : 'none';
     if(tab==='asis') renderAsistencia();
     if(tab==='nom') renderNominas();
     if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
     if(tab==='sistemas') switchSistemasSubTab(ST.sisSubTab||'clientes');
+    if(tab==='fin') switchFinSubTab(ST.finSubTab||'dash');
     saveLastView();
     return;
   }
@@ -10240,6 +10667,7 @@ function mainAdd(){
   else if(tab==='bal') openBalModal(ST.currentBalTab==='gas'?'gas':'ing');
   else if(tab==='nom') openNomModal(null);
   else if(tab==='emp') openEmpModal(null);
+  else if(tab==='fin') openDeudaModal(null);
 }
 
 /* ─── SECCIÓN: COMERCIAL ↔ BALANCE ───
@@ -11496,6 +11924,461 @@ function renderDashboard(){
 }
 
 /* ─── BALANCE — end ─── */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CENTRO DE ESTRATEGIA FINANCIERA — Fase 1
+   Dashboard general, Acreedores (CRUD + pagos), Cronograma, Timeline e
+   Historial. Lee y escribe en las hojas "Deudas", "Deudas_Pagos" y
+   "Deudas_Historial" (ver loadAll para el mapeo de columnas), y para el
+   flujo/dashboard también lee ST.ingresos (ya cargados por Balance), sin
+   duplicar ninguna información.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function toggleFinSheetsWarning(){
+  const w=document.getElementById('finSheetsWarning');
+  const m=document.getElementById('finSheetsWarningMsg');
+  if(!w) return;
+  if(ST.deudasError){ w.style.display=''; if(m) m.textContent=ST.deudasError; }
+  else w.style.display='none';
+}
+
+function finParseDate(s){
+  if(!s) return null;
+  const d=new Date(s+'T00:00:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+function finAddInterval(date, frecuencia){
+  const d=new Date(date);
+  switch(frecuencia){
+    case 'Semanal': d.setDate(d.getDate()+7); break;
+    case 'Quincenal': d.setDate(d.getDate()+15); break;
+    case 'Anual': d.setFullYear(d.getFullYear()+1); break;
+    case 'Mensual': case 'Revolvente': default: d.setMonth(d.getMonth()+1); break;
+  }
+  return d;
+}
+/* Próxima fecha de pago de un acreedor, avanzando desde su fecha de inicio
+   según su frecuencia hasta llegar a la primera ocurrencia >= hoy. */
+function finNextPago(deuda, today){
+  today = today || new Date(new Date().toDateString());
+  if(deuda.frecuencia==='Único'){
+    return finParseDate(deuda.fechaFinEst) || finParseDate(deuda.fechaInicio);
+  }
+  const start=finParseDate(deuda.fechaInicio);
+  if(!start) return null;
+  let d=new Date(start), guard=0;
+  while(d<today && guard<2000){ d=finAddInterval(d, deuda.frecuencia); guard++; }
+  return d;
+}
+/* Puntuación de prioridad automática (0-100): combina tasa de interés,
+   cercanía del próximo vencimiento y qué tan "consumido" está el saldo
+   original. Si el acreedor tiene una prioridad manual (>0), esa gana. */
+function finScoreDeuda(deuda){
+  if(deuda.prioridadManual>0) return Math.min(100, deuda.prioridadManual);
+  const next=finNextPago(deuda);
+  const today=new Date(new Date().toDateString());
+  const dias = next ? Math.round((next-today)/86400000) : 999;
+  let score=0;
+  score += Math.min(deuda.tasa,40)*1.0;
+  score += deuda.compInteres==='Interés compuesto' ? 15 : 0;
+  score += dias<0 ? 30 : (dias<=7 ? 20 : (dias<=30 ? 10 : 0));
+  score += deuda.estado==='Vencida' ? 15 : 0;
+  return Math.round(Math.min(score,100));
+}
+function badgeDeuda(estado){
+  const map={Activa:'pill-acep', Vencida:'pill-rech', Liquidada:'pill-env', Renegociada:'pill-seg'};
+  return `<span class="pill ${map[estado]||'pill-pend'}">${esc(estado||'—')}</span>`;
+}
+
+/* ── ACREEDORES ── */
+function getDeudasFiltradas(){
+  let arr=ST.deudas.slice();
+  if(ST.deudaFilter!=='all') arr=arr.filter(d=>d.estado===ST.deudaFilter);
+  if(ST.deudaSearch) arr=arr.filter(d=>(d.nombre||'').toLowerCase().includes(ST.deudaSearch)||(d.tipo||'').toLowerCase().includes(ST.deudaSearch));
+  return arr;
+}
+function setDeudaFilter(f, btn){
+  ST.deudaFilter=f;
+  document.querySelectorAll('#finSubAcreedores .fchip').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderAcreedores();
+}
+function onDeudaSearch(v){ ST.deudaSearch=(v||'').toLowerCase(); renderAcreedores(); }
+
+function renderAcreedores(){
+  const tbody=document.getElementById('finAcreTbody');
+  if(!tbody) return;
+  toggleFinSheetsWarning();
+  const arr=getDeudasFiltradas().slice().sort((a,b)=>finScoreDeuda(b)-finScoreDeuda(a));
+  document.getElementById('finAcreCount').textContent=arr.length;
+  document.getElementById('finAcreSaldo').textContent=fmtMXNBal(ST.deudas.reduce((s,d)=>s+d.saldoActual,0));
+  document.getElementById('finAcreActivas').textContent=ST.deudas.filter(d=>d.estado==='Activa').length;
+  document.getElementById('finAcreVencidas').textContent=ST.deudas.filter(d=>d.estado==='Vencida').length;
+  document.getElementById('finAcreLiquidadas').textContent=ST.deudas.filter(d=>d.estado==='Liquidada').length;
+  if(!arr.length){
+    tbody.innerHTML=`<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin acreedores registrados todavía. Usa "+ Nuevo Acreedor" para agregar el primero.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=arr.map(d=>{
+    const next=finNextPago(d);
+    const nextTxt=next ? next.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const score=finScoreDeuda(d);
+    const scoreClass = score>=60?'pill-rech':(score>=35?'pill-pend':'pill-acep');
+    return `<tr>
+      <td style="font-size:12.5px">${esc(d.nombre)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(d.tipo)}</td>
+      <td style="text-align:right"><span style="color:var(--red);font-family:var(--mono);font-size:12px">${fmtMXNBal(d.saldoActual)}</span></td>
+      <td style="text-align:right;font-size:12px">${fmtMXNBal(d.pagoProgramado)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(d.frecuencia)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${nextTxt}</td>
+      <td><span class="pill ${scoreClass}">${score}</span></td>
+      <td>${badgeDeuda(d.estado)}</td>
+      <td>
+        <div class="row-acts" style="opacity:1">
+          <button class="btn-icon" onclick="openPagoModal('${esc(d.id)}')" title="Registrar pago" style="color:var(--green)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13"><path d="M8 3v10M4 7l4-4 4 4"/></svg>
+          </button>
+          <button class="btn-icon" onclick="openDeudaModal('${esc(d.id)}')" title="Editar">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openDeudaModal(id){
+  if(!requireAuth()) return;
+  const modal=document.getElementById('deudaModal');
+  if(!modal) return;
+  const existente = id ? ST.deudas.find(d=>d.id===id) : null;
+  ST.deudaEditId = existente ? existente.id : null;
+  document.getElementById('deudaModalTitle').textContent = existente ? 'Editar Acreedor' : 'Nuevo Acreedor';
+  document.getElementById('deudaDelBtn').style.display = existente ? '' : 'none';
+  const fields={
+    dNombre: existente?.nombre||'', dTipo: existente?.tipo||'Banco', dEstado: existente?.estado||'Activa',
+    dCompPago: existente?.compPago||'Fijo', dCompInteres: existente?.compInteres||'Sin intereses',
+    dFrecuencia: existente?.frecuencia||'Mensual', dTasa: existente?.tasa||0,
+    dSaldoOriginal: existente?.saldoOriginal||0, dSaldoActual: existente ? existente.saldoActual : 0,
+    dPagoProgramado: existente?.pagoProgramado||0, dFechaInicio: existente?.fechaInicio||'',
+    dFechaFinEst: existente?.fechaFinEst||'', dPrioridadManual: existente?.prioridadManual||0,
+    dDocumentos: existente?.documentos||'', dObservaciones: existente?.observaciones||'',
+  };
+  Object.entries(fields).forEach(([fid,v])=>{ const el=document.getElementById(fid); if(el) el.value=v; });
+  modal.classList.add('open');
+}
+function closeDeudaModal(){ document.getElementById('deudaModal').classList.remove('open'); }
+
+async function guardarDeuda(){
+  if(!requireAuth()) return;
+  const nombre=document.getElementById('dNombre').value.trim();
+  if(!nombre){ toast('err','El nombre del acreedor es obligatorio.'); return; }
+  const existente = ST.deudaEditId ? ST.deudas.find(d=>d.id===ST.deudaEditId) : null;
+  const id = existente ? existente.id : genDeudaId();
+  const now = new Date().toISOString();
+  const btn=document.getElementById('deudaSaveBtn');
+  btn.disabled=true;
+  try{
+    const row=[
+      id, nombre,
+      document.getElementById('dTipo').value,
+      document.getElementById('dCompPago').value,
+      document.getElementById('dCompInteres').value,
+      document.getElementById('dFrecuencia').value,
+      parseFloat(document.getElementById('dTasa').value)||0,
+      parseFloat(document.getElementById('dSaldoOriginal').value)||0,
+      parseFloat(document.getElementById('dSaldoActual').value)||0,
+      parseFloat(document.getElementById('dPagoProgramado').value)||0,
+      document.getElementById('dFechaInicio').value,
+      document.getElementById('dFechaFinEst').value,
+      parseFloat(document.getElementById('dPrioridadManual').value)||0,
+      document.getElementById('dEstado').value,
+      document.getElementById('dObservaciones').value.trim(),
+      document.getElementById('dDocumentos').value.trim(),
+      existente ? (existente.fechaCreacion||now) : now,
+      now,
+    ];
+    if(existente){
+      await sheetsUpdate(`Deudas!A${existente._row}:R${existente._row}`, [row]);
+      await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), id, now.slice(0,10), 'Edición', `Se actualizó la información de "${nombre}".`, now]]);
+    } else {
+      await sheetsAppend('Deudas!A2:R', [row]);
+      await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), id, now.slice(0,10), 'Creación', `Se dio de alta el acreedor "${nombre}".`, now]]);
+    }
+    toast('ok', existente ? 'Acreedor actualizado.' : 'Acreedor agregado.');
+    closeDeudaModal();
+    await loadAll();
+    renderAcreedores();
+  }catch(e){
+    console.error(e);
+    toast('err','Error al guardar el acreedor: '+(e.result?.error?.message||e.message||e));
+  }
+  btn.disabled=false;
+}
+
+async function eliminarDeuda(){
+  const existente = ST.deudaEditId ? ST.deudas.find(d=>d.id===ST.deudaEditId) : null;
+  if(!existente) return;
+  if(!confirm(`¿Eliminar al acreedor "${existente.nombre}"? Esta acción no se puede deshacer.`)) return;
+  try{
+    await sheetsDeleteRow('Deudas', existente._row);
+    ST.deudas = ST.deudas.filter(d=>d.id!==existente.id);
+    shiftRowsAfterDelete(ST.deudas, existente._row);
+    await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), existente.id, new Date().toISOString().slice(0,10), 'Eliminación', `Se eliminó el acreedor "${existente.nombre}".`, new Date().toISOString()]]);
+    toast('ok','Acreedor eliminado.');
+    closeDeudaModal();
+    renderAcreedores();
+  }catch(e){
+    console.error(e);
+    toast('err','Error al eliminar: '+(e.result?.error?.message||e.message||e));
+  }
+}
+
+/* ── REGISTRAR PAGO / ABONO ── */
+function openPagoModal(deudaId){
+  if(!requireAuth()) return;
+  const deuda=ST.deudas.find(d=>d.id===deudaId);
+  if(!deuda) return;
+  ST.pagoDeudaId=deudaId;
+  document.getElementById('pagoModalSub').textContent = `${deuda.nombre} — saldo actual: ${fmtMXNBal(deuda.saldoActual)}`;
+  document.getElementById('pFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('pTipo').value = 'Pago programado';
+  document.getElementById('pMonto').value = deuda.pagoProgramado||0;
+  document.getElementById('pMetodo').value = '';
+  document.getElementById('pCapital').value = 0;
+  document.getElementById('pInteres').value = 0;
+  document.getElementById('pComprobante').value = '';
+  document.getElementById('pNota').value = '';
+  document.getElementById('pagoModal').classList.add('open');
+}
+function closePagoModal(){ document.getElementById('pagoModal').classList.remove('open'); }
+function pagoRecalc(){
+  const monto=parseFloat(document.getElementById('pMonto').value)||0;
+  const capital=parseFloat(document.getElementById('pCapital').value)||0;
+  const interes=parseFloat(document.getElementById('pInteres').value)||0;
+  // Mientras no se desglose capital/interés, se sugiere el monto completo como capital
+  if(capital===0 && interes===0 && monto>0) document.getElementById('pCapital').value=monto;
+}
+
+async function guardarPago(){
+  if(!requireAuth()) return;
+  const deuda=ST.deudas.find(d=>d.id===ST.pagoDeudaId);
+  if(!deuda) return;
+  const monto=parseFloat(document.getElementById('pMonto').value)||0;
+  if(monto<=0){ toast('err','El monto del pago debe ser mayor a cero.'); return; }
+  const capital=parseFloat(document.getElementById('pCapital').value)||0;
+  const interes=parseFloat(document.getElementById('pInteres').value)||0;
+  const fecha=document.getElementById('pFecha').value || new Date().toISOString().slice(0,10);
+  const tipoPago=document.getElementById('pTipo').value;
+  const now=new Date().toISOString();
+  const btn=document.getElementById('pagoSaveBtn');
+  btn.disabled=true;
+  try{
+    const rowPago=[genPagoId(), deuda.id, fecha, monto, capital, interes, tipoPago, document.getElementById('pMetodo').value.trim(), document.getElementById('pNota').value.trim(), document.getElementById('pComprobante').value.trim(), now];
+    await sheetsAppend('Deudas_Pagos!A2:K', [rowPago]);
+
+    // El capital abonado reduce el saldo actual; si llega a cero, la deuda se marca Liquidada.
+    const nuevoSaldo=Math.max(0, deuda.saldoActual - capital);
+    const nuevoEstado = nuevoSaldo<=0 ? 'Liquidada' : deuda.estado;
+    const rowDeuda=[
+      deuda.id, deuda.nombre, deuda.tipo, deuda.compPago, deuda.compInteres, deuda.frecuencia,
+      deuda.tasa, deuda.saldoOriginal, nuevoSaldo, deuda.pagoProgramado, deuda.fechaInicio, deuda.fechaFinEst,
+      deuda.prioridadManual, nuevoEstado, deuda.observaciones, deuda.documentos, deuda.fechaCreacion||now, now,
+    ];
+    await sheetsUpdate(`Deudas!A${deuda._row}:R${deuda._row}`, [rowDeuda]);
+    await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), deuda.id, fecha, 'Pago', `Pago de ${fmtMXNBal(monto)} (${tipoPago}).`, now]]);
+
+    toast('ok', nuevoEstado==='Liquidada' ? '¡Pago registrado — deuda liquidada! 🎉' : 'Pago registrado.');
+    closePagoModal();
+    await loadAll();
+    renderAcreedores();
+    if(document.getElementById('finSubDash')?.classList.contains('active')) renderFinDashboard();
+  }catch(e){
+    console.error(e);
+    toast('err','Error al registrar el pago: '+(e.result?.error?.message||e.message||e));
+  }
+  btn.disabled=false;
+}
+
+/* ── CRONOGRAMA ── */
+function renderCronograma(){
+  const tbody=document.getElementById('finCronoTbody');
+  if(!tbody) return;
+  toggleFinSheetsWarning();
+  const today=new Date(new Date().toDateString());
+  const items=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida').map(d=>{
+    const next=finNextPago(d, today);
+    const dias = next ? Math.round((next-today)/86400000) : null;
+    return {d, next, dias};
+  }).filter(x=>x.next).sort((a,b)=>a.next-b.next);
+  document.getElementById('finCronoCount').textContent=items.length;
+  if(!items.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin pagos programados. Agrega acreedores activos con fecha de inicio y frecuencia.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=items.map(({d,next,dias})=>{
+    let estLabel, estClass;
+    if(dias<0){ estLabel='Vencido'; estClass='pill-rech'; }
+    else if(dias<=7){ estLabel='Esta semana'; estClass='pill-pend'; }
+    else { estLabel='Próximo'; estClass='pill-acep'; }
+    return `<tr>
+      <td style="font-size:12.5px">${esc(d.nombre)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${next.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td style="text-align:right;font-size:12px">${fmtMXNBal(d.pagoProgramado)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(d.frecuencia)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${dias<0 ? ('Vencido hace '+Math.abs(dias)+' días') : (dias+' días')}</td>
+      <td><span class="pill ${estClass}">${estLabel}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── TIMELINE ── */
+function renderFinTimeline(){
+  const wrap=document.getElementById('finTimelineWrap');
+  if(!wrap) return;
+  toggleFinSheetsWarning();
+  const items=ST.deudas.filter(d=>d.fechaInicio && d.fechaFinEst).map(d=>({
+    d, start: finParseDate(d.fechaInicio), end: finParseDate(d.fechaFinEst)
+  })).filter(x=>x.start && x.end && x.end>=x.start);
+  if(!items.length){
+    wrap.innerHTML=`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Agrega fecha de inicio y fecha final estimada a tus acreedores para ver la línea del tiempo.</div>`;
+    return;
+  }
+  const minYear=Math.min(...items.map(x=>x.start.getFullYear()));
+  const maxYear=Math.max(...items.map(x=>x.end.getFullYear()));
+  const totalMs=new Date(maxYear+1,0,1) - new Date(minYear,0,1);
+  const colors=['#e53e3e','#63b3ed','#ecc94b','#48bb78','#9f7aea','#ed8936','#38b2ac'];
+  const yearsRow=[];
+  for(let y=minYear;y<=maxYear+1;y++) yearsRow.push(y);
+  wrap.innerHTML = `<div class="fin-tl-years">${yearsRow.map(y=>`<span>${y}</span>`).join('')}</div>` +
+    items.sort((a,b)=>a.start-b.start).map((x,i)=>{
+      const leftPct=((x.start - new Date(minYear,0,1))/totalMs)*100;
+      const widthPct=Math.max(((x.end-x.start)/totalMs)*100, 2);
+      const color=colors[i%colors.length];
+      return `<div class="fin-tl-row">
+        <div class="fin-tl-label" title="${esc(x.d.nombre)}">${esc(x.d.nombre)}</div>
+        <div class="fin-tl-track"><div class="fin-tl-bar" style="left:${leftPct}%;width:${widthPct}%;background:${color}" title="${esc(x.d.nombre)}: ${x.d.fechaInicio} → ${x.d.fechaFinEst}">${x.end.getFullYear()}</div></div>
+      </div>`;
+    }).join('');
+}
+
+/* ── HISTORIAL (pagos + eventos) ── */
+function renderFinHistorial(){
+  const tbody=document.getElementById('finHistTbody');
+  if(!tbody) return;
+  toggleFinSheetsWarning();
+  const nombrePorId={};
+  ST.deudas.forEach(d=>{ nombrePorId[d.id]=d.nombre; });
+  const rows=[];
+  ST.deudasPagos.forEach(p=>rows.push({fecha:p.fecha, nombre:nombrePorId[p.idDeuda]||p.idDeuda, tipo:p.tipoPago||'Pago', detalle:p.nota||p.metodo||'—', monto:p.monto}));
+  ST.deudasHistorial.forEach(h=>rows.push({fecha:h.fecha, nombre:nombrePorId[h.idDeuda]||h.idDeuda, tipo:h.tipoEvento||'Evento', detalle:h.descripcion||'—', monto:null}));
+  rows.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  document.getElementById('finHistCount').textContent=rows.length;
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin movimientos registrados todavía.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=rows.map(r=>`<tr>
+    <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${esc(r.fecha)||'—'}</td>
+    <td style="font-size:12.5px">${esc(r.nombre)}</td>
+    <td style="font-size:11.5px;color:var(--text2)">${esc(r.tipo)}</td>
+    <td style="font-size:12px;max-width:320px">${esc(r.detalle)}</td>
+    <td style="text-align:right;font-size:12px">${r.monto!=null ? fmtMXNBal(r.monto) : '—'}</td>
+  </tr>`).join('');
+}
+
+/* ── DASHBOARD GENERAL ── */
+function renderFinDashboard(){
+  toggleFinSheetsWarning();
+  const activas=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida');
+  const deudaTotal=ST.deudas.reduce((s,d)=>s+d.saldoActual,0);
+  const vencidas=ST.deudas.filter(d=>d.estado==='Vencida');
+  const deudaVencida=vencidas.reduce((s,d)=>s+d.saldoActual,0);
+
+  const today=new Date(new Date().toDateString());
+  const inRange=(next,days)=>{ if(!next) return false; const diff=(next-today)/86400000; return diff>=0 && diff<=days; };
+  let semana=0, mesComprometido=0, anio=0;
+  activas.forEach(d=>{
+    const next=finNextPago(d, today);
+    if(inRange(next,7)) semana += d.pagoProgramado;
+    if(inRange(next,30)) mesComprometido += d.pagoProgramado;
+    if(inRange(next,365)) anio += d.pagoProgramado;
+  });
+
+  const ym=today.toISOString().slice(0,7);
+  const pagosMesActual=ST.deudasPagos.filter(p=>(p.fecha||'').startsWith(ym));
+  const interesMes=pagosMesActual.reduce((s,p)=>s+p.montoInteres,0);
+  const capitalMes=pagosMesActual.reduce((s,p)=>s+p.montoCapital,0);
+  const ingresosMesActual=(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(ym) && b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
+  const flujoLibre=ingresosMesActual - mesComprometido;
+
+  document.getElementById('finKDeudaTotal').textContent=fmtMXNBal(deudaTotal);
+  document.getElementById('finKPagoMes').textContent=fmtMXNBal(mesComprometido);
+  document.getElementById('finKInteresMes').textContent=fmtMXNBal(interesMes);
+  document.getElementById('finKCapitalMes').textContent=fmtMXNBal(capitalMes);
+  const flujoEl=document.getElementById('finKFlujoLibre');
+  flujoEl.textContent=fmtMXNBal(flujoLibre);
+  flujoEl.style.color=flujoLibre>=0?'var(--green)':'var(--red)';
+  document.getElementById('finKVencida').textContent=fmtMXNBal(deudaVencida);
+  document.getElementById('finKVencidaN').textContent=vencidas.length+' acreedor(es)';
+  document.getElementById('finKActivas').textContent=ST.deudas.filter(d=>d.estado==='Activa').length;
+  document.getElementById('finKFuturos').textContent=fmtMXNBal(activas.reduce((s,d)=>s+d.saldoActual,0));
+  document.getElementById('finKSemana').textContent=fmtMXNBal(semana);
+  document.getElementById('finKMes').textContent=fmtMXNBal(mesComprometido);
+  document.getElementById('finKAnio').textContent=fmtMXNBal(anio);
+
+  const isDark=!document.body.classList.contains('light');
+  const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
+  const textColor=isDark?'#888':'#999';
+  Chart.defaults.color=textColor;
+
+  const sorted=ST.deudas.slice().sort((a,b)=>b.saldoActual-a.saldoActual).slice(0,10);
+  destroyChart('finAcreedor');
+  ST._charts['finAcreedor']=new Chart(document.getElementById('finChartAcreedor'),{
+    type:'bar',
+    data:{labels:sorted.map(d=>d.nombre), datasets:[{label:'Saldo actual',data:sorted.map(d=>d.saldoActual),backgroundColor:'rgba(229,62,62,.7)',borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridColor},ticks:{callback:v=>'$'+v.toLocaleString('es-MX')}},y:{grid:{display:false}}}}
+  });
+
+  const totInt=ST.deudasPagos.reduce((s,p)=>s+p.montoInteres,0);
+  const totCap=ST.deudasPagos.reduce((s,p)=>s+p.montoCapital,0);
+  destroyChart('finIntCap');
+  ST._charts['finIntCap']=new Chart(document.getElementById('finChartIntCap'),{
+    type:'doughnut',
+    data:{labels:['Capital','Intereses'],datasets:[{data:[totCap,totInt],backgroundColor:['rgba(72,187,120,.8)','rgba(229,62,62,.75)'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXNBal(ctx.raw)}}}}
+  });
+
+  const porTipo={};
+  ST.deudas.forEach(d=>{ porTipo[d.tipo]=(porTipo[d.tipo]||0)+d.saldoActual; });
+  destroyChart('finTipo');
+  ST._charts['finTipo']=new Chart(document.getElementById('finChartTipo'),{
+    type:'pie',
+    data:{labels:Object.keys(porTipo), datasets:[{data:Object.values(porTipo),backgroundColor:['#e53e3e','#63b3ed','#ecc94b','#48bb78','#9f7aea','#ed8936','#38b2ac','#f56565','#4299e1'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtMXNBal(ctx.raw)}}}}
+  });
+
+  const porEstado={Activa:0,Vencida:0,Liquidada:0,Renegociada:0};
+  ST.deudas.forEach(d=>{ if(porEstado[d.estado]!==undefined) porEstado[d.estado]+=d.saldoActual; });
+  destroyChart('finEstado');
+  ST._charts['finEstado']=new Chart(document.getElementById('finChartEstado'),{
+    type:'doughnut',
+    data:{labels:Object.keys(porEstado), datasets:[{data:Object.values(porEstado),backgroundColor:['rgba(72,187,120,.8)','rgba(229,62,62,.8)','rgba(99,179,237,.8)','rgba(236,201,75,.8)'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}}}}
+  });
+
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const year=today.getFullYear();
+  const pagosPorMes=meses.map((_,mi)=>ST.deudasPagos.filter(p=>p.fecha && p.fecha.startsWith(year+'-'+String(mi+1).padStart(2,'0'))).reduce((s,p)=>s+p.monto,0));
+  destroyChart('finPagosMes');
+  ST._charts['finPagosMes']=new Chart(document.getElementById('finChartPagosMes'),{
+    type:'bar',
+    data:{labels:meses, datasets:[{label:'Pagado',data:pagosPorMes,backgroundColor:'rgba(99,179,237,.7)',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor},ticks:{callback:v=>'$'+v.toLocaleString('es-MX')}}}}
+  });
+}
+
+/* ─── CENTRO DE ESTRATEGIA FINANCIERA — end (Fase 1) ─── */
 
 /* ─── UNIDADES ───
    Las únicas sugerencias válidas son las 12 definidas originalmente en el
