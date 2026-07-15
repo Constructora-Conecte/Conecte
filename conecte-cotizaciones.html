@@ -910,14 +910,6 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M11.5 4.2c0-1.3-1.4-2.2-3.5-2.2s-3.5 1-3.5 2.4c0 3 7 1.4 7 4.3 0 1.5-1.5 2.4-3.5 2.4s-3.6-.9-3.6-2.3"/></svg>
           <span>Centro Financiero</span>
         </button>
-        <button class="sidebar-item" id="navNomBtn" onclick="switchSection('nom')" title="Nóminas">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M11 8.5c1.8.3 3 1.8 3 3.3"/></svg>
-          <span>Nóminas</span>
-        </button>
-        <button class="sidebar-item" id="navAsisBtn" onclick="switchSection('asis')" title="Asistencia">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>
-          <span>Asistencia</span>
-        </button>
         <button class="sidebar-item" id="navEmpBtn" onclick="switchSection('emp')" title="Empleados">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.3"/><path d="M1.8 13c0-2.4 1.6-4 3.7-4s3.7 1.6 3.7 4"/><circle cx="11.5" cy="6" r="1.8"/><path d="M9.7 9.3c1.7.2 3 1.5 3.3 3.2"/></svg>
           <span>Empleados</span>
@@ -969,11 +961,19 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         </button>
       </nav>
 
-      <!-- SUB-TABS DE EMPLEADOS: Personal, Rostros, Documentación (mismo diseño, fijo arriba) -->
+      <!-- SUB-TABS DE EMPLEADOS: Personal, Nóminas, Asistencia, Rostros, Documentación (mismo diseño, fijo arriba) -->
       <nav class="bal-nav" id="empleadosSubNav" style="display:none">
         <button class="bal-tab active" id="empPersonalBtn" onclick="switchEmpSubTab('personal')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
           Personal
+        </button>
+        <button class="bal-tab" id="empNomBtn" onclick="switchEmpSubTab('nom')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M11 8.5c1.8.3 3 1.8 3 3.3"/></svg>
+          Nóminas
+        </button>
+        <button class="bal-tab" id="empAsisBtn" onclick="switchEmpSubTab('asis')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>
+          Asistencia
         </button>
         <button class="bal-tab" id="empRostrosBtn" onclick="switchEmpSubTab('rostros')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2.5"/><circle cx="8" cy="7" r="2"/><path d="M4.5 12.5c.7-1.8 2-2.7 3.5-2.7s2.8.9 3.5 2.7"/></svg>
@@ -1446,63 +1446,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 
     </div><!-- /tabBal -->
 
-    <!-- ══ TAB: NÓMINAS ══ -->
-    <div id="tabNom" class="tab-pane">
-      <div class="stats stats-5" style="margin-bottom:16px">
-        <div class="stat cy"><div class="stat-lbl">Semana actual</div><div class="stat-val" id="nomSemActual">—</div><div class="stat-delta" id="nomSemActualMonto">—</div></div>
-        <div class="stat cr"><div class="stat-lbl">Pendientes de pago</div><div class="stat-val" id="nomPend">—</div><div class="stat-delta" id="nomPendMonto">—</div></div>
-        <div class="stat cg"><div class="stat-lbl">Pagado (histórico)</div><div class="stat-val" id="nomPagadoHist">—</div><div class="stat-delta">Acumulado</div></div>
-        <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Registros totales</div><div class="stat-val" id="nomTotalReg">—</div><div class="stat-delta">En el historial</div></div>
-        <div class="stat" style="border-color:var(--blue)"><div class="stat-lbl" style="color:var(--blue)">Salario mín. semanal</div><div class="stat-val" id="nomSalMinRef" style="font-size:16px"></div><div class="stat-delta">Base fiscal vigente</div></div>
-      </div>
 
-      <div class="filter-bar" style="margin-bottom:12px">
-        <button class="fchip on" onclick="setNomFilter('all',this)">Todas</button>
-        <button class="fchip" onclick="setNomFilter('Pendiente',this)">Pendiente</button>
-        <button class="fchip" onclick="setNomFilter('Pagado',this)">Pagado</button>
-        <button class="fchip" onclick="setNomFilter('Cancelado',this)">Cancelado</button>
-        <span class="fsep"></span>
-        <select id="nomFiltroEmpleado" class="form-select" style="height:28px;width:200px;font-size:12px" onchange="ST.nomFiltroEmpleadoId=this.value;renderNominas()">
-          <option value="">Todos los empleados</option>
-        </select>
-        <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar por empleado o folio…" oninput="onNomSearch(this.value)">
-        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openParametrosModal()" title="Editar salario mínimo, vales, factor de faltas y días laborales">⚙ Parámetros</button>
-      </div>
-      <div id="nomSemanasWarning" style="display:none;margin-bottom:10px;font-size:11.5px;color:var(--orange);background:rgba(237,137,54,.1);border:1px solid rgba(237,137,54,.25);border-radius:var(--r4);padding:8px 12px">
-        ⚠️ No se pudo leer la hoja <strong>Semanas</strong>, así que no podrás concluir semanas ni generar los movimientos globales en Salidas todavía. Crea una hoja llamada exactamente <strong>Semanas</strong> con las columnas A:H (FechaInicio, FechaFin, SemanaAnio, Estado, FechaConclusion, ID_Salida_Fiscal, ID_Salida_Vales, ID_Salida_Efectivo).
-      </div>
-
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header">
-          <span class="card-title">Historial de Nóminas — agrupado por semana</span>
-          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="nomCount">0</span>
-          <button class="btn btn-red btn-sm" style="margin-left:auto" onclick="openNomModal(null)">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
-            Nueva Nómina
-          </button>
-        </div>
-        <div class="cot-table-wrap" id="nomTablesWrap">
-          <table class="fac-table">
-            <thead>
-              <tr>
-                <th>Empleado</th>
-                <th style="text-align:center">Faltas</th>
-                <th style="text-align:right">Transferencia (fiscal)</th>
-                <th style="text-align:right">Vales</th>
-                <th style="text-align:right">Efectivo real a entregar</th>
-                <th style="text-align:right">Total semana</th>
-                <th>Estatus</th>
-                <th style="text-align:center">Recibo</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="nomTbody">
-              <tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando nóminas…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div><!-- /tabNom -->
 
     <!-- ══ MODAL: PARÁMETROS DE NÓMINA (hoja Parametros) ══ -->
     <div class="modal-bg" id="paramModal">
@@ -1534,27 +1478,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       </div>
     </div>
 
-    <!-- ══ TAB: ASISTENCIA ══ -->
-    <div id="tabAsis" class="tab-pane">
-      <div class="filter-bar" style="justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:11.5px;color:var(--text3)" id="asisCount">0 registros</span>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <a href="https://constructora-conecte.github.io/Conecte/enroll.html" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg>
-            Registro de rostros (Enroll)
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
-          </a>
-          <a href="https://constructora-conecte.github.io/Conecte/checkin.html" target="_blank" rel="noopener" class="btn btn-red btn-sm">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M3 8l3.5 3.5L13 5"/></svg>
-            Registrar asistencia (Check-in)
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
-          </a>
-        </div>
-      </div>
-      <div id="asisWeeksWrap"><div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Cargando asistencia…</div></div>
-    </div><!-- /tabAsis -->
+
 
     <!-- ══ TAB: EMPLEADOS (panel administrativo sobre la hoja Personal) ══ -->
     <div id="tabEmp" class="tab-pane">
@@ -1610,6 +1534,86 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         </div>
       </div>
       </div><!-- /empSubPersonal -->
+
+      <!-- Sub-vista: NÓMINAS — historial semanal de nómina, ligado a la hoja "Nominas" -->
+      <div id="empSubNom" class="emp-subpane">
+        <div class="stats stats-5" style="margin-bottom:16px">
+          <div class="stat cy"><div class="stat-lbl">Semana actual</div><div class="stat-val" id="nomSemActual">—</div><div class="stat-delta" id="nomSemActualMonto">—</div></div>
+          <div class="stat cr"><div class="stat-lbl">Pendientes de pago</div><div class="stat-val" id="nomPend">—</div><div class="stat-delta" id="nomPendMonto">—</div></div>
+          <div class="stat cg"><div class="stat-lbl">Pagado (histórico)</div><div class="stat-val" id="nomPagadoHist">—</div><div class="stat-delta">Acumulado</div></div>
+          <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Registros totales</div><div class="stat-val" id="nomTotalReg">—</div><div class="stat-delta">En el historial</div></div>
+          <div class="stat" style="border-color:var(--blue)"><div class="stat-lbl" style="color:var(--blue)">Salario mín. semanal</div><div class="stat-val" id="nomSalMinRef" style="font-size:16px"></div><div class="stat-delta">Base fiscal vigente</div></div>
+        </div>
+
+        <div class="filter-bar" style="margin-bottom:12px">
+          <button class="fchip on" onclick="setNomFilter('all',this)">Todas</button>
+          <button class="fchip" onclick="setNomFilter('Pendiente',this)">Pendiente</button>
+          <button class="fchip" onclick="setNomFilter('Pagado',this)">Pagado</button>
+          <button class="fchip" onclick="setNomFilter('Cancelado',this)">Cancelado</button>
+          <span class="fsep"></span>
+          <select id="nomFiltroEmpleado" class="form-select" style="height:28px;width:200px;font-size:12px" onchange="ST.nomFiltroEmpleadoId=this.value;renderNominas()">
+            <option value="">Todos los empleados</option>
+          </select>
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar por empleado o folio…" oninput="onNomSearch(this.value)">
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openParametrosModal()" title="Editar salario mínimo, vales, factor de faltas y días laborales">⚙ Parámetros</button>
+        </div>
+        <div id="nomSemanasWarning" style="display:none;margin-bottom:10px;font-size:11.5px;color:var(--orange);background:rgba(237,137,54,.1);border:1px solid rgba(237,137,54,.25);border-radius:var(--r4);padding:8px 12px">
+          ⚠️ No se pudo leer la hoja <strong>Semanas</strong>, así que no podrás concluir semanas ni generar los movimientos globales en Salidas todavía. Crea una hoja llamada exactamente <strong>Semanas</strong> con las columnas A:H (FechaInicio, FechaFin, SemanaAnio, Estado, FechaConclusion, ID_Salida_Fiscal, ID_Salida_Vales, ID_Salida_Efectivo).
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <span class="card-title">Historial de Nóminas — agrupado por semana</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="nomCount">0</span>
+            <button class="btn btn-red btn-sm" style="margin-left:auto" onclick="openNomModal(null)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
+              Nueva Nómina
+            </button>
+          </div>
+          <div class="cot-table-wrap" id="nomTablesWrap">
+            <table class="fac-table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th style="text-align:center">Faltas</th>
+                  <th style="text-align:right">Transferencia (fiscal)</th>
+                  <th style="text-align:right">Vales</th>
+                  <th style="text-align:right">Efectivo real a entregar</th>
+                  <th style="text-align:right">Total semana</th>
+                  <th>Estatus</th>
+                  <th style="text-align:center">Recibo</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="nomTbody">
+                <tr class="loading-row"><td colspan="9"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando nóminas…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /empSubNom -->
+
+      <!-- Sub-vista: ASISTENCIA — check-ins/check-outs agrupados por semana, ligado a la hoja "Registros" -->
+      <div id="empSubAsis" class="emp-subpane">
+        <div class="filter-bar" style="justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11.5px;color:var(--text3)" id="asisCount">0 registros</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a href="https://constructora-conecte.github.io/Conecte/enroll.html" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg>
+              Registro de rostros (Enroll)
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
+            </a>
+            <a href="https://constructora-conecte.github.io/Conecte/checkin.html" target="_blank" rel="noopener" class="btn btn-red btn-sm">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M3 8l3.5 3.5L13 5"/></svg>
+              Registrar asistencia (Check-in)
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M6 3h7v7M13 3L4 12"/></svg>
+            </a>
+          </div>
+        </div>
+        <div id="asisWeeksWrap"><div style="padding:24px;text-align:center;color:var(--text3);font-size:12.5px">Cargando asistencia…</div></div>
+      </div><!-- /empSubAsis -->
 
       <!-- Sub-vista: ROSTROS — vinculada a la hoja "Rostros" (registro de reconocimiento
            facial hecho desde la herramienta externa Enroll). Permite ver de un vistazo
@@ -3999,17 +4003,46 @@ async function loadAll() {
   const savedScrollTop = scrollEl ? scrollEl.scrollTop : 0;
   setLoading(true);
   try {
-    const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR] = await Promise.all([
-      sheetsGet('Cotizaciones!A2:Q'),
-      sheetsGet('Clientes!A2:E'),
-      sheetsGet('Contactos!A2:E'),
-      sheetsGet('Articulos!A2:G'),
-      sheetsGet('Oc_Client!A2:I'),   // 9 cols: + I=ID_Cotizacion (vínculo)
-      sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
-      sheetsGet('Ingresos!A2:N'),    // 14 cols: A=ID … N=Foto
-      sheetsGet('Salidas!A2:Q'),     // 17 cols: A=ID … Q=XML_Content
-      sheetsGet('Proveedores!A2:E'), // 5 cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo
-    ]);
+    /* Un solo mapa de qué hojas existen (spreadsheets.get, 1 petición) + UNA sola
+       values.batchGet con TODOS los rangos que loadAll necesita (core + opcionales).
+       Antes esto eran ~20 peticiones sueltas (una por sheetsGet) cada vez que se
+       recargaban los datos; ahora son 2 peticiones sin importar cuántas hojas se
+       lean. Los rangos de hojas que no existen se omiten del batchGet (evita que
+       toda la petición falle por una sola hoja faltante) y su "Error" se marca
+       más abajo, igual que antes con el try/catch individual. */
+    const sheetMap = await getSheetIdMap();
+    const ALL_RANGES = [
+      {k:'cot', sheet:'Cotizaciones', range:'Cotizaciones!A2:Q'},
+      {k:'cli', sheet:'Clientes', range:'Clientes!A2:E'},
+      {k:'con', sheet:'Contactos', range:'Contactos!A2:E'},
+      {k:'art', sheet:'Articulos', range:'Articulos!A2:G'},
+      {k:'oc', sheet:'Oc_Client', range:'Oc_Client!A2:I'},   // 9 cols: + I=ID_Cotizacion (vínculo)
+      {k:'fac', sheet:'Facturas', range:'Facturas!A2:P'},    // 16 cols: includes PDF/XML
+      {k:'ing', sheet:'Ingresos', range:'Ingresos!A2:N'},    // 14 cols: A=ID … N=Foto
+      {k:'gas', sheet:'Salidas', range:'Salidas!A2:Q'},      // 17 cols: A=ID … Q=XML_Content
+      {k:'prov', sheet:'Proveedores', range:'Proveedores!A2:E'}, // 5 cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo
+      {k:'contra', sheet:'Contraseñas', range:'Contraseñas!A2:F'},
+      {k:'reg', sheet:'Registros', range:'Registros!A2:I'},
+      {k:'deu', sheet:'Deudas', range:'Deudas!A2:S'},
+      {k:'pag', sheet:'Deudas_Pagos', range:'Deudas_Pagos!A2:K'},
+      {k:'hist', sheet:'Deudas_Historial', range:'Deudas_Historial!A2:F'},
+      {k:'esc', sheet:'Escenarios', range:'Escenarios!A2:G'},
+      {k:'obj', sheet:'Objetivos_Financieros', range:'Objetivos_Financieros!A2:H'},
+      {k:'per', sheet:'Personal', range:'Personal!A2:T'},
+      {k:'sem', sheet:'Semanas', range:'Semanas!A2:H'},
+      {k:'ros', sheet:'Rostros', range:'Rostros!A2:B'},
+      {k:'gaf', sheet:'Gafetes', range:'Gafetes!A2:J'},
+      {k:'nom', sheet:'Nominas', range:'Nominas!A2:AV'},
+      {k:'par', sheet:'Parametros', range:'Parametros!A1:B50'},
+    ];
+    const presentes = ALL_RANGES.filter(x => sheetMap[x.sheet]!==undefined);
+    const valores = await sheetsBatchGet(presentes.map(x=>x.range));
+    const BR = {}; // resultados por clave, en el mismo orden que ALL_RANGES
+    presentes.forEach((x,i)=>{ BR[x.k] = valores[i] || []; });
+    ALL_RANGES.forEach(x=>{ if(BR[x.k]===undefined) BR[x.k] = null; }); // null = la hoja no existe
+    const faltaHoja = k => BR[k]===null;
+    const [cotR, cliR, conR, artR, ocR, facR, ingR, gasR, provR] =
+      ['cot','cli','con','art','oc','fac','ing','gas','prov'].map(k=>BR[k]||[]);
 
     /* Clientes */
     ST.clientes = {};
@@ -4025,7 +4058,8 @@ async function loadAll() {
        muestra un aviso explicando cómo crearla. */
     ST.contrasenasError = null;
     try{
-      const contraR = await sheetsGet('Contraseñas!A2:F');
+      if(faltaHoja('contra')) throw new Error('No se encontró la hoja "Contraseñas".');
+      const contraR = BR.contra;
       ST.contrasenas = (contraR||[]).map((r,i)=>({
         _row: i+2,
         id: r[0]||('PWD'+(i+2)),
@@ -4045,7 +4079,8 @@ async function loadAll() {
        y podamos mostrar el motivo exacto en la pestaña de Asistencia en vez de "sin registros". */
     ST.registrosError = null;
     try{
-      const regR = await sheetsGet('Registros!A2:I'); // A=Fecha,B=Hora,C=ID_Usuario,D=Nombre,E=Tipo_Marca,F=Ubicacion_Detectada,G=Lat,H=Long,I=Dentro_Geofence
+      if(faltaHoja('reg')) throw new Error('No se encontró la hoja "Registros".');
+      const regR = BR.reg; // A=Fecha,B=Hora,C=ID_Usuario,D=Nombre,E=Tipo_Marca,F=Ubicacion_Detectada,G=Lat,H=Long,I=Dentro_Geofence
       console.log('[Asistencia] filas crudas recibidas de Registros!A2:I:', regR);
       ST.registros = (regR||[]).map((r,i)=>({
         _row:      i+2,
@@ -4073,11 +4108,8 @@ async function loadAll() {
        explicando qué hoja falta en vez de romper la carga general. */
     ST.deudasError = null;
     try{
-      const [deuR, pagR, histR] = await Promise.all([
-        sheetsGet('Deudas!A2:S'),
-        sheetsGet('Deudas_Pagos!A2:K'),
-        sheetsGet('Deudas_Historial!A2:F'),
-      ]);
+      if(faltaHoja('deu')||faltaHoja('pag')||faltaHoja('hist')) throw new Error('No se encontró alguna de las hojas "Deudas" / "Deudas_Pagos" / "Deudas_Historial".');
+      const deuR = BR.deu, pagR = BR.pag, histR = BR.hist;
       ST.deudas = (deuR||[]).map((r,i)=>({
         _row: i+2,
         id: r[0]||('DEU'+(i+2)),
@@ -4133,7 +4165,8 @@ async function loadAll() {
        siga funcionando igual. */
     ST.escenariosError = null;
     try{
-      const escR = await sheetsGet('Escenarios!A2:G');
+      if(faltaHoja('esc')) throw new Error('No se encontró la hoja "Escenarios".');
+      const escR = BR.esc;
       ST.escenarios = (escR||[]).map((r,i)=>({
         _row: i+2,
         id: r[0]||('ESC'+(i+2)),
@@ -4153,7 +4186,8 @@ async function loadAll() {
        para no romper el resto del módulo si aún no existe. */
     ST.objetivosError = null;
     try{
-      const objR = await sheetsGet('Objetivos_Financieros!A2:H');
+      if(faltaHoja('obj')) throw new Error('No se encontró la hoja "Objetivos_Financieros".');
+      const objR = BR.obj;
       ST.objetivos = (objR||[]).map((r,i)=>({
         _row: i+2,
         id: r[0]||('OBJ'+(i+2)),
@@ -4179,7 +4213,8 @@ async function loadAll() {
        TRUE. Si es FALSE, el monto fiscal no se deposita y se suma automáticamente
        al efectivo (el empleado nunca pierde dinero, solo cambia el método de pago). */
     try{
-      const perR = await sheetsGet('Personal!A2:T');
+      if(faltaHoja('per')) throw new Error('No se encontró la hoja "Personal".');
+      const perR = BR.per;
       ST.personal = {};
       ST.personalList = [];
       (perR||[]).forEach((r,i)=>{
@@ -4226,7 +4261,8 @@ async function loadAll() {
              F=ID_Salida_Fiscal, G=ID_Salida_Vales, H=ID_Salida_Efectivo. */
     ST.semanasError = null;
     try{
-      const semR = await sheetsGet('Semanas!A2:H');
+      if(faltaHoja('sem')) throw new Error('No se encontró la hoja "Semanas".');
+      const semR = BR.sem;
       ST.semanas = {};
       (semR||[]).forEach((r,i)=>{
         if(!r[0]) return;
@@ -4253,7 +4289,8 @@ async function loadAll() {
        Personal!A), B = fecha de registro. Se carga en try/catch propio para no
        romper el resto de la app si la hoja aún no existe. */
     try{
-      const rosR = await sheetsGet('Rostros!A2:B');
+      if(faltaHoja('ros')) throw new Error('No se encontró la hoja "Rostros".');
+      const rosR = BR.ros;
       ST.rostros = {};
       (rosR||[]).forEach(r=>{ if(r[0]) ST.rostros[r[0]] = { fecha: r[1]||'' }; });
       ST.rostrosError = null;
@@ -4268,7 +4305,8 @@ async function loadAll() {
        I=Reimpresiones, J=Notas). Se carga en try/catch propio para no romper el resto
        de la app si la hoja aún no existe o el nombre no coincide exactamente. */
     try{
-      const gafR = await sheetsGet('Gafetes!A2:J');
+      if(faltaHoja('gaf')) throw new Error('No se encontró la hoja "Gafetes".');
+      const gafR = BR.gaf;
       ST.gafetes = (gafR||[]).map((r,i)=>({
         _row: i+2,
         idGafete: r[0]||'',
@@ -4315,7 +4353,8 @@ async function loadAll() {
        Monto_Acordado_Manual/Faltas_Justificadas (AN–AS) nunca se recuperaban al reabrir
        una nómina ya guardada — ese bug queda corregido aquí. */
     try{
-      const nomR = await sheetsGet('Nominas!A2:AV');
+      if(faltaHoja('nom')) throw new Error('No se encontró la hoja "Nominas".');
+      const nomR = BR.nom;
       ST.nominas = (nomR||[]).map((r,i)=>({
         _row: i+2,
         idNomina: r[0]||'',
@@ -4397,7 +4436,8 @@ async function loadAll() {
        automáticamente toda nómina que aún no se haya guardado/pagado. */
     try{
       ST.parametrosRows = {};
-      const cfgNom = await sheetsGet('Parametros!A1:B50');
+      if(faltaHoja('par')) throw new Error('No se encontró la hoja "Parametros".');
+      const cfgNom = BR.par;
       (cfgNom||[]).forEach((row,idx)=>{
         const k=String(row[0]||'').trim().toUpperCase();
         if(!k) return;
@@ -4614,6 +4654,21 @@ function sheetsGet(range) {
   return withGoogleAuth(
     gapi.client.sheets.spreadsheets.values.get({ spreadsheetId:SHEET_ID, range })
       .then(r => r.result.values || [])
+  );
+}
+/* Trae VARIOS rangos en UNA sola petición HTTP (values.batchGet), en vez de un
+   sheetsGet() por hoja. Esto es clave para no pegarle a la cuota de Google Sheets
+   ("Read requests per minute per user"): loadAll() antes hacía ~20 peticiones
+   individuales cada vez que se recargaban los datos (por ejemplo, después de
+   guardar cualquier registro), y eso se acumulaba rápido si el usuario hacía
+   varias acciones seguidas. Con batchGet, esas mismas ~20 lecturas cuentan como
+   UNA sola petición contra la cuota. Devuelve un arreglo de arreglos de filas,
+   en el mismo orden que `ranges`. */
+function sheetsBatchGet(ranges) {
+  if(!ranges.length) return Promise.resolve([]);
+  return withGoogleAuth(
+    gapi.client.sheets.spreadsheets.values.batchGet({ spreadsheetId:SHEET_ID, ranges })
+      .then(r => (r.result.valueRanges||[]).map(vr => vr.values || []))
   );
 }
 function sheetsAppend(range, values) {
@@ -8444,7 +8499,7 @@ function renderNominas(){
 }
 function setNomFilter(val, btn){
   ST.nomFilter = val;
-  document.querySelectorAll('#tabNom .fchip').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('#empSubNom .fchip').forEach(b=>b.classList.remove('on'));
   if(btn) btn.classList.add('on');
   renderNominas();
 }
@@ -9085,16 +9140,30 @@ function normalizePhotoUrl(url){
   return s;
 }
 
-/* ─── SUB-VISTAS DE EMPLEADOS: Personal / Rostros / Documentación ─── */
+/* ─── SUB-VISTAS DE EMPLEADOS: Personal / Nóminas / Asistencia / Rostros / Documentación ───
+   Nóminas y Asistencia vivían antes como vistas principales independientes; ahora son
+   sub-pestañas de Empleados, pero conservan exactamente su misma funcionalidad, tablas,
+   filtros y lógica (renderNominas / renderAsistencia / openNomModal, etc. no cambiaron). */
 function switchEmpSubTab(sub){
   ST.empSubTab = sub;
-  ['empSubPersonal','empSubRostros','empSubDoc'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['empPersonalBtn','empRostrosBtn','empDocBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {personal:'empSubPersonal', rostros:'empSubRostros', doc:'empSubDoc'}[sub] || 'empSubPersonal';
-  const btnId  = {personal:'empPersonalBtn', rostros:'empRostrosBtn', doc:'empDocBtn'}[sub] || 'empPersonalBtn';
+  ['empSubPersonal','empSubNom','empSubAsis','empSubRostros','empSubDoc'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['empPersonalBtn','empNomBtn','empAsisBtn','empRostrosBtn','empDocBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {personal:'empSubPersonal', nom:'empSubNom', asis:'empSubAsis', rostros:'empSubRostros', doc:'empSubDoc'}[sub] || 'empSubPersonal';
+  const btnId  = {personal:'empPersonalBtn', nom:'empNomBtn', asis:'empAsisBtn', rostros:'empRostrosBtn', doc:'empDocBtn'}[sub] || 'empPersonalBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
+  // El botón "+ Agregar" de la barra superior depende de en qué sub-pestaña de
+  // Empleados estemos: Nuevo Empleado en Personal, Nueva Nómina en Nóminas,
+  // oculto en Asistencia/Rostros/Documentación (igual que cuando Nóminas y
+  // Asistencia eran vistas principales independientes).
+  const addBtn = document.getElementById('mainAddBtn');
+  const addTxt = document.getElementById('mainAddTxt');
+  if(sub==='nom'){ if(addBtn) addBtn.style.display=''; if(addTxt) addTxt.textContent='+ Nueva Nómina'; }
+  else if(sub==='asis'){ if(addBtn) addBtn.style.display='none'; }
+  else { if(addBtn) addBtn.style.display=''; if(addTxt) addTxt.textContent='+ Nuevo Empleado'; }
   if(sub==='personal') renderEmpleados();
+  if(sub==='nom') renderNominas();
+  if(sub==='asis') renderAsistencia();
   if(sub==='rostros') renderRostros();
   saveLastView();
 }
@@ -10861,20 +10930,28 @@ function restoreLastView(){
   if(!v) return; // nada guardado todavía: se queda con la vista inicial (Comercial > Cotizaciones)
   ST.currentComercialTab = v.comercialTab||'cot';
   ST.currentBalTab = v.balTab||'dash';
-  ST.empSubTab = v.empSubTab||'personal';
   ST.sisSubTab = v.sisSubTab||'clientes';
   ST.finSubTab = v.finSubTab||'dash';
-  if(v.section==='balance') switchTab('bal');
-  else if(v.section==='emp'||v.section==='nom'||v.section==='asis'||v.section==='sistemas'||v.section==='fin') switchTab(v.section);
+  // Migración: en versiones anteriores "Nóminas" y "Asistencia" eran secciones
+  // principales propias; ahora son sub-pestañas de "Empleados". Si el navegador
+  // del usuario todavía tiene guardada una de esas secciones, lo mandamos a
+  // Empleados con la sub-pestaña equivalente en vez de dejar la navegación rota.
+  let section = v.section;
+  let empSubTab = v.empSubTab||'personal';
+  if(section==='nom'){ section='emp'; empSubTab='nom'; }
+  else if(section==='asis'){ section='emp'; empSubTab='asis'; }
+  ST.empSubTab = empSubTab;
+  if(section==='balance') switchTab('bal');
+  else if(section==='emp'||section==='sistemas'||section==='fin') switchTab(section);
   else switchTab(ST.currentComercialTab);
 }
 
 function switchTab(tab){
   resetViewTransitionState();
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { nom:{pane:'tabNom', label:'Nóminas', navBtn:'navNomBtn', addLabel:'+ Nueva Nómina'}, asis:{pane:'tabAsis', label:'Asistencia', navBtn:'navAsisBtn'}, emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn', addLabel:'+ Nuevo Acreedor'} };
+  const SIMPLE_TABS = { emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn', addLabel:'+ Nuevo Acreedor'} };
   if(SIMPLE_TABS[tab]){
-    ['tabCot','tabFac','tabOC','tabBal','tabNom','tabAsis','tabEmp','tabSistemas','tabFin'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -10899,8 +10976,6 @@ function switchTab(tab){
     if(empSubNav) empSubNav.style.display = tab==='emp' ? 'flex' : 'none';
     if(sisSubNav) sisSubNav.style.display = tab==='sistemas' ? 'flex' : 'none';
     if(finSubNav) finSubNav.style.display = tab==='fin' ? 'flex' : 'none';
-    if(tab==='asis') renderAsistencia();
-    if(tab==='nom') renderNominas();
     if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
     if(tab==='sistemas') switchSistemasSubTab(ST.sisSubTab||'clientes');
     if(tab==='fin') switchFinSubTab(ST.finSubTab||'dash');
@@ -10953,7 +11028,7 @@ function switchTab(tab){
   // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
   // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
   // porque el bloque de arriba solo toggle-a Comercial/Balance.
-  ['navNomBtn','navAsisBtn','navEmpBtn','navSistemasBtn','navFinBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['navEmpBtn','navSistemasBtn','navFinBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   const empSubNav=document.getElementById('empleadosSubNav');
@@ -10976,8 +11051,10 @@ function mainAdd(){
   else if(tab==='fac') openFacUpload();
   else if(tab==='oc') openNewOCCliente();
   else if(tab==='bal') openBalModal(ST.currentBalTab==='gas'?'gas':'ing');
-  else if(tab==='nom') openNomModal(null);
-  else if(tab==='emp') openEmpModal(null);
+  else if(tab==='emp'){
+    if(ST.empSubTab==='nom') openNomModal(null);
+    else openEmpModal(null);
+  }
   else if(tab==='fin') {
     if(ST.finSubTab==='objetivos') openObjetivoModal(null);
     else openDeudaModal(null);
@@ -10995,7 +11072,7 @@ function switchSection(section){
   // sin importar en qué sub-pestaña se haya quedado la última vez.
   if(section==='comercial'){ ST.currentComercialTab='cot'; switchTab('cot'); }
   else if(section==='balance'){ ST.currentBalTab='dash'; switchTab('bal'); }
-  else switchTab(section); // 'doc' | 'nom' | 'asis' | 'emp'
+  else switchTab(section); // 'emp' | 'sistemas' | 'fin'
 }
 
 /* ─── ASISTENCIA: agrupación semanal (lunes–domingo) / diaria + detalle con mapa ─── */
