@@ -999,6 +999,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
           Contraseñas
         </button>
+        <button class="bal-tab" id="sisUsuariosBtn" onclick="switchSistemasSubTab('usuarios')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.2"/><path d="M2 13c0-2.3 1.8-4 4-4s4 1.7 4 4"/><circle cx="12.2" cy="5.5" r="1.7"/><path d="M10.7 9.3c1.7.2 3 1.6 3 3.7"/></svg>
+          Usuarios
+        </button>
       </nav>
 
       <!-- SUB-TABS DE CENTRO FINANCIERO: Dashboard, Acreedores, Cronograma, Timeline, Historial -->
@@ -1751,6 +1755,36 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           </div>
         </div>
       </div><!-- /sisSubContrasenas -->
+
+      <!-- Sub-vista: USUARIOS -->
+      <div id="sisSubUsuarios" class="emp-subpane">
+        <div class="info-card" style="margin-bottom:12px">
+          <div>👤 Los roles (Admin / Gerente / Empleado) son solo una etiqueta por ahora. El acceso real a cada módulo depende de las casillas "Módulos habilitados" que marques aquí manualmente para cada usuario — todavía no se aplica automáticamente en el resto de la app.</div>
+        </div>
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre o email…" oninput="onSisUsuariosSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Usuarios</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisUsuariosCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddUsuario()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Usuario
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Módulos habilitados</th><th>Estado</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="sisUsuariosTbody">
+                <tr class="loading-row"><td colspan="6"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubUsuarios -->
 
     </div><!-- /tabSistemas -->
 
@@ -3130,6 +3164,57 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
   </div>
 </div>
 
+<!-- ══ ADD/EDIT USUARIO MODAL ══ -->
+<div class="modal-bg" id="addUsuarioModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-title" id="addUsuarioModalTitle">Nuevo Usuario</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-input" id="nuNombre" placeholder="Ej. Juan Pérez">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" class="form-input" id="nuEmail" placeholder="usuario@empresa.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rol</label>
+        <select class="form-select" id="nuRol" onchange="onNuRolChange()">
+          <option value="Admin">Admin</option>
+          <option value="Gerente">Gerente</option>
+          <option value="Empleado" selected>Empleado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-select" id="nuEstado">
+          <option value="Activo">Activo</option>
+          <option value="Pendiente">Pendiente de aprobación</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Módulos habilitados</label>
+        <div id="nuModulosWrap" style="display:flex;flex-direction:column;gap:6px;padding:8px 0">
+          <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="comercial" id="nuModComercial" style="width:16px;height:16px"><label class="form-label" for="nuModComercial" style="margin:0;cursor:pointer">Comercial (Cotizaciones, Facturas, OC Clientes)</label></div>
+          <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="bal" id="nuModBal" style="width:16px;height:16px"><label class="form-label" for="nuModBal" style="margin:0;cursor:pointer">Balance</label></div>
+          <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="fin" id="nuModFin" style="width:16px;height:16px"><label class="form-label" for="nuModFin" style="margin:0;cursor:pointer">Centro Financiero</label></div>
+          <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="emp" id="nuModEmp" style="width:16px;height:16px"><label class="form-label" for="nuModEmp" style="margin:0;cursor:pointer">Empleados</label></div>
+          <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="sistemas" id="nuModSistemas" style="width:16px;height:16px"><label class="form-label" for="nuModSistemas" style="margin:0;cursor:pointer">Sistemas</label></div>
+        </div>
+        <div id="nuAdminHint" style="display:none;font-size:11px;color:var(--text3)">Admin tiene acceso completo por definición; no necesita marcar módulos.</div>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('addUsuarioModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-red" id="saveUsuarioBtn" onclick="saveNewUsuario()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar Usuario
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ ADD PROVEEDOR MODAL (usado desde el formulario de Salidas) ══ -->
 <div class="modal-bg" id="addProveedorModal">
   <div class="modal" style="width:420px">
@@ -3825,7 +3910,7 @@ function startAutoRefresh(){
     const ocOpen   = document.getElementById('ocModal').classList.contains('open');
     if(formOpen || ocOpen) return;
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
-    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','addContrasenaModal','facUploadModal','balModal','asisDetailModal','empModal','empCardModal'];
+    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','addContrasenaModal','facUploadModal','balModal','asisDetailModal','empModal','empCardModal','addUsuarioModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
     // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
     if(Date.now() < facEditingUntil) return;
@@ -3911,9 +3996,31 @@ function handleAuthClick() {
         setGoogleUI(true);
       }
       await loadAll();
+      await registrarUsuarioSiEsNuevo();
     }
   });
   tokenClient.requestAccessToken();
+}
+
+/* Si la persona que se conecta con Google no existe todavía en la hoja "Usuarios",
+   se crea ahí un registro con estado "Pendiente" (alta = "Google") para que el
+   Admin lo vea en Sistemas > Usuarios y decida su rol y qué módulos habilitar.
+   No bloquea el uso de la app ni concede ningún permiso por sí solo. */
+async function registrarUsuarioSiEsNuevo(){
+  try{
+    if(ST.usuariosSistemaError) return; // la hoja "Usuarios" todavía no existe
+    const email = (ST.usuario||'').toLowerCase().trim();
+    if(!email || !email.includes('@')) return;
+    const yaExiste = (ST.usuariosSistema||[]).some(u=>u.email===email);
+    if(yaExiste) return;
+    const id = genUsuarioId();
+    const hoy = todayISO();
+    const nombre = ST.nombre || email;
+    await sheetsAppend('Usuarios!A2:H', [[id, nombre, email, 'Empleado', '', 'Pendiente', 'Google', hoy]]);
+    ST.usuariosSistema = ST.usuariosSistema||[];
+    ST.usuariosSistema.push({ id, nombre, email, rol:'Empleado', modulos:[], estado:'Pendiente', metodoAlta:'Google', fechaAlta:hoy, _row: ST.usuariosSistema.length+2 });
+    renderSisUsuarios();
+  }catch(e){ console.error('No se pudo registrar el usuario nuevo en la hoja Usuarios:', e); }
 }
 
 function setGoogleUI(connected) {
@@ -4034,6 +4141,7 @@ async function loadAll() {
       {k:'gaf', sheet:'Gafetes', range:'Gafetes!A2:J'},
       {k:'nom', sheet:'Nominas', range:'Nominas!A2:AV'},
       {k:'par', sheet:'Parametros', range:'Parametros!A1:B50'},
+      {k:'usr', sheet:'Usuarios', range:'Usuarios!A2:H'},
     ];
     const presentes = ALL_RANGES.filter(x => sheetMap[x.sheet]!==undefined);
     const valores = await sheetsBatchGet(presentes.map(x=>x.range));
@@ -4073,6 +4181,36 @@ async function loadAll() {
       ST.contrasenas = [];
       ST.contrasenasError = contraErr.result?.error?.message || contraErr.message || String(contraErr);
     }
+
+    /* Usuarios y roles (Sistemas > Usuarios) — hoja "Usuarios":
+       A=ID, B=Nombre, C=Email, D=Rol (Admin/Gerente/Empleado),
+       E=Modulos_Habilitados (lista separada por comas: comercial,bal,fin,emp,sistemas),
+       F=Estado (Activo/Pendiente/Inactivo), G=Metodo_Alta (Manual/Google), H=Fecha_Alta.
+       Se llama ST.usuariosSistema (NO ST.usuario, que ya se usa para el email de la
+       sesión de Google actual) para no chocar con esa variable existente.
+       Se carga en try/catch propio, igual que Contraseñas/Registros, para que si la hoja
+       aún no existe no rompa el resto de la carga; la sub-vista Sistemas > Usuarios
+       muestra un aviso explicando cómo crearla. */
+    ST.usuariosSistemaError = null;
+    try{
+      if(faltaHoja('usr')) throw new Error('No se encontró la hoja "Usuarios".');
+      const usrR = BR.usr;
+      ST.usuariosSistema = (usrR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('USR'+(i+2)),
+        nombre: r[1]||'',
+        email: (r[2]||'').toLowerCase().trim(),
+        rol: r[3]||'Empleado',
+        modulos: (r[4]||'').split(',').map(m=>m.trim()).filter(Boolean),
+        estado: r[5]||'Activo',
+        metodoAlta: r[6]||'Manual',
+        fechaAlta: r[7]||'',
+      })).filter(u=>u.email);
+    }catch(usrErr){
+      ST.usuariosSistema = [];
+      ST.usuariosSistemaError = usrErr.result?.error?.message || usrErr.message || String(usrErr);
+    }
+    renderSisUsuarios();
 
     /* Registros de asistencia — se carga aparte (try/catch propio) para que, si la hoja
        "Registros" no existe o el nombre no coincide, NO se rompa la carga del resto de la app
@@ -6501,6 +6639,11 @@ async function confirmDel(){
       ST.contrasenas = ST.contrasenas.filter(c=>c._row!==ST.delRow);
       shiftRowsAfterDelete(ST.contrasenas, ST.delRow);
       renderSisContrasenas();
+    } else if(kind==='usuario'){
+      await sheetsDeleteRow('Usuarios', ST.delRow);
+      ST.usuariosSistema = (ST.usuariosSistema||[]).filter(u=>u._row!==ST.delRow);
+      shiftRowsAfterDelete(ST.usuariosSistema, ST.delRow);
+      renderSisUsuarios();
     } else {
       await sheetsDeleteRow('Cotizaciones', ST.delRow);
       ST.cotizaciones=ST.cotizaciones.filter(c=>c.id!==ST.delId);
@@ -7693,7 +7836,7 @@ function openFacIngLink(facId){
     const ing=ST.ingresos.find(b=>b.id===f.id_ingreso);
     wrap.style.display='flex';
     document.getElementById('facIngCurrentLabel').innerHTML = ing
-      ? `Ingreso vinculado: <b>${esc(ing.concepto||ing.id)}</b> — ${fmtMXNBal(ing.monto)} (${esc(ing.fecha||'')})`
+      ? `Ingreso vinculado: <b>${esc(ing.concepto||ing.id)}</b> — ${fmtMXN(ing.monto)} (${esc(ing.fecha||'')})`
       : `Ingreso vinculado: <b>${esc(f.id_ingreso)}</b>`;
   } else {
     wrap.style.display='none';
@@ -7712,7 +7855,7 @@ function filterIngForFacLink(q){
   if(!list.length){ drop.innerHTML='<div class="art-no-results">Sin ingresos disponibles que coincidan</div>'; drop.style.display='block'; return; }
   drop.innerHTML=list.map(b=>`<div class="art-option" onclick="selectIngForFacLink('${esc(b.id)}')">
     <div style="font-weight:500">${esc(b.concepto||b.id)}</div>
-    <div style="font-size:10.5px;color:var(--text3)">${esc(ST.clientes[b.cliente]?.nombre||b.cliente||'—')} · ${fmtMXNBal(b.monto)} · ${esc(b.fecha||'')}</div>
+    <div style="font-size:10.5px;color:var(--text3)">${esc(ST.clientes[b.cliente]?.nombre||b.cliente||'—')} · ${fmtMXN(b.monto)} · ${esc(b.fecha||'')}</div>
   </div>`).join('');
   drop.style.display='block';
 }
@@ -7743,12 +7886,12 @@ function newIngresoFromFacLink(){
   const f=ST.facturas.find(x=>x.id===ST.facIngLinkTargetId); if(!f) return;
   document.getElementById('facIngLinkModal').classList.remove('open');
   openBalModal('ing',{
-    fecha: todayISOBal(),
+    fecha: todayISO(),
     concepto: `Pago ${f.folio||f.id} — ${f.concepto||''}`.trim().slice(0,120),
     monto: f.total,
     cuenta: f.metodo||'Transferencia electrónica',
     estado: f.estatus==='Pagado'?'Pagado':'Pendiente',
-    fechaPago: f.estatus==='Pagado'?todayISOBal():'',
+    fechaPago: f.estatus==='Pagado'?todayISO():'',
     cliente: f.id_cli,
     obs: `Factura ${f.folio||f.id}`,
     facRef: { id:f.id, folio:f.folio, _row:f._row },
@@ -9152,15 +9295,6 @@ function switchEmpSubTab(sub){
   const btnId  = {personal:'empPersonalBtn', nom:'empNomBtn', asis:'empAsisBtn', rostros:'empRostrosBtn', doc:'empDocBtn'}[sub] || 'empPersonalBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
-  // El botón "+ Agregar" de la barra superior depende de en qué sub-pestaña de
-  // Empleados estemos: Nuevo Empleado en Personal, Nueva Nómina en Nóminas,
-  // oculto en Asistencia/Rostros/Documentación (igual que cuando Nóminas y
-  // Asistencia eran vistas principales independientes).
-  const addBtn = document.getElementById('mainAddBtn');
-  const addTxt = document.getElementById('mainAddTxt');
-  if(sub==='nom'){ if(addBtn) addBtn.style.display=''; if(addTxt) addTxt.textContent='+ Nueva Nómina'; }
-  else if(sub==='asis'){ if(addBtn) addBtn.style.display='none'; }
-  else { if(addBtn) addBtn.style.display=''; if(addTxt) addTxt.textContent='+ Nuevo Empleado'; }
   if(sub==='personal') renderEmpleados();
   if(sub==='nom') renderNominas();
   if(sub==='asis') renderAsistencia();
@@ -9174,15 +9308,16 @@ function switchEmpSubTab(sub){
    formulario de Cotización, que solo permite agregar). */
 function switchSistemasSubTab(sub){
   ST.sisSubTab = sub;
-  ['sisSubClientes','sisSubArticulos','sisSubContrasenas'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['sisClientesBtn','sisArticulosBtn','sisContrasenasBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', contrasenas:'sisSubContrasenas'}[sub] || 'sisSubClientes';
-  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', contrasenas:'sisContrasenasBtn'}[sub] || 'sisClientesBtn';
+  ['sisSubClientes','sisSubArticulos','sisSubContrasenas','sisSubUsuarios'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['sisClientesBtn','sisArticulosBtn','sisContrasenasBtn','sisUsuariosBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', contrasenas:'sisSubContrasenas', usuarios:'sisSubUsuarios'}[sub] || 'sisSubClientes';
+  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', contrasenas:'sisContrasenasBtn', usuarios:'sisUsuariosBtn'}[sub] || 'sisClientesBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
   if(sub==='clientes') renderSisClientes();
   if(sub==='articulos') renderSisArticulos();
   if(sub==='contrasenas') renderSisContrasenas();
+  if(sub==='usuarios') renderSisUsuarios();
   saveLastView();
 }
 
@@ -9195,11 +9330,6 @@ function switchFinSubTab(sub){
   const btnId  = {dash:'finDashBtn', acreedores:'finAcreedoresBtn', sim:'finSimBtn', alertas:'finAlertasBtn', objetivos:'finObjBtn', proy:'finProyBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finDashBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
-  const addBtn = document.getElementById('mainAddBtn');
-  const addTxt = document.getElementById('mainAddTxt');
-  if(addBtn) addBtn.style.display = (sub==='acreedores'||sub==='objetivos') ? '' : 'none';
-  if(addTxt && sub==='objetivos') addTxt.textContent = '+ Nuevo Objetivo';
-  else if(addTxt && sub==='acreedores') addTxt.textContent = '+ Nuevo Acreedor';
   if(sub==='dash') renderFinDashboard();
   if(sub==='acreedores') renderAcreedores();
   if(sub==='sim') renderSimulador();
@@ -9255,6 +9385,122 @@ function openEditCliente(id){
   document.getElementById('ncEmail').value = c.email||'';
   document.getElementById('saveClienteBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
   document.getElementById('addClienteModal').classList.add('open');
+}
+
+/* ── USUARIOS Y ROLES (Sistemas) ──
+   Estructura + CRUD básico únicamente: guarda rol y módulos habilitados por
+   usuario, pero todavía NO se usa para restringir el acceso real a los demás
+   módulos de la app (eso queda para un cambio aparte). */
+const USUARIO_MODULOS = ['comercial','bal','fin','emp','sistemas'];
+function genUsuarioId(){ return 'USR'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function onSisUsuariosSearch(v){ ST.sisUsuariosQuery = (v||'').toLowerCase(); renderSisUsuarios(); }
+function estadoUsuarioPillClass(estado){
+  return {Activo:'pill-acep', Pendiente:'pill-pend', Inactivo:'pill-rech'}[estado] || 'pill-pend';
+}
+function renderSisUsuarios(){
+  const tbody=document.getElementById('sisUsuariosTbody');
+  if(!tbody) return;
+  if(ST.usuariosSistemaError){
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3)">
+      ⚠️ No se pudo leer la hoja <strong>Usuarios</strong> todavía (${esc(ST.usuariosSistemaError)}).<br>
+      Crea una hoja llamada exactamente <strong>Usuarios</strong> con columnas: A=ID, B=Nombre, C=Email, D=Rol, E=Modulos_Habilitados, F=Estado, G=Metodo_Alta, H=Fecha_Alta.
+      En cuanto exista podrás agregar y editar desde aquí.
+    </td></tr>`;
+    document.getElementById('sisUsuariosCount').textContent='0';
+    return;
+  }
+  const q = ST.sisUsuariosQuery||'';
+  let list = (ST.usuariosSistema||[]).slice();
+  if(q) list = list.filter(u=>(u.nombre||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.nombre||a.email||'').localeCompare(b.nombre||b.email||''));
+  document.getElementById('sisUsuariosCount').textContent = list.length;
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin usuarios registrados todavía.'}</td></tr>`;
+    return;
+  }
+  const modLabels = {comercial:'Comercial', bal:'Balance', fin:'Centro Financiero', emp:'Empleados', sistemas:'Sistemas'};
+  tbody.innerHTML = list.map(u=>`<tr>
+    <td style="font-weight:500;font-size:12.5px">${esc(u.nombre||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(u.email)}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(u.rol)}</td>
+    <td style="font-size:11.5px;color:var(--text3)">${u.rol==='Admin' ? 'Todos (Admin)' : (u.modulos.length ? u.modulos.map(m=>esc(modLabels[m]||m)).join(', ') : '—')}</td>
+    <td><span class="pill ${estadoUsuarioPillClass(u.estado)}">${esc(u.estado)}</span></td>
+    <td>
+      <div class="row-acts" style="opacity:1">
+        <button class="btn-icon" title="Editar" onclick="openEditUsuario('${esc(u.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        </button>
+        <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(u.email)}',${u._row},'usuario')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function onNuRolChange(){
+  const esAdmin = document.getElementById('nuRol').value==='Admin';
+  document.querySelectorAll('.nu-modulo').forEach(cb=>{ cb.disabled = esAdmin; if(esAdmin) cb.checked=false; });
+  document.getElementById('nuAdminHint').style.display = esAdmin ? '' : 'none';
+}
+function openAddUsuario(){
+  if(!requireAuth()) return;
+  ST.editUsuarioId = null;
+  document.getElementById('addUsuarioModalTitle').textContent='Nuevo Usuario';
+  document.getElementById('nuNombre').value='';
+  document.getElementById('nuEmail').value='';
+  document.getElementById('nuEmail').disabled=false;
+  document.getElementById('nuRol').value='Empleado';
+  document.getElementById('nuEstado').value='Activo';
+  document.querySelectorAll('.nu-modulo').forEach(cb=>{ cb.checked=false; cb.disabled=false; });
+  document.getElementById('nuAdminHint').style.display='none';
+  document.getElementById('saveUsuarioBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Usuario';
+  document.getElementById('addUsuarioModal').classList.add('open');
+}
+function openEditUsuario(id){
+  if(!requireAuth()) return;
+  const u = (ST.usuariosSistema||[]).find(x=>x.id===id); if(!u) return;
+  ST.editUsuarioId = id;
+  document.getElementById('addUsuarioModalTitle').textContent='Editar Usuario';
+  document.getElementById('nuNombre').value = u.nombre||'';
+  document.getElementById('nuEmail').value = u.email||'';
+  document.getElementById('nuEmail').disabled = true; // el email identifica al usuario; no se cambia al editar
+  document.getElementById('nuRol').value = u.rol||'Empleado';
+  document.getElementById('nuEstado').value = u.estado||'Activo';
+  document.querySelectorAll('.nu-modulo').forEach(cb=>{ cb.checked = u.modulos.includes(cb.value); cb.disabled=false; });
+  onNuRolChange();
+  document.getElementById('saveUsuarioBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+  document.getElementById('addUsuarioModal').classList.add('open');
+}
+async function saveNewUsuario(){
+  const nombre = document.getElementById('nuNombre').value.trim();
+  const email = document.getElementById('nuEmail').value.trim().toLowerCase();
+  if(!nombre){ toast('err','El nombre es obligatorio.'); return; }
+  if(!email || !email.includes('@')){ toast('err','Ingresa un email válido.'); return; }
+  if(!ST.editUsuarioId && (ST.usuariosSistema||[]).some(u=>u.email===email)){ toast('err','Ya existe un usuario con ese email.'); return; }
+  const rol = document.getElementById('nuRol').value;
+  const estado = document.getElementById('nuEstado').value;
+  const modulos = rol==='Admin' ? [] : Array.from(document.querySelectorAll('.nu-modulo:checked')).map(cb=>cb.value);
+  const btn=document.getElementById('saveUsuarioBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    const modulosStr = modulos.join(',');
+    if(ST.editUsuarioId){
+      const u = (ST.usuariosSistema||[]).find(x=>x.id===ST.editUsuarioId);
+      await sheetsUpdate(`Usuarios!B${u._row}:F${u._row}`,[[nombre, u.email, rol, modulosStr, estado]]);
+      u.nombre=nombre; u.rol=rol; u.modulos=modulos; u.estado=estado;
+      toast('ok',`Usuario "${nombre}" actualizado.`);
+    } else {
+      const id = genUsuarioId();
+      const hoy = todayISO();
+      await sheetsAppend('Usuarios!A2:H', [[id, nombre, email, rol, modulosStr, estado, 'Manual', hoy]]);
+      ST.usuariosSistema = ST.usuariosSistema||[];
+      ST.usuariosSistema.push({ id, nombre, email, rol, modulos, estado, metodoAlta:'Manual', fechaAlta:hoy, _row: ST.usuariosSistema.length+2 });
+      toast('ok',`Usuario "${nombre}" agregado.`);
+    }
+    renderSisUsuarios();
+    document.getElementById('addUsuarioModal').classList.remove('open');
+  }catch(e){ toast('err','Error al guardar usuario: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false;
 }
 
 /* ── ARTÍCULOS (Sistemas) ── */
@@ -10949,7 +11195,7 @@ function restoreLastView(){
 function switchTab(tab){
   resetViewTransitionState();
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn', addLabel:'+ Nuevo Empleado'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn', addLabel:'+ Nuevo Acreedor'} };
+  const SIMPLE_TABS = { emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn'} };
   if(SIMPLE_TABS[tab]){
     ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
@@ -10958,10 +11204,6 @@ function switchTab(tab){
     document.getElementById(SIMPLE_TABS[tab].navBtn)?.classList.add('active');
     ST.currentTab = tab;
     ST.currentSection = tab;
-    const addTxt = document.getElementById('mainAddTxt');
-    const addBtn = document.getElementById('mainAddBtn');
-    if(addBtn) addBtn.style.display = SIMPLE_TABS[tab].addLabel ? '' : 'none';
-    if(addTxt) addTxt.textContent = SIMPLE_TABS[tab].addLabel || '+ Agregar';
     const bcPage = document.getElementById('bcPage');
     if(bcPage) bcPage.textContent = SIMPLE_TABS[tab].label;
     const bcSection = document.getElementById('bcSection');
@@ -10982,8 +11224,6 @@ function switchTab(tab){
     saveLastView();
     return;
   }
-  document.getElementById('mainAddBtn')?.style.setProperty('display','');
-
   const TABS = { cot:{pane:'tabCot', btn:'tabCotBtn'}, fac:{pane:'tabFac', btn:'tabFacBtn'}, oc:{pane:'tabOC', btn:'tabOCBtn'}, bal:{pane:'tabBal', btn:null} };
 
   Object.values(TABS).forEach(({pane, btn}) => {
@@ -11002,12 +11242,6 @@ function switchTab(tab){
 
   ST.currentTab = tab;
   if(tab!=='bal') ST.currentComercialTab = tab;
-
-  const addTxt = document.getElementById('mainAddTxt');
-  if(addTxt){
-    const labels = {cot:'+ Cotización', fac:'+ Factura', oc:'+ OC', bal:'+ Movimiento'};
-    addTxt.textContent = labels[tab] || '+ Agregar';
-  }
 
   // Breadcrumb (Comercial > Cotizaciones / Facturas / OC Clientes)
   const bcPage = document.getElementById('bcPage');
@@ -11256,17 +11490,15 @@ function switchBalTab(sub){
   document.getElementById('bal'+sub.charAt(0).toUpperCase()+sub.slice(1))?.classList.add('active');
   document.getElementById('bal'+sub.charAt(0).toUpperCase()+sub.slice(1)+'Btn')?.classList.add('active');
   ST.currentBalTab = sub;
-  const addTxt=document.getElementById('mainAddTxt');
-  if(addTxt) addTxt.textContent = sub==='gas'?'+ Gasto':'+ Ingreso';
   const bcPage=document.getElementById('bcPage');
   if(bcPage) bcPage.textContent = {dash:'Dashboard', ing:'Ingresos', gas:'Salidas'}[sub] || 'Balance';
   if(sub==='dash') setTimeout(renderDashboard,80);
   saveLastView();
 }
 
-/* ─── HELPERS ─── */
-function fmtMXNBal(n){ return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function todayISOBal(){ return new Date().toISOString().slice(0,10); }
+/* ─── HELPERS ───
+   fmtMXN y todayISO son las funciones compartidas (definidas arriba, en el
+   módulo de Cotizaciones); Balance las reutiliza en vez de duplicarlas. */
 function badgeBal(estado){
   const map={Pagado:'pagado',Pendiente:'pendiente',Vencido:'vencido',Cancelado:'cancelado'};
   return `<span class="bal-badge ${map[estado]||'pendiente'}">${estado||'Pendiente'}</span>`;
@@ -11351,11 +11583,11 @@ function updateIngStats(){
   const s=(arr)=>arr.reduce((s,b)=>s+b.monto,0);
   document.getElementById('sIngTotal').textContent=ing.length;
   document.getElementById('sIngPag').textContent=pag.length;
-  document.getElementById('sIngPagMonto').textContent=fmtMXNBal(s(pag));
+  document.getElementById('sIngPagMonto').textContent=fmtMXN(s(pag));
   document.getElementById('sIngPend').textContent=pen.length;
-  document.getElementById('sIngPendMonto').textContent=fmtMXNBal(s(pen));
+  document.getElementById('sIngPendMonto').textContent=fmtMXN(s(pen));
   document.getElementById('sIngVenc').textContent=vec.length;
-  document.getElementById('sIngVencMonto').textContent=fmtMXNBal(s(vec));
+  document.getElementById('sIngVencMonto').textContent=fmtMXN(s(vec));
 }
 function renderIngTable(){
   const tbody=document.getElementById('ingTbody');
@@ -11378,7 +11610,7 @@ function renderIngTable(){
       <td><span class="bal-cuenta">${b.cuenta||'—'}</span></td>
       <td>${badgeBal(b.estado)}</td>
       <td style="font-size:11.5px;color:var(--text2)">${b.fechaPago||'—'}</td>
-      <td style="text-align:right"><span class="bal-monto-ing">${fmtMXNBal(b.monto)}</span></td>
+      <td style="text-align:right"><span class="bal-monto-ing">${fmtMXN(b.monto)}</span></td>
       <td style="font-size:10.5px">${facCell}</td>
       <td>
         <div class="row-acts" style="opacity:1">
@@ -11417,7 +11649,7 @@ function showFacRelPopover(el, ingId){
             <span style="font-family:var(--mono);font-weight:700;color:var(--white)">${esc(f.folio||f.id)}</span>
             <span class="bal-badge ${stClass}" style="font-size:9.5px">${esc(f.estatus||'—')}</span>
           </div>
-          <div style="color:var(--text3);margin-top:2px">${fmtMXNBal(f.total)} · ${esc(f.fecha||'—')}</div>
+          <div style="color:var(--text3);margin-top:2px">${fmtMXN(f.total)} · ${esc(f.fecha||'—')}</div>
         </div>`;
       }).join('')
     : '<div style="color:var(--text3);padding:4px">Sin facturas vinculadas</div>';
@@ -11455,7 +11687,7 @@ function showFacRelPopoverOC(el, ocId){
             <span style="font-family:var(--mono);font-weight:700;color:var(--white)">${esc(f.folio||f.id)}</span>
             <span class="bal-badge ${stClass}" style="font-size:9.5px">${esc(f.estatus||'—')}</span>
           </div>
-          <div style="color:var(--text3);margin-top:2px">${fmtMXNBal(f.total)} · ${esc(f.fecha||'—')}</div>
+          <div style="color:var(--text3);margin-top:2px">${fmtMXN(f.total)} · ${esc(f.fecha||'—')}</div>
         </div>`;
       }).join('')
     : '<div style="color:var(--text3);padding:4px">Sin facturas vinculadas</div>';
@@ -11481,7 +11713,7 @@ function openFacRelCard(facId){
   document.getElementById('facRelCardBody').innerHTML = `
     <div class="fac-card-row"><span>Cliente</span><span>${esc(cli)}</span></div>
     <div class="fac-card-row"><span>Concepto</span><span>${esc(f.concepto||'—')}</span></div>
-    <div class="fac-card-row"><span>Monto</span><span>${fmtMXNBal(f.total)}</span></div>
+    <div class="fac-card-row"><span>Monto</span><span>${fmtMXN(f.total)}</span></div>
     <div class="fac-card-row"><span>Estatus</span><span>${badgeBal(f.estatus)}</span></div>
     <div class="fac-card-row"><span>Fecha</span><span>${esc(f.fecha||'—')}</span></div>
   `;
@@ -11582,11 +11814,11 @@ function updateGasStats(){
   const s=(arr)=>arr.reduce((s,b)=>s+b.monto,0);
   document.getElementById('sGasTotal').textContent=gas.length;
   document.getElementById('sGasPag').textContent=pag.length;
-  document.getElementById('sGasPagMonto').textContent=fmtMXNBal(s(pag));
+  document.getElementById('sGasPagMonto').textContent=fmtMXN(s(pag));
   document.getElementById('sGasPend').textContent=pen.length;
-  document.getElementById('sGasPendMonto').textContent=fmtMXNBal(s(pen));
+  document.getElementById('sGasPendMonto').textContent=fmtMXN(s(pen));
   document.getElementById('sGasDeuda').textContent=deu.length;
-  document.getElementById('sGasDeudaMonto').textContent=fmtMXNBal(s(deu));
+  document.getElementById('sGasDeudaMonto').textContent=fmtMXN(s(deu));
 }
 function renderGasTable(){
   const tbody=document.getElementById('gasTbody');
@@ -11601,7 +11833,7 @@ function renderGasTable(){
     <td>${badgeBal(b.estado)}</td>
     <td style="font-size:11.5px;color:var(--text2)">${b.fechaLim||'—'}</td>
     <td style="font-size:11.5px;color:var(--text2)">${b.fechaPago||'—'}</td>
-    <td style="text-align:right"><span class="bal-monto-gas">${fmtMXNBal(b.monto)}</span></td>
+    <td style="text-align:right"><span class="bal-monto-gas">${fmtMXN(b.monto)}</span></td>
     <td style="text-align:center;font-size:11px;color:${b.esDeuda==='TRUE'?'var(--red)':'var(--text3)'}">${b.esDeuda==='TRUE'?'Sí':'No'}</td>
     <td onclick="event.stopPropagation()">
       <div class="row-acts" style="opacity:1">
@@ -11639,7 +11871,7 @@ function openBalModal(tipo, prefill){
   const isIng=(tipo==='ing'||tipo==='Ingreso');
   document.getElementById('balModalTitle').textContent = isIng?'Nuevo Ingreso':'Nuevo Gasto';
   document.getElementById('balModalSub').textContent   = isIng?'Registrar un ingreso en la hoja Ingresos':'Registrar un gasto en la hoja Salidas';
-  document.getElementById('bFecha').value     = prefill?.fecha || todayISOBal();
+  document.getElementById('bFecha').value     = prefill?.fecha || todayISO();
   document.getElementById('bConcepto').value  = prefill?.concepto||'';
   document.getElementById('bMonto').value     = prefill?.monto||'';
   populateMetodoPagoSelect(document.getElementById('bCuenta'), isIng, prefill?.cuenta);
@@ -11783,7 +12015,7 @@ function renderBalFacRelChips(){
   document.getElementById('bFacRelCount').textContent = facs.length+(facs.length===1?' relacionada':' relacionadas');
   const wrap=document.getElementById('bFacRelChips');
   wrap.innerHTML = facs.length
-    ? facs.map(f=>`<span class="bal-fac-chip"><b>${esc(f.folio||f.id)}</b><span class="amt">${fmtMXNBal(f.total)}</span><button type="button" title="Quitar" onclick="removeFacFromBalEntry('${esc(f.id)}')">✕</button></span>`).join('')
+    ? facs.map(f=>`<span class="bal-fac-chip"><b>${esc(f.folio||f.id)}</b><span class="amt">${fmtMXN(f.total)}</span><button type="button" title="Quitar" onclick="removeFacFromBalEntry('${esc(f.id)}')">✕</button></span>`).join('')
     : '<div class="bal-fac-empty">Aún no hay facturas relacionadas. Búscalas arriba para agregarlas.</div>';
 }
 function filterFacForBalLink(q){
@@ -11798,7 +12030,7 @@ function filterFacForBalLink(q){
   if(!list.length){ drop.innerHTML='<div class="art-no-results">Sin facturas disponibles que coincidan</div>'; drop.style.display='block'; return; }
   drop.innerHTML=list.map(f=>`<div class="art-option" onclick="addFacToBalEntry('${esc(f.id)}')">
     <div style="font-weight:500">${esc(f.folio||f.id)} <span style="color:var(--text3);font-weight:400">— ${esc(ST.clientes[f.id_cli]?.nombre||f.id_cli||'—')}</span></div>
-    <div style="font-size:10.5px;color:var(--text3);margin-left:auto">${fmtMXNBal(f.total)} · ${esc(f.estatus||'—')}</div>
+    <div style="font-size:10.5px;color:var(--text3);margin-left:auto">${fmtMXN(f.total)} · ${esc(f.estatus||'—')}</div>
   </div>`).join('');
   drop.style.display='block';
 }
@@ -11923,7 +12155,7 @@ async function onGastoFileSelected(input){
       // Proyecto (columna K). NUNCA se guarda este texto largo en Concepto.
       const detalleCompleto = conceptos.map(c=>c.getAttribute('Descripcion')||c.getAttribute('descripcion')||'').filter(Boolean).join(', ');
       // Fecha = Fecha de pago = fecha de emisión del XML (regla fija, nunca se calcula otra).
-      const fecha = fechaRaw ? fechaRaw.split('T')[0] : todayISOBal();
+      const fecha = fechaRaw ? fechaRaw.split('T')[0] : todayISO();
       // Forma de pago (atributo FormaPago del Comprobante) → descripción legible.
       const formaPagoCod = comp.getAttribute('FormaPago')||comp.getAttribute('formaPago')||'';
       const formaPagoTxt = formaPagoLabelSAT(formaPagoCod);
@@ -12134,7 +12366,7 @@ function promptCrearIngreso(f){
   ST_facPagoIngresoCtx = f;
   const cli=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
   const body=document.getElementById('facPagoIngresoBody');
-  if(body) body.textContent = `Factura ${f.folio||f.id} — ${fmtMXNBal(f.total)} (${cli})`;
+  if(body) body.textContent = `Factura ${f.folio||f.id} — ${fmtMXN(f.total)} (${cli})`;
   document.getElementById('facPagoIngresoModal').classList.add('open');
 }
 
@@ -12173,7 +12405,7 @@ async function crearIngresoAutomaticoDesdeFactura(f){
   if(!requireAuth()){ toast('err','Conéctate con Google primero para poder generar el ingreso.'); return; }
   const cliNombreCompleto = ST.clientes[f.id_cli]?.nombre || f.id_cli || '';
   const clientePrimera = primeraPalabraCliente(cliNombreCompleto);
-  const fechaPago = todayISOBal();
+  const fechaPago = todayISO();
   const metodo = f.metodo || 'Transferencia electrónica';
   const consecutivo = siguienteConsecutivoDelDia(fechaPago);
   const fechaFmt = fmtFechaDDMMYYYY(fechaPago);
@@ -12246,13 +12478,13 @@ function renderDashboard(){
   const ingPag=ing.filter(b=>b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
   const gasPag=gas.filter(b=>b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
   const ingPend=ing.filter(b=>b.estado!=='Pagado').reduce((s,b)=>s+b.monto,0);
-  document.getElementById('dKpiIng').textContent=fmtMXNBal(ingPag);
-  document.getElementById('dKpiGas').textContent=fmtMXNBal(gasPag);
+  document.getElementById('dKpiIng').textContent=fmtMXN(ingPag);
+  document.getElementById('dKpiGas').textContent=fmtMXN(gasPag);
   const net=ingPag-gasPag;
   const netEl=document.getElementById('dKpiBal');
-  netEl.textContent=fmtMXNBal(net);
+  netEl.textContent=fmtMXN(net);
   netEl.style.color=net>=0?'var(--green)':'var(--red)';
-  document.getElementById('dKpiPend').textContent=fmtMXNBal(ingPend);
+  document.getElementById('dKpiPend').textContent=fmtMXN(ingPend);
 
   const isDark=!document.body.classList.contains('light');
   const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
@@ -12290,7 +12522,7 @@ function renderDashboard(){
   ST._charts['pieComp']=new Chart(document.getElementById('chartPieComp'),{
     type:'pie',
     data:{labels:['Entradas (Ingresos)','Salidas (Gastos)'],datasets:[{data:[totalIng,totalGas],backgroundColor:['rgba(72,187,120,.8)','rgba(229,62,62,.75)'],borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtMXNBal(ctx.raw)}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtMXN(ctx.raw)}}}}
   });
 
   // Donut ingresos por estado
@@ -12300,7 +12532,7 @@ function renderDashboard(){
   ST._charts['dIng']=new Chart(document.getElementById('chartDonutIng'),{
     type:'doughnut',
     data:{labels:Object.keys(iEst),datasets:[{data:Object.values(iEst),backgroundColor:['rgba(72,187,120,.8)','rgba(236,201,75,.8)','rgba(229,62,62,.8)','rgba(100,100,100,.5)'],borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXNBal(ctx.raw)}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXN(ctx.raw)}}}}
   });
 
   // Donut gastos por estado
@@ -12310,7 +12542,7 @@ function renderDashboard(){
   ST._charts['dGas']=new Chart(document.getElementById('chartDonutGas'),{
     type:'doughnut',
     data:{labels:Object.keys(gEst),datasets:[{data:Object.values(gEst),backgroundColor:['rgba(72,187,120,.8)','rgba(236,201,75,.8)','rgba(229,62,62,.8)','rgba(100,100,100,.5)'],borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXNBal(ctx.raw)}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXN(ctx.raw)}}}}
   });
 }
 
@@ -12402,7 +12634,7 @@ function renderAcreedores(){
   toggleFinSheetsWarning();
   const arr=getDeudasFiltradas().slice().sort((a,b)=>finScoreDeuda(b)-finScoreDeuda(a));
   document.getElementById('finAcreCount').textContent=arr.length;
-  document.getElementById('finAcreSaldo').textContent=fmtMXNBal(ST.deudas.reduce((s,d)=>s+d.saldoActual,0));
+  document.getElementById('finAcreSaldo').textContent=fmtMXN(ST.deudas.reduce((s,d)=>s+d.saldoActual,0));
   document.getElementById('finAcreActivas').textContent=ST.deudas.filter(d=>d.estado==='Activa').length;
   document.getElementById('finAcreVencidas').textContent=ST.deudas.filter(d=>d.estado==='Vencida').length;
   document.getElementById('finAcreLiquidadas').textContent=ST.deudas.filter(d=>d.estado==='Liquidada').length;
@@ -12418,8 +12650,8 @@ function renderAcreedores(){
     return `<tr>
       <td style="font-size:12.5px">${esc(d.nombre)}</td>
       <td style="font-size:11.5px;color:var(--text2)">${esc(d.tipo)}</td>
-      <td style="text-align:right"><span style="color:var(--red);font-family:var(--mono);font-size:12px">${fmtMXNBal(d.saldoActual)}</span></td>
-      <td style="text-align:right;font-size:12px">${fmtMXNBal(d.pagoProgramado)}</td>
+      <td style="text-align:right"><span style="color:var(--red);font-family:var(--mono);font-size:12px">${fmtMXN(d.saldoActual)}</span></td>
+      <td style="text-align:right;font-size:12px">${fmtMXN(d.pagoProgramado)}</td>
       <td style="font-size:11.5px;color:var(--text2)">${esc(d.frecuencia)}</td>
       <td style="font-size:11.5px;color:var(--text2)">${nextTxt}</td>
       <td><span class="pill ${scoreClass}">${score}</span></td>
@@ -12542,7 +12774,7 @@ function openPagoModal(deudaId){
   const deuda=ST.deudas.find(d=>d.id===deudaId);
   if(!deuda) return;
   ST.pagoDeudaId=deudaId;
-  document.getElementById('pagoModalSub').textContent = `${deuda.nombre} — saldo actual: ${fmtMXNBal(deuda.saldoActual)}`;
+  document.getElementById('pagoModalSub').textContent = `${deuda.nombre} — saldo actual: ${fmtMXN(deuda.saldoActual)}`;
   document.getElementById('pFecha').value = new Date().toISOString().slice(0,10);
   document.getElementById('pTipo').value = 'Pago programado';
   document.getElementById('pMonto').value = deuda.pagoProgramado||0;
@@ -12588,7 +12820,7 @@ async function guardarPago(){
       deuda.prioridadManual, nuevoEstado, deuda.observaciones, deuda.documentos, deuda.fechaCreacion||now, now,
     ];
     await sheetsUpdate(`Deudas!A${deuda._row}:R${deuda._row}`, [rowDeuda]);
-    await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), deuda.id, fecha, 'Pago', `Pago de ${fmtMXNBal(monto)} (${tipoPago}).`, now]]);
+    await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), deuda.id, fecha, 'Pago', `Pago de ${fmtMXN(monto)} (${tipoPago}).`, now]]);
 
     toast('ok', nuevoEstado==='Liquidada' ? '¡Pago registrado — deuda liquidada! 🎉' : 'Pago registrado.');
     closePagoModal();
@@ -12626,7 +12858,7 @@ function renderCronograma(){
     return `<tr>
       <td style="font-size:12.5px">${esc(d.nombre)}</td>
       <td style="font-size:11.5px;color:var(--text2)">${next.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})}</td>
-      <td style="text-align:right;font-size:12px">${fmtMXNBal(d.pagoProgramado)}</td>
+      <td style="text-align:right;font-size:12px">${fmtMXN(d.pagoProgramado)}</td>
       <td style="font-size:11.5px;color:var(--text2)">${esc(d.frecuencia)}</td>
       <td style="font-size:11.5px;color:var(--text2)">${dias<0 ? ('Vencido hace '+Math.abs(dias)+' días') : (dias+' días')}</td>
       <td><span class="pill ${estClass}">${estLabel}</span></td>
@@ -12685,7 +12917,7 @@ function renderFinHistorial(){
     <td style="font-size:12.5px">${esc(r.nombre)}</td>
     <td style="font-size:11.5px;color:var(--text2)">${esc(r.tipo)}</td>
     <td style="font-size:12px;max-width:320px">${esc(r.detalle)}</td>
-    <td style="text-align:right;font-size:12px">${r.monto!=null ? fmtMXNBal(r.monto) : '—'}</td>
+    <td style="text-align:right;font-size:12px">${r.monto!=null ? fmtMXN(r.monto) : '—'}</td>
   </tr>`).join('');
 }
 
@@ -12714,20 +12946,20 @@ function renderFinDashboard(){
   const ingresosMesActual=(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(ym) && b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
   const flujoLibre=ingresosMesActual - mesComprometido;
 
-  document.getElementById('finKDeudaTotal').textContent=fmtMXNBal(deudaTotal);
-  document.getElementById('finKPagoMes').textContent=fmtMXNBal(mesComprometido);
-  document.getElementById('finKInteresMes').textContent=fmtMXNBal(interesMes);
-  document.getElementById('finKCapitalMes').textContent=fmtMXNBal(capitalMes);
+  document.getElementById('finKDeudaTotal').textContent=fmtMXN(deudaTotal);
+  document.getElementById('finKPagoMes').textContent=fmtMXN(mesComprometido);
+  document.getElementById('finKInteresMes').textContent=fmtMXN(interesMes);
+  document.getElementById('finKCapitalMes').textContent=fmtMXN(capitalMes);
   const flujoEl=document.getElementById('finKFlujoLibre');
-  flujoEl.textContent=fmtMXNBal(flujoLibre);
+  flujoEl.textContent=fmtMXN(flujoLibre);
   flujoEl.style.color=flujoLibre>=0?'var(--green)':'var(--red)';
-  document.getElementById('finKVencida').textContent=fmtMXNBal(deudaVencida);
+  document.getElementById('finKVencida').textContent=fmtMXN(deudaVencida);
   document.getElementById('finKVencidaN').textContent=vencidas.length+' acreedor(es)';
   document.getElementById('finKActivas').textContent=ST.deudas.filter(d=>d.estado==='Activa').length;
-  document.getElementById('finKFuturos').textContent=fmtMXNBal(activas.reduce((s,d)=>s+d.saldoActual,0));
-  document.getElementById('finKSemana').textContent=fmtMXNBal(semana);
-  document.getElementById('finKMes').textContent=fmtMXNBal(mesComprometido);
-  document.getElementById('finKAnio').textContent=fmtMXNBal(anio);
+  document.getElementById('finKFuturos').textContent=fmtMXN(activas.reduce((s,d)=>s+d.saldoActual,0));
+  document.getElementById('finKSemana').textContent=fmtMXN(semana);
+  document.getElementById('finKMes').textContent=fmtMXN(mesComprometido);
+  document.getElementById('finKAnio').textContent=fmtMXN(anio);
 
   const isDark=!document.body.classList.contains('light');
   const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
@@ -12748,7 +12980,7 @@ function renderFinDashboard(){
   ST._charts['finIntCap']=new Chart(document.getElementById('finChartIntCap'),{
     type:'doughnut',
     data:{labels:['Capital','Intereses'],datasets:[{data:[totCap,totInt],backgroundColor:['rgba(72,187,120,.8)','rgba(229,62,62,.75)'],borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXNBal(ctx.raw)}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:ctx=>' '+fmtMXN(ctx.raw)}}}}
   });
 
   const porTipo={};
@@ -12757,7 +12989,7 @@ function renderFinDashboard(){
   ST._charts['finTipo']=new Chart(document.getElementById('finChartTipo'),{
     type:'pie',
     data:{labels:Object.keys(porTipo), datasets:[{data:Object.values(porTipo),backgroundColor:['#e53e3e','#63b3ed','#ecc94b','#48bb78','#9f7aea','#ed8936','#38b2ac','#f56565','#4299e1'],borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtMXNBal(ctx.raw)}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmtMXN(ctx.raw)}}}}
   });
 
   const porEstado={Activa:0,Vencida:0,Liquidada:0,Renegociada:0};
@@ -12880,7 +13112,7 @@ function populateSimDeudaSelect(){
   const current=sel.value||ST.simSeleccion||'__all__';
   const activas=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida');
   sel.innerHTML = '<option value="__all__">Todas las deudas activas (agregado)</option>' +
-    activas.map(d=>`<option value="${esc(d.id)}">${esc(d.nombre)} — ${fmtMXNBal(d.saldoActual)}</option>`).join('');
+    activas.map(d=>`<option value="${esc(d.id)}">${esc(d.nombre)} — ${fmtMXN(d.saldoActual)}</option>`).join('');
   if([...sel.options].some(o=>o.value===current)) sel.value=current;
 }
 function onSimChange(){
@@ -12922,7 +13154,7 @@ function renderSimulador(){
       return;
     }
     kpiWrap.innerHTML=`
-      <div class="stat cg"><div class="stat-lbl">Ahorro en intereses</div><div class="stat-val">${fmtMXNBal(port.ahorroInteres)}</div><div class="stat-delta">vs. sin cambios</div></div>
+      <div class="stat cg"><div class="stat-lbl">Ahorro en intereses</div><div class="stat-val">${fmtMXN(port.ahorroInteres)}</div><div class="stat-delta">vs. sin cambios</div></div>
       <div class="stat cb"><div class="stat-lbl">Todo liquidado (antes)</div><div class="stat-val" style="font-size:15px">${fmtFecha(port.fechaFinBase)}</div><div class="stat-delta">Sin cambios</div></div>
       <div class="stat cb"><div class="stat-lbl">Todo liquidado (simulado)</div><div class="stat-val" style="font-size:15px">${fmtFecha(port.fechaFinSim)}</div><div class="stat-delta">Con este escenario</div></div>
       <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Abono extra aplicado a</div><div class="stat-val" style="font-size:14px">${esc(port.prioritaria.nombre)}</div><div class="stat-delta">Mayor prioridad</div></div>`;
@@ -12943,7 +13175,7 @@ function renderSimulador(){
   if(modoFijoNote) modoFijoNote.style.display = deuda.modoInteres==='fijo' ? '' : 'none';
   const cmp=finCompararSimulacion(deuda, {pagoExtra:abonoExtra, pagoMensualMult:mult});
   kpiWrap.innerHTML=`
-    <div class="stat cg"><div class="stat-lbl">Ahorro en intereses</div><div class="stat-val">${fmtMXNBal(cmp.ahorroInteres)}</div><div class="stat-delta">vs. sin cambios</div></div>
+    <div class="stat cg"><div class="stat-lbl">Ahorro en intereses</div><div class="stat-val">${fmtMXN(cmp.ahorroInteres)}</div><div class="stat-delta">vs. sin cambios</div></div>
     <div class="stat cb"><div class="stat-lbl">Fecha fin (antes)</div><div class="stat-val" style="font-size:15px">${fmtFecha(cmp.baseDate)}</div><div class="stat-delta">${cmp.base.periodos} pagos</div></div>
     <div class="stat cb"><div class="stat-lbl">Fecha fin (simulado)</div><div class="stat-val" style="font-size:15px">${fmtFecha(cmp.simDate)}</div><div class="stat-delta">${cmp.sim.periodos} pagos</div></div>
     <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Plazo reducido</div><div class="stat-val" style="font-size:15px">${Math.max(0,cmp.base.periodos-cmp.sim.periodos)} pagos</div><div class="stat-delta">${esc(deuda.frecuencia)}</div></div>`;
@@ -12958,9 +13190,9 @@ function renderSimulador(){
       return `<tr>
         <td>${row.periodo}</td>
         <td style="font-size:11.5px;color:var(--text2)">${fmtFecha(fecha)}</td>
-        <td style="text-align:right;font-size:12px;color:var(--red)">${fmtMXNBal(row.interes)}</td>
-        <td style="text-align:right;font-size:12px;color:var(--green)">${fmtMXNBal(row.capital)}</td>
-        <td style="text-align:right;font-size:12px">${fmtMXNBal(row.saldo)}</td>
+        <td style="text-align:right;font-size:12px;color:var(--red)">${fmtMXN(row.interes)}</td>
+        <td style="text-align:right;font-size:12px;color:var(--green)">${fmtMXN(row.capital)}</td>
+        <td style="text-align:right;font-size:12px">${fmtMXN(row.saldo)}</td>
       </tr>`;
     }).join('') || `<tr><td colspan="5" style="padding:14px;text-align:center;color:var(--text3);font-size:12px">Esta deuda ya está liquidada o no tiene pago programado.</td></tr>`;
   } else {
@@ -13037,7 +13269,7 @@ function renderEscenarios(){
       <td style="font-size:12.5px">${esc(e.nombre)}</td>
       <td><span class="pill pill-seg">${esc(e.tipo)}</span></td>
       <td style="font-size:11.5px;color:var(--text2)">${esc(r.aplicadoA||'—')}</td>
-      <td style="text-align:right;font-size:12px;color:var(--green)">${r.ahorroInteres!=null?fmtMXNBal(r.ahorroInteres):'—'}</td>
+      <td style="text-align:right;font-size:12px;color:var(--green)">${r.ahorroInteres!=null?fmtMXN(r.ahorroInteres):'—'}</td>
       <td style="font-size:11.5px;color:var(--text2)">${esc(r.fechaFinSim||'—')}</td>
       <td style="font-size:11.5px;color:var(--text2);max-width:200px">${esc(e.notas||'—')}</td>
       <td><button class="btn-icon del" onclick="eliminarEscenario('${esc(e.id)}',${e._row})" title="Eliminar">
@@ -13089,7 +13321,7 @@ function finGenerarAlertas(){
   const ingresosRecientes = meses3.map(ym=>(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(ym) && b.estado==='Pagado').reduce((s,b)=>s+b.monto,0));
   const promedioIngreso = ingresosRecientes.reduce((a,b)=>a+b,0)/3;
   if(promedioIngreso>0 && compromisos30>promedioIngreso){
-    alerts.push({sev:'crit', icon:'📉', msg:`Tus compromisos de deuda en los próximos 30 días (${fmtMXNBal(compromisos30)}) superan tu ingreso promedio mensual reciente (${fmtMXNBal(promedioIngreso)}). Tu flujo podría ser negativo.`});
+    alerts.push({sev:'crit', icon:'📉', msg:`Tus compromisos de deuda en los próximos 30 días (${fmtMXN(compromisos30)}) superan tu ingreso promedio mensual reciente (${fmtMXN(promedioIngreso)}). Tu flujo podría ser negativo.`});
   }
   return alerts;
 }
@@ -13151,7 +13383,7 @@ function finObjetivoMetric(tipo){
   }
 }
 function finObjetivoEsAumento(tipo){ return tipo==='Llegar a cierto flujo libre'; }
-function finObjetivoFmt(tipo, val){ return tipo==='Eliminar pagos de intereses' ? (val||0).toFixed(1)+'%' : fmtMXNBal(val||0); }
+function finObjetivoFmt(tipo, val){ return tipo==='Eliminar pagos de intereses' ? (val||0).toFixed(1)+'%' : fmtMXN(val||0); }
 
 function finObjetivoProgreso(obj){
   const actual=finObjetivoMetric(obj.tipo);
@@ -13304,8 +13536,8 @@ function renderProyecciones(){
   const fmtFecha = d => d ? d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
   kpiWrap.innerHTML = `
     <div class="stat cb"><div class="stat-lbl">¿Cuándo termino de pagar todo?</div><div class="stat-val" style="font-size:16px">${fmtFecha(fechaFinTodo)}</div><div class="stat-delta">Sin cambios, ritmo actual</div></div>
-    <div class="stat cr"><div class="stat-lbl">Intereses totales restantes</div><div class="stat-val">${fmtMXNBal(interesTotalRestante)}</div><div class="stat-delta">Si no cambia nada</div></div>
-    <div class="stat cy"><div class="stat-lbl">Capital restante</div><div class="stat-val">${fmtMXNBal(capitalRestante)}</div><div class="stat-delta">Suma de saldos actuales</div></div>
+    <div class="stat cr"><div class="stat-lbl">Intereses totales restantes</div><div class="stat-val">${fmtMXN(interesTotalRestante)}</div><div class="stat-delta">Si no cambia nada</div></div>
+    <div class="stat cy"><div class="stat-lbl">Capital restante</div><div class="stat-val">${fmtMXN(capitalRestante)}</div><div class="stat-delta">Suma de saldos actuales</div></div>
     <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">¿Cuánto ahorro si pago antes?</div><div class="stat-val" style="font-size:13px;color:var(--blue);cursor:pointer" onclick="switchFinSubTab('sim')">Pruébalo en el Simulador →</div><div class="stat-delta">Abonos extra / aumento %</div></div>
   `;
 
@@ -13315,8 +13547,8 @@ function renderProyecciones(){
     } else {
       tbody.innerHTML = proy.map(p=>`<tr>
         <td style="font-size:12.5px">${esc(p.d.nombre)}</td>
-        <td style="text-align:right;font-size:12px">${fmtMXNBal(p.d.saldoActual)}</td>
-        <td style="text-align:right;font-size:12px;color:var(--red)">${fmtMXNBal(p.interesRestante)}</td>
+        <td style="text-align:right;font-size:12px">${fmtMXN(p.d.saldoActual)}</td>
+        <td style="text-align:right;font-size:12px;color:var(--red)">${fmtMXN(p.interesRestante)}</td>
         <td style="font-size:11.5px;color:var(--text2)">${p.sinPago ? 'Sin pago programado — no se puede proyectar' : fmtFecha(p.fechaFin)}</td>
       </tr>`).join('');
     }
@@ -13331,15 +13563,15 @@ function renderProyecciones(){
     ingWrap.innerHTML = `
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:12px;color:var(--text2)">Cotizaciones aceptadas (${cotAceptadas.length})</span>
-        <strong style="font-size:12.5px;color:var(--green)">${fmtMXNBal(totCot)}</strong>
+        <strong style="font-size:12.5px;color:var(--green)">${fmtMXN(totCot)}</strong>
       </div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:12px;color:var(--text2)">Facturas por cobrar (${facPendientes.length})</span>
-        <strong style="font-size:12.5px;color:var(--green)">${fmtMXNBal(totFac)}</strong>
+        <strong style="font-size:12.5px;color:var(--green)">${fmtMXN(totFac)}</strong>
       </div>
       <div style="display:flex;justify-content:space-between;padding:9px 0 0">
         <span style="font-size:12.5px;font-weight:600;color:var(--text)">Total ingresos futuros esperados</span>
-        <strong style="font-size:13.5px;color:var(--green)">${fmtMXNBal(totCot+totFac)}</strong>
+        <strong style="font-size:13.5px;color:var(--green)">${fmtMXN(totCot+totFac)}</strong>
       </div>
       <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Tomado directamente de Comercial → Cotizaciones y Facturas, sin duplicar datos.</div>
     `;
@@ -13357,19 +13589,19 @@ function renderProyecciones(){
     compWrap.innerHTML = `
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:12px;color:var(--text2)">Deuda (próximos 30 días)</span>
-        <strong style="font-size:12.5px;color:var(--red)">${fmtMXNBal(compDeuda)}</strong>
+        <strong style="font-size:12.5px;color:var(--red)">${fmtMXN(compDeuda)}</strong>
       </div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:12px;color:var(--text2)">Nómina (aprox., últimas ${nominasRecientes.length} semanas)</span>
-        <strong style="font-size:12.5px;color:var(--red)">${fmtMXNBal(compNomina)}</strong>
+        <strong style="font-size:12.5px;color:var(--red)">${fmtMXN(compNomina)}</strong>
       </div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:12px;color:var(--text2)">Gastos fijos pendientes este mes</span>
-        <strong style="font-size:12.5px;color:var(--red)">${fmtMXNBal(compGastos)}</strong>
+        <strong style="font-size:12.5px;color:var(--red)">${fmtMXN(compGastos)}</strong>
       </div>
       <div style="display:flex;justify-content:space-between;padding:9px 0 0">
         <span style="font-size:12.5px;font-weight:600;color:var(--text)">Disponible (ingresos − compromisos)</span>
-        <strong style="font-size:13.5px;color:${disponible>=0?'var(--green)':'var(--red)'}">${fmtMXNBal(disponible)}</strong>
+        <strong style="font-size:13.5px;color:${disponible>=0?'var(--green)':'var(--red)'}">${fmtMXN(disponible)}</strong>
       </div>
       <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Nómina tomada de Nóminas, gastos de Balance → Salidas.</div>
     `;
@@ -14209,7 +14441,7 @@ const RELATION_DEFS = {
              onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'">
           <div style="font-weight:600;font-size:12.5px;color:var(--white)">${esc(n.nombreEmpleado||n.idEmpleado)}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px">Semana ${esc(n.semanaAnio||'—')} · ${esc(n.fechaInicio||'—')} · ${esc(n.estatus||'—')}</div>
-          <div style="font-size:12px;font-weight:700;color:var(--red);margin-top:2px">${fmtMXNBal(n.totalFinal||0)}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-top:2px">${fmtMXN(n.totalFinal||0)}</div>
         </div>`
     }
     // Espacio reservado para futuras relaciones (Compras, Activos, Proyecto…)
@@ -14236,7 +14468,7 @@ function openGastoCard(id){
     ${row('Forma de pago', esc(g.cuenta||'—'))}
     ${row('Categoría', esc(g.categoria||'—'))}
     ${row('Responsable', esc(g.responsable||'—'))}
-    ${row('Importe', fmtMXNBal(g.monto||0))}
+    ${row('Importe', fmtMXN(g.monto||0))}
     ${row('Estado', badgeBal(g.estado))}
     ${row('¿Es deuda?', g.esDeuda==='TRUE'?'Sí':'No')}
     ${row('Observaciones', g.obs ? esc(g.obs) : '—')}
