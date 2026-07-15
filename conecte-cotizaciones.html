@@ -906,6 +906,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h3V7H2zM6.5 12h3V4h-3zM11 12h3V9h-3z"/></svg>
           <span>Balance</span>
         </button>
+        <button class="sidebar-item" id="navFinBtn" onclick="switchSection('fin')" title="Centro Financiero">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M11.5 4.2c0-1.3-1.4-2.2-3.5-2.2s-3.5 1-3.5 2.4c0 3 7 1.4 7 4.3 0 1.5-1.5 2.4-3.5 2.4s-3.6-.9-3.6-2.3"/></svg>
+          <span>Centro Financiero</span>
+        </button>
         <button class="sidebar-item" id="navNomBtn" onclick="switchSection('nom')" title="Nóminas">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M11 8.5c1.8.3 3 1.8 3 3.3"/></svg>
           <span>Nóminas</span>
@@ -921,10 +925,6 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <button class="sidebar-item" id="navSistemasBtn" onclick="switchSection('sistemas')" title="Sistemas">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
           <span>Sistemas</span>
-        </button>
-        <button class="sidebar-item" id="navFinBtn" onclick="switchSection('fin')" title="Centro Financiero">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M11.5 4.2c0-1.3-1.4-2.2-3.5-2.2s-3.5 1-3.5 2.4c0 3 7 1.4 7 4.3 0 1.5-1.5 2.4-3.5 2.4s-3.6-.9-3.6-2.3"/></svg>
-          <span>Centro Financiero</span>
         </button>
       </nav>
       <div class="sidebar-foot">
@@ -1690,6 +1690,11 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       <div id="sisSubArticulos" class="emp-subpane">
         <div class="filter-bar" style="margin-bottom:12px">
           <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre…" oninput="onSisArticulosSearch(this.value)">
+          <span class="fsep"></span>
+          <select class="fsort" id="sisArticulosGroupSel" onchange="onSisArticulosGroupChange(this.value)">
+            <option value="especialidad">Agrupar por: Especialidad</option>
+            <option value="ninguno">Agrupar por: Ninguno</option>
+          </select>
         </div>
         <div class="card">
           <div class="card-header">
@@ -1703,10 +1708,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <div class="cot-table-wrap">
             <table class="fac-table">
               <thead>
-                <tr><th>Concepto</th><th style="text-align:right">Precio</th><th>Unidad</th><th>Impuesto</th><th>Acciones</th></tr>
+                <tr><th>Concepto</th><th style="text-align:right">Precio</th><th>Unidad</th><th>Impuesto</th><th>Especialidad</th><th>Acciones</th></tr>
               </thead>
               <tbody id="sisArticulosTbody">
-                <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+                <tr class="loading-row"><td colspan="6"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1858,6 +1863,9 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
             <div id="simAllNote" class="info-card" style="display:none;margin-bottom:10px">
               <div>ℹ️ Con "Todas las deudas activas" seleccionado, el abono extra se aplica completo a la deuda de mayor prioridad y el aumento % se aplica a todos los pagos programados. Para ver el detalle mes a mes, elige un acreedor específico.</div>
             </div>
+            <div id="simModoFijoNote" class="info-card" style="display:none;margin-bottom:10px">
+              <div>ℹ️ Este acreedor cobra interés fijo por cuota: aunque abones capital, seguirás pagando el mismo interés en pesos cada periodo hasta que liquides el saldo completo. Un abono extra reduce lo que falta por juntar para liquidar, pero no reduce tu pago mensual mientras la deuda siga abierta.</div>
+            </div>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
               <button class="btn btn-ghost btn-sm" id="simDetalleBtn" onclick="toggleSimDetalle()">Ver detalle mes a mes</button>
               <button class="btn btn-red btn-sm" onclick="openEscenarioModal()">💾 Guardar como escenario</button>
@@ -2005,7 +2013,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
             </div>
             <div class="form-group">
               <label class="form-label">Comportamiento de pago</label>
-              <select class="form-select" id="dCompPago">
+              <select class="form-select" id="dCompPago" onchange="onDCompPagoChange()">
                 <option>Fijo</option><option>Variable</option><option>Solo intereses</option><option>Pago único</option>
               </select>
             </div>
@@ -2013,6 +2021,15 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
               <label class="form-label">Comportamiento de interés</label>
               <select class="form-select" id="dCompInteres">
                 <option>Sin intereses</option><option>Interés fijo</option><option>Interés compuesto</option>
+              </select>
+            </div>
+            <div class="form-group" id="dModoInteresWrap" style="display:none">
+              <label class="form-label">¿Cómo se recalcula el interés?
+                <span class="fh" data-tip="Sobre saldo: el interés en pesos baja si abonas capital extra, porque se calcula sobre el saldo restante. Fijo por cuota: el prestamista cobra el mismo monto en pesos cada periodo sin importar cuánto abones, hasta que liquides el 100% de golpe.">?</span>
+              </label>
+              <select class="form-select" id="dModoInteres">
+                <option value="saldo">Sobre saldo (recalcula si abonas capital)</option>
+                <option value="fijo">Fijo por cuota (no baja hasta liquidar 100%)</option>
               </select>
             </div>
             <div class="form-group">
@@ -3462,6 +3479,11 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <option value="16.00%">16.00%</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="form-label">Especialidad / grupo (opcional)</label>
+        <input type="text" class="form-input" id="naEspecialidad" list="especialidadesList" placeholder="Ej. CUADRILLAS Y SERVICIOS DE OBRA">
+        <datalist id="especialidadesList"></datalist>
+      </div>
     </div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('newArticuloModal').classList.remove('open')">Cancelar</button>
@@ -3981,7 +4003,7 @@ async function loadAll() {
       sheetsGet('Cotizaciones!A2:Q'),
       sheetsGet('Clientes!A2:E'),
       sheetsGet('Contactos!A2:E'),
-      sheetsGet('Articulos!A2:F'),
+      sheetsGet('Articulos!A2:G'),
       sheetsGet('Oc_Client!A2:I'),   // 9 cols: + I=ID_Cotizacion (vínculo)
       sheetsGet('Facturas!A2:P'),    // 16 cols: includes PDF/XML
       sheetsGet('Ingresos!A2:N'),    // 14 cols: A=ID … N=Foto
@@ -4052,7 +4074,7 @@ async function loadAll() {
     ST.deudasError = null;
     try{
       const [deuR, pagR, histR] = await Promise.all([
-        sheetsGet('Deudas!A2:R'),
+        sheetsGet('Deudas!A2:S'),
         sheetsGet('Deudas_Pagos!A2:K'),
         sheetsGet('Deudas_Historial!A2:F'),
       ]);
@@ -4076,6 +4098,7 @@ async function loadAll() {
         documentos: r[15]||'',
         fechaCreacion: r[16]||'',
         ultimaActualizacion: r[17]||'',
+        modoInteres: r[18]||'saldo',
       })).filter(d=>d.nombre);
       ST.deudasPagos = (pagR||[]).map((r,i)=>({
         _row: i+2,
@@ -4402,7 +4425,7 @@ async function loadAll() {
       }
     });
 
-    /* Artículos — cols: A=ID, B=Nombre, C=Precio, D=Impuesto, E=Descripcion, F=Unidad */
+    /* Artículos — cols: A=ID, B=Nombre, C=Precio, D=Impuesto, E=Descripcion, F=Unidad, G=Especialidad */
     ST.articulos = (artR||[]).map((r,i) => ({
       id:     r[0]||'',
       nombre: r[1]||'',
@@ -4410,6 +4433,7 @@ async function loadAll() {
       impuesto: r[3]||'',
       desc:   r[4]||'',
       unidad: r[5]||'pza',
+      especialidad: r[6]||'',
       _row:   i+2,
     })).filter(a=>a.id);
 
@@ -9166,23 +9190,14 @@ function openEditCliente(id){
 
 /* ── ARTÍCULOS (Sistemas) ── */
 function onSisArticulosSearch(v){ ST.sisArticulosQuery = (v||'').toLowerCase(); renderSisArticulos(); }
-function renderSisArticulos(){
-  const tbody=document.getElementById('sisArticulosTbody');
-  if(!tbody) return;
-  const q = ST.sisArticulosQuery||'';
-  let list = (ST.articulos||[]).slice();
-  if(q) list = list.filter(a=>(a.nombre||'').toLowerCase().includes(q));
-  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
-  document.getElementById('sisArticulosCount').textContent = list.length;
-  if(!list.length){
-    tbody.innerHTML=`<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin artículos en el catálogo todavía.'}</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = list.map(a=>`<tr>
+function onSisArticulosGroupChange(v){ ST.sisArticulosGroup = v; renderSisArticulos(); }
+function articuloRowHtml(a){
+  return `<tr>
     <td style="font-weight:500;font-size:12.5px;max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(a.nombre||a.id)}">${esc(a.nombre||a.id)}</td>
     <td style="text-align:right;font-family:var(--mono);font-size:12px">${fmtMXN(a.precio||0)}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(a.unidad||'—')}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(a.impuesto||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(a.especialidad||'—')}</td>
     <td>
       <div class="row-acts" style="opacity:1">
         <button class="btn-icon" title="Editar" onclick="openEditArticulo('${esc(a.id)}')">
@@ -9193,7 +9208,39 @@ function renderSisArticulos(){
         </button>
       </div>
     </td>
-  </tr>`).join('');
+  </tr>`;
+}
+function renderSisArticulos(){
+  const tbody=document.getElementById('sisArticulosTbody');
+  if(!tbody) return;
+  const q = ST.sisArticulosQuery||'';
+  const groupBy = ST.sisArticulosGroup || 'especialidad';
+  const groupSel = document.getElementById('sisArticulosGroupSel');
+  if(groupSel && groupSel.value!==groupBy) groupSel.value=groupBy;
+  let list = (ST.articulos||[]).slice();
+  if(q) list = list.filter(a=>(a.nombre||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  document.getElementById('sisArticulosCount').textContent = list.length;
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin artículos en el catálogo todavía.'}</td></tr>`;
+    return;
+  }
+  if(groupBy==='ninguno'){
+    tbody.innerHTML = list.map(articuloRowHtml).join('');
+    return;
+  }
+  // Agrupado por especialidad: los artículos sin especialidad capturada caen en un
+  // grupo "Sin especialidad" al final, para no perderlos de vista.
+  const groups = {};
+  list.forEach(a=>{
+    const key = a.especialidad || 'Sin especialidad';
+    (groups[key] = groups[key]||[]).push(a);
+  });
+  const keys = Object.keys(groups).sort((a,b)=> a==='Sin especialidad'?1 : b==='Sin especialidad'?-1 : a.localeCompare(b));
+  tbody.innerHTML = keys.map(k=>`
+    <tr class="group-row"><td colspan="6" style="background:var(--bg3);font-weight:600;font-size:11.5px;color:var(--text2);padding:6px 10px">${esc(k)} <span style="font-weight:400;color:var(--text3)">(${groups[k].length})</span></td></tr>
+    ${groups[k].map(articuloRowHtml).join('')}
+  `).join('');
 }
 function openEditArticulo(id){
   if(!requireAuth()) return;
@@ -9205,6 +9252,8 @@ function openEditArticulo(id){
   document.getElementById('naUnit').value = a.unidad||'';
   document.getElementById('naDesc').value = a.desc||'';
   document.getElementById('naImpuesto').value = a.impuesto||'0.00%';
+  document.getElementById('naEspecialidad').value = a.especialidad||'';
+  populateEspecialidadesList();
   document.getElementById('saveArticuloBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
   document.getElementById('newArticuloModal').classList.add('open');
 }
@@ -10904,15 +10953,17 @@ function switchTab(tab){
   // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
   // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
   // porque el bloque de arriba solo toggle-a Comercial/Balance.
-  ['navNomBtn','navAsisBtn','navEmpBtn','navSistemasBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['navNomBtn','navAsisBtn','navEmpBtn','navSistemasBtn','navFinBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   const empSubNav=document.getElementById('empleadosSubNav');
   const sisSubNav=document.getElementById('sistemasSubNav');
+  const finSubNav=document.getElementById('finSubNav');
   if(comSubNav) comSubNav.style.display = isComercial ? 'flex' : 'none';
   if(balSubNav) balSubNav.style.display = isComercial ? 'none' : 'flex';
   if(empSubNav) empSubNav.style.display='none';
   if(sisSubNav) sisSubNav.style.display='none';
+  if(finSubNav) finSubNav.style.display='none';
   const bcSection=document.getElementById('bcSection');
   if(bcSection) bcSection.textContent = isComercial ? 'Comercial' : 'Balance';
   ST.currentSection = isComercial ? 'comercial' : 'balance';
@@ -12321,6 +12372,7 @@ function openDeudaModal(id){
   const fields={
     dNombre: existente?.nombre||'', dTipo: existente?.tipo||'Banco', dEstado: existente?.estado||'Activa',
     dCompPago: existente?.compPago||'Fijo', dCompInteres: existente?.compInteres||'Sin intereses',
+    dModoInteres: existente?.modoInteres||'saldo',
     dFrecuencia: existente?.frecuencia||'Mensual', dTasa: existente?.tasa||0,
     dSaldoOriginal: existente?.saldoOriginal||0, dSaldoActual: existente ? existente.saldoActual : 0,
     dPagoProgramado: existente?.pagoProgramado||0, dFechaInicio: existente?.fechaInicio||'',
@@ -12328,9 +12380,18 @@ function openDeudaModal(id){
     dDocumentos: existente?.documentos||'', dObservaciones: existente?.observaciones||'',
   };
   Object.entries(fields).forEach(([fid,v])=>{ const el=document.getElementById(fid); if(el) el.value=v; });
+  onDCompPagoChange();
   modal.classList.add('open');
 }
 function closeDeudaModal(){ document.getElementById('deudaModal').classList.remove('open'); }
+/* Muestra/oculta el select "¿Cómo se recalcula el interés?" — solo aplica cuando
+   el comportamiento de pago es "Solo intereses" (único caso donde el interés fijo
+   por cuota tiene sentido: en los demás esquemas el capital sí se amortiza). */
+function onDCompPagoChange(){
+  const compPago = document.getElementById('dCompPago')?.value;
+  const wrap = document.getElementById('dModoInteresWrap');
+  if(wrap) wrap.style.display = compPago==='Solo intereses' ? '' : 'none';
+}
 
 async function guardarDeuda(){
   if(!requireAuth()) return;
@@ -12360,12 +12421,13 @@ async function guardarDeuda(){
       document.getElementById('dDocumentos').value.trim(),
       existente ? (existente.fechaCreacion||now) : now,
       now,
+      document.getElementById('dModoInteres')?.value || 'saldo',
     ];
     if(existente){
-      await sheetsUpdate(`Deudas!A${existente._row}:R${existente._row}`, [row]);
+      await sheetsUpdate(`Deudas!A${existente._row}:S${existente._row}`, [row]);
       await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), id, now.slice(0,10), 'Edición', `Se actualizó la información de "${nombre}".`, now]]);
     } else {
-      await sheetsAppend('Deudas!A2:R', [row]);
+      await sheetsAppend('Deudas!A2:S', [row]);
       await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), id, now.slice(0,10), 'Creación', `Se dio de alta el acreedor "${nombre}".`, now]]);
     }
     toast('ok', existente ? 'Acreedor actualizado.' : 'Acreedor agregado.');
@@ -12667,9 +12729,14 @@ function finSimulateDebt(deuda, opts){
   const detalle=[];
   const MAX_PERIODOS=1200;
   const sinInteres = deuda.compInteres==='Sin intereses' || tasaAnual<=0;
+  // Modo "fijo por cuota": el interés en pesos de cada periodo es constante, calculado
+  // UNA sola vez sobre el saldo original (o saldo actual si no hay original capturado) y
+  // no se recalcula por abonos a capital — solo desaparece cuando el saldo llega a $0.
+  const esFijoPorCuota = deuda.modoInteres==='fijo';
+  const interesFijoPorPeriodo = (esFijoPorCuota && !sinInteres) ? (deuda.saldoOriginal||deuda.saldoActual||0)*tasaPeriodo : 0;
   while(saldo>0.5 && periodos<MAX_PERIODOS){
     if(pago<=0) break; // sin pago programado no se puede proyectar más
-    const interesPeriodo = sinInteres ? 0 : saldo*tasaPeriodo;
+    const interesPeriodo = esFijoPorCuota ? interesFijoPorPeriodo : (sinInteres ? 0 : saldo*tasaPeriodo);
     let abonoCapital = pago - interesPeriodo;
     if(abonoCapital<=0){
       // el pago programado no alcanza a cubrir ni el interés: no baja el saldo, se detiene
@@ -12764,8 +12831,10 @@ function renderSimulador(){
 
   const fmtFecha = d => d ? d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 
+  const modoFijoNote=document.getElementById('simModoFijoNote');
   if(seleccion==='__all__'){
     allNote.style.display='';
+    if(modoFijoNote) modoFijoNote.style.display='none';
     detalleBtn.style.display='none';
     detalleWrap.style.display='none';
     const port=finPortfolioSimulacion({pagoExtra:abonoExtra, pagoMensualMult:mult});
@@ -12790,9 +12859,11 @@ function renderSimulador(){
   const deuda=ST.deudas.find(d=>d.id===seleccion);
   if(!deuda){
     kpiWrap.innerHTML=`<div style="grid-column:1/-1;padding:14px;color:var(--text3);font-size:12.5px;text-align:center">Selecciona un acreedor.</div>`;
+    if(modoFijoNote) modoFijoNote.style.display='none';
     renderEscenarios();
     return;
   }
+  if(modoFijoNote) modoFijoNote.style.display = deuda.modoInteres==='fijo' ? '' : 'none';
   const cmp=finCompararSimulacion(deuda, {pagoExtra:abonoExtra, pagoMensualMult:mult});
   kpiWrap.innerHTML=`
     <div class="stat cg"><div class="stat-lbl">Ahorro en intereses</div><div class="stat-val">${fmtMXNBal(cmp.ahorroInteres)}</div><div class="stat-delta">vs. sin cambios</div></div>
@@ -12916,7 +12987,8 @@ function finGenerarAlertas(){
       else break;
     }
     if(mesesSoloInteres>=3){
-      alerts.push({sev:'crit', icon:'🌀', msg:`Llevas <strong>${mesesSoloInteres} pagos consecutivos</strong> pagando solo intereses en <strong>${esc(d.nombre)}</strong>. Esta deuda no está bajando.`});
+      const extra = d.modoInteres==='fijo' ? ' Recuerda: en esta deuda el interés no baja aunque abones, solo desaparece si liquidas el saldo completo.' : '';
+      alerts.push({sev:'crit', icon:'🌀', msg:`Llevas <strong>${mesesSoloInteres} pagos consecutivos</strong> pagando solo intereses en <strong>${esc(d.nombre)}</strong>. Esta deuda no está bajando.${extra}`});
     }
     if(pagosDeuda.length>=3 && d.saldoOriginal>0 && d.saldoActual >= d.saldoOriginal*0.97){
       alerts.push({sev:'crit', icon:'📉', msg:`<strong>${esc(d.nombre)}</strong> prácticamente no ha bajado de saldo después de ${pagosDeuda.length} pagos registrados.`});
@@ -13243,12 +13315,21 @@ localStorage.removeItem('customUnidades');
 function addCustomUnidad(val){ /* deshabilitado a propósito: ver comentario arriba */ }
 
 /* ─── NUEVO / EDITAR ARTÍCULO ─── */
+/* Llena el <datalist> de especialidades con los valores ya usados en el catálogo,
+   para que el campo del modal ofrezca autocompletar sin restringir a escribir uno nuevo. */
+function populateEspecialidadesList(){
+  const dl=document.getElementById('especialidadesList');
+  if(!dl) return;
+  const vals=[...new Set((ST.articulos||[]).map(a=>a.especialidad).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  dl.innerHTML = vals.map(v=>`<option value="${esc(v)}">`).join('');
+}
 function openNewArticulo(){
   if(!requireAuth()) return;
   ST.editArticuloId = null;
   document.getElementById('newArticuloModalTitle').textContent='Nuevo Artículo al Catálogo';
-  ['naName','naPrice','naUnit','naDesc'].forEach(id=>document.getElementById(id).value='');
+  ['naName','naPrice','naUnit','naDesc','naEspecialidad'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('naImpuesto').value='0.00%';
+  populateEspecialidadesList();
   document.getElementById('saveArticuloBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar al catálogo';
   document.getElementById('newArticuloModal').classList.add('open');
 }
@@ -13259,6 +13340,7 @@ async function saveNewArticulo(){
   const unit  = document.getElementById('naUnit').value.trim()||'pza';
   const desc  = document.getElementById('naDesc').value.trim();
   const imp   = document.getElementById('naImpuesto').value;
+  const especialidad = document.getElementById('naEspecialidad').value.trim();
   if(!name){ toast('err','El nombre del artículo es obligatorio.'); return; }
   if(!ST.token){ toast('err','Conecta Google para guardar artículos.'); return; }
   const btn = document.getElementById('saveArticuloBtn');
@@ -13267,14 +13349,14 @@ async function saveNewArticulo(){
     if(ST.editArticuloId){
       const a = ST.articulos.find(x=>x.id===ST.editArticuloId);
       if(a){
-        await sheetsUpdate(`Articulos!A${a._row}:F${a._row}`,[[a.id,name,price,imp,desc,unit]]);
-        a.nombre=name; a.precio=price; a.impuesto=imp; a.desc=desc; a.unidad=unit;
+        await sheetsUpdate(`Articulos!A${a._row}:G${a._row}`,[[a.id,name,price,imp,desc,unit,especialidad]]);
+        a.nombre=name; a.precio=price; a.impuesto=imp; a.desc=desc; a.unidad=unit; a.especialidad=especialidad;
       }
       toast('ok',`Artículo "${name}" actualizado.`);
     } else {
       const id = 'ART'+Date.now().toString(36).toUpperCase();
-      await sheetsAppend('Articulos!A2:F',[[id,name,price,imp,desc,unit]]);
-      ST.articulos.push({id,nombre:name,precio:price,impuesto:imp,desc,unidad:unit,_row:ST.articulos.length+2});
+      await sheetsAppend('Articulos!A2:G',[[id,name,price,imp,desc,unit,especialidad]]);
+      ST.articulos.push({id,nombre:name,precio:price,impuesto:imp,desc,unidad:unit,especialidad,_row:ST.articulos.length+2});
       addCustomUnidad(unit);
       toast('ok',`Artículo "${name}" guardado al catálogo.`);
     }
