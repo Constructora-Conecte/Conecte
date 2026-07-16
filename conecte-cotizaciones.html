@@ -1601,10 +1601,6 @@ textarea.item-inp.item-desc-ta{
             <option value="">Todos los empleados</option>
           </select>
           <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar por empleado o folio…" oninput="onNomSearch(this.value)">
-          <button class="btn btn-ghost btn-sm" onclick="imprimirNoAdeudo()" title="Genera un PDF para que los empleados firmen de no adeudo de la semana">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M4 6V2h8v4M4 12h8v3H4v-3ZM2 6h12a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v-2H3v2H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
-            No Adeudo
-          </button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openParametrosModal()" title="Editar salario mínimo, vales, factor de faltas y días laborales">⚙ Parámetros</button>
         </div>
         <div id="nomSemanasWarning" style="display:none;margin-bottom:10px;font-size:11.5px;color:var(--orange);background:rgba(237,137,54,.1);border:1px solid rgba(237,137,54,.25);border-radius:var(--r4);padding:8px 12px">
@@ -2563,7 +2559,8 @@ textarea.item-inp.item-desc-ta{
             </div>
             <div class="form-group">
               <label class="form-label">Puesto</label>
-              <input type="text" class="form-input" id="ePuesto">
+              <input type="text" class="form-input" id="ePuesto" list="ePuestoList" autocomplete="off" placeholder="Escribe para buscar o agrega uno nuevo…">
+              <datalist id="ePuestoList"></datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Sueldo total acordado</label>
@@ -2762,6 +2759,7 @@ textarea.item-inp.item-desc-ta{
             <div class="card" style="display:flex;flex-direction:column;min-height:0;background:var(--bg3);margin-bottom:0">
               <div class="card-header" style="padding:6px 10px;flex-shrink:0">
                 <span class="card-title" style="font-size:11.5px">OC Asociadas</span>
+                <span class="fh" tabindex="0" data-tip="Primero guarda la cotización (botón Guardar); en cuanto tenga folio podrás asociar y agregar Órdenes de Compra (OC) desde aquí.">?</span>
                 <span style="font-size:10.5px;color:var(--text3);font-family:var(--mono)" id="ocCount">0 OC</span>
                 <button type="button" class="btn btn-ghost btn-sm" id="verRelacionBtn" onclick="openRelacionPanel('cot',ST.editId)" style="margin-left:auto;height:22px;padding:0 6px" disabled title="Ver relación completa">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
@@ -2771,9 +2769,7 @@ textarea.item-inp.item-desc-ta{
                 </button>
               </div>
               <div id="ocListWrap" style="padding:6px 10px;max-height:64px;min-height:26px;overflow-y:auto">
-                <div id="ocEmptyMsg" style="font-size:11.5px;color:var(--text3);text-align:center;padding:4px 0">
-                  Guarda la cotización primero para agregar OC
-                </div>
+                <div id="ocEmptyMsg" style="font-size:11.5px;color:var(--text3);text-align:center;padding:4px 0"></div>
                 <div id="ocList" style="display:flex;flex-direction:column;gap:6px"></div>
               </div>
             </div>
@@ -2785,17 +2781,9 @@ textarea.item-inp.item-desc-ta{
       <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:11.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;">Partidas</span>
-          <button type="button" class="help-btn" onclick="toggleItemsHelp()" title="¿Cómo funciona esta sección?">?</button>
+          <span class="fh" tabindex="0" data-tip-html="<strong>Buscar concepto:</strong> escribe para encontrar un artículo ya guardado en tu catálogo y llenar la fila automáticamente con su nombre, unidad y precio.<br><br><strong>Nuevo artículo:</strong> guarda un artículo nuevo en el catálogo (para poder reutilizarlo en futuras cotizaciones).<br><br><strong>Agregar partida manual:</strong> agrega una fila vacía para escribir un concepto que no está en el catálogo; solo se guarda en esta cotización.<br><br><strong>P. Unitario / Unidad en blanco:</strong> se dejan vacíos a propósito para que no los confundas con un dato ya capturado — llénalos con el precio y la unidad reales (pza, m, kg, servicio…).<br><br><strong>✕:</strong> elimina esa partida de la cotización.">?</span>
         </div>
         <span style="font-size:11px;color:var(--text3);">Busca del catálogo o agrega manualmente</span>
-      </div>
-
-      <div id="itemsHelpCard" class="info-card" style="display:none">
-        <div><strong>Buscar concepto:</strong> escribe para encontrar un artículo ya guardado en tu catálogo y llenar la fila automáticamente con su nombre, unidad y precio.</div>
-        <div><strong>Nuevo artículo:</strong> guarda un artículo nuevo en el catálogo (para poder reutilizarlo en futuras cotizaciones).</div>
-        <div><strong>Agregar partida manual:</strong> agrega una fila vacía para escribir un concepto que no está en el catálogo; solo se guarda en esta cotización.</div>
-        <div><strong>P. Unitario / Unidad en blanco:</strong> se dejan vacíos a propósito para que no los confundas con un dato ya capturado — llénalos con el precio y la unidad reales (pza, m, kg, servicio…).</div>
-        <div><strong>✕:</strong> elimina esa partida de la cotización.</div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:flex-start">
@@ -3639,8 +3627,8 @@ textarea.item-inp.item-desc-ta{
     <div class="modal-title" id="addContactoModalTitle">Nuevo Contacto</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <div class="form-group">
-        <label class="form-label">ID Contacto *</label>
-        <input type="text" class="form-input" id="ncoId" placeholder="Ej. ING001" style="text-transform:uppercase">
+        <label class="form-label">ID Contacto</label>
+        <input type="text" class="form-input" id="ncoId" readonly style="text-transform:uppercase;background:var(--bg4);color:var(--text2)">
       </div>
       <div class="form-group" id="ncoClienteLabelWrap">
         <label class="form-label">Cliente al que pertenece</label>
@@ -5861,11 +5849,6 @@ function removeItem(i) {
   ST.items.splice(i,1);
   ST.formDirty=true;
   renderItems();
-}
-
-function toggleItemsHelp(){
-  const card=document.getElementById('itemsHelpCard');
-  if(card) card.style.display = card.style.display==='none' ? 'flex' : 'none';
 }
 
 function renderItems() {
@@ -8507,6 +8490,7 @@ function renderOCSection(hasId) {
   if (!hasId) {
     btn.disabled = true;
     relBtn.disabled = true;
+    emptyMsg.textContent = 'Sin OC asociadas.';
     emptyMsg.style.display = '';
     ocListEl.innerHTML = '';
     ocCountEl.textContent = '0 OC';
@@ -9179,6 +9163,12 @@ function renderNominas(){
           : semConcluida
             ? `<button class="btn btn-ghost btn-sm" style="padding:3px 8px" ${busy?'disabled':''} onclick="reabrirSemana('${semKey}')" title="Reabrir semana para seguir editando nóminas">↺ Reabrir semana</button>`
             : `<button class="btn btn-red btn-sm" style="padding:3px 10px" ${busy?'disabled':''} onclick="concluirSemana('${semKey}')" title="Generar los 3 movimientos globales en Salidas (Fiscal, Vales, Efectivo) para toda la semana">${busy?'Generando…':'Concluir semana →'}</button>`;
+        // Botón "No Adeudo" de ESTA semana en particular — usa únicamente las fechas
+        // y los empleados con nómina en esta semana (excluyendo siempre a los patrones).
+        const noAdeudoBtn = `<button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="imprimirNoAdeudo('${semKeyJs}')" title="Genera un PDF para que los empleados de esta semana firmen de no adeudo">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M4 6V2h8v4M4 12h8v3H4v-3ZM2 6h12a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v-2H3v2H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
+            No Adeudo
+          </button>`;
 
         // Flecha para expandir/contraer el grupo semanal. Colapsada por defecto;
         // el estado (expandida/colapsada) se guarda en localStorage por semana
@@ -9190,7 +9180,7 @@ function renderNominas(){
             <span style="font-weight:400;color:var(--text3);margin-left:6px">${primero.semanaAnio} · ${grupo.length} nómina(s)</span>
             ${semBadge}
           </td>
-          <td colspan="3" style="padding:8px 10px;text-align:right">${semBtn}</td>
+          <td colspan="3" style="padding:8px 10px;text-align:right">${noAdeudoBtn} ${semBtn}</td>
         </tr>`;
 
         if(collapsed) return headerRow;
@@ -9522,10 +9512,11 @@ function updateNomReceiptPreview(r, empleado, fIni, fFin){
     return tip;
   }
   function showTip(target){
+    const html = target.getAttribute('data-tip-html');
     const text = target.getAttribute('data-tip');
-    if(!text) return;
+    if(!html && !text) return;
     const el = ensureTip();
-    el.textContent = text;
+    if(html) el.innerHTML = html; else el.textContent = text;
     el.classList.remove('show','above','below');
     // Mide primero sin animación para calcular tamaño real
     el.style.left = '-9999px'; el.style.top='-9999px';
@@ -11051,10 +11042,14 @@ function renderRostros(){
 /* Genera un PDF simple e imprimible con la lista de empleados activos
    (ST.personalList ya contiene solo Estado = Activo) y lo abre en una pestaña
    nueva, lista para imprimir o guardar. */
-function imprimirListaEmpleadosActivos(){
+async function imprimirListaEmpleadosActivos(){
   if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
   const activos = (ST.personalList||[]).slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   if(!activos.length){ toast('err','No hay empleados activos para imprimir.'); return; }
+
+  // Precarga las fotografías en paralelo (mismo helper que usan los gafetes) para
+  // poder incluir un thumbnail chiquito junto a cada nombre en el PDF.
+  const fotos = await Promise.all(activos.map(p=>gafeteCargarImagen(normalizePhotoUrl(p.fotografia), 5000)));
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
@@ -11063,11 +11058,12 @@ function imprimirListaEmpleadosActivos(){
   function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
   function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
 
-  // Columnas: Nombre | Puesto | Sueldo total | Vales | Fiscal | Tipo de pago | Fecha ingreso
+  // Columnas: Foto | Nombre | Puesto | Sueldo total | Vales | Fiscal | Tipo de pago | Fecha ingreso
   // Vales y Fiscal se dibujan como una palomita vectorial (no depende de que la
   // fuente del PDF tenga el glifo ✓/✅), igual que se ven en pantalla.
   const cols = [
-    {label:'Nombre',        w:46, get:p=>p.nombre||'—'},
+    {label:'',              w:9,  type:'foto'},
+    {label:'Nombre',        w:37, get:p=>p.nombre||'—'},
     {label:'Puesto',        w:34, get:p=>p.puesto||'—'},
     {label:'Sueldo total',  w:24, get:p=>fmtMXN(p.sueldoTotalAcordado||0), align:'right'},
     {label:'Vales',         w:16, type:'check', get:p=>!!p.recibeVales, align:'center'},
@@ -11077,6 +11073,14 @@ function imprimirListaEmpleadosActivos(){
   ];
   const colX = []; let acc = ML;
   cols.forEach(c=>{ colX.push(acc); acc += c.w; });
+
+  // Dibuja el thumbnail de la fotografía (si se pudo cargar) dentro de un
+  // pequeño círculo; si no hay foto o no cargó, simplemente no dibuja nada.
+  function drawFoto(img,cx,cy,d){
+    if(!img) return;
+    try{ doc.addImage(img, 'JPEG', cx-d/2, cy-d/2, d, d); }
+    catch(e){ /* si la imagen no se pudo insertar (CORS u otro formato), se omite en silencio */ }
+  }
 
   // Dibuja una casilla pequeña y, si corresponde, una palomita adentro —
   // vectorial, para que se imprima igual en cualquier visor de PDF.
@@ -11113,12 +11117,16 @@ function imprimirListaEmpleadosActivos(){
   }
 
   let y = pageHeader(1,1);
-  const rowH = 7;
+  const rowH = 8.5;
   setF('normal',8.3,C.ink);
   activos.forEach((p,i)=>{
     if(y > BOTY){ doc.addPage(); y = pageHeader(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages()); }
-    if(i%2===1){ doc.setFillColor(250,250,250); doc.rect(ML,y-4.6,CW,rowH,'F'); }
+    if(i%2===1){ doc.setFillColor(250,250,250); doc.rect(ML,y-6,CW,rowH,'F'); }
     cols.forEach((c,ci)=>{
+      if(c.type==='foto'){
+        drawFoto(fotos[i], colX[ci]+c.w/2, y-2.2, 6);
+        return;
+      }
       if(c.type==='check'){
         drawCheck(colX[ci]+c.w/2, y-1.3, c.get(p));
         return;
@@ -11151,16 +11159,35 @@ function imprimirListaEmpleadosActivos(){
    el formato en Excel que se usaba antes (rango de fechas, párrafo de
    constancia y una tabla Nombre/Firma con espacio suficiente para firmar a
    mano), solo que ahora se genera desde la app con el diseño de la marca.
-   Incluye a los empleados ACTIVOS, excluyendo a los patrones/dueños (se
-   detectan por el texto del puesto — ajusta PATRON_KEYWORDS si tu puesto de
-   dueño/socio usa otra palabra que no esté en la lista). */
+
+   Se genera POR SEMANA: se llama desde el botón "No Adeudo" que aparece junto
+   a "Concluir semana" en cada grupo semanal de Nóminas, así que solo incluye
+   la fecha y los empleados con nómina en ESA semana en particular — nunca a
+   los patrones/dueños (se detectan por el texto del puesto — ajusta
+   PATRON_KEYWORDS si tu puesto de dueño/socio usa otra palabra que no esté
+   en la lista). */
 const PATRON_KEYWORDS = ['patrón','patron','dueño','dueno','socio','propietario','director general'];
-function imprimirNoAdeudo(){
+function imprimirNoAdeudo(semKey){
   if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
-  const firmantes = (ST.personalList||[])
-    .filter(p=>!PATRON_KEYWORDS.some(k=>(p.puesto||'').toLowerCase().includes(k)))
-    .slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
-  if(!firmantes.length){ toast('err','No hay empleados para incluir en el No Adeudo.'); return; }
+
+  // Nóminas de esta semana en particular (se identifican por FechaInicio, igual
+  // que la agrupación semanal de renderNominas). Se ignoran las canceladas.
+  const grupo = (ST.nominas||[]).filter(n=>(n.fechaInicio||n.semanaAnio||'—')===semKey && n.estatus!=='Cancelado');
+  if(!grupo.length){ toast('err','No hay nóminas registradas en esta semana para generar el No Adeudo.'); return; }
+
+  // Un firmante por empleado (sin duplicar), excluyendo siempre a los patrones/dueños.
+  const vistos = new Set();
+  const firmantes = [];
+  grupo.forEach(n=>{
+    if(vistos.has(n.idEmpleado)) return;
+    const emp = ST.personal[n.idEmpleado] || {};
+    const puesto = emp.puesto || '';
+    if(PATRON_KEYWORDS.some(k=>puesto.toLowerCase().includes(k))) return;
+    vistos.add(n.idEmpleado);
+    firmantes.push({ nombre: n.nombreEmpleado || emp.nombre || n.idEmpleado });
+  });
+  firmantes.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  if(!firmantes.length){ toast('err','No hay empleados para incluir en el No Adeudo de esta semana.'); return; }
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
@@ -11169,9 +11196,10 @@ function imprimirNoAdeudo(){
   function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
   function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
 
-  // Semana vigente (lunes a domingo) — mismo criterio que el resto del módulo de Nóminas.
-  const lunes = nomMondayOf(todayISO());
-  const domingo = nomAddDays(lunes,6);
+  // Fechas de ESTA semana (no la semana vigente): se toman del primer registro del grupo.
+  const primero = grupo[0];
+  const lunes = primero.fechaInicio || semKey;
+  const domingo = primero.fechaFin || nomAddDays(lunes,6);
   const rango = `Semana del ${nomFmtFechaLarga(lunes)} al ${nomFmtFechaLarga(domingo)}`;
   const parrafo = 'Por medio de la presente, dejo constancia y confirmo que he recibido a entera satisfacción el pago correspondiente a mi semana laboral, sin que exista ningún adeudo pendiente, ya sea por salario, horas extras o cualquier otro concepto.';
 
@@ -11358,6 +11386,19 @@ function openEmpCard(idEmpleado){
 }
 function closeEmpCard(){ document.getElementById('empCardModal').classList.remove('open'); }
 
+/* Llena el <datalist> de Puesto con las opciones que ya existen en la tabla de
+   Personal (activos y bajas, sin duplicar), para que al escribir se puedan
+   elegir entre las que ya existen — y en cuanto se guarde un puesto nuevo,
+   la próxima vez que se abra el modal también aparecerá como opción. */
+function populatePuestoDatalist(){
+  const dl = document.getElementById('ePuestoList');
+  if(!dl) return;
+  const puestos = Array.from(new Set(
+    Object.values(ST.personal||{}).map(p=>(p.puesto||'').trim()).filter(Boolean)
+  )).sort((a,b)=>a.localeCompare(b));
+  dl.innerHTML = puestos.map(p=>`<option value="${esc(p)}"></option>`).join('');
+}
+
 function openEmpModal(idEmpleado){
   if(!requireAuth()) return;
   const modal = document.getElementById('empModal');
@@ -11365,6 +11406,8 @@ function openEmpModal(idEmpleado){
   const existente = idEmpleado ? ST.personal[idEmpleado] : null;
   ST.empEditId = existente ? existente.id : null;
   ST.empFotoFile = null;
+
+  populatePuestoDatalist();
 
   document.getElementById('empModalTitle').textContent = existente ? 'Editar Empleado' : 'Nuevo Empleado';
 
@@ -11501,6 +11544,18 @@ function gafeteFmtFecha(iso){
   const d = new Date(iso+'T00:00:00');
   if(isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}).replace(/\./g,'').toUpperCase();
+}
+
+/* Folio consecutivo para Contactos, nunca se repite: toma el número más alto
+   ya usado en ST.contactosList (formato CTC-000001) y suma 1. El usuario ya
+   no captura el ID a mano — se genera solo al abrir "Nuevo Contacto". */
+function contactoNextFolio(){
+  let max = 0;
+  (ST.contactosList||[]).forEach(c=>{
+    const m = /CTC-(\d+)/i.exec(c.id||'');
+    if(m){ const n=parseInt(m[1],10); if(n>max) max=n; }
+  });
+  return 'CTC-' + String(max+1).padStart(6,'0');
 }
 
 /* Folio consecutivo, nunca se repite: toma el número más alto ya usado en la
@@ -12469,8 +12524,8 @@ function openAddContacto() {
   ST.editContactoId = null;
   const cliId  = document.getElementById('fCliente').value;
   const cliNom = cliId ? (ST.clientes[cliId]?.nombre||cliId) : '— (selecciona un cliente primero) —';
-  ['ncoId','ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('ncoId').disabled = false;
+  ['ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ncoId').value = contactoNextFolio();
   document.getElementById('ncoClienteId').value  = cliId;
   document.getElementById('ncoClienteLabel').value = cliNom;
   document.getElementById('ncoClienteLabelWrap').style.display='';
@@ -12490,8 +12545,8 @@ function populateClienteSelectFor(selId, selectedId){
 function openAddContactoSistemas(clienteId){
   if(!requireAuth()) return;
   ST.editContactoId = null;
-  ['ncoId','ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('ncoId').disabled = false;
+  ['ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ncoId').value = contactoNextFolio();
   document.getElementById('ncoClienteLabelWrap').style.display='none';
   document.getElementById('ncoClienteSelWrap').style.display='';
   populateClienteSelectFor('ncoClienteSel', clienteId||'');
