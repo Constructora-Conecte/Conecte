@@ -2139,12 +2139,15 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
     <!-- SUB-VISTA: DASHBOARD GENERAL (Fase 4) — cruza Comercial + Nómina + Finanzas + Obras -->
     <div id="tabDashboard" class="tab-pane">
       <div class="dash-kpi-grid" id="dgKpis">
-        <div class="stat cg"><div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dgKpiIng">—</div><div class="stat-delta">Pagados en el año</div></div>
-        <div class="stat cr"><div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dgKpiGas">—</div><div class="stat-delta">Pagados en el año</div></div>
-        <div class="stat cb"><div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dgKpiBal">—</div><div class="stat-delta">Ingresos − Gastos</div></div>
         <div class="stat cy"><div class="stat-lbl">Cotizaciones Activas</div><div class="stat-val" id="dgKpiCot">—</div><div class="stat-delta">Pendientes + Enviadas</div></div>
         <div class="stat cg"><div class="stat-lbl">Obras en Proceso</div><div class="stat-val" id="dgKpiObras">—</div><div class="stat-delta" id="dgKpiObrasAvance">Avance promedio —</div></div>
-        <div class="stat cr"><div class="stat-lbl">Nómina Pagada</div><div class="stat-val" id="dgKpiNomina">—</div><div class="stat-delta">Pagada en el año</div></div>
+      </div>
+      <!-- Ingresos Cobrados / Gastos Pagados / Balance Neto / Nómina Pagada y la gráfica
+           "Ingresos vs Gastos por Mes" se quitaron de aquí a petición del usuario (ya
+           viven, con más detalle, en Centro Financiero). Se dejan estos nodos ocultos
+           solo para no romper renderDashboardGeneral(), que sigue escribiéndoles. -->
+      <div style="display:none" id="dgKpisOcultos">
+        <span id="dgKpiIng"></span><span id="dgKpiGas"></span><span id="dgKpiBal"></span><span id="dgKpiNomina"></span>
       </div>
       <!-- Reporte de pendientes: solo conteos, sin montos (a propósito) -->
       <div class="dash-card-title" style="margin:4px 0 8px">Reporte de Pendientes</div>
@@ -2167,25 +2170,20 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <span style="font-size:11.5px;color:var(--text3)">Año:</span>
         <select id="dgYear" onchange="renderDashboardGeneral()" style="height:28px;padding:0 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text2);outline:none;"></select>
       </div>
-      <div class="dash-grid" style="margin-bottom:14px">
-        <div class="dash-card">
-          <div class="dash-card-title">Ingresos vs Gastos por Mes</div>
-          <div class="dash-chart-wrap"><canvas id="dgChartBarMes"></canvas></div>
-        </div>
-        <div class="dash-card">
-          <div class="dash-card-title">Obras por Estatus</div>
-          <div class="dash-chart-wrap"><canvas id="dgChartObrasEstatus"></canvas></div>
-        </div>
-      </div>
+      <div style="display:none"><canvas id="dgChartBarMes"></canvas></div>
       <div class="dash-grid" style="margin-bottom:14px">
         <div class="dash-card">
           <div class="dash-card-title">Cotizaciones por Estatus</div>
           <div class="dash-chart-wrap"><canvas id="dgChartCotEstatus"></canvas></div>
         </div>
         <div class="dash-card">
-          <div class="dash-card-title">Obras con menor avance</div>
-          <div id="dgObrasBajoAvance" style="padding:4px 2px;font-size:12px;color:var(--text2)">—</div>
+          <div class="dash-card-title">Obras por Estatus</div>
+          <div class="dash-chart-wrap"><canvas id="dgChartObrasEstatus"></canvas></div>
         </div>
+      </div>
+      <div class="dash-card" style="margin-bottom:14px">
+        <div class="dash-card-title">Obras con menor avance</div>
+        <div id="dgObrasBajoAvance" style="padding:4px 2px;font-size:12px;color:var(--text2)">—</div>
       </div>
     </div><!-- /tabDashboard -->
 
@@ -3533,6 +3531,60 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       <button class="btn btn-red" id="saveObraBtn" onclick="saveObra()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
         Guardar Obra
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DETALLE DE OBRA — cotizaciones y salidas relacionadas ══ -->
+<div class="modal-bg" id="verObraModal">
+  <div class="modal-lg" style="width:760px">
+    <div class="mlg-head">
+      <div>
+        <div class="mlg-title" id="verObraTitle">Obra</div>
+        <div class="mlg-sub" id="verObraSub">Cliente — Estatus</div>
+      </div>
+      <button class="close-x" onclick="closeVerObraModal()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="mlg-body">
+      <div class="dash-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+        <div class="stat"><div class="stat-lbl">Presupuesto</div><div class="stat-val" id="voKpiPresupuesto" style="font-size:16px">—</div><div class="stat-delta" id="voKpiAvance">Avance —</div></div>
+        <div class="stat cg"><div class="stat-lbl">Cotizado</div><div class="stat-val" id="voKpiCot" style="font-size:16px">—</div><div class="stat-delta" id="voKpiCotCount">0 cotizaciones</div></div>
+        <div class="stat cr"><div class="stat-lbl">Gastado</div><div class="stat-val" id="voKpiGas" style="font-size:16px">—</div><div class="stat-delta" id="voKpiGasCount">0 salidas</div></div>
+      </div>
+
+      <div class="card-header" style="padding:0 0 8px;border:none">
+        <span class="card-title">Cotizaciones relacionadas</span>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="const oid=ST._verObraId;closeVerObraModal();switchTab('cot');abrirNueva(oid)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+          Nueva cotización para esta obra
+        </button>
+      </div>
+      <div class="cot-table-wrap" style="margin-bottom:16px">
+        <table class="fac-table">
+          <thead><tr><th>Folio</th><th>Fecha</th><th>Descripción</th><th style="text-align:right">Total</th><th>Estatus</th></tr></thead>
+          <tbody id="voCotTbody"><tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Sin cotizaciones ligadas a esta obra.</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card-header" style="padding:0 0 8px;border:none">
+        <span class="card-title">Salidas / gastos relacionados</span>
+      </div>
+      <div class="cot-table-wrap">
+        <table class="fac-table">
+          <thead><tr><th>Fecha</th><th>Concepto</th><th>Proveedor</th><th style="text-align:right">Monto</th><th>Estatus</th></tr></thead>
+          <tbody id="voGasTbody"><tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Sin salidas ligadas a esta obra.</td></tr></tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:10px">Para ligar una cotización o una salida existente a esta obra, ábrela y elige esta obra en el campo "Obra" de su formulario.</div>
+    </div>
+    <div class="mlg-foot">
+      <button class="btn btn-ghost" onclick="closeVerObraModal()">Cerrar</button>
+      <button class="btn btn-red" onclick="closeVerObraModal();openEditObra(ST._verObraId)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        Editar Obra
       </button>
     </div>
   </div>
@@ -6904,7 +6956,7 @@ function llenarFormularioDesdeIA(campos){
 }
 
 /* ─── OPEN FORM ─── */
-function abrirNueva() {
+function abrirNueva(obraId) {
   if(!requireAuth()) return;
   ST.editId=null; ST.editRow=null;
   ST.formDirty=false;
@@ -6919,7 +6971,7 @@ function abrirNueva() {
   document.getElementById('fNotas').value='';
   document.getElementById('fEstatus').value='Pendiente';
   document.getElementById('fFechaEnvio').value='';
-  document.getElementById('fObra').value='';
+  document.getElementById('fObra').value=obraId||'';
   document.getElementById('artSearch').value='';
   ST.ocList = [];
   renderOCSection(false); // nueva cotización: no tiene ID aún
@@ -10299,7 +10351,7 @@ function renderObras(){
     const pct = avancePct(o);
     const cliente = ST.clientes[o.idCliente]?.nombre || o.idCliente || '—';
     return `<tr>
-    <td style="font-weight:500;font-size:12.5px">${esc(o.nombre||'—')}</td>
+    <td style="font-weight:500;font-size:12.5px;cursor:pointer" onclick="openVerObra('${esc(o.id)}')" title="Ver detalle">${esc(o.nombre||'—')}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(cliente)}</td>
     <td><span class="pill ${estatusObraPillClass(o.estatus)}">${esc(o.estatus)}</span></td>
     <td style="min-width:110px">
@@ -10315,6 +10367,9 @@ function renderObras(){
     <td style="font-size:12px;color:var(--text2)">${esc(o.responsable||'—')}</td>
     <td>
       <div class="row-acts" style="opacity:1">
+        <button class="btn-icon" title="Ver cotizaciones y salidas ligadas" onclick="openVerObra('${esc(o.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z"/><circle cx="8" cy="8" r="2"/></svg>
+        </button>
         <button class="btn-icon" title="Editar" onclick="openEditObra('${esc(o.id)}')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
         </button>
@@ -10457,6 +10512,49 @@ function openEditObra(id){
   document.getElementById('obraModal').classList.add('open');
 }
 function closeObraModal(){ document.getElementById('obraModal').classList.remove('open'); }
+/* ── Detalle de Obra: cotizaciones y salidas relacionadas (por obraId) ── */
+function openVerObra(id){
+  const o = (ST.obras||[]).find(x=>x.id===id); if(!o) return;
+  ST._verObraId = id;
+  document.getElementById('verObraTitle').textContent = o.nombre||'Obra';
+  const cliente = ST.clientes[o.idCliente]?.nombre || o.idCliente || 'Sin cliente';
+  document.getElementById('verObraSub').textContent = `${cliente} — ${o.estatus||''}`;
+  const pct = avancePct(o);
+  document.getElementById('voKpiPresupuesto').textContent = o.presupuesto ? fmtMXN(o.presupuesto) : '—';
+  document.getElementById('voKpiAvance').textContent = `Avance ${pct}%`;
+
+  const cots = (ST.cotizaciones||[]).filter(c=>c.obraId===id);
+  const gastos = (ST.salidas||[]).filter(s=>s.obraId===id);
+  const totalCot = cots.reduce((s,c)=>s+(c.total||0),0);
+  const totalGas = gastos.reduce((s,g)=>s+(g.monto||0),0);
+  document.getElementById('voKpiCot').textContent = fmtMXN(totalCot);
+  document.getElementById('voKpiCotCount').textContent = `${cots.length} cotizacion${cots.length===1?'':'es'}`;
+  document.getElementById('voKpiGas').textContent = fmtMXN(totalGas);
+  document.getElementById('voKpiGasCount').textContent = `${gastos.length} salida${gastos.length===1?'':'s'}`;
+
+  const cotTbody = document.getElementById('voCotTbody');
+  cotTbody.innerHTML = cots.length ? cots.slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(c=>`
+    <tr>
+      <td><button class="folio" title="${esc(c.id)}" onclick="closeVerObraModal();openCotResumen('${esc(c.id)}',${c._row})">${esc(shortFolio(c.id))}</button></td>
+      <td style="font-size:11.5px;color:var(--text3)">${fmtDate(c.fecha)}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(c.desc||'—')}</td>
+      <td style="text-align:right;font-size:12px">${fmtMXN(c.total)}</td>
+      <td><span class="pill ${pillClass(c.estatus)}">${esc(c.estatus)}</span></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Sin cotizaciones ligadas a esta obra.</td></tr>';
+
+  const gasTbody = document.getElementById('voGasTbody');
+  gasTbody.innerHTML = gastos.length ? gastos.slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(g=>`
+    <tr>
+      <td style="font-size:11.5px;color:var(--text3)">${fmtDate(g.fecha)}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(g.concepto||'—')}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(g.proveedor||'—')}</td>
+      <td style="text-align:right;font-size:12px">${fmtMXN(g.monto)}</td>
+      <td><span class="pill ${facPillClass(g.estado)}">${esc(g.estado)}</span></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Sin salidas ligadas a esta obra.</td></tr>';
+
+  document.getElementById('verObraModal').classList.add('open');
+}
+function closeVerObraModal(){ document.getElementById('verObraModal').classList.remove('open'); }
 async function saveObra(){
   const nombre = document.getElementById('oNombre').value.trim();
   if(!nombre){ toast('err','El nombre de la obra es obligatorio.'); return; }
@@ -10573,18 +10671,7 @@ function renderDashboardGeneral(){
   const textColor=isDark?'#888':'#999';
   Chart.defaults.color=textColor;
 
-  destroyChart('dgBar');
-  ST._charts['dgBar']=new Chart(document.getElementById('dgChartBarMes'),{
-    type:'bar',
-    data:{
-      labels:meses,
-      datasets:[
-        {label:'Ingresos',data:ingM,backgroundColor:'rgba(72,187,120,.7)',borderRadius:3},
-        {label:'Gastos',data:gasM,backgroundColor:'rgba(229,62,62,.65)',borderRadius:3}
-      ]
-    },
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor},ticks:{callback:v=>'$'+v.toLocaleString('es-MX')}}}}
-  });
+  destroyChart('dgBar'); // card "Ingresos vs Gastos por Mes" ya no se muestra en este dashboard (ver Centro Financiero)
 
   /* Obras por estatus */
   const obrasCountByEstatus = ESTATUS_OBRA.map(e=>(ST.obras||[]).filter(o=>o.estatus===e).length);
@@ -12326,8 +12413,8 @@ function renderSisContactos(){
     const contactos = grupos[cliId].sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
     return `<div class="card" style="margin-bottom:12px">
       <div class="card-header">
-        <span class="card-title">${esc(cliNom)}</span>
-        <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);">${contactos.length}</span>
+        <span class="card-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw" title="${esc(cliNom)}">${esc(cliNom)}</span>
+        <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);flex-shrink:0">${contactos.length}</span>
         ${cliId!=='__sin_cliente__' ? `<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openAddContactoSistemas('${esc(cliId)}')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
           Agregar contacto
@@ -12335,12 +12422,12 @@ function renderSisContactos(){
       </div>
       <div class="cot-table-wrap">
         <table class="fac-table">
-          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+          <thead><tr><th style="min-width:150px">Nombre</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
           <tbody>
             ${contactos.map(c=>`<tr>
-              <td style="font-weight:500;font-size:12.5px">${esc(c.nombre||c.id)}</td>
-              <td style="font-size:12px;color:var(--text2)">${esc(c.tel||'—')}</td>
-              <td style="font-size:12px;color:var(--text2)">${esc(c.email||'—')}</td>
+              <td style="font-weight:500;font-size:12.5px;white-space:nowrap;min-width:150px">${esc(c.nombre||c.id)}</td>
+              <td style="font-size:12px;color:var(--text2);white-space:nowrap">${esc(c.tel||'—')}</td>
+              <td style="font-size:12px;color:var(--text2);white-space:nowrap">${esc(c.email||'—')}</td>
               <td>
                 <div class="row-acts" style="opacity:1">
                   <button class="btn-icon" title="Editar" onclick="openEditContacto('${esc(c.id)}')">
@@ -13984,6 +14071,36 @@ function setDeudaFilter(f, btn){
 }
 function onDeudaSearch(v){ ST.deudaSearch=(v||'').toLowerCase(); renderAcreedores(); }
 
+function acreedorRowHtml(d){
+  const next=finNextPago(d);
+  const nextTxt=next ? next.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+  const score=finScoreDeuda(d);
+  const scoreClass = score>=60?'pill-rech':(score>=35?'pill-pend':'pill-acep');
+  const liquidada = d.estado==='Liquidada';
+  return `<tr${liquidada?' style="opacity:.6"':''}>
+      <td style="font-size:12.5px">${esc(d.nombre)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(d.tipo)}</td>
+      <td style="text-align:right"><span style="color:${liquidada?'var(--text3)':'var(--red)'};font-family:var(--mono);font-size:12px">${fmtMXN(d.saldoActual)}</span></td>
+      <td style="text-align:right;font-size:12px">${fmtMXN(d.pagoProgramado)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(d.frecuencia)}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${liquidada?'—':nextTxt}</td>
+      <td>${liquidada?'—':`<span class="pill ${scoreClass}">${score}</span>`}</td>
+      <td>${badgeDeuda(d.estado)}</td>
+      <td>
+        <div class="row-acts" style="opacity:1">
+          <button class="btn-icon" onclick="openPagoModal('${esc(d.id)}')" title="Registrar pago" style="color:var(--green)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13"><path d="M8 3v10M4 7l4-4 4 4"/></svg>
+          </button>
+          <button class="btn-icon" onclick="openDeudaModal('${esc(d.id)}')" title="Editar">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+}
+function acreedorGroupHeaderHtml(label, count){
+  return `<tr class="acre-group-row"><td colspan="9" style="padding:8px 12px;background:var(--bg3);font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">${esc(label)} (${count})</td></tr>`;
+}
 function renderAcreedores(){
   const tbody=document.getElementById('finAcreTbody');
   if(!tbody) return;
@@ -13998,32 +14115,22 @@ function renderAcreedores(){
     tbody.innerHTML=`<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin acreedores registrados todavía. Usa "+ Nuevo Acreedor" para agregar el primero.</td></tr>`;
     return;
   }
-  tbody.innerHTML=arr.map(d=>{
-    const next=finNextPago(d);
-    const nextTxt=next ? next.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    const score=finScoreDeuda(d);
-    const scoreClass = score>=60?'pill-rech':(score>=35?'pill-pend':'pill-acep');
-    return `<tr>
-      <td style="font-size:12.5px">${esc(d.nombre)}</td>
-      <td style="font-size:11.5px;color:var(--text2)">${esc(d.tipo)}</td>
-      <td style="text-align:right"><span style="color:var(--red);font-family:var(--mono);font-size:12px">${fmtMXN(d.saldoActual)}</span></td>
-      <td style="text-align:right;font-size:12px">${fmtMXN(d.pagoProgramado)}</td>
-      <td style="font-size:11.5px;color:var(--text2)">${esc(d.frecuencia)}</td>
-      <td style="font-size:11.5px;color:var(--text2)">${nextTxt}</td>
-      <td><span class="pill ${scoreClass}">${score}</span></td>
-      <td>${badgeDeuda(d.estado)}</td>
-      <td>
-        <div class="row-acts" style="opacity:1">
-          <button class="btn-icon" onclick="openPagoModal('${esc(d.id)}')" title="Registrar pago" style="color:var(--green)">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13"><path d="M8 3v10M4 7l4-4 4 4"/></svg>
-          </button>
-          <button class="btn-icon" onclick="openDeudaModal('${esc(d.id)}')" title="Editar">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
-          </button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+  // En "Todas" agrupamos: activas/vencidas/renegociadas primero (por score, las que
+  // más urgen arriba), y las Liquidadas al final en su propio grupo, atenuadas, para
+  // que no se mezclen con las que sí requieren seguimiento. En cualquier otro filtro
+  // (Activas, Vencidas, Liquidadas, Renegociadas) se muestra la lista plana de siempre,
+  // ya que ahí el usuario ya eligió ver solo un estado.
+  if(ST.deudaFilter==='all'){
+    const pendientes = arr.filter(d=>d.estado!=='Liquidada');
+    const liquidadas = arr.filter(d=>d.estado==='Liquidada').sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+    let html = pendientes.map(acreedorRowHtml).join('');
+    if(liquidadas.length){
+      html += acreedorGroupHeaderHtml('Liquidadas', liquidadas.length) + liquidadas.map(acreedorRowHtml).join('');
+    }
+    tbody.innerHTML = html;
+  } else {
+    tbody.innerHTML = arr.map(acreedorRowHtml).join('');
+  }
 }
 
 function openDeudaModal(id){
@@ -16258,3 +16365,4 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
+
