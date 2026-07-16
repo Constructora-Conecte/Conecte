@@ -10,6 +10,7 @@
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script><!-- Fase 4: Reportes exportables (Excel) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -879,6 +880,21 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <svg viewBox="0 0 18 18"><path fill="#EA4335" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#4285F4" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#34A853" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
         <span id="googleBtnTxt">Conectar Google</span>
       </button>
+      <!-- ── CAMPANITA DE NOTIFICACIONES CENTRALIZADAS (Fase 4) ── -->
+      <div id="notifWrap" style="position:relative">
+        <button class="theme-toggle" id="notifBellBtn" onclick="toggleNotifPanel()" title="Notificaciones" style="position:relative">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6.5a4 4 0 018 0c0 3 1 4 1.5 4.5h-11C3 10.5 4 9.5 4 6.5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>
+          <span id="notifBadge" style="display:none;position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 3px;background:var(--red,#e53e3e);color:#fff;border-radius:8px;font-size:9.5px;font-weight:700;line-height:15px;text-align:center;font-family:var(--mono);">0</span>
+        </button>
+        <div id="notifPanel" style="display:none;position:absolute;top:38px;right:0;width:360px;max-height:440px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r8);box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:220;color:var(--text)">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)">
+            <span style="font-size:12.5px;font-weight:700">Notificaciones</span>
+            <span style="font-size:10.5px;color:var(--text3);font-family:var(--mono)" id="notifPanelCount">0</span>
+            <button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:10.5px;padding:3px 8px" onclick="marcarTodasAlertasLeidas()">Marcar todas como leídas</button>
+          </div>
+          <div id="notifList" style="padding:8px"></div>
+        </div>
+      </div>
       <!-- Theme toggle -->
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Modo claro/oscuro">
         <svg id="themeIconDark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v1M8 14v1M1 8h1M14 8h1M3.05 3.05l.71.71M12.24 12.24l.71.71M3.05 12.95l.71-.71M12.24 3.76l.71-.71"/><circle cx="8" cy="8" r="3"/></svg>
@@ -901,6 +917,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
     <!-- ══ MENÚ LATERAL (retráctil) — Comercial / Balance ══ -->
     <aside class="sidebar" id="sidebar">
       <nav class="sidebar-nav">
+        <button class="sidebar-item" id="navDashboardBtn" onclick="switchSection('dashboard')" title="Dashboard General">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="2" width="5.5" height="8.5" rx="1"/><rect x="2" y="9" width="5.5" height="5" rx="1"/><rect x="8.5" y="12" width="5.5" height="2" rx="1"/></svg>
+          <span>Dashboard General</span>
+        </button>
         <button class="sidebar-item active" id="navComercialBtn" onclick="switchSection('comercial')" title="Comercial">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>
           <span>Comercial</span>
@@ -1009,6 +1029,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <button class="bal-tab" id="sisUsuariosBtn" onclick="switchSistemasSubTab('usuarios')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.2"/><path d="M2 13c0-2.3 1.8-4 4-4s4 1.7 4 4"/><circle cx="12.2" cy="5.5" r="1.7"/><path d="M10.7 9.3c1.7.2 3 1.6 3 3.7"/></svg>
           Usuarios
+        </button>
+        <button class="bal-tab" id="sisReportesBtn" onclick="switchSistemasSubTab('reportes')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1.2"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg>
+          Reportes
         </button>
       </nav>
 
@@ -1793,6 +1817,49 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         </div>
       </div><!-- /sisSubUsuarios -->
 
+      <!-- Sub-vista: REPORTES (Fase 4 — reportes exportables PDF/Excel) -->
+      <div id="sisSubReportes" class="emp-subpane">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <select class="fsort" id="repTipoSel" onchange="onReporteTipoChange(this.value)" style="height:28px">
+            <option value="cot">Cotizaciones</option>
+            <option value="fac">Facturas</option>
+            <option value="oc">OC Clientes</option>
+            <option value="ing">Ingresos</option>
+            <option value="gas">Salidas</option>
+          </select>
+          <span class="fsep"></span>
+          <span style="font-size:11.5px;color:var(--text3)">Del</span>
+          <input type="date" id="repFechaDesde" class="form-input" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="renderReportePreview()">
+          <span style="font-size:11.5px;color:var(--text3)">al</span>
+          <input type="date" id="repFechaHasta" class="form-input" style="height:28px;padding:0 8px;font-size:12px;width:auto" onchange="renderReportePreview()">
+          <button type="button" class="btn btn-ghost btn-sm" style="margin-left:4px" onclick="document.getElementById('repFechaDesde').value='';document.getElementById('repFechaHasta').value='';renderReportePreview()">Limpiar fechas</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" id="repTituloTabla">Cotizaciones</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="repCount">0</span>
+            <div style="margin-left:auto;display:flex;gap:8px">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="exportarReporteExcel()">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><rect x="2" y="2" width="12" height="12" rx="1.2"/><path d="M5 5l6 6M11 5l-6 6"/></svg>
+                Exportar Excel
+              </button>
+              <button type="button" class="btn btn-red btn-sm" onclick="exportarReportePDF()">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><rect x="2" y="2" width="12" height="12" rx="1.2"/><path d="M5 6h6M5 9h6M5 12h3"/></svg>
+                Exportar PDF
+              </button>
+            </div>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead id="repTheadRow"></thead>
+              <tbody id="repTbody">
+                <tr class="loading-row"><td colspan="8">Elige un tipo de reporte para ver la vista previa.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubReportes -->
+
     </div><!-- /tabSistemas -->
 
     <!-- ══ TAB: CENTRO DE ESTRATEGIA FINANCIERA ══ -->
@@ -2023,6 +2090,43 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       </div><!-- /finSubHist -->
 
     </div><!-- /tabFin -->
+
+    <!-- SUB-VISTA: DASHBOARD GENERAL (Fase 4) — cruza Comercial + Nómina + Finanzas + Obras -->
+    <div id="tabDashboard" class="tab-pane">
+      <div class="dash-kpi-grid" id="dgKpis">
+        <div class="stat cg"><div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dgKpiIng">—</div><div class="stat-delta">Pagados en el año</div></div>
+        <div class="stat cr"><div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dgKpiGas">—</div><div class="stat-delta">Pagados en el año</div></div>
+        <div class="stat cb"><div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dgKpiBal">—</div><div class="stat-delta">Ingresos − Gastos</div></div>
+        <div class="stat cy"><div class="stat-lbl">Cotizaciones Activas</div><div class="stat-val" id="dgKpiCot">—</div><div class="stat-delta">Pendientes + Enviadas</div></div>
+        <div class="stat cg"><div class="stat-lbl">Obras en Proceso</div><div class="stat-val" id="dgKpiObras">—</div><div class="stat-delta" id="dgKpiObrasAvance">Avance promedio —</div></div>
+        <div class="stat cr"><div class="stat-lbl">Nómina Pagada</div><div class="stat-val" id="dgKpiNomina">—</div><div class="stat-delta">Pagada en el año</div></div>
+      </div>
+      <!-- Filtro año -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="font-size:11.5px;color:var(--text3)">Año:</span>
+        <select id="dgYear" onchange="renderDashboardGeneral()" style="height:28px;padding:0 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text2);outline:none;"></select>
+      </div>
+      <div class="dash-grid" style="margin-bottom:14px">
+        <div class="dash-card">
+          <div class="dash-card-title">Ingresos vs Gastos por Mes</div>
+          <div class="dash-chart-wrap"><canvas id="dgChartBarMes"></canvas></div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">Obras por Estatus</div>
+          <div class="dash-chart-wrap"><canvas id="dgChartObrasEstatus"></canvas></div>
+        </div>
+      </div>
+      <div class="dash-grid" style="margin-bottom:14px">
+        <div class="dash-card">
+          <div class="dash-card-title">Cotizaciones por Estatus</div>
+          <div class="dash-chart-wrap"><canvas id="dgChartCotEstatus"></canvas></div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">Obras con menor avance</div>
+          <div id="dgObrasBajoAvance" style="padding:4px 2px;font-size:12px;color:var(--text2)">—</div>
+        </div>
+      </div>
+    </div><!-- /tabDashboard -->
 
     <!-- SUB-VISTA: OBRAS / PROYECTOS (Fase 3) -->
     <div id="tabObras" class="tab-pane">
@@ -3251,6 +3355,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       <div class="form-group full">
         <label class="form-label">Módulos habilitados</label>
         <div id="nuModulosWrap" style="display:flex;flex-direction:column;gap:6px;padding:8px 0">
+          <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="dashboard" id="nuModDashboard" style="width:16px;height:16px"><label class="form-label" for="nuModDashboard" style="margin:0;cursor:pointer">Dashboard General</label></div>
           <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="comercial" id="nuModComercial" style="width:16px;height:16px"><label class="form-label" for="nuModComercial" style="margin:0;cursor:pointer">Comercial (Cotizaciones, Facturas, OC Clientes)</label></div>
           <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="bal" id="nuModBal" style="width:16px;height:16px"><label class="form-label" for="nuModBal" style="margin:0;cursor:pointer">Balance</label></div>
           <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="fin" id="nuModFin" style="width:16px;height:16px"><label class="form-label" for="nuModFin" style="margin:0;cursor:pointer">Centro Financiero</label></div>
@@ -3283,12 +3388,16 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group">
           <label class="form-label">Cliente</label>
-          <select class="form-select" id="oCliente"></select>
+          <select class="form-select" id="oCliente" onchange="onObraClienteChange()"></select>
         </div>
         <div class="form-group">
-          <label class="form-label">Responsable / Encargado de obra</label>
-          <input type="text" class="form-input" id="oResponsable" placeholder="Nombre del encargado">
+          <label class="form-label">Contacto</label>
+          <select class="form-select" id="oContacto"></select>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Responsable / Encargado de obra</label>
+        <input type="text" class="form-input" id="oResponsable" placeholder="Nombre del encargado">
       </div>
       <div class="form-group">
         <label class="form-label">Dirección / Ubicación</label>
@@ -3968,6 +4077,10 @@ const ST = {
   escenariosError: null,
   objetivos: [],          // hoja "Objetivos_Financieros" (Fase 3 — metas)
   objetivosError: null,
+  alertasLeidas: [],       // hoja "Alertas_Leidas" (Fase 4 — notificaciones centralizadas descartadas)
+  alertasLeidasIds: new Set(),
+  alertasLeidasError: null,
+  notifPanelOpen: false,
   objetivoEditId: null,
   finSubTab: 'dash',
   deudaEditId: null,
@@ -4217,7 +4330,7 @@ function moduloPermitido(mod){
 }
 function primerModuloPermitido(){
   const permitidos = modulosPermitidos();
-  const orden = ['comercial','bal','obras','fin','emp','sistemas'];
+  const orden = ['dashboard','comercial','bal','obras','fin','emp','sistemas'];
   if(permitidos===null) return 'comercial';
   return orden.find(m=>permitidos.includes(m)) || null;
 }
@@ -4229,6 +4342,7 @@ function primerModuloPermitido(){
 function aplicarPermisosUI(){
   const permitidos = modulosPermitidos();
   const NAV = [
+    {mod:'dashboard', navBtn:'navDashboardBtn'},
     {mod:'comercial', navBtn:'navComercialBtn'},
     {mod:'bal',       navBtn:'navBalanceBtn'},
     {mod:'obras',     navBtn:'navObrasBtn'},
@@ -4386,7 +4500,8 @@ async function loadAll() {
       {k:'nom', sheet:'Nominas', range:'Nominas!A2:AV'},
       {k:'par', sheet:'Parametros', range:'Parametros!A1:B50'},
       {k:'usr', sheet:'Usuarios', range:'Usuarios!A2:H'},
-      {k:'obr', sheet:'Obras', range:'Obras!A2:P'},
+      {k:'obr', sheet:'Obras', range:'Obras!A2:Q'},
+      {k:'alertLeidas', sheet:'Alertas_Leidas', range:'Alertas_Leidas!A2:C'}, // Fase 4: notificaciones centralizadas descartadas
     ];
     const presentes = ALL_RANGES.filter(x => sheetMap[x.sheet]!==undefined);
     const valores = await sheetsBatchGet(presentes.map(x=>x.range));
@@ -4461,7 +4576,8 @@ async function loadAll() {
        A=ID, B=Nombre, C=ID_Cliente, D=Direccion, E=Responsable, F=Presupuesto,
        G=Fecha_Inicio, H=Fecha_Fin_Estimada, I=Fecha_Fin_Real, J=Estatus,
        K=Modo_Avance (manual|checklist), L=Avance_Manual (0-100),
-       M=Etapas_JSON ([{nombre,hecho}]), N=Notas, O=Fecha_Creacion, P=Creado_Por.
+       M=Etapas_JSON ([{nombre,hecho}]), N=Notas, O=Fecha_Creacion, P=Creado_Por,
+       Q=ID_Contacto.
        Se carga en try/catch propio, igual que Usuarios/Contraseñas, para que si la
        hoja aún no existe no rompa el resto de la carga; la vista de Obras muestra
        un aviso explicando cómo crearla. */
@@ -4490,6 +4606,7 @@ async function loadAll() {
           notas: r[13]||'',
           fechaCreacion: r[14]||'',
           creadoPor: r[15]||'',
+          idContacto: r[16]||'',
         };
       }).filter(o=>o.id);
     }catch(obrErr){
@@ -4498,6 +4615,22 @@ async function loadAll() {
     }
     renderObras();
     populateObraSelects();
+
+    /* Alertas leídas/descartadas (Fase 4 — notificaciones centralizadas) — hoja
+       "Alertas_Leidas": A=ID_Alerta, B=Fecha, C=Usuario. Guarda qué alertas ya
+       vio/descartó el usuario en la campanita, para no repetírselas. Si la hoja
+       no existe todavía, simplemente no se recuerda nada entre sesiones (no
+       rompe el resto de la carga). */
+    ST.alertasLeidasError = null;
+    try{
+      if(faltaHoja('alertLeidas')) throw new Error('No se encontró la hoja "Alertas_Leidas".');
+      const alR = BR.alertLeidas;
+      ST.alertasLeidas = (alR||[]).map((r,i)=>({ _row:i+2, id:r[0]||'', fecha:r[1]||'', usuario:r[2]||'' })).filter(a=>a.id);
+    }catch(alErr){
+      ST.alertasLeidas = [];
+      ST.alertasLeidasError = alErr.result?.error?.message || alErr.message || String(alErr);
+    }
+    ST.alertasLeidasIds = new Set(ST.alertasLeidas.map(a=>a.id));
 
     /* Registros de asistencia — se carga aparte (try/catch propio) para que, si la hoja
        "Registros" no existe o el nombre no coincide, NO se rompa la carga del resto de la app
@@ -5023,6 +5156,10 @@ async function loadAll() {
     updateIngStats();
     updateGasStats();
     renderDashboard();
+    // Fase 4 — Notificaciones centralizadas: se recalculan aquí porque ya están
+    // cargados todos los datos que las alimentan (deudas, cotizaciones, ingresos,
+    // salidas, obras, alertas leídas).
+    renderNotifBell();
     document.getElementById('lastUpd').textContent = 'Act. ' +
       new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
 
@@ -5031,6 +5168,9 @@ async function loadAll() {
     toast('err', 'Error al cargar datos: ' + (e.result?.error?.message || e.message || e));
   }
   setLoading(false);
+  // FASE 4 — Dashboard General: se re-renderiza en cada carga (la función misma
+  // se sale de inmediato si esa pestaña no está activa, igual que renderDashboard).
+  renderDashboardGeneral();
   // FASE 2 — control de acceso real: se reaplica en cada carga (incluido el
   // auto-refresh) para reaccionar si un Admin cambió el rol/módulos de este
   // usuario mientras seguía conectado. Sin sesión de Google no hace nada.
@@ -9610,16 +9750,17 @@ function switchEmpSubTab(sub){
    formulario de Cotización, que solo permite agregar). */
 function switchSistemasSubTab(sub){
   ST.sisSubTab = sub;
-  ['sisSubClientes','sisSubArticulos','sisSubContrasenas','sisSubUsuarios'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['sisClientesBtn','sisArticulosBtn','sisContrasenasBtn','sisUsuariosBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', contrasenas:'sisSubContrasenas', usuarios:'sisSubUsuarios'}[sub] || 'sisSubClientes';
-  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', contrasenas:'sisContrasenasBtn', usuarios:'sisUsuariosBtn'}[sub] || 'sisClientesBtn';
+  ['sisSubClientes','sisSubArticulos','sisSubContrasenas','sisSubUsuarios','sisSubReportes'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['sisClientesBtn','sisArticulosBtn','sisContrasenasBtn','sisUsuariosBtn','sisReportesBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', contrasenas:'sisSubContrasenas', usuarios:'sisSubUsuarios', reportes:'sisSubReportes'}[sub] || 'sisSubClientes';
+  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', contrasenas:'sisContrasenasBtn', usuarios:'sisUsuariosBtn', reportes:'sisReportesBtn'}[sub] || 'sisClientesBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
   if(sub==='clientes') renderSisClientes();
   if(sub==='articulos') renderSisArticulos();
   if(sub==='contrasenas') renderSisContrasenas();
   if(sub==='usuarios') renderSisUsuarios();
+  if(sub==='reportes') renderReportePreview();
   saveLastView();
 }
 
@@ -9694,7 +9835,7 @@ function openEditCliente(id){
    (ocultar módulos no habilitados, bloquear Pendientes/Inactivos, etc.) vive
    en las funciones modulosPermitidos()/aplicarPermisosUI() más arriba en este
    archivo (buscar "FASE 2"). */
-const USUARIO_MODULOS = ['comercial','bal','obras','fin','emp','sistemas'];
+const USUARIO_MODULOS = ['dashboard','comercial','bal','obras','fin','emp','sistemas'];
 function genUsuarioId(){ return 'USR'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 function onSisUsuariosSearch(v){ ST.sisUsuariosQuery = (v||'').toLowerCase(); renderSisUsuarios(); }
 function estadoUsuarioPillClass(estado){
@@ -9721,7 +9862,7 @@ function renderSisUsuarios(){
     tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin usuarios registrados todavía.'}</td></tr>`;
     return;
   }
-  const modLabels = {comercial:'Comercial', bal:'Balance', obras:'Obras', fin:'Centro Financiero', emp:'Empleados', sistemas:'Sistemas'};
+  const modLabels = {dashboard:'Dashboard General', comercial:'Comercial', bal:'Balance', obras:'Obras', fin:'Centro Financiero', emp:'Empleados', sistemas:'Sistemas'};
   tbody.innerHTML = list.map(u=>`<tr>
     <td style="font-weight:500;font-size:12.5px">${esc(u.nombre||'—')}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(u.email)}</td>
@@ -9806,6 +9947,226 @@ async function saveNewUsuario(){
   btn.disabled=false;
 }
 
+/* ── REPORTES EXPORTABLES (Sistemas > Reportes — Fase 4) ──
+   Genera reportes en PDF (jsPDF, ya usado en el resto de la app) y en Excel
+   (SheetJS, agregado solo para este módulo) a partir de los datos que ya
+   están cargados en memoria (ST.cotizaciones/facturas/ocAll/ingresos/salidas).
+   No hace peticiones nuevas a Sheets: usa lo que loadAll() ya trajo.
+   Cada tipo de reporte define sus columnas UNA vez (cfg.cols) y esa misma
+   definición alimenta la vista previa en pantalla, el PDF y el Excel, para
+   que los tres coincidan siempre. */
+function getRepCliente(id){
+  if(!id) return '—';
+  const c = ST.clientes[id];
+  return c ? (c.nombre||id) : id;
+}
+const REPORTES_TIPOS = {
+  cot: {
+    label: 'Cotizaciones',
+    data: ()=> ST.cotizaciones||[],
+    cols: [
+      {label:'ID',       w:18, get:r=>r.id||'—'},
+      {label:'Fecha',    w:20, get:r=>r.fecha||'—'},
+      {label:'Cliente',  w:44, get:r=>getRepCliente(r.id_cli)},
+      {label:'Subtotal', w:22, get:r=>fmtMXN(r.sub),   align:'right', raw:r=>r.sub},
+      {label:'IVA',      w:18, get:r=>fmtMXN(r.iva),   align:'right', raw:r=>r.iva},
+      {label:'Total',    w:22, get:r=>fmtMXN(r.total), align:'right', raw:r=>r.total, sum:true},
+      {label:'Estatus',  w:20, get:r=>r.estatus||'—'},
+    ]
+  },
+  fac: {
+    label: 'Facturas',
+    data: ()=> ST.facturas||[],
+    cols: [
+      {label:'Folio',    w:18, get:r=>r.folio||r.id||'—'},
+      {label:'Fecha',    w:18, get:r=>r.fecha||'—'},
+      {label:'Cliente',  w:40, get:r=>getRepCliente(r.id_cli)},
+      {label:'Concepto', w:42, get:r=>r.concepto||'—'},
+      {label:'Total',    w:22, get:r=>fmtMXN(r.total), align:'right', raw:r=>r.total, sum:true},
+      {label:'Método',   w:18, get:r=>r.metodo||'—'},
+      {label:'Estatus',  w:22, get:r=>r.estatus||'—'},
+    ]
+  },
+  oc: {
+    label: 'OC Clientes',
+    data: ()=> ST.ocAll||[],
+    cols: [
+      {label:'Número',   w:20, get:r=>r.numero||r.id||'—'},
+      {label:'Fecha',    w:18, get:r=>r.fecha||'—'},
+      {label:'Cliente',  w:40, get:r=>getRepCliente(r.id_cli)},
+      {label:'Concepto', w:44, get:r=>r.concepto||'—'},
+      {label:'Monto',    w:24, get:r=>fmtMXN(r.monto), align:'right', raw:r=>r.monto, sum:true},
+      {label:'Estatus',  w:24, get:r=>r.estatus||'—'},
+    ]
+  },
+  ing: {
+    label: 'Ingresos',
+    data: ()=> ST.ingresos||[],
+    cols: [
+      {label:'Fecha',       w:18, get:r=>r.fecha||'—'},
+      {label:'Concepto',    w:36, get:r=>r.concepto||'—'},
+      {label:'Monto',       w:22, get:r=>fmtMXN(r.monto), align:'right', raw:r=>r.monto, sum:true},
+      {label:'Cuenta',      w:18, get:r=>r.cuenta||'—'},
+      {label:'Estado',      w:18, get:r=>r.estado||'—'},
+      {label:'Cliente',     w:34, get:r=>r.cliente||'—'},
+      {label:'Responsable', w:24, get:r=>r.responsable||'—'},
+    ]
+  },
+  gas: {
+    label: 'Salidas',
+    data: ()=> ST.salidas||[],
+    cols: [
+      {label:'Fecha',       w:16, get:r=>r.fecha||'—'},
+      {label:'Concepto',    w:32, get:r=>r.concepto||'—'},
+      {label:'Monto',       w:20, get:r=>fmtMXN(r.monto), align:'right', raw:r=>r.monto, sum:true},
+      {label:'Cuenta',      w:16, get:r=>r.cuenta||'—'},
+      {label:'Estado',      w:16, get:r=>r.estado||'—'},
+      {label:'Proveedor',   w:28, get:r=>r.proveedor||'—'},
+      {label:'Categoría',   w:20, get:r=>r.categoria||'—'},
+      {label:'Responsable', w:18, get:r=>r.responsable||'—'},
+    ]
+  },
+};
+function reporteRangoTexto(){
+  const desde = document.getElementById('repFechaDesde')?.value||'';
+  const hasta = document.getElementById('repFechaHasta')?.value||'';
+  if(!desde && !hasta) return 'Todos los registros';
+  if(desde && hasta) return `Del ${desde} al ${hasta}`;
+  if(desde) return `Desde ${desde}`;
+  return `Hasta ${hasta}`;
+}
+function getReporteFiltrado(tipo){
+  const cfg = REPORTES_TIPOS[tipo]; if(!cfg) return [];
+  const desde = document.getElementById('repFechaDesde')?.value||'';
+  const hasta = document.getElementById('repFechaHasta')?.value||'';
+  let list = (cfg.data()||[]).slice();
+  if(desde) list = list.filter(r=>(r.fecha||'') >= desde);
+  if(hasta) list = list.filter(r=>(r.fecha||'') <= hasta);
+  list.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  return list;
+}
+function onReporteTipoChange(v){ renderReportePreview(); }
+function renderReportePreview(){
+  const tipo = document.getElementById('repTipoSel')?.value || 'cot';
+  const cfg = REPORTES_TIPOS[tipo]; if(!cfg) return;
+  document.getElementById('repTituloTabla').textContent = cfg.label;
+  const thead = document.getElementById('repTheadRow');
+  thead.innerHTML = '<tr>'+cfg.cols.map(c=>`<th${c.align==='right'?' style="text-align:right"':''}>${esc(c.label)}</th>`).join('')+'</tr>';
+  const rows = getReporteFiltrado(tipo);
+  document.getElementById('repCount').textContent = rows.length;
+  const tbody = document.getElementById('repTbody');
+  if(!rows.length){
+    tbody.innerHTML = `<tr><td colspan="${cfg.cols.length}" style="padding:24px;text-align:center;color:var(--text3)">Sin registros para ese tipo de reporte / rango de fechas.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r=>'<tr>'+cfg.cols.map(c=>`<td${c.align==='right'?' style="text-align:right"':''}>${esc(String(c.get(r)))}</td>`).join('')+'</tr>').join('');
+}
+/* PDF: mismo patrón de imprimirListaEmpleadosActivos() (columnas con ancho fijo,
+   encabezado repetido por página, franjas alternas), generalizado por cfg.cols
+   y con una fila de TOTAL para las columnas marcadas con sum:true. */
+function exportarReportePDF(){
+  if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
+  const tipo = document.getElementById('repTipoSel').value;
+  const cfg = REPORTES_TIPOS[tipo];
+  const rows = getReporteFiltrado(tipo);
+  if(!rows.length){ toast('err','No hay registros para exportar con ese filtro.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const C = { red:[175,13,18], ink:[26,26,26], sub:[120,120,120], line:[222,222,222], head:[245,245,245] };
+  const PW=210, ML=14, MR=196, CW=MR-ML, BOTY=278;
+  function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
+  function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
+
+  const cols = cfg.cols;
+  const colX = []; let acc = ML;
+  cols.forEach(c=>{ colX.push(acc); acc += c.w; });
+  const rango = reporteRangoTexto();
+
+  function pageHeader(pg,total){
+    doc.setFillColor(...C.red); doc.rect(0,0,PW,2.2,'F');
+    setF('bold',15); doc.text('Reporte de '+cfg.label, ML, 16);
+    setF('normal',8.5,C.sub);
+    doc.text('Constructora Conecte  ·  '+rango+'  ·  Generado el '+todayISO()+'  ·  '+rows.length+' registro(s)', ML, 22);
+    doc.text(`Página ${pg} de ${total}`, MR, 22, {align:'right'});
+    hline(26);
+    doc.setFillColor(...C.head); doc.rect(ML,29,CW,7,'F');
+    setF('bold',8.2,C.ink);
+    cols.forEach((c,i)=> doc.text(c.label, c.align==='right'?colX[i]+c.w-2:colX[i]+1.5, 34, c.align==='right'?{align:'right'}:{}));
+    hline(36);
+    return 40;
+  }
+
+  let y = pageHeader(1,1);
+  const rowH = 7;
+  setF('normal',8.3,C.ink);
+  rows.forEach((r,i)=>{
+    if(y > BOTY){ doc.addPage(); y = pageHeader(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages()); setF('normal',8.3,C.ink); }
+    if(i%2===1){ doc.setFillColor(250,250,250); doc.rect(ML,y-4.6,CW,rowH,'F'); }
+    cols.forEach((c,ci)=>{
+      const val = String(c.get(r));
+      const x = c.align==='right' ? colX[ci]+c.w-2 : colX[ci]+1.5;
+      doc.text(val.length>40?val.slice(0,39)+'…':val, x, y, c.align==='right'?{align:'right'}:{});
+    });
+    y += rowH;
+    doc.setDrawColor(...C.line); doc.setLineWidth(0.15); doc.line(ML,y-4.8,MR,y-4.8);
+  });
+
+  const sumCols = cols.map((c,i)=>c.sum?i:-1).filter(i=>i>=0);
+  if(sumCols.length){
+    if(y > BOTY-6){ doc.addPage(); y = pageHeader(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages()); }
+    y += 2; hline(y-4.8,C.ink,0.4);
+    setF('bold',8.5,C.ink);
+    doc.text('TOTAL', colX[0]+1.5, y);
+    sumCols.forEach(ci=>{
+      const total = rows.reduce((a,r)=>a+(cols[ci].raw?(cols[ci].raw(r)||0):0),0);
+      doc.text(fmtMXN(total), colX[ci]+cols[ci].w-2, y, {align:'right'});
+    });
+  }
+
+  const totalPages = doc.internal.getNumberOfPages();
+  if(totalPages>1){
+    for(let p=1;p<=totalPages;p++){
+      doc.setPage(p);
+      setF('normal',8.5,C.sub);
+      doc.setFillColor(255,255,255); doc.rect(MR-30,18,30,6,'F');
+      doc.text(`Página ${p} de ${totalPages}`, MR, 22, {align:'right'});
+    }
+  }
+
+  doc.save(`Reporte_${cfg.label.replace(/\s+/g,'_')}_${todayISO()}.pdf`);
+  toast('ok','Reporte PDF generado.');
+}
+/* Excel: misma cfg.cols que el PDF y la vista previa, vía SheetJS. Los valores
+   numéricos (raw) se exportan como número real, no como texto con "$", para
+   que se puedan sumar/graficar directamente en Excel. Incluye fila de TOTAL
+   para las columnas marcadas con sum:true, igual que el PDF. */
+function exportarReporteExcel(){
+  if(!window.XLSX){ toast('err','La librería de Excel no está cargada. Recarga la página.'); return; }
+  const tipo = document.getElementById('repTipoSel').value;
+  const cfg = REPORTES_TIPOS[tipo];
+  const rows = getReporteFiltrado(tipo);
+  if(!rows.length){ toast('err','No hay registros para exportar con ese filtro.'); return; }
+
+  const headers = cfg.cols.map(c=>c.label);
+  const aoa = [headers, ...rows.map(r=>cfg.cols.map(c=> c.raw ? (c.raw(r)||0) : c.get(r)))];
+  const sumCols = cfg.cols.map((c,i)=>c.sum?i:-1).filter(i=>i>=0);
+  if(sumCols.length){
+    const totalRow = cfg.cols.map((c,i)=>{
+      if(i===0) return 'TOTAL';
+      if(!sumCols.includes(i)) return '';
+      return rows.reduce((a,r)=>a+(c.raw?(c.raw(r)||0):0),0);
+    });
+    aoa.push(totalRow);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = cfg.cols.map(c=>({wch: Math.max(10, Math.round(c.w*0.55))}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, cfg.label.slice(0,31));
+  XLSX.writeFile(wb, `Reporte_${cfg.label.replace(/\s+/g,'_')}_${todayISO()}.xlsx`);
+  toast('ok','Reporte Excel generado.');
+}
+
 /* ── OBRAS / PROYECTOS (Fase 3) ──
    Módulo nuevo, independiente de Empleados/Sistemas. Reutiliza los mismos
    patrones que Usuarios/Contraseñas: try/catch propio en loadAll, CRUD con
@@ -9840,7 +10201,7 @@ function renderObras(){
       ⚠️ No se pudo leer la hoja <strong>Obras</strong> todavía (${esc(ST.obrasError)}).<br>
       Crea una hoja llamada exactamente <strong>Obras</strong> con columnas: A=ID, B=Nombre, C=ID_Cliente, D=Direccion,
       E=Responsable, F=Presupuesto, G=Fecha_Inicio, H=Fecha_Fin_Estimada, I=Fecha_Fin_Real, J=Estatus,
-      K=Modo_Avance, L=Avance_Manual, M=Etapas_JSON, N=Notas, O=Fecha_Creacion, P=Creado_Por.
+      K=Modo_Avance, L=Avance_Manual, M=Etapas_JSON, N=Notas, O=Fecha_Creacion, P=Creado_Por, Q=ID_Contacto.
       En cuanto exista podrás agregar y editar desde aquí.
     </td></tr>`;
     document.getElementById('obrasCount').textContent='0';
@@ -9908,6 +10269,24 @@ function populateObraClienteSelect(selected){
   sel.innerHTML = opts;
   sel.value = selected||'';
 }
+/* Contactos del cliente elegido en el modal de Obra. Función propia (no reutiliza
+   populateContactos de Cotizaciones) porque esa está atada a los IDs fContacto/fCliente
+   y a la opción "+ Agregar nuevo contacto…" que abre el modal de Contactos con el
+   cliente de la cotización, no el de la obra; aquí basta con listar los contactos ya
+   existentes de ese cliente. */
+function populateObraContactos(id_cli, selected){
+  const sel = document.getElementById('oContacto'); if(!sel) return;
+  sel.innerHTML = '<option value="">— Sin contacto —</option>';
+  const filtered = id_cli && ST.contactosList ? ST.contactosList.filter(c=>c.id_cli===id_cli) : [];
+  filtered.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c.id; o.textContent=c.nombre; sel.appendChild(o);
+  });
+  if(selected && filtered.some(c=>c.id===selected)) sel.value = selected;
+}
+function onObraClienteChange(){
+  populateObraContactos(document.getElementById('oCliente').value, '');
+}
 function renderEtapasEditor(){
   const wrap = document.getElementById('oEtapasWrap'); if(!wrap) return;
   const etapas = ST._obraEtapas||[];
@@ -9958,6 +10337,7 @@ function openAddObra(){
   document.getElementById('obraModalTitle').textContent = 'Nueva Obra / Proyecto';
   document.getElementById('oNombre').value='';
   populateObraClienteSelect('');
+  populateObraContactos('', '');
   document.getElementById('oDireccion').value='';
   document.getElementById('oResponsable').value='';
   document.getElementById('oPresupuesto').value='';
@@ -9981,6 +10361,7 @@ function openEditObra(id){
   document.getElementById('obraModalTitle').textContent = 'Editar Obra / Proyecto';
   document.getElementById('oNombre').value = o.nombre||'';
   populateObraClienteSelect(o.idCliente);
+  populateObraContactos(o.idCliente, o.idContacto);
   document.getElementById('oDireccion').value = o.direccion||'';
   document.getElementById('oResponsable').value = o.responsable||'';
   document.getElementById('oPresupuesto').value = o.presupuesto||'';
@@ -10001,6 +10382,7 @@ async function saveObra(){
   const nombre = document.getElementById('oNombre').value.trim();
   if(!nombre){ toast('err','El nombre de la obra es obligatorio.'); return; }
   const idCliente = document.getElementById('oCliente').value;
+  const idContacto = document.getElementById('oContacto').value;
   const direccion = document.getElementById('oDireccion').value.trim();
   const responsable = document.getElementById('oResponsable').value.trim();
   const presupuesto = parseFloat(document.getElementById('oPresupuesto').value)||0;
@@ -10018,21 +10400,22 @@ async function saveObra(){
     const etapasJSON = JSON.stringify(etapas);
     if(ST.editObraId){
       const o = (ST.obras||[]).find(x=>x.id===ST.editObraId);
-      await sheetsUpdate(`Obras!B${o._row}:N${o._row}`, [[
+      await sheetsUpdate(`Obras!B${o._row}:Q${o._row}`, [[
         nombre, idCliente, direccion, responsable, presupuesto.toFixed(2),
-        fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapasJSON, notas
+        fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapasJSON, notas,
+        o.fechaCreacion||'', o.creadoPor||'', idContacto
       ]]);
-      Object.assign(o, {nombre, idCliente, direccion, responsable, presupuesto, fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapas});
+      Object.assign(o, {nombre, idCliente, idContacto, direccion, responsable, presupuesto, fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapas});
       toast('ok',`Obra "${nombre}" actualizada.`);
     } else {
       const id = genObraId();
       const hoy = todayISO();
-      await sheetsAppend('Obras!A2:P', [[
+      await sheetsAppend('Obras!A2:Q', [[
         id, nombre, idCliente, direccion, responsable, presupuesto.toFixed(2),
-        fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapasJSON, notas, hoy, ST.usuario||''
+        fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapasJSON, notas, hoy, ST.usuario||'', idContacto
       ]]);
       ST.obras = ST.obras||[];
-      ST.obras.push({_row: ST.obras.length+2, id, nombre, idCliente, direccion, responsable, presupuesto, fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapas, notas, fechaCreacion:hoy, creadoPor:ST.usuario||''});
+      ST.obras.push({_row: ST.obras.length+2, id, nombre, idCliente, idContacto, direccion, responsable, presupuesto, fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapas, notas, fechaCreacion:hoy, creadoPor:ST.usuario||''});
       toast('ok',`Obra "${nombre}" creada.`);
     }
     renderObras();
@@ -10040,6 +10423,117 @@ async function saveObra(){
     closeObraModal();
   }catch(e){ toast('err','Error al guardar obra: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false;
+}
+
+/* ── DASHBOARD GENERAL (Fase 4) ──
+   Cruza Comercial (Cotizaciones) + Finanzas (Ingresos/Salidas) + Nómina + Obras
+   en una sola vista. Reutiliza exactamente el mismo patrón que el Dashboard de
+   Balance (renderDashboard): selector de año basado en Fecha_Pago, destroyChart()
+   + ST._charts, fmtMXN, mismos colores/estructura de Chart.js. */
+function renderDashboardGeneral(){
+  if(document.getElementById('tabDashboard')?.classList.contains('active')===false) return;
+  const ySel=document.getElementById('dgYear');
+  if(ySel){
+    const years=[...new Set([...ST.ingresos,...ST.salidas].map(b=>b.fechaPago?.slice(0,4)).filter(Boolean))].sort().reverse();
+    if(!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
+    const existing=new Set([...ySel.options].map(o=>o.value));
+    if(years.some(y=>!existing.has(y))){
+      const prevVal=ySel.value;
+      ySel.innerHTML='';
+      years.forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y; ySel.appendChild(o); });
+      ySel.value = existing.size && years.includes(prevVal) ? prevVal : String(new Date().getFullYear());
+    }
+  }
+  const year=parseInt(ySel?.value)||new Date().getFullYear();
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  /* ── Finanzas: Ingresos vs Gastos (mismo criterio que Balance: fecha de pago) ── */
+  const ing=(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(year));
+  const gas=(ST.salidas||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(year));
+  function sumByMonth(arr){ return meses.map((_,mi)=>arr.filter(b=>parseInt(b.fechaPago?.slice(5,7))===mi+1).reduce((s,b)=>s+b.monto,0)); }
+  const ingM=sumByMonth(ing), gasM=sumByMonth(gas);
+  const ingPag=ing.filter(b=>b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
+  const gasPag=gas.filter(b=>b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
+  document.getElementById('dgKpiIng').textContent=fmtMXN(ingPag);
+  document.getElementById('dgKpiGas').textContent=fmtMXN(gasPag);
+  const net=ingPag-gasPag;
+  const netEl=document.getElementById('dgKpiBal');
+  netEl.textContent=fmtMXN(net);
+  netEl.style.color=net>=0?'var(--green)':'var(--red)';
+
+  /* ── Comercial: cotizaciones activas ── */
+  const cotActivas = (ST.cotizaciones||[]).filter(c=>c.estatus==='Pendiente'||c.estatus==='Enviado').length;
+  document.getElementById('dgKpiCot').textContent = cotActivas;
+
+  /* ── Obras: en proceso + avance promedio ── */
+  const obrasEnProceso = (ST.obras||[]).filter(o=>o.estatus==='En proceso');
+  document.getElementById('dgKpiObras').textContent = obrasEnProceso.length;
+  const avgAvance = obrasEnProceso.length
+    ? Math.round(obrasEnProceso.reduce((s,o)=>s+avancePct(o),0)/obrasEnProceso.length)
+    : null;
+  document.getElementById('dgKpiObrasAvance').textContent = avgAvance===null ? 'Sin obras en proceso' : `Avance promedio ${avgAvance}%`;
+
+  /* ── Nómina: total pagado en el año (por Fecha_Fin de la semana) ── */
+  const nominaPagada = (ST.nominas||[])
+    .filter(n=>n.estatus==='Pagada' && n.fechaFin && n.fechaFin.startsWith(year))
+    .reduce((s,n)=>s+(n.totalFinal||0),0);
+  document.getElementById('dgKpiNomina').textContent = fmtMXN(nominaPagada);
+
+  const isDark=!document.body.classList.contains('light');
+  const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
+  const textColor=isDark?'#888':'#999';
+  Chart.defaults.color=textColor;
+
+  destroyChart('dgBar');
+  ST._charts['dgBar']=new Chart(document.getElementById('dgChartBarMes'),{
+    type:'bar',
+    data:{
+      labels:meses,
+      datasets:[
+        {label:'Ingresos',data:ingM,backgroundColor:'rgba(72,187,120,.7)',borderRadius:3},
+        {label:'Gastos',data:gasM,backgroundColor:'rgba(229,62,62,.65)',borderRadius:3}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor},ticks:{callback:v=>'$'+v.toLocaleString('es-MX')}}}}
+  });
+
+  /* Obras por estatus */
+  const obrasCountByEstatus = ESTATUS_OBRA.map(e=>(ST.obras||[]).filter(o=>o.estatus===e).length);
+  destroyChart('dgObras');
+  ST._charts['dgObras']=new Chart(document.getElementById('dgChartObrasEstatus'),{
+    type:'doughnut',
+    data:{labels:ESTATUS_OBRA,datasets:[{data:obrasCountByEstatus,backgroundColor:['#63b3ed','#48bb78','#ecc94b','#a0aec0','#e53e3e']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10.5},boxWidth:10}}}}
+  });
+
+  /* Cotizaciones por estatus */
+  const cotEstatusList = [...new Set((ST.cotizaciones||[]).map(c=>c.estatus))];
+  const cotCountByEstatus = cotEstatusList.map(e=>(ST.cotizaciones||[]).filter(c=>c.estatus===e).length);
+  destroyChart('dgCot');
+  ST._charts['dgCot']=new Chart(document.getElementById('dgChartCotEstatus'),{
+    type:'doughnut',
+    data:{labels:cotEstatusList,datasets:[{data:cotCountByEstatus,backgroundColor:['#63b3ed','#48bb78','#ecc94b','#e53e3e','#a0aec0','#ed8936']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10.5},boxWidth:10}}}}
+  });
+
+  /* Obras con menor avance (top 5, excluye Terminada/Cancelada) */
+  const wrap = document.getElementById('dgObrasBajoAvance');
+  if(wrap){
+    const candidatas = (ST.obras||[]).filter(o=>o.estatus!=='Terminada'&&o.estatus!=='Cancelada')
+      .map(o=>({o, pct:avancePct(o)})).sort((a,b)=>a.pct-b.pct).slice(0,5);
+    if(!candidatas.length){
+      wrap.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px 0">Sin obras activas todavía.</div>';
+    } else {
+      wrap.innerHTML = candidatas.map(({o,pct})=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="flex:1;font-size:12px">${esc(o.nombre)}</span>
+          <div style="width:80px;height:6px;border-radius:3px;background:var(--bg3);overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--blue)"></div>
+          </div>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono);width:34px;text-align:right">${pct}%</span>
+        </div>`).join('');
+    }
+  }
 }
 
 /* ── ARTÍCULOS (Sistemas) ── */
@@ -11736,7 +12230,7 @@ function switchTab(tab){
   // permitido para el usuario conectado, se bloquea aquí (punto único por el que
   // pasa toda la navegación: menú lateral, búsqueda global, restoreLastView, etc.)
   if(tab!=='sinacceso'){
-    const MOD_OF_TAB = {cot:'comercial', fac:'comercial', oc:'comercial', bal:'bal', emp:'emp', sistemas:'sistemas', fin:'fin', obras:'obras'};
+    const MOD_OF_TAB = {cot:'comercial', fac:'comercial', oc:'comercial', bal:'bal', emp:'emp', sistemas:'sistemas', fin:'fin', obras:'obras', dashboard:'dashboard'};
     const modDeEsteTab = MOD_OF_TAB[tab];
     if(modDeEsteTab && !moduloPermitido(modDeEsteTab)){
       toast('err','No tienes acceso a ese módulo. Pide a un Admin que te lo habilite en Sistemas > Usuarios.');
@@ -11747,7 +12241,7 @@ function switchTab(tab){
   }
   resetViewTransitionState();
   if(tab==='sinacceso'){
-    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin','tabObras','tabSinAcceso'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin','tabObras','tabDashboard','tabSinAcceso'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById('tabSinAcceso')?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -11758,9 +12252,9 @@ function switchTab(tab){
     return;
   }
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn'}, obras:{pane:'tabObras', label:'Obras', navBtn:'navObrasBtn'} };
+  const SIMPLE_TABS = { emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn'}, obras:{pane:'tabObras', label:'Obras', navBtn:'navObrasBtn'}, dashboard:{pane:'tabDashboard', label:'Dashboard General', navBtn:'navDashboardBtn'} };
   if(SIMPLE_TABS[tab]){
-    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin','tabObras','tabSinAcceso'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin','tabObras','tabDashboard','tabSinAcceso'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -11784,6 +12278,7 @@ function switchTab(tab){
     if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
     if(tab==='sistemas') switchSistemasSubTab(ST.sisSubTab||'clientes');
     if(tab==='fin') switchFinSubTab(ST.finSubTab||'dash');
+    if(tab==='dashboard') renderDashboardGeneral();
     saveLastView();
     return;
   }
@@ -11797,6 +12292,7 @@ function switchTab(tab){
   });
   document.getElementById('tabSinAcceso')?.classList.remove('active');
   document.getElementById('tabObras')?.classList.remove('active');
+  document.getElementById('tabDashboard')?.classList.remove('active');
 
   const target = TABS[tab];
   if(!target){ console.error('switchTab: unknown tab', tab); return; }
@@ -11827,7 +12323,7 @@ function switchTab(tab){
   // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
   // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
   // porque el bloque de arriba solo toggle-a Comercial/Balance.
-  ['navEmpBtn','navSistemasBtn','navFinBtn','navObrasBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['navEmpBtn','navSistemasBtn','navFinBtn','navObrasBtn','navDashboardBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   const empSubNav=document.getElementById('empleadosSubNav');
@@ -13856,7 +14352,7 @@ function finGenerarAlertas(){
 
   activas.forEach(d=>{
     if(d.estado==='Vencida'){
-      alerts.push({sev:'crit', icon:'⛔', msg:`<strong>${esc(d.nombre)}</strong> está marcada como vencida. Revisa el pago pendiente lo antes posible.`});
+      alerts.push({id:`deuda_venc_${d.id}`, kind:'deuda', sev:'crit', icon:'⛔', msg:`<strong>${esc(d.nombre)}</strong> está marcada como vencida. Revisa el pago pendiente lo antes posible.`});
     }
     const pagosDeuda=ST.deudasPagos.filter(p=>p.idDeuda===d.id).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
     let mesesSoloInteres=0;
@@ -13866,22 +14362,22 @@ function finGenerarAlertas(){
     }
     if(mesesSoloInteres>=3){
       const extra = d.modoInteres==='fijo' ? ' Recuerda: en esta deuda el interés no baja aunque abones, solo desaparece si liquidas el saldo completo.' : '';
-      alerts.push({sev:'crit', icon:'🌀', msg:`Llevas <strong>${mesesSoloInteres} pagos consecutivos</strong> pagando solo intereses en <strong>${esc(d.nombre)}</strong>. Esta deuda no está bajando.${extra}`});
+      alerts.push({id:`deuda_soloint_${d.id}`, kind:'deuda', sev:'crit', icon:'🌀', msg:`Llevas <strong>${mesesSoloInteres} pagos consecutivos</strong> pagando solo intereses en <strong>${esc(d.nombre)}</strong>. Esta deuda no está bajando.${extra}`});
     }
     if(pagosDeuda.length>=3 && d.saldoOriginal>0 && d.saldoActual >= d.saldoOriginal*0.97){
-      alerts.push({sev:'crit', icon:'📉', msg:`<strong>${esc(d.nombre)}</strong> prácticamente no ha bajado de saldo después de ${pagosDeuda.length} pagos registrados.`});
+      alerts.push({id:`deuda_nobaja_${d.id}`, kind:'deuda', sev:'crit', icon:'📉', msg:`<strong>${esc(d.nombre)}</strong> prácticamente no ha bajado de saldo después de ${pagosDeuda.length} pagos registrados.`});
     }
     const totCap=pagosDeuda.reduce((s,p)=>s+p.montoCapital,0);
     const totInt=pagosDeuda.reduce((s,p)=>s+p.montoInteres,0);
     if(pagosDeuda.length>=2 && (totCap+totInt)>0 && totInt/(totCap+totInt) > 0.5){
-      alerts.push({sev:'warn', icon:'💸', msg:`En <strong>${esc(d.nombre)}</strong>, el ${Math.round(totInt/(totCap+totInt)*100)}% de lo pagado hasta ahora ha sido interés, no capital.`});
+      alerts.push({id:`deuda_interes_${d.id}`, kind:'deuda', sev:'warn', icon:'💸', msg:`En <strong>${esc(d.nombre)}</strong>, el ${Math.round(totInt/(totCap+totInt)*100)}% de lo pagado hasta ahora ha sido interés, no capital.`});
     }
     const score=finScoreDeuda(d);
     if(score>=60){
-      alerts.push({sev:'warn', icon:'🎯', msg:`<strong>${esc(d.nombre)}</strong> tiene una puntuación de prioridad de ${score}/100 — debería ser de las primeras en liquidarse.`});
+      alerts.push({id:`deuda_score_${d.id}`, kind:'deuda', sev:'warn', icon:'🎯', msg:`<strong>${esc(d.nombre)}</strong> tiene una puntuación de prioridad de ${score}/100 — debería ser de las primeras en liquidarse.`});
     }
     if(d.pagoProgramado>0 && d.saldoActual>0 && d.saldoActual <= d.pagoProgramado*2){
-      alerts.push({sev:'ok', icon:'🏁', msg:`<strong>${esc(d.nombre)}</strong> está a 1-2 pagos de liquidarse por completo.`});
+      alerts.push({id:`deuda_porliquidar_${d.id}`, kind:'deuda', sev:'ok', icon:'🏁', msg:`<strong>${esc(d.nombre)}</strong> está a 1-2 pagos de liquidarse por completo.`});
     }
   });
 
@@ -13890,7 +14386,7 @@ function finGenerarAlertas(){
   const ingresosRecientes = meses3.map(ym=>(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(ym) && b.estado==='Pagado').reduce((s,b)=>s+b.monto,0));
   const promedioIngreso = ingresosRecientes.reduce((a,b)=>a+b,0)/3;
   if(promedioIngreso>0 && compromisos30>promedioIngreso){
-    alerts.push({sev:'crit', icon:'📉', msg:`Tus compromisos de deuda en los próximos 30 días (${fmtMXN(compromisos30)}) superan tu ingreso promedio mensual reciente (${fmtMXN(promedioIngreso)}). Tu flujo podría ser negativo.`});
+    alerts.push({id:'flujo_compromisos30', kind:'deuda', sev:'crit', icon:'📉', msg:`Tus compromisos de deuda en los próximos 30 días (${fmtMXN(compromisos30)}) superan tu ingreso promedio mensual reciente (${fmtMXN(promedioIngreso)}). Tu flujo podría ser negativo.`});
   }
   return alerts;
 }
@@ -13916,6 +14412,150 @@ function renderFinAlertas(){
 }
 
 /* ─── CENTRO DE ESTRATEGIA FINANCIERA — Fase 2 end ─── */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NOTIFICACIONES / ALERTAS CENTRALIZADAS — Fase 4
+   Generaliza el motor de alertas que ya existía en Centro Financiero
+   (finGenerarAlertas, arriba) a una campanita global en el topbar, agregando
+   otras 3 fuentes: Cotizaciones vencidas, Ingresos/Salidas vencidos sin pago
+   y Obras retrasadas. No se guarda nada de esto en Sheets — las alertas se
+   recalculan en vivo cada vez que se cargan datos, igual que las de Deudas.
+   Lo único que SÍ se guarda es qué alertas ya viste/descartaste (hoja
+   "Alertas_Leidas"), para que no se te repitan.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Cotizaciones cuya vigencia (fecha + días de vigencia) ya venció y siguen
+   abiertas (Pendiente/Enviado — nunca se aceptaron ni rechazaron). */
+function alertasCotizacionesVencidas(){
+  const hoy = new Date(new Date().toDateString());
+  const out = [];
+  (ST.cotizaciones||[]).forEach(c=>{
+    if(c.estatus!=='Pendiente' && c.estatus!=='Enviado') return;
+    const f = finParseDate(c.fecha); if(!f) return;
+    const dias = parseInt(c.vigencia)||30;
+    const vence = new Date(f.getTime()+dias*864e5);
+    if(vence < hoy){
+      const cli = getRepCliente(c.id_cli);
+      out.push({id:`cot_venc_${c.id}`, kind:'cot', sev:'warn', icon:'📄', msg:`La cotización <strong>${esc(c.id)}</strong> (${esc(cli)}) venció el ${esc(c.fecha)} y sigue como "${esc(c.estatus)}". Contacta al cliente o actualiza su estatus.`});
+    }
+  });
+  return out;
+}
+/* Ingresos/Salidas con Fecha_Limite ya pasada y que siguen "Pendiente" de
+   pago/cobro. (Facturas no tiene columna de fecha límite propia, por eso no
+   se incluye aquí — ver sugerencia al final del cambio.) */
+function alertasBalancesVencidos(){
+  const hoy = new Date(new Date().toDateString());
+  const out = [];
+  (ST.ingresos||[]).forEach(r=>{
+    if(r.estado!=='Pendiente' || !r.fechaLim) return;
+    const f = finParseDate(r.fechaLim); if(!f || f>=hoy) return;
+    out.push({id:`ing_venc_${r.id}`, kind:'ing', sev:'crit', icon:'💰', msg:`El ingreso <strong>${esc(r.concepto||r.id)}</strong> (${esc(fmtMXN(r.monto))}, ${esc(r.cliente||'sin cliente')}) tenía fecha límite de cobro el ${esc(r.fechaLim)} y sigue pendiente.`});
+  });
+  (ST.salidas||[]).forEach(r=>{
+    if(r.estado!=='Pendiente' || !r.fechaLim) return;
+    const f = finParseDate(r.fechaLim); if(!f || f>=hoy) return;
+    out.push({id:`gas_venc_${r.id}`, kind:'gas', sev:'crit', icon:'🧾', msg:`La salida <strong>${esc(r.concepto||r.id)}</strong> (${esc(fmtMXN(r.monto))}, ${esc(r.proveedor||'sin proveedor')}) tenía fecha límite de pago el ${esc(r.fechaLim)} y sigue pendiente.`});
+  });
+  return out;
+}
+/* Obras "En proceso" cuya fecha de fin estimada ya pasó y no se han
+   marcado como Terminadas. */
+function alertasObrasRetrasadas(){
+  const hoy = new Date(new Date().toDateString());
+  const out = [];
+  (ST.obras||[]).forEach(o=>{
+    if(o.estatus!=='En proceso' || !o.fechaFinEst) return;
+    const f = finParseDate(o.fechaFinEst); if(!f || f>=hoy) return;
+    const pct = avancePct(o);
+    out.push({id:`obra_venc_${o.id}`, kind:'obra', sev:'warn', icon:'🏗️', msg:`La obra <strong>${esc(o.nombre)}</strong> debía terminar el ${esc(o.fechaFinEst)} y va en ${pct}% de avance. Revisa el cronograma.`});
+  });
+  return out;
+}
+/* Unifica todas las fuentes. Cada alerta trae id estable (para poder
+   descartarla individualmente) y kind (para poder navegar al módulo
+   correspondiente al hacer clic). */
+function generarAlertasGlobales(){
+  return [
+    ...finGenerarAlertas(),
+    ...alertasCotizacionesVencidas(),
+    ...alertasBalancesVencidos(),
+    ...alertasObrasRetrasadas(),
+  ];
+}
+function notifIrA(kind){
+  toggleNotifPanel(false);
+  if(kind==='deuda'){ switchTab('fin'); switchFinSubTab('acreedores'); }
+  else if(kind==='cot'){ switchTab('cot'); }
+  else if(kind==='ing'){ switchTab('bal'); switchBalTab('ing'); }
+  else if(kind==='gas'){ switchTab('bal'); switchBalTab('gas'); }
+  else if(kind==='obra'){ switchTab('obras'); }
+}
+function toggleNotifPanel(force){
+  const panel = document.getElementById('notifPanel');
+  const abrir = typeof force==='boolean' ? force : panel.style.display==='none';
+  panel.style.display = abrir ? 'block' : 'none';
+  ST.notifPanelOpen = abrir;
+}
+document.addEventListener('click', e=>{
+  const wrap=document.getElementById('notifWrap');
+  if(wrap && !wrap.contains(e.target)) toggleNotifPanel(false);
+});
+/* Vuelve a pintar la campanita (badge + lista) con las alertas vigentes que
+   el usuario todavía no marcó como leídas. Se llama al final de loadAll() y
+   cada vez que se descarta una alerta. */
+function renderNotifBell(){
+  const badge = document.getElementById('notifBadge');
+  const list = document.getElementById('notifList');
+  const countLbl = document.getElementById('notifPanelCount');
+  if(!badge || !list) return; // topbar aún no montado
+  const todas = generarAlertasGlobales();
+  const visibles = todas.filter(a=>!ST.alertasLeidasIds.has(a.id));
+  ST._alertasVisiblesActuales = visibles; // cache para marcarTodasAlertasLeidas()
+  badge.style.display = visibles.length ? 'block' : 'none';
+  badge.textContent = visibles.length>99 ? '99+' : String(visibles.length);
+  countLbl.textContent = visibles.length;
+  if(!visibles.length){
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">✅ Sin notificaciones pendientes.</div>`;
+    return;
+  }
+  const order={crit:0, warn:1, ok:2};
+  list.innerHTML = visibles.slice().sort((a,b)=>order[a.sev]-order[b.sev]).map(a=>`
+    <div class="fin-alert fin-alert-${a.sev}" style="margin-bottom:6px">
+      <div class="fin-alert-icon">${a.icon}</div>
+      <div class="fin-alert-msg" style="flex:1;cursor:pointer" onclick="notifIrA('${a.kind}')">${a.msg}</div>
+      <button type="button" class="btn-icon" title="Marcar como leída" onclick="event.stopPropagation();marcarAlertaLeida('${a.id}')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="11" height="11"><path d="M3.5 8.5l3 3 6-7"/></svg>
+      </button>
+    </div>`).join('');
+}
+/* Registra la alerta como leída en la hoja "Alertas_Leidas" (append) y la
+   quita de inmediato de la campanita. Si la hoja no existe, avisa una vez
+   con instrucciones exactas para crearla, en vez de fallar en silencio. */
+async function marcarAlertaLeida(id){
+  ST.alertasLeidasIds.add(id); // optimista: desaparece ya de la campanita
+  renderNotifBell();
+  try{
+    await sheetsAppend('Alertas_Leidas!A2:C', [[id, todayISO(), ST.usuario?.email||ST.usuario?.nombre||'']]);
+    ST.alertasLeidas.push({id, fecha:todayISO(), usuario:ST.usuario?.email||''});
+  }catch(e){
+    toast('err','No se pudo guardar en Sheets (¿existe la hoja "Alertas_Leidas"? columnas A=ID_Alerta, B=Fecha, C=Usuario). La alerta se ocultó solo por ahora, pero puede volver a aparecer al recargar.');
+  }
+}
+async function marcarTodasAlertasLeidas(){
+  const visibles = ST._alertasVisiblesActuales||[];
+  if(!visibles.length) return;
+  visibles.forEach(a=>ST.alertasLeidasIds.add(a.id));
+  renderNotifBell();
+  try{
+    const filas = visibles.map(a=>[a.id, todayISO(), ST.usuario?.email||ST.usuario?.nombre||'']);
+    await sheetsAppend('Alertas_Leidas!A2:C', filas);
+    visibles.forEach(a=>ST.alertasLeidas.push({id:a.id, fecha:todayISO(), usuario:ST.usuario?.email||''}));
+    toast('ok','Notificaciones marcadas como leídas.');
+  }catch(e){
+    toast('err','No se pudo guardar en Sheets (¿existe la hoja "Alertas_Leidas"? columnas A=ID_Alerta, B=Fecha, C=Usuario). Se ocultaron solo por ahora.');
+  }
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    CENTRO DE ESTRATEGIA FINANCIERA — Fase 3
