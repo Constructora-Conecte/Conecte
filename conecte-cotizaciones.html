@@ -342,6 +342,9 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 }
 .item-inp:focus{border-color:var(--red);background:var(--bg2)}
 .item-inp.num{font-family:var(--mono);text-align:right}
+textarea.item-inp.item-desc-ta{
+  resize:none;overflow:hidden;display:block;line-height:1.4;min-height:26px;
+}
 .item-imp{font-family:var(--mono);font-size:12px;color:var(--text2);text-align:right;padding-right:10px}
 .add-row-btn{
   display:flex;align-items:center;gap:6px;padding:8px 12px;
@@ -1562,9 +1565,9 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
                 <th></th>
                 <th>Nombre</th>
                 <th>Puesto</th>
-                <th>Nivel</th>
                 <th style="text-align:right">Sueldo total</th>
                 <th style="text-align:center">Vales</th>
+                <th style="text-align:center">Fiscal</th>
                 <th>Tipo de pago</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -1598,6 +1601,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
             <option value="">Todos los empleados</option>
           </select>
           <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar por empleado o folio…" oninput="onNomSearch(this.value)">
+          <button class="btn btn-ghost btn-sm" onclick="imprimirNoAdeudo()" title="Genera un PDF para que los empleados firmen de no adeudo de la semana">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M4 6V2h8v4M4 12h8v3H4v-3ZM2 6h12a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v-2H3v2H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
+            No Adeudo
+          </button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openParametrosModal()" title="Editar salario mínimo, vales, factor de faltas y días laborales">⚙ Parámetros</button>
         </div>
         <div id="nomSemanasWarning" style="display:none;margin-bottom:10px;font-size:11.5px;color:var(--orange);background:rgba(237,137,54,.1);border:1px solid rgba(237,137,54,.25);border-radius:var(--r4);padding:8px 12px">
@@ -2138,9 +2145,12 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 
     <!-- SUB-VISTA: DASHBOARD GENERAL (Fase 4) — cruza Comercial + Nómina + Finanzas + Obras -->
     <div id="tabDashboard" class="tab-pane">
-      <div class="dash-kpi-grid" id="dgKpis">
-        <div class="stat cy"><div class="stat-lbl">Cotizaciones Activas</div><div class="stat-val" id="dgKpiCot">—</div><div class="stat-delta">Pendientes + Enviadas</div></div>
-        <div class="stat cg"><div class="stat-lbl">Obras en Proceso</div><div class="stat-val" id="dgKpiObras">—</div><div class="stat-delta" id="dgKpiObrasAvance">Avance promedio —</div></div>
+      <!-- Las tarjetas "Cotizaciones Activas" / "Obras en Proceso" que iban aquí (antes
+           del Reporte de Pendientes) se quitaron a petición del usuario. Se dejan estos
+           nodos ocultos solo para no romper renderDashboardGeneral(), que sigue
+           calculando y escribiendo esos datos (por si se vuelven a mostrar más adelante). -->
+      <div style="display:none" id="dgKpisOcultos2">
+        <span id="dgKpiCot"></span><span id="dgKpiObras"></span><span id="dgKpiObrasAvance"></span>
       </div>
       <!-- Ingresos Cobrados / Gastos Pagados / Balance Neto / Nómina Pagada y la gráfica
            "Ingresos vs Gastos por Mes" se quitaron de aquí a petición del usuario (ya
@@ -2552,10 +2562,6 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
               <input type="text" class="form-input" id="eCuentaBBVA">
             </div>
             <div class="form-group">
-              <label class="form-label">Nivel</label>
-              <input type="text" class="form-input" id="eNivel">
-            </div>
-            <div class="form-group">
               <label class="form-label">Puesto</label>
               <input type="text" class="form-input" id="ePuesto">
             </div>
@@ -2694,10 +2700,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
     </div>
     <div class="mlg-body">
       <!-- Datos generales: dividido en 2 secciones — izquierda datos cortos (cliente,
-           contacto, fecha/vigencia + OC Asociadas al lado, estatus/fecha de envío),
-           derecha texto libre (descripción, notas). -->
+           contacto, fecha/vigencia), derecha texto libre (descripción, notas)
+           más Obra/Proyecto y OC Asociadas debajo de las notas. -->
       <div style="display:grid;grid-template-columns:380px 1fr;gap:20px;margin-bottom:16px">
-        <!-- Panel izquierdo: datos cortos + OC -->
+        <!-- Panel izquierdo: datos cortos -->
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="form-group">
             <label class="form-label">Cliente (RFC / ID) *</label>
@@ -2717,8 +2723,9 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
               </button>
             </div>
           </div>
-          <!-- Fecha / Vigencia / Fecha de envío en una sola fila -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:10px">
+          <!-- Fecha / Vigencia en una sola fila (se quitó Fecha de envío: ya no se
+               captura desde este formulario, se sigue manejando desde el listado) -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="form-group">
               <label class="form-label">Fecha *</label>
               <input type="date" class="form-input" id="fFecha">
@@ -2727,41 +2734,14 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
               <label class="form-label">Vigencia (días)</label>
               <input type="number" class="form-input" id="fVigencia" placeholder="30" min="1">
             </div>
-            <div class="form-group">
-              <label class="form-label">Fecha de envío</label>
-              <input type="date" class="form-input" id="fFechaEnvio">
-            </div>
           </div>
-          <!-- Fase 3: liga opcional esta cotización a una Obra/Proyecto -->
-          <div class="form-group">
-            <label class="form-label">Obra / Proyecto (opcional)</label>
-            <select class="form-select obra-select" id="fObra"></select>
-          </div>
-          <!-- El estatus ya no se edita aquí: se cambia desde el listado (columna Estatus).
-               Se conserva oculto para no romper la lógica de guardado. -->
+          <!-- El estatus y la fecha de envío ya no se editan aquí: el estatus se cambia
+               desde el listado (columna Estatus) y ese mismo flujo pide la fecha de envío
+               cuando corresponde. Se conservan ocultos para no romper la lógica de guardado. -->
           <input type="hidden" id="fEstatus" value="Pendiente">
-
-          <!-- ── ÓRDENES DE COMPRA ── -->
-          <div class="card" style="display:flex;flex-direction:column;min-height:0;background:var(--bg3);margin-bottom:0">
-            <div class="card-header" style="padding:8px 12px;flex-shrink:0">
-              <span class="card-title" style="font-size:11.5px">OC Asociadas</span>
-              <span style="font-size:10.5px;color:var(--text3);font-family:var(--mono)" id="ocCount">0 OC</span>
-              <button type="button" class="btn btn-ghost btn-sm" id="verRelacionBtn" onclick="openRelacionPanel('cot',ST.editId)" style="margin-left:auto;height:22px;padding:0 6px" disabled title="Ver relación completa">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
-              </button>
-              <button type="button" class="btn btn-ghost btn-sm" id="addOCBtn" onclick="openAddOC()" style="color:var(--red);border-color:rgba(229,62,62,.3);height:22px;padding:0 6px" disabled title="Agregar OC">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
-              </button>
-            </div>
-            <div id="ocListWrap" style="padding:8px 12px;max-height:110px;min-height:36px;overflow-y:auto">
-              <div id="ocEmptyMsg" style="font-size:11.5px;color:var(--text3);text-align:center;padding:8px 0">
-                Guarda la cotización primero para agregar OC
-              </div>
-              <div id="ocList" style="display:flex;flex-direction:column;gap:6px"></div>
-            </div>
-          </div>
+          <input type="hidden" id="fFechaEnvio" value="">
         </div>
-        <!-- Panel derecho: texto libre -->
+        <!-- Panel derecho: texto libre + Obra/OC -->
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="form-group">
             <label class="form-label">Descripción / Trabajo *</label>
@@ -2769,7 +2749,34 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           </div>
           <div class="form-group">
             <label class="form-label">Notas adicionales</label>
-            <textarea class="form-textarea" id="fNotas" placeholder="Condiciones, tiempos de entrega, observaciones…" style="min-height:64px;height:64px"></textarea>
+            <textarea class="form-textarea" id="fNotas" placeholder="Condiciones, tiempos de entrega, observaciones…" style="min-height:40px;height:40px"></textarea>
+          </div>
+          <!-- Obra/Proyecto + OC Asociadas van uno junto al otro, debajo de las notas -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <!-- Fase 3: liga opcional esta cotización a una Obra/Proyecto -->
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Obra / Proyecto (opcional)</label>
+              <select class="form-select obra-select" id="fObra"></select>
+            </div>
+            <!-- ── ÓRDENES DE COMPRA ── -->
+            <div class="card" style="display:flex;flex-direction:column;min-height:0;background:var(--bg3);margin-bottom:0">
+              <div class="card-header" style="padding:6px 10px;flex-shrink:0">
+                <span class="card-title" style="font-size:11.5px">OC Asociadas</span>
+                <span style="font-size:10.5px;color:var(--text3);font-family:var(--mono)" id="ocCount">0 OC</span>
+                <button type="button" class="btn btn-ghost btn-sm" id="verRelacionBtn" onclick="openRelacionPanel('cot',ST.editId)" style="margin-left:auto;height:22px;padding:0 6px" disabled title="Ver relación completa">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" id="addOCBtn" onclick="openAddOC()" style="color:var(--red);border-color:rgba(229,62,62,.3);height:22px;padding:0 6px" disabled title="Agregar OC">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
+                </button>
+              </div>
+              <div id="ocListWrap" style="padding:6px 10px;max-height:64px;min-height:26px;overflow-y:auto">
+                <div id="ocEmptyMsg" style="font-size:11.5px;color:var(--text3);text-align:center;padding:4px 0">
+                  Guarda la cotización primero para agregar OC
+                </div>
+                <div id="ocList" style="display:flex;flex-direction:column;gap:6px"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -4610,7 +4617,7 @@ async function loadAll() {
       {k:'hist', sheet:'Deudas_Historial', range:'Deudas_Historial!A2:F'},
       {k:'esc', sheet:'Escenarios', range:'Escenarios!A2:G'},
       {k:'obj', sheet:'Objetivos_Financieros', range:'Objetivos_Financieros!A2:H'},
-      {k:'per', sheet:'Personal', range:'Personal!A2:T'},
+      {k:'per', sheet:'Personal', range:'Personal!A2:S'},
       {k:'sem', sheet:'Semanas', range:'Semanas!A2:H'},
       {k:'ros', sheet:'Rostros', range:'Rostros!A2:B'},
       {k:'gaf', sheet:'Gafetes', range:'Gafetes!A2:J'},
@@ -4879,14 +4886,16 @@ async function loadAll() {
       ST.objetivosError = objErr.result?.error?.message || objErr.message || String(objErr);
     }
 
-    /* Personal — hoja "Personal" (20 cols: A=ID_Usuarios … R=Estado, S=Recibe_Vales, T=Recibe_Fiscal).
+    /* Personal — hoja "Personal" (19 cols: A=ID_Usuarios … Q=Estado, R=Recibe_Vales, S=Recibe_Fiscal).
        Se carga en try/catch propio para no romper el resto de la app si la hoja
        aún no existe o el nombre no coincide exactamente.
-       NUEVO: columna S = Recibe_Vales (TRUE/FALSE). Si la celda está vacía se asume
-       TRUE, para no afectar el comportamiento de empleados ya existentes.
-       NUEVO: columna T = Recibe_Fiscal (TRUE/FALSE). Si la celda está vacía se asume
-       TRUE. Si es FALSE, el monto fiscal no se deposita y se suma automáticamente
-       al efectivo (el empleado nunca pierde dinero, solo cambia el método de pago). */
+       Se eliminó la columna Nivel: todo lo que estaba después se recorrió una
+       posición (antes llegaba hasta la T, ahora hasta la S).
+       Recibe_Vales (TRUE/FALSE): si la celda está vacía se asume TRUE, para no
+       afectar el comportamiento de empleados ya existentes.
+       Recibe_Fiscal (TRUE/FALSE): si la celda está vacía se asume TRUE. Si es
+       FALSE, el monto fiscal no se deposita y se suma automáticamente al
+       efectivo (el empleado nunca pierde dinero, solo cambia el método de pago). */
     try{
       if(faltaHoja('per')) throw new Error('No se encontró la hoja "Personal".');
       const perR = BR.per;
@@ -4894,8 +4903,8 @@ async function loadAll() {
       ST.personalList = [];
       (perR||[]).forEach((r,i)=>{
         if(!r[0]) return;
-        const recibeValesRaw = (r[18]===undefined || r[18]===null || String(r[18]).trim()==='') ? 'TRUE' : String(r[18]).trim().toUpperCase();
-        const recibeFiscalRaw = (r[19]===undefined || r[19]===null || String(r[19]).trim()==='') ? 'TRUE' : String(r[19]).trim().toUpperCase();
+        const recibeValesRaw = (r[17]===undefined || r[17]===null || String(r[17]).trim()==='') ? 'TRUE' : String(r[17]).trim().toUpperCase();
+        const recibeFiscalRaw = (r[18]===undefined || r[18]===null || String(r[18]).trim()==='') ? 'TRUE' : String(r[18]).trim().toUpperCase();
         const p = {
           _row: i+2,
           id: r[0],
@@ -4907,15 +4916,14 @@ async function loadAll() {
           rfc: r[6]||'',
           nss: r[7]||'',
           cuentaBBVA: r[8]||'',
-          nivel: r[9]||'',
-          puesto: r[10]||'',
-          sueldoTotalAcordado: parseFloat((r[11]||'').toString().replace(/[$,]/g,''))||0,
-          salarioFiscal: parseFloat((r[12]||'').toString().replace(/[$,]/g,''))||0,
-          compensacionEfectivo: parseFloat((r[13]||'').toString().replace(/[$,]/g,''))||0,
-          tipoPago: r[14]||'',
-          fechaIngreso: r[15]||'',
-          fechaBaja: r[16]||'',
-          estado: r[17]||'Activo',
+          puesto: r[9]||'',
+          sueldoTotalAcordado: parseFloat((r[10]||'').toString().replace(/[$,]/g,''))||0,
+          salarioFiscal: parseFloat((r[11]||'').toString().replace(/[$,]/g,''))||0,
+          compensacionEfectivo: parseFloat((r[12]||'').toString().replace(/[$,]/g,''))||0,
+          tipoPago: r[13]||'',
+          fechaIngreso: r[14]||'',
+          fechaBaja: r[15]||'',
+          estado: r[16]||'Activo',
           recibeVales: recibeValesRaw==='TRUE' || recibeValesRaw==='SI' || recibeValesRaw==='SÍ' || recibeValesRaw==='1',
           recibeFiscal: recibeFiscalRaw==='TRUE' || recibeFiscalRaw==='SI' || recibeFiscalRaw==='SÍ' || recibeFiscalRaw==='1',
         };
@@ -5831,7 +5839,8 @@ function hideDropdown() {
 function insertArt(id) {
   const a=ST.articulos.find(x=>x.id===id);
   if(!a) return;
-  ST.items.push({ desc:a.nombre, cant:1, unidad:a.unidad||'pza', precio:a.precio, imp:a.precio });
+  // Cantidad vacía por defecto: el usuario siempre debe capturarla a propósito.
+  ST.items.push({ desc:a.nombre, cant:'', unidad:a.unidad||'pza', precio:a.precio, imp:0 });
   ST.formDirty=true;
   renderItems();
   document.getElementById('artSearch').value='';
@@ -5841,7 +5850,9 @@ function insertArt(id) {
 
 /* ─── ITEMS ─── */
 function addBlankItem() {
-  ST.items.push({ desc:'', cant:1, unidad:'', precio:0, imp:0 });
+  // Cantidad vacía por defecto (no 1), para que el usuario siempre capture
+  // el valor real en lugar de heredar un dato que no escribió.
+  ST.items.push({ desc:'', cant:'', unidad:'', precio:0, imp:0 });
   ST.formDirty=true;
   renderItems();
 }
@@ -5865,8 +5876,8 @@ function renderItems() {
   }
   tbody.innerHTML=ST.items.map((it,i)=>`
     <tr>
-      <td><input class="item-inp" value="${esc(it.desc)}" placeholder="Descripción del concepto"
-        oninput="ST.items[${i}].desc=this.value"></td>
+      <td><textarea class="item-inp item-desc-ta" rows="1" placeholder="Descripción del concepto"
+        oninput="ST.items[${i}].desc=this.value;autoGrowDesc(this)">${esc(it.desc)}</textarea></td>
       <td><input class="item-inp num" type="number" min="0" step="any" value="${it.cant}"
         oninput="ST.items[${i}].cant=parseFloat(this.value)||0;recalcItem(${i})"></td>
       <td>
@@ -5884,7 +5895,20 @@ function renderItems() {
       </td>
     </tr>
   `).join('');
+  // Ajusta la altura de cada textarea de concepto a su contenido actual
+  // (importante al editar una cotización con descripciones largas ya guardadas).
+  tbody.querySelectorAll('.item-desc-ta').forEach(autoGrowDesc);
   calcTotals();
+}
+
+/* Hace crecer verticalmente el textarea de "Concepto/Descripción" mientras el
+   usuario escribe, para que siempre pueda ver todo el texto capturado. No hay
+   límite de alto: el formulario se alarga hacia abajo (el contenedor ya hace
+   scroll) en vez de recortar el texto. */
+function autoGrowDesc(el){
+  if(!el) return;
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
 }
 
 function recalcItem(i) {
@@ -6960,7 +6984,9 @@ function abrirNueva(obraId) {
   if(!requireAuth()) return;
   ST.editId=null; ST.editRow=null;
   ST.formDirty=false;
-  ST.items=[{ desc:'', cant:1, unidad:'', precio:0, imp:0 }];
+  // Sin partida por defecto: el usuario decide si busca un concepto del
+  // catálogo o agrega una partida manual primero.
+  ST.items=[];
   document.getElementById('fmTitle').textContent='Nueva Cotización';
   document.getElementById('fmSub').textContent='Completa los datos y agrega las partidas';
   document.getElementById('fCliente').value='';
@@ -10324,6 +10350,37 @@ function estatusObraPillClass(estatus){
   return {Planeada:'pill-pend', 'En proceso':'pill-acep', Pausada:'pill-pend', Terminada:'pill-acep', Cancelada:'pill-rech'}[estatus] || 'pill-pend';
 }
 function onObrasSearch(v){ ST.obrasQuery = (v||'').toLowerCase(); renderObras(); }
+
+/* ── Orden de agrupación de Obras ──
+   Entre más "pendiente" esté una obra, más arriba se ve; las que ya se
+   finalizaron o concluyeron (Terminada/Cancelada) se van hasta abajo:
+   1) En proceso   (trabajo activo, lo más urgente de monitorear)
+   2) Planeada     (aún no arranca, sigue pendiente)
+   3) Pausada      (pendiente de retomar)
+   4) Terminada    (concluida)
+   5) Cancelada    (concluida, ya no aplica) */
+const OBRA_GROUP_ORDER = ['En proceso','Planeada','Pausada','Terminada','Cancelada'];
+const OBRA_GROUP_META = {
+  'En proceso': {label:'EN PROCESO', cls:'g-acep'},
+  'Planeada':   {label:'PLANEADA',   cls:'g-pend'},
+  'Pausada':    {label:'PAUSADA',    cls:'g-orange'},
+  'Terminada':  {label:'TERMINADA',  cls:'g-blue'},
+  'Cancelada':  {label:'CANCELADA',  cls:'g-rech'},
+};
+function obraGroupIndex(estatus){
+  const i = OBRA_GROUP_ORDER.indexOf(estatus);
+  return i===-1 ? OBRA_GROUP_ORDER.length : i; // estatus desconocido: al final
+}
+/* Duración estimada de la obra en semanas (Fecha_Fin_Estimada - Fecha_Inicio).
+   Se usa para ordenar dentro de cada grupo: la que va a llevar menos tiempo
+   arriba, la que va a llevar más tiempo abajo. Si falta alguna fecha, esa obra
+   se manda al final de su grupo (no hay forma de saber cuánto va a durar). */
+function obraDuracionSemanas(o){
+  if(!o.fechaInicio || !o.fechaFinEst) return Infinity;
+  const d1 = new Date(o.fechaInicio), d2 = new Date(o.fechaFinEst);
+  if(isNaN(d1)||isNaN(d2)) return Infinity;
+  return (d2-d1) / (1000*60*60*24*7);
+}
 function renderObras(){
   const tbody = document.getElementById('obrasTbody');
   if(!tbody) return;
@@ -10341,16 +10398,32 @@ function renderObras(){
   const q = ST.obrasQuery||'';
   let list = (ST.obras||[]).slice();
   if(q) list = list.filter(o=>(o.nombre||'').toLowerCase().includes(q) || (ST.clientes[o.idCliente]?.nombre||'').toLowerCase().includes(q));
-  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  // 1º agrupadas por estatus (más pendiente arriba, concluidas abajo),
+  // 2º dentro de cada grupo por duración estimada (menos tiempo arriba).
+  list.sort((a,b)=>{
+    const ga=obraGroupIndex(a.estatus), gb=obraGroupIndex(b.estatus);
+    if(ga!==gb) return ga-gb;
+    const da=obraDuracionSemanas(a), db=obraDuracionSemanas(b);
+    if(da!==db) return da-db;
+    return (a.nombre||'').localeCompare(b.nombre||'');
+  });
   document.getElementById('obrasCount').textContent = list.length;
   if(!list.length){
     tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin obras registradas todavía.'}</td></tr>`;
     return;
   }
+  let lastGroup=null;
   tbody.innerHTML = list.map(o=>{
+    let groupHeader='';
+    if(o.estatus!==lastGroup){
+      lastGroup=o.estatus;
+      const meta = OBRA_GROUP_META[o.estatus] || {label:(o.estatus||'OTRO').toUpperCase(), cls:'g-pend'};
+      const count = list.filter(x=>x.estatus===o.estatus).length;
+      groupHeader = `<tr class="group-row ${meta.cls}"><td colspan="8">${meta.label}<span class="g-sum">${count} obra${count===1?'':'s'}</span></td></tr>`;
+    }
     const pct = avancePct(o);
     const cliente = ST.clientes[o.idCliente]?.nombre || o.idCliente || '—';
-    return `<tr>
+    return groupHeader + `<tr>
     <td style="font-weight:500;font-size:12.5px;cursor:pointer" onclick="openVerObra('${esc(o.id)}')" title="Ver detalle">${esc(o.nombre||'—')}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(cliente)}</td>
     <td><span class="pill ${estatusObraPillClass(o.estatus)}">${esc(o.estatus)}</span></td>
@@ -10990,17 +11063,35 @@ function imprimirListaEmpleadosActivos(){
   function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
   function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
 
-  // Columnas: Nombre | Puesto | Nivel | Sueldo total | Tipo de pago | Fecha ingreso
+  // Columnas: Nombre | Puesto | Sueldo total | Vales | Fiscal | Tipo de pago | Fecha ingreso
+  // Vales y Fiscal se dibujan como una palomita vectorial (no depende de que la
+  // fuente del PDF tenga el glifo ✓/✅), igual que se ven en pantalla.
   const cols = [
-    {label:'Nombre',        w:52, get:p=>p.nombre||'—'},
-    {label:'Puesto',        w:38, get:p=>p.puesto||'—'},
-    {label:'Nivel',         w:18, get:p=>p.nivel||'—'},
-    {label:'Sueldo total',  w:26, get:p=>fmtMXN(p.sueldoTotalAcordado||0), align:'right'},
-    {label:'Tipo de pago',  w:26, get:p=>p.tipoPago||'—'},
+    {label:'Nombre',        w:46, get:p=>p.nombre||'—'},
+    {label:'Puesto',        w:34, get:p=>p.puesto||'—'},
+    {label:'Sueldo total',  w:24, get:p=>fmtMXN(p.sueldoTotalAcordado||0), align:'right'},
+    {label:'Vales',         w:16, type:'check', get:p=>!!p.recibeVales, align:'center'},
+    {label:'Fiscal',        w:16, type:'check', get:p=>!!p.recibeFiscal, align:'center'},
+    {label:'Tipo de pago',  w:24, get:p=>p.tipoPago||'—'},
     {label:'Fecha ingreso', w:22, get:p=>p.fechaIngreso||'—'},
   ];
   const colX = []; let acc = ML;
   cols.forEach(c=>{ colX.push(acc); acc += c.w; });
+
+  // Dibuja una casilla pequeña y, si corresponde, una palomita adentro —
+  // vectorial, para que se imprima igual en cualquier visor de PDF.
+  function drawCheck(cx,cy,checked){
+    const s=3.2;
+    doc.setDrawColor(...(checked?C.red:C.line));
+    doc.setLineWidth(0.25);
+    doc.rect(cx-s/2, cy-s/2-0.6, s, s);
+    if(checked){
+      doc.setDrawColor(...C.red);
+      doc.setLineWidth(0.5);
+      doc.line(cx-s/2+0.5, cy-1.1, cx-0.4, cy+0.5);
+      doc.line(cx-0.4, cy+0.5, cx+s/2-0.3, cy-1.6);
+    }
+  }
 
   function pageHeader(pg,total){
     doc.setFillColor(...C.red); doc.rect(0,0,PW,2.2,'F');
@@ -11012,7 +11103,11 @@ function imprimirListaEmpleadosActivos(){
     // Encabezado de tabla
     doc.setFillColor(...C.head); doc.rect(ML,29,CW,7,'F');
     setF('bold',8.2,C.ink);
-    cols.forEach((c,i)=> doc.text(c.label, c.align==='right'?colX[i]+c.w-2:colX[i]+1.5, 34, c.align==='right'?{align:'right'}:{}));
+    cols.forEach((c,i)=>{
+      if(c.align==='right') doc.text(c.label, colX[i]+c.w-2, 34, {align:'right'});
+      else if(c.align==='center') doc.text(c.label, colX[i]+c.w/2, 34, {align:'center'});
+      else doc.text(c.label, colX[i]+1.5, 34);
+    });
     hline(36);
     return 40;
   }
@@ -11024,6 +11119,10 @@ function imprimirListaEmpleadosActivos(){
     if(y > BOTY){ doc.addPage(); y = pageHeader(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages()); }
     if(i%2===1){ doc.setFillColor(250,250,250); doc.rect(ML,y-4.6,CW,rowH,'F'); }
     cols.forEach((c,ci)=>{
+      if(c.type==='check'){
+        drawCheck(colX[ci]+c.w/2, y-1.3, c.get(p));
+        return;
+      }
       const val = String(c.get(p));
       const x = c.align==='right' ? colX[ci]+c.w-2 : colX[ci]+1.5;
       doc.text(val.length>34?val.slice(0,33)+'…':val, x, y, c.align==='right'?{align:'right'}:{});
@@ -11040,6 +11139,87 @@ function imprimirListaEmpleadosActivos(){
       setF('normal',8.5,C.sub);
       doc.setFillColor(255,255,255); doc.rect(MR-30,18,30,6,'F');
       doc.text(`Página ${p} de ${totalPages}`, MR, 22, {align:'right'});
+    }
+  }
+
+  const blobUrl = doc.output('bloburl');
+  window.open(blobUrl,'_blank');
+}
+
+/* Genera el PDF de "No Adeudo" para que los empleados firmen que recibieron su
+   pago semanal sin ningún adeudo pendiente — mismo contenido y propósito que
+   el formato en Excel que se usaba antes (rango de fechas, párrafo de
+   constancia y una tabla Nombre/Firma con espacio suficiente para firmar a
+   mano), solo que ahora se genera desde la app con el diseño de la marca.
+   Incluye a los empleados ACTIVOS, excluyendo a los patrones/dueños (se
+   detectan por el texto del puesto — ajusta PATRON_KEYWORDS si tu puesto de
+   dueño/socio usa otra palabra que no esté en la lista). */
+const PATRON_KEYWORDS = ['patrón','patron','dueño','dueno','socio','propietario','director general'];
+function imprimirNoAdeudo(){
+  if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
+  const firmantes = (ST.personalList||[])
+    .filter(p=>!PATRON_KEYWORDS.some(k=>(p.puesto||'').toLowerCase().includes(k)))
+    .slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  if(!firmantes.length){ toast('err','No hay empleados para incluir en el No Adeudo.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const C = { red:[175,13,18], ink:[26,26,26], sub:[120,120,120], line:[190,190,190], head:[245,245,245] };
+  const PW=210, ML=16, MR=194, CW=MR-ML, BOTY=283;
+  function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
+  function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
+
+  // Semana vigente (lunes a domingo) — mismo criterio que el resto del módulo de Nóminas.
+  const lunes = nomMondayOf(todayISO());
+  const domingo = nomAddDays(lunes,6);
+  const rango = `Semana del ${nomFmtFechaLarga(lunes)} al ${nomFmtFechaLarga(domingo)}`;
+  const parrafo = 'Por medio de la presente, dejo constancia y confirmo que he recibido a entera satisfacción el pago correspondiente a mi semana laboral, sin que exista ningún adeudo pendiente, ya sea por salario, horas extras o cualquier otro concepto.';
+
+  const nameColW = CW*0.58, firmaColW = CW*0.42;
+
+  function pageHeader(pg,total,incluirParrafo){
+    doc.setFillColor(...C.red); doc.rect(0,0,PW,2.4,'F');
+    setF('bold',16); doc.text('Constancia de No Adeudo', PW/2, 14, {align:'center'});
+    setF('normal',9,C.sub);
+    doc.text('Constructora Conecte  ·  '+rango, PW/2, 20, {align:'center'});
+    doc.text(`Página ${pg} de ${total}`, MR, 12, {align:'right'});
+    hline(24);
+    let y = 24;
+    if(incluirParrafo){
+      setF('normal',9.5,C.ink);
+      const lines = doc.splitTextToSize(parrafo, CW-10);
+      doc.text(lines, PW/2, y+7, {align:'center'});
+      y += 7 + lines.length*4.6 + 5;
+    } else {
+      y += 6;
+    }
+    doc.setFillColor(...C.head); doc.rect(ML,y,CW,7,'F');
+    setF('bold',9,C.ink);
+    doc.text('NOMBRE', ML+3, y+5);
+    doc.text('FIRMA', ML+nameColW+ (firmaColW/2), y+5, {align:'center'});
+    hline(y+7);
+    return y+7;
+  }
+
+  let y = pageHeader(1,1,true);
+  const rowH = 15; // alto suficiente para que cada persona firme a mano
+  setF('normal',10,C.ink);
+  firmantes.forEach((p)=>{
+    if(y+rowH > BOTY){ doc.addPage(); y = pageHeader(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages(), false); setF('normal',10,C.ink); }
+    doc.setDrawColor(...C.line); doc.setLineWidth(0.2);
+    doc.rect(ML,y,nameColW,rowH);
+    doc.rect(ML+nameColW,y,firmaColW,rowH);
+    doc.text(p.nombre||'—', ML+3, y+rowH/2+1.5);
+    y += rowH;
+  });
+
+  const totalPages = doc.internal.getNumberOfPages();
+  if(totalPages>1){
+    for(let p=1;p<=totalPages;p++){
+      doc.setPage(p);
+      setF('normal',9,C.sub);
+      doc.setFillColor(255,255,255); doc.rect(MR-30,9,30,6,'F');
+      doc.text(`Página ${p} de ${totalPages}`, MR, 12, {align:'right'});
     }
   }
 
@@ -11116,9 +11296,9 @@ function renderEmpleados(){
       <td>${avatar}</td>
       <td><span style="cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">${esc(p.nombre||'—')}</span></td>
       <td>${esc(p.puesto||'—')}</td>
-      <td>${esc(p.nivel||'—')}</td>
       <td style="text-align:right">${fmtMXN(p.sueldoTotalAcordado||0)}</td>
       <td style="text-align:center">${p.recibeVales ? '✅' : '—'}</td>
+      <td style="text-align:center">${p.recibeFiscal ? '✅' : '—'}</td>
       <td>${esc(p.tipoPago||'—')}</td>
       <td><span style="color:${estColor};font-weight:600;font-size:11.5px">${esc(p.estado||'—')}</span></td>
       <td style="white-space:nowrap">
@@ -11163,7 +11343,6 @@ function openEmpCard(idEmpleado){
     ${row('RFC', p.rfc)}
     ${row('NSS', p.nss)}
     ${row('Cuenta BBVA', p.cuentaBBVA)}
-    ${row('Nivel', p.nivel)}
     ${row('Puesto', p.puesto)}
     ${row('Sueldo total acordado', fmtMXN(p.sueldoTotalAcordado||0))}
     ${row('Salario registrado fiscal', fmtMXN(p.salarioFiscal||0))}
@@ -11192,7 +11371,7 @@ function openEmpModal(idEmpleado){
   const fields = {
     eNombre: existente?.nombre||'', eCorreo: existente?.correo||'', eTelefono: existente?.telefono||'',
     eCURP: existente?.curp||'', eRFC: existente?.rfc||'', eNSS: existente?.nss||'',
-    eCuentaBBVA: existente?.cuentaBBVA||'', eNivel: existente?.nivel||'', ePuesto: existente?.puesto||'',
+    eCuentaBBVA: existente?.cuentaBBVA||'', ePuesto: existente?.puesto||'',
     eSueldoTotal: existente?.sueldoTotalAcordado||0, eSalarioFiscal: existente?.salarioFiscal||0,
     eCompEfectivo: existente?.compensacionEfectivo||0, eTipoPago: existente?.tipoPago||'',
     eFechaIngreso: existente?.fechaIngreso||'', eFechaBaja: existente?.fechaBaja||'',
@@ -11258,7 +11437,6 @@ async function guardarEmpleado(){
       document.getElementById('eRFC').value.trim().toUpperCase(),
       document.getElementById('eNSS').value.trim(),
       document.getElementById('eCuentaBBVA').value.trim(),
-      document.getElementById('eNivel').value.trim(),
       document.getElementById('ePuesto').value.trim(),
       parseFloat(document.getElementById('eSueldoTotal').value)||0,
       parseFloat(document.getElementById('eSalarioFiscal').value)||0,
@@ -11272,9 +11450,9 @@ async function guardarEmpleado(){
     ];
 
     if(existente){
-      await sheetsUpdate(`Personal!A${existente._row}:T${existente._row}`, [row]);
+      await sheetsUpdate(`Personal!A${existente._row}:S${existente._row}`, [row]);
     } else {
-      await sheetsAppend('Personal!A2:T', [row]);
+      await sheetsAppend('Personal!A2:S', [row]);
     }
 
     toast('ok', existente ? 'Empleado actualizado.' : 'Empleado agregado a Personal.');
@@ -16365,4 +16543,3 @@ ST.currentTab='cot';
 </script>
 </body>
 </html>
-
