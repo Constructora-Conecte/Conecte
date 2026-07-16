@@ -893,6 +893,9 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
   <div id="oauthHint" style="display:none;background:rgba(236,201,75,.12);border-bottom:1px solid rgba(236,201,75,.25);padding:8px 20px;font-size:11.5px;color:var(--yellow);line-height:1.5;">
     ⚠️ <strong>Error 401:</strong> Agrega <strong id="currentOrigin"></strong> en Google Cloud Console → APIs &amp; Services → Credentials → OAuth 2.0 Client → Authorized JavaScript origins
   </div>
+  <!-- Aviso de permisos (Fase 2 — Usuarios y roles): visible solo cuando el usuario
+       conectado con Google está Pendiente de aprobación o Inactivo. -->
+  <div id="permisosHint" style="display:none;background:rgba(236,201,75,.12);border-bottom:1px solid rgba(236,201,75,.25);padding:8px 20px;font-size:11.5px;color:var(--yellow);line-height:1.5;"></div>
 
   <div class="app-shell">
     <!-- ══ MENÚ LATERAL (retráctil) — Comercial / Balance ══ -->
@@ -905,6 +908,10 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <button class="sidebar-item" id="navBalanceBtn" onclick="switchSection('balance')" title="Balance">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h3V7H2zM6.5 12h3V4h-3zM11 12h3V9h-3z"/></svg>
           <span>Balance</span>
+        </button>
+        <button class="sidebar-item" id="navObrasBtn" onclick="switchSection('obras')" title="Obras">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V7l6-4 6 4v7"/><path d="M6 14V9h4v5"/></svg>
+          <span>Obras</span>
         </button>
         <button class="sidebar-item" id="navFinBtn" onclick="switchSection('fin')" title="Centro Financiero">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5v13M11.5 4.2c0-1.3-1.4-2.2-3.5-2.2s-3.5 1-3.5 2.4c0 3 7 1.4 7 4.3 0 1.5-1.5 2.4-3.5 2.4s-3.6-.9-3.6-2.3"/></svg>
@@ -1759,7 +1766,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       <!-- Sub-vista: USUARIOS -->
       <div id="sisSubUsuarios" class="emp-subpane">
         <div class="info-card" style="margin-bottom:12px">
-          <div>👤 Los roles (Admin / Gerente / Empleado) son solo una etiqueta por ahora. El acceso real a cada módulo depende de las casillas "Módulos habilitados" que marques aquí manualmente para cada usuario — todavía no se aplica automáticamente en el resto de la app.</div>
+          <div>👤 El rol y las casillas "Módulos habilitados" ya controlan de verdad lo que cada usuario puede ver: Admin ve todo; un usuario "Pendiente" solo ve Comercial hasta que le asignes rol y módulos aquí; "Inactivo" no ve ningún módulo; Activo ve exactamente los módulos que le marques.</div>
         </div>
         <div class="filter-bar" style="margin-bottom:12px">
           <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre o email…" oninput="onSisUsuariosSearch(this.value)">
@@ -2016,6 +2023,44 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       </div><!-- /finSubHist -->
 
     </div><!-- /tabFin -->
+
+    <!-- SUB-VISTA: OBRAS / PROYECTOS (Fase 3) -->
+    <div id="tabObras" class="tab-pane">
+      <div class="filter-bar" style="margin-bottom:12px">
+        <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar obra o cliente…" oninput="onObrasSearch(this.value)">
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Obras / Proyectos</span>
+          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="obrasCount">0</span>
+          <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddObra()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+            Nueva Obra
+          </button>
+        </div>
+        <div class="cot-table-wrap">
+          <table class="fac-table">
+            <thead><tr>
+              <th>Nombre</th><th>Cliente</th><th>Estatus</th><th>Avance</th><th>Presupuesto</th><th>Fechas</th><th>Responsable</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="obrasTbody">
+              <tr class="loading-row"><td colspan="8"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tabObras -->
+
+    <!-- Pantalla de "sin acceso" (Fase 2 — Usuarios y roles): se muestra en vez de
+         cualquier módulo cuando el usuario conectado con Google está Inactivo o,
+         por cualquier motivo, no tiene ningún módulo habilitado. -->
+    <div id="tabSinAcceso" class="tab-pane">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 20px;text-align:center;color:var(--text3)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" width="36" height="36"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
+        <div style="font-size:14px;font-weight:600;color:var(--text2)">No tienes acceso a ningún módulo todavía</div>
+        <div style="font-size:12.5px;max-width:380px;line-height:1.6">Pide a un Admin que revise tu usuario en <strong>Sistemas &gt; Usuarios</strong> y te asigne un rol y los módulos que necesitas.</div>
+      </div>
+    </div><!-- /tabSinAcceso -->
 
     <!-- ══ MODAL: ACREEDOR / DEUDA (alta / edición sobre la hoja Deudas) ══ -->
     <div class="modal-bg" id="deudaModal">
@@ -2524,6 +2569,11 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
               <input type="date" class="form-input" id="fFechaEnvio">
             </div>
           </div>
+          <!-- Fase 3: liga opcional esta cotización a una Obra/Proyecto -->
+          <div class="form-group">
+            <label class="form-label">Obra / Proyecto (opcional)</label>
+            <select class="form-select obra-select" id="fObra"></select>
+          </div>
           <!-- El estatus ya no se edita aquí: se cambia desde el listado (columna Estatus).
                Se conserva oculto para no romper la lógica de guardado. -->
           <input type="hidden" id="fEstatus" value="Pendiente">
@@ -2752,6 +2802,11 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <div class="form-group" id="bProyectoGrp" style="display:none">
           <label class="form-label">Proyecto</label>
           <input type="text" class="form-input" id="bProyecto" placeholder="Detalle completo de la compra (se llena solo al importar XML)">
+        </div>
+        <!-- Fase 3: liga opcional de este gasto a una Obra/Proyecto (distinto del campo "Proyecto" de arriba) -->
+        <div class="form-group" id="bObraGrp" style="display:none">
+          <label class="form-label">Obra / Proyecto (opcional)</label>
+          <select class="form-select obra-select" id="bObra"></select>
         </div>
         <div class="form-group">
           <label class="form-label">Responsable</label>
@@ -3200,6 +3255,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="bal" id="nuModBal" style="width:16px;height:16px"><label class="form-label" for="nuModBal" style="margin:0;cursor:pointer">Balance</label></div>
           <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="fin" id="nuModFin" style="width:16px;height:16px"><label class="form-label" for="nuModFin" style="margin:0;cursor:pointer">Centro Financiero</label></div>
           <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="emp" id="nuModEmp" style="width:16px;height:16px"><label class="form-label" for="nuModEmp" style="margin:0;cursor:pointer">Empleados</label></div>
+          <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="obras" id="nuModObras" style="width:16px;height:16px"><label class="form-label" for="nuModObras" style="margin:0;cursor:pointer">Obras</label></div>
           <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="nu-modulo" value="sistemas" id="nuModSistemas" style="width:16px;height:16px"><label class="form-label" for="nuModSistemas" style="margin:0;cursor:pointer">Sistemas</label></div>
         </div>
         <div id="nuAdminHint" style="display:none;font-size:11px;color:var(--text3)">Admin tiene acceso completo por definición; no necesita marcar módulos.</div>
@@ -3210,6 +3266,103 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
       <button class="btn btn-red" id="saveUsuarioBtn" onclick="saveNewUsuario()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
         Guardar Usuario
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD / EDIT OBRA MODAL (Fase 3 — Obras/Proyectos) ══ -->
+<div class="modal-bg" id="obraModal">
+  <div class="modal" style="width:560px">
+    <div class="modal-title" id="obraModalTitle">Nueva Obra / Proyecto</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;max-height:60vh;overflow-y:auto;padding-right:4px">
+      <div class="form-group">
+        <label class="form-label">Nombre de la obra *</label>
+        <input type="text" class="form-input" id="oNombre" placeholder="Ej. Remodelación Planta Norte">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <select class="form-select" id="oCliente"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Responsable / Encargado de obra</label>
+          <input type="text" class="form-input" id="oResponsable" placeholder="Nombre del encargado">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dirección / Ubicación</label>
+        <input type="text" class="form-input" id="oDireccion" placeholder="Calle, número, colonia, ciudad…">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Presupuesto</label>
+          <input type="number" class="form-input" id="oPresupuesto" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estatus</label>
+          <select class="form-select" id="oEstatus">
+            <option value="Planeada">Planeada</option>
+            <option value="En proceso">En proceso</option>
+            <option value="Pausada">Pausada</option>
+            <option value="Terminada">Terminada</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Fecha de inicio</label>
+          <input type="date" class="form-input" id="oFechaInicio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fin estimado</label>
+          <input type="date" class="form-input" id="oFechaFinEst">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fin real</label>
+          <input type="date" class="form-input" id="oFechaFinReal">
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <label class="form-label">¿Cómo quieres medir el avance de esta obra?</label>
+        <div style="display:flex;gap:16px;padding:4px 0">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;color:var(--text2)">
+            <input type="radio" name="oModoAvance" value="manual" onchange="onObraModoAvanceChange()"> Manual (%)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;color:var(--text2)">
+            <input type="radio" name="oModoAvance" value="checklist" onchange="onObraModoAvanceChange()"> Por etapas (checklist)
+          </label>
+          <span style="margin-left:auto;font-size:13px;font-weight:600;font-family:var(--mono);color:var(--blue)" id="oAvancePreview">0%</span>
+        </div>
+      </div>
+
+      <div class="form-group full" id="oAvanceManualWrap">
+        <label class="form-label">Avance manual (%)</label>
+        <input type="range" id="oAvanceManual" min="0" max="100" step="5" value="0" style="width:100%" oninput="actualizarAvancePreview()">
+      </div>
+
+      <div class="form-group full" id="oEtapasSection" style="display:none">
+        <label class="form-label">Etapas de la obra</label>
+        <div id="oEtapasWrap" style="max-height:160px;overflow-y:auto"></div>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="agregarEtapaObra()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+          Agregar etapa
+        </button>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">El % de avance se calcula solo: etapas marcadas ✓ entre el total.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea class="form-textarea" id="oNotas" placeholder="Observaciones, condiciones especiales…" style="min-height:56px;height:56px"></textarea>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeObraModal()">Cancelar</button>
+      <button class="btn btn-red" id="saveObraBtn" onclick="saveObra()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar Obra
       </button>
     </div>
   </div>
@@ -3910,7 +4063,7 @@ function startAutoRefresh(){
     const ocOpen   = document.getElementById('ocModal').classList.contains('open');
     if(formOpen || ocOpen) return;
     // Tampoco interrumpir si hay otro modal de captura abierto (cliente/contacto/artículo/factura nuevos)
-    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','addContrasenaModal','facUploadModal','balModal','asisDetailModal','empModal','empCardModal','addUsuarioModal'];
+    const otherCaptureModals = ['addClienteModal','addProveedorModal','addContactoModal','newArticuloModal','addContrasenaModal','facUploadModal','balModal','asisDetailModal','empModal','empCardModal','addUsuarioModal','obraModal'];
     if(otherCaptureModals.some(id=>document.getElementById(id)?.classList.contains('open'))) return;
     // Tampoco si se acaba de editar una factura inline (estatus/método/notas)
     if(Date.now() < facEditingUntil) return;
@@ -3956,6 +4109,7 @@ function handleAuthClick() {
     ST.token = null; ST.usuario = null;
     if(tokenExpiryTimer) clearTimeout(tokenExpiryTimer);
     setGoogleUI(false);
+    aplicarPermisosUI();
     toast('inf', 'Sesión de Google desconectada.');
     return;
   }
@@ -3997,6 +4151,7 @@ function handleAuthClick() {
       }
       await loadAll();
       await registrarUsuarioSiEsNuevo();
+      aplicarPermisosUI();
     }
   });
   tokenClient.requestAccessToken();
@@ -4021,6 +4176,93 @@ async function registrarUsuarioSiEsNuevo(){
     ST.usuariosSistema.push({ id, nombre, email, rol:'Empleado', modulos:[], estado:'Pendiente', metodoAlta:'Google', fechaAlta:hoy, _row: ST.usuariosSistema.length+2 });
     renderSisUsuarios();
   }catch(e){ console.error('No se pudo registrar el usuario nuevo en la hoja Usuarios:', e); }
+}
+
+/* ─── FASE 2: PERMISOS REALES POR USUARIO (Sistemas > Usuarios) ───
+   Antes, el rol y los "módulos habilitados" de la hoja "Usuarios" eran solo una
+   etiqueta: no restringían nada. Esto sí lo aplica:
+   - Antes de conectarse con Google (ST.usuario vacío) la app se comporta exactamente
+     igual que hoy: modo público de solo lectura, todos los módulos visibles. No hay
+     con qué email buscar permisos todavía.
+   - Si la hoja "Usuarios" no existe o el usuario conectado aún no aparece en la
+     lista (por ejemplo, el alta automática no ha terminado de guardarse), tampoco
+     se restringe nada, para no dejar a nadie fuera por un error de lectura.
+   - Admin → acceso a todos los módulos siempre, sin importar lo que tenga marcado
+     en "Módulos habilitados".
+   - Estado "Pendiente" (recién registrado, un Admin todavía no le asignó rol/módulos)
+     → solo ve "Comercial"; el resto se oculta del menú lateral.
+   - Estado "Inactivo" (acceso revocado por un Admin) → no ve ningún módulo.
+   - Estado "Activo" con rol Gerente/Empleado → ve exactamente los módulos marcados
+     en "Módulos habilitados" para ese usuario, ni uno más. */
+function usuarioActualRegistro(){
+  const email = (ST.usuario||'').toLowerCase().trim();
+  if(!email) return null;
+  return (ST.usuariosSistema||[]).find(u=>u.email===email) || null;
+}
+/* Devuelve la lista de módulos permitidos para el usuario conectado, o null
+   si no hay ninguna restricción que aplicar (sin sesión, hoja sin crear, o
+   usuario todavía no encontrado en la lista). */
+function modulosPermitidos(){
+  if(!ST.usuario || ST.usuariosSistemaError) return null;
+  const u = usuarioActualRegistro();
+  if(!u) return null;
+  if(u.rol==='Admin') return null;
+  if(u.estado==='Pendiente') return ['comercial'];
+  if(u.estado==='Inactivo') return [];
+  return u.modulos||[];
+}
+function moduloPermitido(mod){
+  const permitidos = modulosPermitidos();
+  return permitidos===null || permitidos.includes(mod);
+}
+function primerModuloPermitido(){
+  const permitidos = modulosPermitidos();
+  const orden = ['comercial','bal','obras','fin','emp','sistemas'];
+  if(permitidos===null) return 'comercial';
+  return orden.find(m=>permitidos.includes(m)) || null;
+}
+/* Oculta del menú lateral los módulos no habilitados, muestra el aviso de
+   Pendiente/Inactivo si aplica, y si la sección donde está parado el usuario
+   ya no está permitida (por ejemplo, un Admin le quitó el módulo mientras
+   estaba conectado), lo manda a la primera que sí tenga. Se llama después de
+   cada loadAll() (con sesión activa) y al conectar/desconectar Google. */
+function aplicarPermisosUI(){
+  const permitidos = modulosPermitidos();
+  const NAV = [
+    {mod:'comercial', navBtn:'navComercialBtn'},
+    {mod:'bal',       navBtn:'navBalanceBtn'},
+    {mod:'obras',     navBtn:'navObrasBtn'},
+    {mod:'fin',       navBtn:'navFinBtn'},
+    {mod:'emp',       navBtn:'navEmpBtn'},
+    {mod:'sistemas',  navBtn:'navSistemasBtn'},
+  ];
+  NAV.forEach(({mod,navBtn})=>{
+    const btn = document.getElementById(navBtn);
+    if(!btn) return;
+    btn.style.display = (permitidos===null || permitidos.includes(mod)) ? '' : 'none';
+  });
+  const u = usuarioActualRegistro();
+  const banner = document.getElementById('permisosHint');
+  if(banner){
+    if(ST.usuario && !ST.usuariosSistemaError && u && u.rol!=='Admin' && u.estado==='Pendiente'){
+      banner.style.display='block';
+      banner.textContent = '⏳ Tu acceso está pendiente de aprobación. Por ahora solo puedes ver Comercial. Pide a un Admin que te asigne rol y módulos en Sistemas > Usuarios.';
+    } else if(ST.usuario && !ST.usuariosSistemaError && u && u.rol!=='Admin' && u.estado==='Inactivo'){
+      banner.style.display='block';
+      banner.textContent = '🚫 Tu acceso fue desactivado. Contacta a un Admin si crees que es un error.';
+    } else {
+      banner.style.display='none';
+    }
+  }
+  if(permitidos!==null){
+    const actual = ST.currentSection;
+    const actualMod = actual==='balance' ? 'bal' : actual;
+    if(actual && !permitidos.includes(actualMod)){
+      const primera = primerModuloPermitido();
+      if(primera) switchSection(primera==='bal'?'balance':primera);
+      else switchTab('sinacceso');
+    }
+  }
 }
 
 function setGoogleUI(connected) {
@@ -4068,6 +4310,7 @@ function handleGoogleDisconnected(msg){
   ST.token = null; ST.usuario = null; ST.nombre = null;
   if(tokenExpiryTimer) clearTimeout(tokenExpiryTimer);
   setGoogleUI(false);
+  aplicarPermisosUI();
   toast('err', msg || 'Se cerró tu sesión de Google. Conéctate de nuevo para poder editar.');
 }
 /* Envuelve cualquier llamada a la API de Google: si detecta error 401 (token
@@ -4089,6 +4332,7 @@ function doLogout() {
   ST.token = null; ST.usuario = null; ST.nombre = null;
   if(tokenExpiryTimer) clearTimeout(tokenExpiryTimer);
   setGoogleUI(false);
+  aplicarPermisosUI();
   // Clear data
   ST.cotizaciones=[]; ST.filtered=[];
   document.getElementById('cotTbody').innerHTML='<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">Conecta Google para ver los datos</td></tr>';
@@ -4119,14 +4363,14 @@ async function loadAll() {
        más abajo, igual que antes con el try/catch individual. */
     const sheetMap = await getSheetIdMap();
     const ALL_RANGES = [
-      {k:'cot', sheet:'Cotizaciones', range:'Cotizaciones!A2:Q'},
+      {k:'cot', sheet:'Cotizaciones', range:'Cotizaciones!A2:R'},   // +R = Obra_ID (Fase 3: liga a Obras/Proyectos)
       {k:'cli', sheet:'Clientes', range:'Clientes!A2:E'},
       {k:'con', sheet:'Contactos', range:'Contactos!A2:E'},
       {k:'art', sheet:'Articulos', range:'Articulos!A2:G'},
       {k:'oc', sheet:'Oc_Client', range:'Oc_Client!A2:I'},   // 9 cols: + I=ID_Cotizacion (vínculo)
       {k:'fac', sheet:'Facturas', range:'Facturas!A2:P'},    // 16 cols: includes PDF/XML
       {k:'ing', sheet:'Ingresos', range:'Ingresos!A2:N'},    // 14 cols: A=ID … N=Foto
-      {k:'gas', sheet:'Salidas', range:'Salidas!A2:Q'},      // 17 cols: A=ID … Q=XML_Content
+      {k:'gas', sheet:'Salidas', range:'Salidas!A2:R'},      // +R = Obra_ID (Fase 3; distinto de K=Proyecto, que ya se usa para el detalle de la compra)
       {k:'prov', sheet:'Proveedores', range:'Proveedores!A2:E'}, // 5 cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo
       {k:'contra', sheet:'Contraseñas', range:'Contraseñas!A2:F'},
       {k:'reg', sheet:'Registros', range:'Registros!A2:I'},
@@ -4142,6 +4386,7 @@ async function loadAll() {
       {k:'nom', sheet:'Nominas', range:'Nominas!A2:AV'},
       {k:'par', sheet:'Parametros', range:'Parametros!A1:B50'},
       {k:'usr', sheet:'Usuarios', range:'Usuarios!A2:H'},
+      {k:'obr', sheet:'Obras', range:'Obras!A2:P'},
     ];
     const presentes = ALL_RANGES.filter(x => sheetMap[x.sheet]!==undefined);
     const valores = await sheetsBatchGet(presentes.map(x=>x.range));
@@ -4211,6 +4456,48 @@ async function loadAll() {
       ST.usuariosSistemaError = usrErr.result?.error?.message || usrErr.message || String(usrErr);
     }
     renderSisUsuarios();
+
+    /* Obras / Proyectos (Fase 3) — hoja "Obras":
+       A=ID, B=Nombre, C=ID_Cliente, D=Direccion, E=Responsable, F=Presupuesto,
+       G=Fecha_Inicio, H=Fecha_Fin_Estimada, I=Fecha_Fin_Real, J=Estatus,
+       K=Modo_Avance (manual|checklist), L=Avance_Manual (0-100),
+       M=Etapas_JSON ([{nombre,hecho}]), N=Notas, O=Fecha_Creacion, P=Creado_Por.
+       Se carga en try/catch propio, igual que Usuarios/Contraseñas, para que si la
+       hoja aún no existe no rompa el resto de la carga; la vista de Obras muestra
+       un aviso explicando cómo crearla. */
+    ST.obrasError = null;
+    try{
+      if(faltaHoja('obr')) throw new Error('No se encontró la hoja "Obras".');
+      const obrR = BR.obr;
+      ST.obras = (obrR||[]).map((r,i)=>{
+        let etapas = [];
+        try{ if(r[12]) etapas = JSON.parse(r[12]); }catch(e){ etapas = []; }
+        return {
+          _row: i+2,
+          id: r[0]||('OBR'+(i+2)),
+          nombre: r[1]||'',
+          idCliente: r[2]||'',
+          direccion: r[3]||'',
+          responsable: r[4]||'',
+          presupuesto: parseFloat((r[5]||'').toString().replace(/[$,]/g,''))||0,
+          fechaInicio: r[6]||'',
+          fechaFinEst: r[7]||'',
+          fechaFinReal: r[8]||'',
+          estatus: r[9]||'Planeada',
+          modoAvance: (r[10]||'manual'),
+          avanceManual: parseFloat(r[11])||0,
+          etapas: Array.isArray(etapas) ? etapas : [],
+          notas: r[13]||'',
+          fechaCreacion: r[14]||'',
+          creadoPor: r[15]||'',
+        };
+      }).filter(o=>o.id);
+    }catch(obrErr){
+      ST.obras = [];
+      ST.obrasError = obrErr.result?.error?.message || obrErr.message || String(obrErr);
+    }
+    renderObras();
+    populateObraSelects();
 
     /* Registros de asistencia — se carga aparte (try/catch propio) para que, si la hoja
        "Registros" no existe o el nombre no coincide, NO se rompa la carga del resto de la app
@@ -4669,6 +4956,7 @@ async function loadAll() {
         desc: r[8]||'', notas: r[9]||'', creacion: r[10]||'', id_usr: r[11]||'',
         id_con: r[12]||'', vigencia: r[13]||'', estatus: r[14]||'Pendiente',
         fechaEnvio: r[16]||'',
+        obraId: r[17]||'',
         // Timestamps completos (fecha+hora) para poder ordenar por creación/actualización
         // más reciente incluso cuando varias cotizaciones se crean el mismo día.
         // Se guardan en columnas H y P, que antes estaban sin usar.
@@ -4727,6 +5015,7 @@ async function loadAll() {
       metodoExtraccion: r[14]||'',
       fuenteArchivo:    r[15]||'',
       xmlContent:       r[16]||'',
+      obraId:           r[17]||'',
     })).filter(b=>b.id);
 
     applyIngFilter();
@@ -4742,6 +5031,10 @@ async function loadAll() {
     toast('err', 'Error al cargar datos: ' + (e.result?.error?.message || e.message || e));
   }
   setLoading(false);
+  // FASE 2 — control de acceso real: se reaplica en cada carga (incluido el
+  // auto-refresh) para reaccionar si un Admin cambió el rol/módulos de este
+  // usuario mientras seguía conectado. Sin sesión de Google no hace nada.
+  if(ST.usuario) aplicarPermisosUI();
   // Restaurar exactamente la posición de scroll que tenía el usuario antes
   // de refrescar los datos (doble rAF para esperar a que el layout de las
   // tablas recién renderizadas termine de calcularse).
@@ -6421,6 +6714,7 @@ function abrirNueva() {
   document.getElementById('fNotas').value='';
   document.getElementById('fEstatus').value='Pendiente';
   document.getElementById('fFechaEnvio').value='';
+  document.getElementById('fObra').value='';
   document.getElementById('artSearch').value='';
   ST.ocList = [];
   renderOCSection(false); // nueva cotización: no tiene ID aún
@@ -6462,6 +6756,7 @@ function openEdit(id,rowNum) {
   document.getElementById('fNotas').value=r.notas;
   document.getElementById('fEstatus').value=r.estatus;
   document.getElementById('fFechaEnvio').value=r.fechaEnvio||'';
+  document.getElementById('fObra').value=r.obraId||'';
   document.getElementById('artSearch').value='';
   ST.ocList = ST.ocAll.filter(o => o.cotIds.includes(id));
   renderOCSection(true);
@@ -6492,6 +6787,7 @@ async function guardarCot() {
   const notas    = document.getElementById('fNotas').value;
   const estatus  = document.getElementById('fEstatus').value;
   const fechaEnvio = document.getElementById('fFechaEnvio').value;
+  const obraId   = document.getElementById('fObra').value||'';
   if(estatus==='Enviado' && !fechaEnvio){ toast('err','Confirma la fecha de envío.'); abrirModalFechaEnvio(); return; }
 
   const sub = ST.items.reduce((s,it)=>s+(it.imp||0),0);
@@ -6539,7 +6835,7 @@ async function guardarCot() {
     JSON.stringify(ST.items.map(it=>({desc: it.desc, cant: it.cant, unidad: it.unidad, precio: it.precio, imp: it.imp}))),
     creacionTS, desc, notas, fechaCreacion,
     ST.usuario||'', contacto, vigencia, estatus, actualizacionTS,
-    fechaEnvio ? sheetDate(fechaEnvio) : ''
+    fechaEnvio ? sheetDate(fechaEnvio) : '', obraId
   ];
 
   const btn=document.getElementById('saveBtn');
@@ -6547,12 +6843,12 @@ async function guardarCot() {
 
   try {
     if(ST.editId && ST.editRow){
-      await sheetsUpdate(`Cotizaciones!A${ST.editRow}:Q${ST.editRow}`, [row]);
+      await sheetsUpdate(`Cotizaciones!A${ST.editRow}:R${ST.editRow}`, [row]);
       toast('ok', avisoIdNoSync
         ? `${newId} actualizada. El ID no se sincronizó con la nueva descripción porque ya tiene Órdenes de Compra vinculadas.`
         : `${newId} actualizada.`);
     } else {
-      await sheetsAppend('Cotizaciones!A2:Q', [row]);
+      await sheetsAppend('Cotizaciones!A2:R', [row]);
       ST.editId = newId;
       toast('ok',`${newId} creada.`);
     }
@@ -6644,6 +6940,12 @@ async function confirmDel(){
       ST.usuariosSistema = (ST.usuariosSistema||[]).filter(u=>u._row!==ST.delRow);
       shiftRowsAfterDelete(ST.usuariosSistema, ST.delRow);
       renderSisUsuarios();
+    } else if(kind==='obra'){
+      await sheetsDeleteRow('Obras', ST.delRow);
+      ST.obras = (ST.obras||[]).filter(o=>o._row!==ST.delRow);
+      shiftRowsAfterDelete(ST.obras, ST.delRow);
+      renderObras();
+      populateObraSelects();
     } else {
       await sheetsDeleteRow('Cotizaciones', ST.delRow);
       ST.cotizaciones=ST.cotizaciones.filter(c=>c.id!==ST.delId);
@@ -9388,10 +9690,11 @@ function openEditCliente(id){
 }
 
 /* ── USUARIOS Y ROLES (Sistemas) ──
-   Estructura + CRUD básico únicamente: guarda rol y módulos habilitados por
-   usuario, pero todavía NO se usa para restringir el acceso real a los demás
-   módulos de la app (eso queda para un cambio aparte). */
-const USUARIO_MODULOS = ['comercial','bal','fin','emp','sistemas'];
+   CRUD de usuarios + rol + módulos habilitados. El control de acceso real
+   (ocultar módulos no habilitados, bloquear Pendientes/Inactivos, etc.) vive
+   en las funciones modulosPermitidos()/aplicarPermisosUI() más arriba en este
+   archivo (buscar "FASE 2"). */
+const USUARIO_MODULOS = ['comercial','bal','obras','fin','emp','sistemas'];
 function genUsuarioId(){ return 'USR'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
 function onSisUsuariosSearch(v){ ST.sisUsuariosQuery = (v||'').toLowerCase(); renderSisUsuarios(); }
 function estadoUsuarioPillClass(estado){
@@ -9418,7 +9721,7 @@ function renderSisUsuarios(){
     tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin usuarios registrados todavía.'}</td></tr>`;
     return;
   }
-  const modLabels = {comercial:'Comercial', bal:'Balance', fin:'Centro Financiero', emp:'Empleados', sistemas:'Sistemas'};
+  const modLabels = {comercial:'Comercial', bal:'Balance', obras:'Obras', fin:'Centro Financiero', emp:'Empleados', sistemas:'Sistemas'};
   tbody.innerHTML = list.map(u=>`<tr>
     <td style="font-weight:500;font-size:12.5px">${esc(u.nombre||'—')}</td>
     <td style="font-size:12px;color:var(--text2)">${esc(u.email)}</td>
@@ -9500,6 +9803,242 @@ async function saveNewUsuario(){
     renderSisUsuarios();
     document.getElementById('addUsuarioModal').classList.remove('open');
   }catch(e){ toast('err','Error al guardar usuario: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false;
+}
+
+/* ── OBRAS / PROYECTOS (Fase 3) ──
+   Módulo nuevo, independiente de Empleados/Sistemas. Reutiliza los mismos
+   patrones que Usuarios/Contraseñas: try/catch propio en loadAll, CRUD con
+   sheetsAppend/sheetsUpdate/sheetsDeleteRow, esc() para escapar texto,
+   openDel()/confirmDel() para borrar (kind:'obra').
+   El avance se puede medir de 2 formas (se elige por obra, en "Modo_Avance"):
+   - "manual": un % que el usuario actualiza a mano (Avance_Manual).
+   - "checklist": una lista de etapas que el usuario define libremente para esa
+     obra (ej. "Cimentación", "Estructura", "Acabados…"); el % se calcula solo
+     como etapas marcadas / total de etapas. Se guarda en Etapas_JSON. */
+const ESTATUS_OBRA = ['Planeada','En proceso','Pausada','Terminada','Cancelada'];
+function genObraId(){ return 'OBR'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function avancePct(o){
+  if(!o) return 0;
+  if(o.modoAvance==='checklist'){
+    const etapas = o.etapas||[];
+    if(!etapas.length) return 0;
+    const hechas = etapas.filter(e=>e.hecho).length;
+    return Math.round((hechas/etapas.length)*100);
+  }
+  return Math.max(0, Math.min(100, Math.round(o.avanceManual||0)));
+}
+function estatusObraPillClass(estatus){
+  return {Planeada:'pill-pend', 'En proceso':'pill-acep', Pausada:'pill-pend', Terminada:'pill-acep', Cancelada:'pill-rech'}[estatus] || 'pill-pend';
+}
+function onObrasSearch(v){ ST.obrasQuery = (v||'').toLowerCase(); renderObras(); }
+function renderObras(){
+  const tbody = document.getElementById('obrasTbody');
+  if(!tbody) return;
+  if(ST.obrasError){
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text3)">
+      ⚠️ No se pudo leer la hoja <strong>Obras</strong> todavía (${esc(ST.obrasError)}).<br>
+      Crea una hoja llamada exactamente <strong>Obras</strong> con columnas: A=ID, B=Nombre, C=ID_Cliente, D=Direccion,
+      E=Responsable, F=Presupuesto, G=Fecha_Inicio, H=Fecha_Fin_Estimada, I=Fecha_Fin_Real, J=Estatus,
+      K=Modo_Avance, L=Avance_Manual, M=Etapas_JSON, N=Notas, O=Fecha_Creacion, P=Creado_Por.
+      En cuanto exista podrás agregar y editar desde aquí.
+    </td></tr>`;
+    document.getElementById('obrasCount').textContent='0';
+    return;
+  }
+  const q = ST.obrasQuery||'';
+  let list = (ST.obras||[]).slice();
+  if(q) list = list.filter(o=>(o.nombre||'').toLowerCase().includes(q) || (ST.clientes[o.idCliente]?.nombre||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  document.getElementById('obrasCount').textContent = list.length;
+  if(!list.length){
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin obras registradas todavía.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(o=>{
+    const pct = avancePct(o);
+    const cliente = ST.clientes[o.idCliente]?.nombre || o.idCliente || '—';
+    return `<tr>
+    <td style="font-weight:500;font-size:12.5px">${esc(o.nombre||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(cliente)}</td>
+    <td><span class="pill ${estatusObraPillClass(o.estatus)}">${esc(o.estatus)}</span></td>
+    <td style="min-width:110px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;height:6px;border-radius:3px;background:var(--bg3);overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--blue)"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${pct}%</span>
+      </div>
+    </td>
+    <td style="font-size:12px;color:var(--text2)">${fmtMXN(o.presupuesto)}</td>
+    <td style="font-size:11.5px;color:var(--text3)">${esc(o.fechaInicio||'—')} → ${esc(o.fechaFinEst||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(o.responsable||'—')}</td>
+    <td>
+      <div class="row-acts" style="opacity:1">
+        <button class="btn-icon" title="Editar" onclick="openEditObra('${esc(o.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        </button>
+        <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(o.id)}',${o._row},'obra')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>`;
+  }).join('');
+}
+/* Rellena todos los <select class="obra-select"> del sistema (formulario de
+   Cotización y de Gasto/Salidas) con la lista de obras, para poder ligar una
+   cotización o un gasto a una obra. Incluye siempre una opción vacía. */
+function populateObraSelects(){
+  const opts = '<option value="">— Sin obra —</option>' +
+    (ST.obras||[]).slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''))
+      .map(o=>`<option value="${esc(o.id)}">${esc(o.nombre)}</option>`).join('');
+  document.querySelectorAll('select.obra-select').forEach(sel=>{
+    const prev = sel.value;
+    sel.innerHTML = opts;
+    if(prev) sel.value = prev;
+  });
+}
+/* ── Modal Agregar/Editar Obra ── */
+function populateObraClienteSelect(selected){
+  const sel = document.getElementById('oCliente'); if(!sel) return;
+  const opts = '<option value="">— Sin cliente —</option>' +
+    Object.values(ST.clientes||{}).slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''))
+      .map(c=>`<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+  sel.innerHTML = opts;
+  sel.value = selected||'';
+}
+function renderEtapasEditor(){
+  const wrap = document.getElementById('oEtapasWrap'); if(!wrap) return;
+  const etapas = ST._obraEtapas||[];
+  if(!etapas.length){
+    wrap.innerHTML = '<div style="font-size:11.5px;color:var(--text3);padding:6px 0">Sin etapas todavía. Agrega la primera con el botón de abajo.</div>';
+  } else {
+    wrap.innerHTML = etapas.map((e,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+        <input type="checkbox" ${e.hecho?'checked':''} onchange="toggleEtapaObra(${i})" style="width:16px;height:16px;flex-shrink:0">
+        <input type="text" class="form-input" value="${esc(e.nombre)}" oninput="renombrarEtapaObra(${i},this.value)" style="flex:1;height:28px" placeholder="Nombre de la etapa (ej. Cimentación)">
+        <button type="button" class="btn-icon del" title="Quitar etapa" onclick="quitarEtapaObra(${i})">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+        </button>
+      </div>`).join('');
+  }
+  actualizarAvancePreview();
+}
+function agregarEtapaObra(){
+  ST._obraEtapas = ST._obraEtapas||[];
+  ST._obraEtapas.push({nombre:'', hecho:false});
+  renderEtapasEditor();
+}
+function toggleEtapaObra(i){ if(ST._obraEtapas&&ST._obraEtapas[i]){ ST._obraEtapas[i].hecho = !ST._obraEtapas[i].hecho; actualizarAvancePreview(); } }
+function renombrarEtapaObra(i,val){ if(ST._obraEtapas&&ST._obraEtapas[i]) ST._obraEtapas[i].nombre = val; }
+function quitarEtapaObra(i){ ST._obraEtapas.splice(i,1); renderEtapasEditor(); }
+function onObraModoAvanceChange(){
+  const modo = document.querySelector('input[name="oModoAvance"]:checked')?.value || 'manual';
+  document.getElementById('oAvanceManualWrap').style.display = modo==='manual' ? '' : 'none';
+  document.getElementById('oEtapasSection').style.display = modo==='checklist' ? '' : 'none';
+  actualizarAvancePreview();
+}
+function actualizarAvancePreview(){
+  const modo = document.querySelector('input[name="oModoAvance"]:checked')?.value || 'manual';
+  const preview = document.getElementById('oAvancePreview'); if(!preview) return;
+  let pct;
+  if(modo==='checklist'){
+    const etapas = ST._obraEtapas||[];
+    pct = etapas.length ? Math.round(etapas.filter(e=>e.hecho).length/etapas.length*100) : 0;
+  } else {
+    pct = parseInt(document.getElementById('oAvanceManual').value)||0;
+  }
+  preview.textContent = pct+'%';
+}
+function openAddObra(){
+  if(!requireAuth()) return;
+  ST.editObraId = null;
+  ST._obraEtapas = [];
+  document.getElementById('obraModalTitle').textContent = 'Nueva Obra / Proyecto';
+  document.getElementById('oNombre').value='';
+  populateObraClienteSelect('');
+  document.getElementById('oDireccion').value='';
+  document.getElementById('oResponsable').value='';
+  document.getElementById('oPresupuesto').value='';
+  document.getElementById('oFechaInicio').value='';
+  document.getElementById('oFechaFinEst').value='';
+  document.getElementById('oFechaFinReal').value='';
+  document.getElementById('oEstatus').value='Planeada';
+  document.getElementById('oNotas').value='';
+  document.querySelector('input[name="oModoAvance"][value="manual"]').checked = true;
+  document.getElementById('oAvanceManual').value = 0;
+  onObraModoAvanceChange();
+  renderEtapasEditor();
+  document.getElementById('saveObraBtn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Obra';
+  document.getElementById('obraModal').classList.add('open');
+}
+function openEditObra(id){
+  if(!requireAuth()) return;
+  const o = (ST.obras||[]).find(x=>x.id===id); if(!o) return;
+  ST.editObraId = id;
+  ST._obraEtapas = JSON.parse(JSON.stringify(o.etapas||[]));
+  document.getElementById('obraModalTitle').textContent = 'Editar Obra / Proyecto';
+  document.getElementById('oNombre').value = o.nombre||'';
+  populateObraClienteSelect(o.idCliente);
+  document.getElementById('oDireccion').value = o.direccion||'';
+  document.getElementById('oResponsable').value = o.responsable||'';
+  document.getElementById('oPresupuesto').value = o.presupuesto||'';
+  document.getElementById('oFechaInicio').value = o.fechaInicio||'';
+  document.getElementById('oFechaFinEst').value = o.fechaFinEst||'';
+  document.getElementById('oFechaFinReal').value = o.fechaFinReal||'';
+  document.getElementById('oEstatus').value = o.estatus||'Planeada';
+  document.getElementById('oNotas').value = o.notas||'';
+  document.querySelector(`input[name="oModoAvance"][value="${o.modoAvance==='checklist'?'checklist':'manual'}"]`).checked = true;
+  document.getElementById('oAvanceManual').value = o.avanceManual||0;
+  onObraModoAvanceChange();
+  renderEtapasEditor();
+  document.getElementById('saveObraBtn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+  document.getElementById('obraModal').classList.add('open');
+}
+function closeObraModal(){ document.getElementById('obraModal').classList.remove('open'); }
+async function saveObra(){
+  const nombre = document.getElementById('oNombre').value.trim();
+  if(!nombre){ toast('err','El nombre de la obra es obligatorio.'); return; }
+  const idCliente = document.getElementById('oCliente').value;
+  const direccion = document.getElementById('oDireccion').value.trim();
+  const responsable = document.getElementById('oResponsable').value.trim();
+  const presupuesto = parseFloat(document.getElementById('oPresupuesto').value)||0;
+  const fechaInicio = document.getElementById('oFechaInicio').value;
+  const fechaFinEst = document.getElementById('oFechaFinEst').value;
+  const fechaFinReal = document.getElementById('oFechaFinReal').value;
+  const estatus = document.getElementById('oEstatus').value;
+  const notas = document.getElementById('oNotas').value;
+  const modoAvance = document.querySelector('input[name="oModoAvance"]:checked')?.value || 'manual';
+  const avanceManual = parseInt(document.getElementById('oAvanceManual').value)||0;
+  const etapas = (ST._obraEtapas||[]).filter(e=>e.nombre.trim());
+  const btn = document.getElementById('saveObraBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    const etapasJSON = JSON.stringify(etapas);
+    if(ST.editObraId){
+      const o = (ST.obras||[]).find(x=>x.id===ST.editObraId);
+      await sheetsUpdate(`Obras!B${o._row}:N${o._row}`, [[
+        nombre, idCliente, direccion, responsable, presupuesto.toFixed(2),
+        fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapasJSON, notas
+      ]]);
+      Object.assign(o, {nombre, idCliente, direccion, responsable, presupuesto, fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapas});
+      toast('ok',`Obra "${nombre}" actualizada.`);
+    } else {
+      const id = genObraId();
+      const hoy = todayISO();
+      await sheetsAppend('Obras!A2:P', [[
+        id, nombre, idCliente, direccion, responsable, presupuesto.toFixed(2),
+        fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapasJSON, notas, hoy, ST.usuario||''
+      ]]);
+      ST.obras = ST.obras||[];
+      ST.obras.push({_row: ST.obras.length+2, id, nombre, idCliente, direccion, responsable, presupuesto, fechaInicio, fechaFinEst, fechaFinReal, estatus, modoAvance, avanceManual, etapas, notas, fechaCreacion:hoy, creadoPor:ST.usuario||''});
+      toast('ok',`Obra "${nombre}" creada.`);
+    }
+    renderObras();
+    populateObraSelects();
+    closeObraModal();
+  }catch(e){ toast('err','Error al guardar obra: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false;
 }
 
@@ -11193,11 +11732,35 @@ function restoreLastView(){
 }
 
 function switchTab(tab){
+  // FASE 2 — control de acceso real: si el módulo al que se quiere entrar no está
+  // permitido para el usuario conectado, se bloquea aquí (punto único por el que
+  // pasa toda la navegación: menú lateral, búsqueda global, restoreLastView, etc.)
+  if(tab!=='sinacceso'){
+    const MOD_OF_TAB = {cot:'comercial', fac:'comercial', oc:'comercial', bal:'bal', emp:'emp', sistemas:'sistemas', fin:'fin', obras:'obras'};
+    const modDeEsteTab = MOD_OF_TAB[tab];
+    if(modDeEsteTab && !moduloPermitido(modDeEsteTab)){
+      toast('err','No tienes acceso a ese módulo. Pide a un Admin que te lo habilite en Sistemas > Usuarios.');
+      const primera = primerModuloPermitido();
+      if(primera && primera!==modDeEsteTab){ switchSection(primera==='bal'?'balance':primera); return; }
+      if(!primera){ switchTab('sinacceso'); return; }
+    }
+  }
   resetViewTransitionState();
+  if(tab==='sinacceso'){
+    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin','tabObras','tabSinAcceso'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    document.getElementById('tabSinAcceso')?.classList.add('active');
+    document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+    ['comercialSubNav','balanceSubNav','empleadosSubNav','sistemasSubNav','finSubNav'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+    const bcPage = document.getElementById('bcPage'); if(bcPage) bcPage.textContent='Sin acceso';
+    const bcSection = document.getElementById('bcSection'); if(bcSection) bcSection.textContent='Sin acceso';
+    ST.currentTab='sinacceso'; ST.currentSection='sinacceso';
+    return;
+  }
   // Vistas nuevas, aún vacías (sin sub-nav ni funcionalidad propia todavía)
-  const SIMPLE_TABS = { emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn'} };
+  const SIMPLE_TABS = { emp:{pane:'tabEmp', label:'Empleados', navBtn:'navEmpBtn'}, sistemas:{pane:'tabSistemas', label:'Sistemas', navBtn:'navSistemasBtn'}, fin:{pane:'tabFin', label:'Centro Financiero', navBtn:'navFinBtn'}, obras:{pane:'tabObras', label:'Obras', navBtn:'navObrasBtn'} };
   if(SIMPLE_TABS[tab]){
-    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    ['tabCot','tabFac','tabOC','tabBal','tabEmp','tabSistemas','tabFin','tabObras','tabSinAcceso'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
     document.getElementById(SIMPLE_TABS[tab].pane)?.classList.add('active');
     document.querySelectorAll('.bal-tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
@@ -11232,6 +11795,8 @@ function switchTab(tab){
     if(p) p.classList.remove('active');
     if(b) b.classList.remove('active');
   });
+  document.getElementById('tabSinAcceso')?.classList.remove('active');
+  document.getElementById('tabObras')?.classList.remove('active');
 
   const target = TABS[tab];
   if(!target){ console.error('switchTab: unknown tab', tab); return; }
@@ -11262,7 +11827,7 @@ function switchTab(tab){
   // Estas vistas (Documentación/Nóminas/Asistencia) no forman parte de Comercial/Balance:
   // si venimos de una de ellas, hay que apagar su botón del menú lateral explícitamente,
   // porque el bloque de arriba solo toggle-a Comercial/Balance.
-  ['navEmpBtn','navSistemasBtn','navFinBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['navEmpBtn','navSistemasBtn','navFinBtn','navObrasBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   const comSubNav=document.getElementById('comercialSubNav');
   const balSubNav=document.getElementById('balanceSubNav');
   const empSubNav=document.getElementById('empleadosSubNav');
@@ -11881,6 +12446,7 @@ function openBalModal(tipo, prefill){
   document.getElementById('bEsDeuda').value   = 'FALSE';
   document.getElementById('bCategoria').value = '';
   document.getElementById('bProyecto').value  = '';
+  document.getElementById('bObra').value      = '';
   document.getElementById('bObs').value       = prefill?.obs||'';
   document.getElementById('bResponsable').value= '';
   // evidencia de pago (solo ingresos: PDF / foto)
@@ -11916,6 +12482,7 @@ function toggleBalFieldsByTipo(isIng){
   document.getElementById('bProveedorGrp').style.display  = isIng?'none':'';
   document.getElementById('bCategoriaGrp').style.display  = isIng?'none':'';
   document.getElementById('bProyectoGrp').style.display   = isIng?'none':'';
+  document.getElementById('bObraGrp').style.display        = isIng?'none':'';
   document.getElementById('bDeudaGrp').style.display      = isIng?'none':'';
   document.getElementById('bEvidenciaGrp').style.display  = isIng?'':'none';
   document.getElementById('bGastoModoWrap').style.display = isIng?'none':'';
@@ -11950,6 +12517,7 @@ function openBalEdit(id, tipo){
   document.getElementById('bEsDeuda').value    = isIng?'FALSE':(b.esDeuda||'FALSE');
   document.getElementById('bCategoria').value  = isIng?'':(b.categoria||'');
   document.getElementById('bProyecto').value   = isIng?'':(b.proyecto||'');
+  if(document.getElementById('bObra')) document.getElementById('bObra').value = isIng?'':(b.obraId||'');
 
   // evidencia de pago (ingresos)
   ST._balEvidenciaFile = null;
@@ -12295,7 +12863,7 @@ async function saveBalEntry(){
         btn.textContent='Guardando…';
       }
     } catch(e){ toast('err','Error al subir el archivo: '+(e.message||e)); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar'; return; }
-    // Fila con las 17 columnas reales de la hoja Salidas (A=ID … Q=XML_Content)
+    // Fila con las 18 columnas reales de la hoja Salidas (A=ID … Q=XML_Content, R=Obra_ID)
     const row=[
       ST.balEditId || genBalId(),
       fecha,
@@ -12314,21 +12882,22 @@ async function saveBalEntry(){
       ST._bGastoMetodo || (ST.balEditId ? (ST.salidas.find(x=>x.id===ST.balEditId)?.metodoExtraccion||'') : ''),
       fuenteLink,
       ST._bGastoXmlText || (ST.balEditId ? (ST.salidas.find(x=>x.id===ST.balEditId)?.xmlContent||'') : ''),
+      document.getElementById('bObra') ? document.getElementById('bObra').value : '', // Obra_ID (Fase 3)
     ];
-    // Salvaguarda: la hoja Salidas tiene exactamente 17 columnas (A–Q). Si el
-    // arreglo no trae 17 elementos, algo se desalineó antes de escribir y es
+    // Salvaguarda: la hoja Salidas tiene exactamente 18 columnas (A–R). Si el
+    // arreglo no trae 18 elementos, algo se desalineó antes de escribir y es
     // mejor abortar que guardar datos en columnas incorrectas.
-    if(row.length!==17){
-      toast('err','Error interno: el gasto tiene '+row.length+' columnas en vez de 17 (A–Q). No se guardó, revisa el código.');
+    if(row.length!==18){
+      toast('err','Error interno: el gasto tiene '+row.length+' columnas en vez de 18 (A–R). No se guardó, revisa el código.');
       btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
       return;
     }
     try{
       if(ST.balEditId){
         const b=ST.salidas.find(x=>x.id===ST.balEditId);
-        if(b) await sheetsUpdate(`Salidas!A${b._row}:Q${b._row}`,[row]);
+        if(b) await sheetsUpdate(`Salidas!A${b._row}:R${b._row}`,[row]);
       } else {
-        await sheetsWriteNewRow('Salidas', ST.salidas.length, 'Q', row);
+        await sheetsWriteNewRow('Salidas', ST.salidas.length, 'R', row);
       }
       toast('ok','Gasto guardado.');
       closeBalModal();
