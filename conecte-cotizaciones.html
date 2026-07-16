@@ -1022,6 +1022,14 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
           Artículos
         </button>
+        <button class="bal-tab" id="sisProveedoresBtn" onclick="switchSistemasSubTab('proveedores')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6.5l1.5-3h9l1.5 3M2 6.5v6h12v-6M2 6.5h12M5.5 9.5h1.5M5.5 12h5"/></svg>
+          Proveedores
+        </button>
+        <button class="bal-tab" id="sisContactosBtn" onclick="switchSistemasSubTab('contactos')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="2.4"/><path d="M4 13.5c0-2.5 1.8-4.2 4-4.2s4 1.7 4 4.2"/></svg>
+          Contactos
+        </button>
         <button class="bal-tab" id="sisContrasenasBtn" onclick="switchSistemasSubTab('contrasenas')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
           Contraseñas
@@ -1757,6 +1765,43 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         </div>
       </div><!-- /sisSubArticulos -->
 
+      <!-- Sub-vista: PROVEEDORES -->
+      <div id="sisSubProveedores" class="emp-subpane">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre o ID…" oninput="onSisProveedoresSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Proveedores</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisProveedoresCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddProveedor()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Proveedor
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th>Nombre</th><th>ID</th><th>Dirección</th><th>Contacto</th><th>Correo</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="sisProveedoresTbody">
+                <tr class="loading-row"><td colspan="6"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubProveedores -->
+
+      <!-- Sub-vista: CONTACTOS (agrupados por cliente) -->
+      <div id="sisSubContactos" class="emp-subpane">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre de contacto o cliente…" oninput="onSisContactosSearch(this.value)">
+        </div>
+        <div id="sisContactosWrap">
+          <div class="loading-row" style="padding:24px;text-align:center"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</div>
+        </div>
+      </div><!-- /sisSubContactos -->
+
       <!-- Sub-vista: CONTRASEÑAS -->
       <div id="sisSubContrasenas" class="emp-subpane">
         <div class="info-card" style="margin-bottom:12px">
@@ -2100,6 +2145,22 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
         <div class="stat cy"><div class="stat-lbl">Cotizaciones Activas</div><div class="stat-val" id="dgKpiCot">—</div><div class="stat-delta">Pendientes + Enviadas</div></div>
         <div class="stat cg"><div class="stat-lbl">Obras en Proceso</div><div class="stat-val" id="dgKpiObras">—</div><div class="stat-delta" id="dgKpiObrasAvance">Avance promedio —</div></div>
         <div class="stat cr"><div class="stat-lbl">Nómina Pagada</div><div class="stat-val" id="dgKpiNomina">—</div><div class="stat-delta">Pagada en el año</div></div>
+      </div>
+      <!-- Reporte de pendientes: solo conteos, sin montos (a propósito) -->
+      <div class="dash-card-title" style="margin:4px 0 8px">Reporte de Pendientes</div>
+      <div class="dash-kpi-grid" id="dgKpisPendientes" style="margin-bottom:14px">
+        <div class="stat cy" style="cursor:pointer" onclick="notifIrA('cot')" title="Ir a Cotizaciones">
+          <div class="stat-lbl">Cotizaciones Pendientes</div><div class="stat-val" id="dgKpiCotPend">—</div><div class="stat-delta">Por enviar / sin respuesta</div>
+        </div>
+        <div class="stat cb" style="cursor:pointer" onclick="switchTab('fac')" title="Ir a Facturas">
+          <div class="stat-lbl">Facturas Pendientes</div><div class="stat-val" id="dgKpiFacPend">—</div><div class="stat-delta">Sin cobrar / cerrar</div>
+        </div>
+        <div class="stat cr" style="cursor:pointer" onclick="switchTab('oc')" title="Ir a Órdenes de Compra">
+          <div class="stat-lbl">Órdenes de Compra Pendientes</div><div class="stat-val" id="dgKpiOCPend">—</div><div class="stat-delta">Sin facturar</div>
+        </div>
+        <div class="stat cg" style="cursor:pointer" onclick="switchTab('obras')" title="Ir a Obras">
+          <div class="stat-lbl">Obras Activas</div><div class="stat-val" id="dgKpiObrasPend">—</div><div class="stat-delta">Planeadas + en proceso + pausadas</div>
+        </div>
       </div>
       <!-- Filtro año -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -3480,7 +3541,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 <!-- ══ ADD PROVEEDOR MODAL (usado desde el formulario de Salidas) ══ -->
 <div class="modal-bg" id="addProveedorModal">
   <div class="modal" style="width:420px">
-    <div class="modal-title">Nuevo Proveedor</div>
+    <div class="modal-title" id="addProveedorModalTitle">Nuevo Proveedor</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <div class="form-group">
         <label class="form-label">ID Proveedor *</label>
@@ -3516,16 +3577,20 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 <!-- ══ ADD CONTACT MODAL ══ -->
 <div class="modal-bg" id="addContactoModal">
   <div class="modal" style="width:420px">
-    <div class="modal-title">Nuevo Contacto</div>
+    <div class="modal-title" id="addContactoModalTitle">Nuevo Contacto</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
       <div class="form-group">
         <label class="form-label">ID Contacto *</label>
         <input type="text" class="form-input" id="ncoId" placeholder="Ej. ING001" style="text-transform:uppercase">
       </div>
-      <div class="form-group">
+      <div class="form-group" id="ncoClienteLabelWrap">
         <label class="form-label">Cliente al que pertenece</label>
         <input type="text" class="form-input" id="ncoClienteLabel" readonly style="background:var(--bg4);color:var(--text2)">
         <input type="hidden" id="ncoClienteId">
+      </div>
+      <div class="form-group" id="ncoClienteSelWrap" style="display:none">
+        <label class="form-label">Cliente al que pertenece *</label>
+        <select class="form-select" id="ncoClienteSel"></select>
       </div>
       <div class="form-group">
         <label class="form-label">Nombre Completo *</label>
@@ -4518,7 +4583,7 @@ async function loadAll() {
 
     /* Proveedores — cols: A=ID_Proveedor, B=Nombre, C=Direccion, D=Contacto, E=Correo */
     ST.proveedores = {};
-    (provR||[]).forEach(r => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], direccion:r[2]||'', contacto:r[3]||'', correo:r[4]||'' }; });
+    (provR||[]).forEach((r,i) => { if(r[0]) ST.proveedores[r[0]] = { id:r[0], nombre:r[1]||r[0], direccion:r[2]||'', contacto:r[3]||'', correo:r[4]||'', _row:i+2 }; });
 
     /* Contraseñas — hoja "Contraseñas" (A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Enlace, F=Categoría).
        Se carga en try/catch propio, igual que Registros/Personal, para que si la hoja
@@ -5015,11 +5080,11 @@ async function loadAll() {
     /* Contactos — cols: A=ID, B=ID_Cli, C=Nombre, D=Tel, E=Email */
     ST.contactos = {};
     ST.contactosList = [];
-    (conR||[]).forEach(r => {
+    (conR||[]).forEach((r,i) => {
       if(r[0]){
-        const id=r[0], id_cli=r[1]||'', nombre=r[2]||r[1]||r[0];
+        const id=r[0], id_cli=r[1]||'', nombre=r[2]||r[1]||r[0], tel=r[3]||'', email=r[4]||'';
         ST.contactos[id] = nombre;
-        ST.contactosList.push({ id, id_cli, nombre });
+        ST.contactosList.push({ id, id_cli, nombre, tel, email, _row:i+2 });
       }
     });
 
@@ -7080,6 +7145,18 @@ async function confirmDel(){
       ST.usuariosSistema = (ST.usuariosSistema||[]).filter(u=>u._row!==ST.delRow);
       shiftRowsAfterDelete(ST.usuariosSistema, ST.delRow);
       renderSisUsuarios();
+    } else if(kind==='proveedor'){
+      await sheetsDeleteRow('Proveedores', ST.delRow);
+      delete ST.proveedores[ST.delId];
+      Object.values(ST.proveedores).forEach(p=>{ if(p._row>ST.delRow) p._row--; });
+      populateProveedores();
+      renderSisProveedores();
+    } else if(kind==='contacto'){
+      await sheetsDeleteRow('Contactos', ST.delRow);
+      delete ST.contactos[ST.delId];
+      ST.contactosList = (ST.contactosList||[]).filter(c=>c.id!==ST.delId);
+      ST.contactosList.forEach(c=>{ if(c._row>ST.delRow) c._row--; });
+      renderSisContactos();
     } else if(kind==='obra'){
       await sheetsDeleteRow('Obras', ST.delRow);
       ST.obras = (ST.obras||[]).filter(o=>o._row!==ST.delRow);
@@ -9750,14 +9827,16 @@ function switchEmpSubTab(sub){
    formulario de Cotización, que solo permite agregar). */
 function switchSistemasSubTab(sub){
   ST.sisSubTab = sub;
-  ['sisSubClientes','sisSubArticulos','sisSubContrasenas','sisSubUsuarios','sisSubReportes'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['sisClientesBtn','sisArticulosBtn','sisContrasenasBtn','sisUsuariosBtn','sisReportesBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', contrasenas:'sisSubContrasenas', usuarios:'sisSubUsuarios', reportes:'sisSubReportes'}[sub] || 'sisSubClientes';
-  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', contrasenas:'sisContrasenasBtn', usuarios:'sisUsuariosBtn', reportes:'sisReportesBtn'}[sub] || 'sisClientesBtn';
+  ['sisSubClientes','sisSubArticulos','sisSubProveedores','sisSubContactos','sisSubContrasenas','sisSubUsuarios','sisSubReportes'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['sisClientesBtn','sisArticulosBtn','sisProveedoresBtn','sisContactosBtn','sisContrasenasBtn','sisUsuariosBtn','sisReportesBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', proveedores:'sisSubProveedores', contactos:'sisSubContactos', contrasenas:'sisSubContrasenas', usuarios:'sisSubUsuarios', reportes:'sisSubReportes'}[sub] || 'sisSubClientes';
+  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', proveedores:'sisProveedoresBtn', contactos:'sisContactosBtn', contrasenas:'sisContrasenasBtn', usuarios:'sisUsuariosBtn', reportes:'sisReportesBtn'}[sub] || 'sisClientesBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
   if(sub==='clientes') renderSisClientes();
   if(sub==='articulos') renderSisArticulos();
+  if(sub==='proveedores') renderSisProveedores();
+  if(sub==='contactos') renderSisContactos();
   if(sub==='contrasenas') renderSisContrasenas();
   if(sub==='usuarios') renderSisUsuarios();
   if(sub==='reportes') renderReportePreview();
@@ -10478,6 +10557,16 @@ function renderDashboardGeneral(){
     .filter(n=>n.estatus==='Pagada' && n.fechaFin && n.fechaFin.startsWith(year))
     .reduce((s,n)=>s+(n.totalFinal||0),0);
   document.getElementById('dgKpiNomina').textContent = fmtMXN(nominaPagada);
+
+  /* ── Reporte de Pendientes: solo conteos, nunca montos ── */
+  const cotPend = (ST.cotizaciones||[]).filter(c=>c.estatus==='Pendiente').length;
+  document.getElementById('dgKpiCotPend').textContent = cotPend;
+  const facPend = (ST.facturas||[]).filter(f=>f.estatus==='Pendiente').length;
+  document.getElementById('dgKpiFacPend').textContent = facPend;
+  const ocPend = (ST.ocAll||[]).filter(o=>o.estatus==='Pendiente').length;
+  document.getElementById('dgKpiOCPend').textContent = ocPend;
+  const obrasActivas = (ST.obras||[]).filter(o=>o.estatus==='Planeada'||o.estatus==='En proceso'||o.estatus==='Pausada').length;
+  document.getElementById('dgKpiObrasPend').textContent = obrasActivas;
 
   const isDark=!document.body.classList.contains('light');
   const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
@@ -12009,7 +12098,9 @@ async function saveNewCliente() {
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Cliente';
 }
 
-/* ─── ADD PROVEEDOR (usado desde el formulario de Salidas) ─── */
+/* ─── ADD / EDIT PROVEEDOR ───
+   Se usa desde el formulario de Salidas (rápido, solo alta) y desde
+   Sistemas > Proveedores (alta + edición completas). */
 function populateProveedores(selectedId){
   const sel=document.getElementById('bProveedor');
   if(!sel) return;
@@ -12020,63 +12111,263 @@ function populateProveedores(selectedId){
 }
 function openAddProveedor() {
   if(!requireAuth()) return;
+  ST.editProveedorId = null;
   ['npID','npNombre','npDireccion','npContacto','npCorreo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('npID').disabled = false;
+  document.getElementById('addProveedorModalTitle').textContent = 'Nuevo Proveedor';
+  document.getElementById('saveProveedorBtn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Proveedor';
+  document.getElementById('addProveedorModal').classList.add('open');
+}
+function openEditProveedor(id) {
+  if(!requireAuth()) return;
+  const p = ST.proveedores[id]; if(!p) return;
+  ST.editProveedorId = id;
+  document.getElementById('npID').value = p.id;
+  document.getElementById('npID').disabled = true;
+  document.getElementById('npNombre').value = p.nombre||'';
+  document.getElementById('npDireccion').value = p.direccion||'';
+  document.getElementById('npContacto').value = p.contacto||'';
+  document.getElementById('npCorreo').value = p.correo||'';
+  document.getElementById('addProveedorModalTitle').textContent = 'Editar Proveedor';
+  document.getElementById('saveProveedorBtn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
   document.getElementById('addProveedorModal').classList.add('open');
 }
 async function saveNewProveedor() {
-  const id  = document.getElementById('npID').value.trim().toUpperCase();
+  const editId = ST.editProveedorId;
+  const id  = editId || document.getElementById('npID').value.trim().toUpperCase();
   const nom = document.getElementById('npNombre').value.trim();
   if(!id){ toast('err','El ID de proveedor es obligatorio.'); return; }
   if(!nom){ toast('err','El nombre es obligatorio.'); return; }
-  if(ST.proveedores[id]){ toast('err','Ya existe un proveedor con ese ID.'); return; }
+  if(!editId && ST.proveedores[id]){ toast('err','Ya existe un proveedor con ese ID.'); return; }
   const btn=document.getElementById('saveProveedorBtn');
   btn.disabled=true; btn.textContent='Guardando…';
   try {
     const direccion = document.getElementById('npDireccion').value.trim();
     const contacto  = document.getElementById('npContacto').value.trim();
     const correo    = document.getElementById('npCorreo').value.trim();
-    await sheetsAppend('Proveedores!A2:E', [[id, nom, direccion, contacto, correo]]);
-    ST.proveedores[id]={ id, nombre:nom, direccion, contacto, correo };
+    const row = [id, nom, direccion, contacto, correo];
+    if(editId){
+      const existing = ST.proveedores[editId];
+      await sheetsUpdate(`Proveedores!A${existing._row}:E${existing._row}`, [row]);
+      ST.proveedores[id]={ id, nombre:nom, direccion, contacto, correo, _row:existing._row };
+      toast('ok',`Proveedor "${nom}" actualizado.`);
+    } else {
+      await sheetsAppend('Proveedores!A2:E', [row]);
+      ST.proveedores[id]={ id, nombre:nom, direccion, contacto, correo, _row:Object.keys(ST.proveedores).length+2 };
+      toast('ok',`Proveedor "${nom}" agregado.`);
+    }
     populateProveedores(id);
+    renderSisProveedores();
     document.getElementById('addProveedorModal').classList.remove('open');
-    toast('ok',`Proveedor "${nom}" agregado.`);
   } catch(e){ toast('err','Error al guardar proveedor: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Proveedor';
 }
+function onSisProveedoresSearch(v){ ST.sisProveedoresQuery = (v||'').toLowerCase(); renderSisProveedores(); }
+function renderSisProveedores(){
+  const tbody=document.getElementById('sisProveedoresTbody');
+  if(!tbody) return;
+  const q = ST.sisProveedoresQuery||'';
+  let list = Object.values(ST.proveedores||{});
+  if(q) list = list.filter(p=>(p.nombre||'').toLowerCase().includes(q)||(p.id||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  document.getElementById('sisProveedoresCount').textContent = list.length;
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin proveedores registrados todavía.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p=>`<tr>
+    <td style="font-weight:500;font-size:12.5px">${esc(p.nombre||p.id)}</td>
+    <td style="font-size:11.5px;color:var(--text3);font-family:var(--mono)">${esc(p.id)}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(p.direccion||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(p.contacto||'—')}</td>
+    <td style="font-size:12px;color:var(--text2)">${esc(p.correo||'—')}</td>
+    <td>
+      <div class="row-acts" style="opacity:1">
+        <button class="btn-icon" title="Editar" onclick="openEditProveedor('${esc(p.id)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+        </button>
+        <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(p.id)}',${p._row},'proveedor')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
 
-/* ─── ADD CONTACT ─── */
+/* ─── ADD / EDIT CONTACT ───
+   openAddContacto(): flujo original, se usa desde el formulario de Cotización
+   (el cliente ya viene fijado y solo se muestra como texto).
+   openAddContactoSistemas()/openEditContacto(): flujo desde Sistemas >
+   Contactos, donde el cliente se elige libremente de un <select>. */
 function openAddContacto() {
   if(!requireAuth()) return;
+  ST.editContactoId = null;
   const cliId  = document.getElementById('fCliente').value;
   const cliNom = cliId ? (ST.clientes[cliId]?.nombre||cliId) : '— (selecciona un cliente primero) —';
   ['ncoId','ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ncoId').disabled = false;
   document.getElementById('ncoClienteId').value  = cliId;
   document.getElementById('ncoClienteLabel').value = cliNom;
+  document.getElementById('ncoClienteLabelWrap').style.display='';
+  document.getElementById('ncoClienteSelWrap').style.display='none';
+  document.getElementById('addContactoModalTitle').textContent = 'Nuevo Contacto';
+  document.getElementById('saveContactoBtn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Contacto';
+  document.getElementById('addContactoModal').classList.add('open');
+}
+function populateClienteSelectFor(selId, selectedId){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— Seleccionar cliente —</option>'+
+    Object.values(ST.clientes||{}).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''))
+      .map(c=>`<option value="${esc(c.id)}">${esc(c.nombre||c.id)}</option>`).join('');
+  if(selectedId) sel.value=selectedId;
+}
+function openAddContactoSistemas(clienteId){
+  if(!requireAuth()) return;
+  ST.editContactoId = null;
+  ['ncoId','ncoNombre','ncoTel','ncoEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ncoId').disabled = false;
+  document.getElementById('ncoClienteLabelWrap').style.display='none';
+  document.getElementById('ncoClienteSelWrap').style.display='';
+  populateClienteSelectFor('ncoClienteSel', clienteId||'');
+  document.getElementById('addContactoModalTitle').textContent = 'Nuevo Contacto';
+  document.getElementById('saveContactoBtn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Contacto';
+  document.getElementById('addContactoModal').classList.add('open');
+}
+function openEditContacto(id){
+  if(!requireAuth()) return;
+  const c = (ST.contactosList||[]).find(x=>x.id===id); if(!c) return;
+  ST.editContactoId = id;
+  document.getElementById('ncoId').value = c.id;
+  document.getElementById('ncoId').disabled = true;
+  document.getElementById('ncoNombre').value = c.nombre||'';
+  document.getElementById('ncoTel').value = c.tel||'';
+  document.getElementById('ncoEmail').value = c.email||'';
+  document.getElementById('ncoClienteLabelWrap').style.display='none';
+  document.getElementById('ncoClienteSelWrap').style.display='';
+  populateClienteSelectFor('ncoClienteSel', c.id_cli);
+  document.getElementById('addContactoModalTitle').textContent = 'Editar Contacto';
+  document.getElementById('saveContactoBtn').innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
   document.getElementById('addContactoModal').classList.add('open');
 }
 async function saveNewContacto() {
-  const id   = document.getElementById('ncoId').value.trim().toUpperCase();
+  const editId = ST.editContactoId;
+  const id   = editId || document.getElementById('ncoId').value.trim().toUpperCase();
   const nom  = document.getElementById('ncoNombre').value.trim();
-  const cliId= document.getElementById('ncoClienteId').value;
+  const usaSel = document.getElementById('ncoClienteSelWrap').style.display!=='none';
+  const cliId= usaSel ? document.getElementById('ncoClienteSel').value : document.getElementById('ncoClienteId').value;
   if(!id)  { toast('err','El ID del contacto es obligatorio.'); return; }
   if(!nom) { toast('err','El nombre es obligatorio.'); return; }
-  if(!cliId){ toast('err','Primero selecciona un cliente en el formulario.'); return; }
+  if(!cliId){ toast('err','Selecciona el cliente al que pertenece este contacto.'); return; }
   const btn=document.getElementById('saveContactoBtn');
   btn.disabled=true; btn.textContent='Guardando…';
   try {
     const tel  = document.getElementById('ncoTel').value.trim();
     const mail = document.getElementById('ncoEmail').value.trim();
-    await sheetsAppend('Contactos!A2:E', [[id, cliId, nom, tel, mail]]);
-    ST.contactos[id]=nom;
-    if(!ST.contactosList) ST.contactosList=[];
-    ST.contactosList.push({ id, id_cli:cliId, nombre:nom });
-    populateContactos(cliId);
-    setTimeout(()=>{ document.getElementById('fContacto').value=id; },30);
+    const row = [id, cliId, nom, tel, mail];
+    if(editId){
+      const existing = (ST.contactosList||[]).find(x=>x.id===editId);
+      await sheetsUpdate(`Contactos!A${existing._row}:E${existing._row}`, [row]);
+      ST.contactos[id]=nom;
+      const idx = ST.contactosList.findIndex(x=>x.id===editId);
+      if(idx>=0) ST.contactosList[idx] = { id, id_cli:cliId, nombre:nom, tel, email:mail, _row:existing._row };
+      toast('ok',`Contacto "${nom}" actualizado.`);
+    } else {
+      await sheetsAppend('Contactos!A2:E', [row]);
+      ST.contactos[id]=nom;
+      if(!ST.contactosList) ST.contactosList=[];
+      ST.contactosList.push({ id, id_cli:cliId, nombre:nom, tel, email:mail, _row:ST.contactosList.length+2 });
+      toast('ok',`Contacto "${nom}" agregado.`);
+    }
+    if(!usaSel){
+      populateContactos(cliId);
+      setTimeout(()=>{ document.getElementById('fContacto').value=id; },30);
+    }
+    renderSisContactos();
     document.getElementById('addContactoModal').classList.remove('open');
-    toast('ok',`Contacto "${nom}" agregado.`);
   } catch(e){ toast('err','Error al guardar contacto: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Contacto';
 }
+function onSisContactosSearch(v){ ST.sisContactosQuery = (v||'').toLowerCase(); renderSisContactos(); }
+function renderSisContactos(){
+  const wrap=document.getElementById('sisContactosWrap');
+  if(!wrap) return;
+  const q = ST.sisContactosQuery||'';
+  let list = (ST.contactosList||[]).slice();
+  if(q){
+    list = list.filter(c=>{
+      const cliNom = (ST.clientes[c.id_cli]?.nombre||c.id_cli||'').toLowerCase();
+      return (c.nombre||'').toLowerCase().includes(q) || cliNom.includes(q);
+    });
+  }
+  if(!list.length){
+    wrap.innerHTML = `<div style="margin-bottom:12px;text-align:right">
+      <button type="button" class="btn btn-red btn-sm" onclick="openAddContactoSistemas()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+        Nuevo Contacto
+      </button>
+    </div><div class="card" style="padding:24px;text-align:center;color:var(--text3)">${q?'Sin resultados para tu búsqueda.':'Sin contactos registrados todavía.'}</div>`;
+    return;
+  }
+  // Agrupar por cliente
+  const grupos = {};
+  list.forEach(c=>{
+    const key = c.id_cli || '__sin_cliente__';
+    if(!grupos[key]) grupos[key] = [];
+    grupos[key].push(c);
+  });
+  const clienteIds = Object.keys(grupos).sort((a,b)=>{
+    const na = a==='__sin_cliente__' ? 'zzz' : (ST.clientes[a]?.nombre||a);
+    const nb = b==='__sin_cliente__' ? 'zzz' : (ST.clientes[b]?.nombre||b);
+    return na.localeCompare(nb);
+  });
+  wrap.innerHTML = clienteIds.map(cliId=>{
+    const cliNom = cliId==='__sin_cliente__' ? 'Sin cliente asignado' : (ST.clientes[cliId]?.nombre||cliId);
+    const contactos = grupos[cliId].sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+    return `<div class="card" style="margin-bottom:12px">
+      <div class="card-header">
+        <span class="card-title">${esc(cliNom)}</span>
+        <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);">${contactos.length}</span>
+        ${cliId!=='__sin_cliente__' ? `<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openAddContactoSistemas('${esc(cliId)}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+          Agregar contacto
+        </button>` : '<span style="margin-left:auto"></span>'}
+      </div>
+      <div class="cot-table-wrap">
+        <table class="fac-table">
+          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+          <tbody>
+            ${contactos.map(c=>`<tr>
+              <td style="font-weight:500;font-size:12.5px">${esc(c.nombre||c.id)}</td>
+              <td style="font-size:12px;color:var(--text2)">${esc(c.tel||'—')}</td>
+              <td style="font-size:12px;color:var(--text2)">${esc(c.email||'—')}</td>
+              <td>
+                <div class="row-acts" style="opacity:1">
+                  <button class="btn-icon" title="Editar" onclick="openEditContacto('${esc(c.id)}')">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
+                  </button>
+                  <button class="btn-icon del" title="Eliminar" onclick="openDel('${esc(c.id)}',${c._row},'contacto')">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10l-.8 8H3.8L3 4.5zM2 4.5h12M6 4.5V3h4v1.5"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+  // Agregar botón para agregar contacto a un cliente que aún no tenga ninguno
+  if(!document.getElementById('sisContactosAddAny')){
+    wrap.insertAdjacentHTML('afterbegin', `<div style="margin-bottom:12px;text-align:right">
+      <button type="button" id="sisContactosAddAny" class="btn btn-red btn-sm" onclick="openAddContactoSistemas()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+        Nuevo Contacto
+      </button>
+    </div>`);
+  }
+}
+
 
 /* Cierre de modales SOLO con la "X": por regla de negocio, ningún formulario debe cerrarse
    por click fuera del modal (backdrop), por perder foco (blur), ni por ningún otro medio
@@ -13887,7 +14178,23 @@ async function guardarPago(){
     await sheetsUpdate(`Deudas!A${deuda._row}:R${deuda._row}`, [rowDeuda]);
     await sheetsAppend('Deudas_Historial!A2:F', [[genEventoId(), deuda.id, fecha, 'Pago', `Pago de ${fmtMXN(monto)} (${tipoPago}).`, now]]);
 
-    toast('ok', nuevoEstado==='Liquidada' ? '¡Pago registrado — deuda liquidada! 🎉' : 'Pago registrado.');
+    // Bug reportado: el abono a un acreedor no generaba automáticamente su
+    // salida (gasto) correspondiente en Balance. Cada pago registrado aquí
+    // ahora crea también una fila en la hoja Salidas, marcada Es_Deuda=TRUE,
+    // para que el dinero que sale de la cuenta quede reflejado en Balance
+    // sin tener que capturarlo dos veces.
+    const metodoPago = document.getElementById('pMetodo').value.trim();
+    const comprobante = document.getElementById('pComprobante').value.trim();
+    const notaPago = document.getElementById('pNota').value.trim();
+    const rowSalida = [
+      genBalId(), fecha, `Abono a deuda: ${deuda.nombre}`, monto, metodoPago, 'Pagado',
+      '', fecha, deuda.nombre, 'Pago de deuda', '', '', 'TRUE',
+      notaPago ? `${tipoPago}. ${notaPago}` : tipoPago,
+      '', comprobante, '', '',
+    ];
+    await sheetsWriteNewRow('Salidas', ST.salidas.length, 'R', rowSalida);
+
+    toast('ok', nuevoEstado==='Liquidada' ? '¡Pago registrado — deuda liquidada! 🎉' : 'Pago registrado y salida generada automáticamente.');
     closePagoModal();
     await loadAll();
     renderAcreedores();
@@ -14441,6 +14748,28 @@ function alertasCotizacionesVencidas(){
   });
   return out;
 }
+/* Cotizaciones que siguen "Pendiente" (nunca se marcaron como Enviado) y ya
+   llevan más de 1.5 semanas (10.5 días) desde su fecha de creación sin que
+   se les dé seguimiento. Distinta de alertasCotizacionesVencidas(): esa
+   revisa vigencia ya vencida; esta detecta cotizaciones que se están
+   "quedando en el cajón" antes de siquiera enviarse. */
+function alertasCotizacionesSinEnviar(){
+  const hoy = new Date();
+  const LIMITE_MS = 10.5*864e5; // 1 semana y media
+  const out = [];
+  (ST.cotizaciones||[]).forEach(c=>{
+    if(c.estatus!=='Pendiente') return;
+    if(c.fechaEnvio) return; // ya se marcó como enviada en algún momento
+    const f = finParseDate(c.fecha); if(!f) return;
+    const diffMs = hoy - f;
+    if(diffMs >= LIMITE_MS){
+      const dias = Math.floor(diffMs/864e5);
+      const cli = getRepCliente(c.id_cli);
+      out.push({id:`cot_sinenviar_${c.id}`, kind:'cot', sev:'warn', icon:'✉️', msg:`La cotización <strong>${esc(c.id)}</strong> (${esc(cli)}) lleva <strong>${dias} días</strong> sin enviarse (creada el ${esc(c.fecha)}). Envíala o actualiza su estatus.`});
+    }
+  });
+  return out;
+}
 /* Ingresos/Salidas con Fecha_Limite ya pasada y que siguen "Pendiente" de
    pago/cobro. (Facturas no tiene columna de fecha límite propia, por eso no
    se incluye aquí — ver sugerencia al final del cambio.) */
@@ -14479,6 +14808,7 @@ function generarAlertasGlobales(){
   return [
     ...finGenerarAlertas(),
     ...alertasCotizacionesVencidas(),
+    ...alertasCotizacionesSinEnviar(),
     ...alertasBalancesVencidos(),
     ...alertasObrasRetrasadas(),
   ];
