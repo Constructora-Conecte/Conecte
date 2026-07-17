@@ -2749,7 +2749,7 @@ textarea.item-inp.item-desc-ta{
             <textarea class="form-textarea" id="fNotas" placeholder="Condiciones, tiempos de entrega, observaciones…" style="min-height:40px;height:40px"></textarea>
           </div>
           <!-- Obra/Proyecto + OC Asociadas van uno junto al otro, debajo de las notas -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
             <!-- Fase 3: liga opcional esta cotización a una Obra/Proyecto -->
             <div class="form-group" style="margin-bottom:0">
               <label class="form-label">Obra / Proyecto (opcional)</label>
@@ -2759,7 +2759,7 @@ textarea.item-inp.item-desc-ta{
             <div class="card" style="display:flex;flex-direction:column;min-height:0;background:var(--bg3);margin-bottom:0">
               <div class="card-header" style="padding:6px 10px;flex-shrink:0">
                 <span class="card-title" style="font-size:11.5px">OC Asociadas</span>
-                <span class="fh" tabindex="0" data-tip="Primero guarda la cotización (botón Guardar); en cuanto tenga folio podrás asociar y agregar Órdenes de Compra (OC) desde aquí.">?</span>
+                <span class="fh" tabindex="0" data-tip="Aquí se listan las Órdenes de Compra (OC) asociadas a esta cotización. Si aún no la has guardado, guárdala primero (botón Guardar) para poder asociar o agregar una OC.">?</span>
                 <span style="font-size:10.5px;color:var(--text3);font-family:var(--mono)" id="ocCount">0 OC</span>
                 <button type="button" class="btn btn-ghost btn-sm" id="verRelacionBtn" onclick="openRelacionPanel('cot',ST.editId)" style="margin-left:auto;height:22px;padding:0 6px" disabled title="Ver relación completa">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M6.5 9.5a3 3 0 0 0 4 .3l1.6-1.6a3 3 0 0 0-4.3-4.3L7 4.6"/><path d="M9.5 6.5a3 3 0 0 0-4-.3L3.9 7.8a3 3 0 0 0 4.3 4.3L9 11.4"/></svg>
@@ -2768,8 +2768,7 @@ textarea.item-inp.item-desc-ta{
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
                 </button>
               </div>
-              <div id="ocListWrap" style="padding:6px 10px;max-height:64px;min-height:26px;overflow-y:auto">
-                <div id="ocEmptyMsg" style="font-size:11.5px;color:var(--text3);text-align:center;padding:4px 0"></div>
+              <div id="ocListWrap" style="display:none;padding:6px 10px;max-height:64px;min-height:26px;overflow-y:auto">
                 <div id="ocList" style="display:flex;flex-direction:column;gap:6px"></div>
               </div>
             </div>
@@ -8483,17 +8482,17 @@ function newIngresoFromFacLink(){
 function renderOCSection(hasId) {
   const btn = document.getElementById('addOCBtn');
   const relBtn = document.getElementById('verRelacionBtn');
-  const emptyMsg = document.getElementById('ocEmptyMsg');
+  const wrap = document.getElementById('ocListWrap');
   const ocListEl = document.getElementById('ocList');
   const ocCountEl = document.getElementById('ocCount');
 
   if (!hasId) {
     btn.disabled = true;
     relBtn.disabled = true;
-    emptyMsg.textContent = 'Sin OC asociadas.';
-    emptyMsg.style.display = '';
     ocListEl.innerHTML = '';
     ocCountEl.textContent = '0 OC';
+    wrap.style.display = 'none'; // sin OC que mostrar todavía: se colapsa para que la tarjeta
+                                  // quede del mismo alto que "Obra/Proyecto" (sin espacio vacío feo)
     return;
   }
   btn.disabled = false;
@@ -8501,12 +8500,11 @@ function renderOCSection(hasId) {
   const ocs = ST.ocList;
   ocCountEl.textContent = ocs.length + (ocs.length === 1 ? ' OC' : ' OC');
   if (!ocs.length) {
-    emptyMsg.textContent = 'Sin OC asociadas. Usa "+ Agregar OC" para vincular.';
-    emptyMsg.style.display = '';
     ocListEl.innerHTML = '';
+    wrap.style.display = 'none'; // idem: sin OC vinculadas aún, se colapsa el espacio
     return;
   }
-  emptyMsg.style.display = 'none';
+  wrap.style.display = '';
   ocListEl.innerHTML = ocs.map(oc => `
     <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r4);">
       <div style="flex:1;min-width:0">
@@ -11042,14 +11040,10 @@ function renderRostros(){
 /* Genera un PDF simple e imprimible con la lista de empleados activos
    (ST.personalList ya contiene solo Estado = Activo) y lo abre en una pestaña
    nueva, lista para imprimir o guardar. */
-async function imprimirListaEmpleadosActivos(){
+function imprimirListaEmpleadosActivos(){
   if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
   const activos = (ST.personalList||[]).slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   if(!activos.length){ toast('err','No hay empleados activos para imprimir.'); return; }
-
-  // Precarga las fotografías en paralelo (mismo helper que usan los gafetes) para
-  // poder incluir un thumbnail chiquito junto a cada nombre en el PDF.
-  const fotos = await Promise.all(activos.map(p=>gafeteCargarImagen(normalizePhotoUrl(p.fotografia), 5000)));
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
@@ -11058,12 +11052,13 @@ async function imprimirListaEmpleadosActivos(){
   function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
   function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
 
-  // Columnas: Foto | Nombre | Puesto | Sueldo total | Vales | Fiscal | Tipo de pago | Fecha ingreso
+  // Columnas: Nombre | Puesto | Sueldo total | Vales | Fiscal | Tipo de pago | Fecha ingreso
+  // Sin fotografías: se probaron como thumbnail junto al nombre pero se veían mal
+  // (baja resolución/recortadas) y encimaban el texto, así que se quitaron.
   // Vales y Fiscal se dibujan como una palomita vectorial (no depende de que la
   // fuente del PDF tenga el glifo ✓/✅), igual que se ven en pantalla.
   const cols = [
-    {label:'',              w:9,  type:'foto'},
-    {label:'Nombre',        w:37, get:p=>p.nombre||'—'},
+    {label:'Nombre',        w:46, get:p=>p.nombre||'—'},
     {label:'Puesto',        w:34, get:p=>p.puesto||'—'},
     {label:'Sueldo total',  w:24, get:p=>fmtMXN(p.sueldoTotalAcordado||0), align:'right'},
     {label:'Vales',         w:16, type:'check', get:p=>!!p.recibeVales, align:'center'},
@@ -11073,14 +11068,6 @@ async function imprimirListaEmpleadosActivos(){
   ];
   const colX = []; let acc = ML;
   cols.forEach(c=>{ colX.push(acc); acc += c.w; });
-
-  // Dibuja el thumbnail de la fotografía (si se pudo cargar) dentro de un
-  // pequeño círculo; si no hay foto o no cargó, simplemente no dibuja nada.
-  function drawFoto(img,cx,cy,d){
-    if(!img) return;
-    try{ doc.addImage(img, 'JPEG', cx-d/2, cy-d/2, d, d); }
-    catch(e){ /* si la imagen no se pudo insertar (CORS u otro formato), se omite en silencio */ }
-  }
 
   // Dibuja una casilla pequeña y, si corresponde, una palomita adentro —
   // vectorial, para que se imprima igual en cualquier visor de PDF.
@@ -11117,16 +11104,12 @@ async function imprimirListaEmpleadosActivos(){
   }
 
   let y = pageHeader(1,1);
-  const rowH = 8.5;
+  const rowH = 7;
   setF('normal',8.3,C.ink);
   activos.forEach((p,i)=>{
     if(y > BOTY){ doc.addPage(); y = pageHeader(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages()); }
-    if(i%2===1){ doc.setFillColor(250,250,250); doc.rect(ML,y-6,CW,rowH,'F'); }
+    if(i%2===1){ doc.setFillColor(250,250,250); doc.rect(ML,y-4.6,CW,rowH,'F'); }
     cols.forEach((c,ci)=>{
-      if(c.type==='foto'){
-        drawFoto(fotos[i], colX[ci]+c.w/2, y-2.2, 6);
-        return;
-      }
       if(c.type==='check'){
         drawCheck(colX[ci]+c.w/2, y-1.3, c.get(p));
         return;
