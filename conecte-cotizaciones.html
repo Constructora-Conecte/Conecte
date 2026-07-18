@@ -8910,6 +8910,7 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
       noTrabajo:true, faltasJustificadas, faltasCastigo,
       montoAcordadoOverride, modoManual:false, transferenciaManual:0, transferenciaFinalDisplay:0, efectivoFinalDisplay:0,
       ajusteManualActivo:false, totalManualOverride:0, totalFinalDisplay:0,
+      efectivoNetoFinal:0, fiscalNetoFinal:0, subtotalPagoFinal:0,
     };
   }
 
@@ -9043,6 +9044,24 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
     }
   }
 
+  // Punto 6 (corrección Gratificación/Total percepciones en Modo Manual): cuando
+  // modoManual ajusta el Fiscal (fiscalNeto → transferenciaFinalDisplay) y el Efectivo
+  // (efectivoRealEntregar → efectivoFinalDisplay) para reflejar lo que el recibo CFDI
+  // realmente trae, ese mismo ajuste NUNCA se propagaba a "efectivoNeto" ni a
+  // "subtotalPago" — por eso el PDF podía mostrar un "Total percepciones" que no
+  // cuadraba con la suma real de Sueldo fiscal + Vales + Gratificación (Neto) que
+  // aparecían arriba de él. efectivoNetoFinal despeja la Gratificación a partir del
+  // Efectivo a entregar YA correcto (efectivoFinalDisplay), sumando de vuelta bonos/
+  // préstamo/descuentos (la relación inversa de efectivoRealEntregar), y
+  // subtotalPagoFinal usa ese mismo valor junto con el Fiscal ya corregido, para que
+  // Total percepciones SIEMPRE sea, por definición, la suma exacta de los renglones
+  // que el recibo muestra arriba.
+  const efectivoNetoFinal = modoManual
+    ? +(efectivoFinalDisplay - bonos + prestamo + descuentos).toFixed(2)
+    : efectivoNeto;
+  const fiscalNetoFinal = modoManual ? transferenciaFinalDisplay : fiscalNeto;
+  const subtotalPagoFinal = +(fiscalNetoFinal + valesNeto + efectivoNetoFinal).toFixed(2);
+
   return {
     sueldoTotal, recibeVales, recibeFiscal, fiscalBruto, valesBruto, efectivoBruto,
     diasDescontados, fiscalDescuento, valesDescuento, efectivoDescuento,
@@ -9054,6 +9073,7 @@ function calcularNomina({ empleado, faltas, faltasJustificadas, faltasCastigo, p
     modoManual, transferenciaManual, transferenciaFinalDisplay, efectivoFinalDisplay,
     ajusteManualActivo, totalManualOverride, totalFinalDisplay,
     subtotalPdf: Math.max(0, parseFloat(subtotalPdf)||0),
+    efectivoNetoFinal, fiscalNetoFinal, subtotalPagoFinal,
   };
 }
 
@@ -9471,9 +9491,9 @@ function updateNomReceiptPreview(r, empleado, fIni, fFin){
   setTxt('nrEmpleado', empleado ? (empleado.nombre||'—') : 'Selecciona un empleado…');
   setTxt('nrPeriodo', fIni ? `${nomFmtFechaLarga(fIni)} — ${fFin?nomFmtFechaLarga(fFin):'—'}` : '—');
 
-  setTxt('nrFiscal', fmtMXN(r.fiscalNeto));
+  setTxt('nrFiscal', fmtMXN(r.modoManual ? r.fiscalNetoFinal : r.fiscalNeto));
   setTxt('nrVales', fmtMXN(r.valesNeto));
-  setTxt('nrEfectivo', fmtMXN(r.efectivoNeto));
+  setTxt('nrEfectivo', fmtMXN(r.modoManual ? r.efectivoNetoFinal : r.efectivoNeto));
   const bonos = parseFloat(document.getElementById('nBonos').value)||0;
   setRow('nrBonosRow','nrBonos', bonos>0, bonos);
   setRow('nrExtraRow','nrExtra', (r.extraEfectivo||0)>0, r.extraEfectivo);
@@ -9611,6 +9631,13 @@ async function guardarNomina(){
   const fiscalNetoFinal = (r.modoManual && !r.noTrabajo) ? r.transferenciaFinalDisplay : r.fiscalNeto;
   const efectivoRealFinal = (r.modoManual && !r.noTrabajo) ? r.efectivoFinalDisplay : r.efectivoRealEntregar;
   const totalFinalGuardar = r.totalFinalDisplay;
+  // Corrección: "Efectivo_Neto_Final" y "Total_Percepciones" (subtotalPago) deben
+  // guardarse YA con el mismo ajuste de Modo Manual que fiscalNetoFinal y
+  // efectivoRealFinal, o el PDF (que lee estas columnas tal cual) mostraría una
+  // Gratificación (Neto) y un Total percepciones que no cuadran con el Sueldo fiscal
+  // real importado del CFDI.
+  const efectivoNetoGuardar = (r.modoManual && !r.noTrabajo) ? r.efectivoNetoFinal : r.efectivoNeto;
+  const subtotalPagoGuardar = (r.modoManual && !r.noTrabajo) ? r.subtotalPagoFinal : r.subtotalPago;
 
   const row = [
     idNomina, idEmp, empleado.nombre, fIni, fFin, semanaAnio, estatus,
@@ -9619,8 +9646,8 @@ async function guardarNomina(){
     r.sueldoTotal, empleado.salarioFiscal, empleado.compensacionEfectivo,
     r.fiscalBruto, r.fiscalDescuento, fiscalNetoFinal,
     r.valesBruto, r.valesDescuento, r.valesNeto,
-    r.efectivoBruto, r.efectivoDescuento, r.efectivoNeto,
-    r.subtotalPago, r.totalDescuentos, totalFinalGuardar,
+    r.efectivoBruto, r.efectivoDescuento, efectivoNetoGuardar,
+    subtotalPagoGuardar, r.totalDescuentos, totalFinalGuardar,
     existente ? existente.urlPDF : '', existente ? existente.estatusFirma : 'Pendiente', existente ? existente.fechaFirma : '',
     r.retencionExtra, r.extraEfectivo, efectivoRealFinal,
     existente ? existente.idSalida : '',
