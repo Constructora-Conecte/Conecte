@@ -1283,6 +1283,11 @@ textarea.item-inp.item-desc-ta{
         <button class="fchip" id="ocChipCan" onclick="setOCFilter('Cancelado',this)">Cancelado</button>
         <span class="fsep"></span>
         <input type="text" id="ocSearch" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:200px;" placeholder="🔍  Buscar OC…" oninput="onOCSearch(this.value)">
+        <span class="fsep"></span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);cursor:pointer;user-select:none" title="Muestra los folios de todas las facturas relacionadas directamente en la tabla, sin tener que pasar el mouse. Útil para exportar o mandarle la vista a tu contador.">
+          <input type="checkbox" id="ocShowAllFacsChk" onchange="toggleOCShowAllFacs(this.checked)" style="width:14px;height:14px;cursor:pointer">
+          Ver todas las facturas relacionadas
+        </label>
       </div>
 
       <div class="card">
@@ -3860,12 +3865,20 @@ textarea.item-inp.item-desc-ta{
 <!-- ══ CARD DETALLE DE FACTURA RELACIONADA ══ -->
 <div class="modal-bg" id="facRelCardModal">
   <div class="modal" style="width:400px">
-    <div class="modal-title" id="facRelCardTitle">Factura</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+      <div class="modal-title" id="facRelCardTitle" style="margin-bottom:0">Factura</div>
+      <button class="close-x" onclick="document.getElementById('facRelCardModal').classList.remove('open')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
     <div class="modal-body" id="facRelCardBody" style="margin-top:6px;margin-bottom:14px"></div>
-    <div class="modal-acts">
-      <button class="btn btn-ghost" onclick="document.getElementById('facRelCardModal').classList.remove('open')">Cerrar</button>
-      <button class="btn btn-ghost" id="facRelCardXmlBtn" onclick="facRelCardOpenXML()" style="color:var(--green);border-color:rgba(72,187,120,.3)">Ver XML</button>
-      <button class="btn btn-red" id="facRelCardPdfBtn" onclick="facRelCardOpenPDF()">Ver PDF</button>
+    <div class="modal-acts" style="justify-content:space-between">
+      <button class="btn btn-ghost" id="facRelCardUnlinkBtn" style="display:none;color:var(--red);border-color:rgba(229,62,62,.3)">Quitar de esta OC</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="document.getElementById('facRelCardModal').classList.remove('open')">Cerrar</button>
+        <button class="btn btn-ghost" id="facRelCardXmlBtn" onclick="facRelCardOpenXML()" style="color:var(--green);border-color:rgba(72,187,120,.3)">Ver XML</button>
+        <button class="btn btn-red" id="facRelCardPdfBtn" onclick="facRelCardOpenPDF()">Ver PDF</button>
+      </div>
     </div>
   </div>
 </div>
@@ -4014,8 +4027,14 @@ textarea.item-inp.item-desc-ta{
 
 <!-- ══ VINCULAR FACTURA ↔ OC (rápido, desde la tabla) ══ -->
 <div class="modal-bg" id="facOcLinkModal">
-  <div class="modal" style="width:440px">
-    <div class="modal-title">Vincular factura con Orden de Compra</div>
+  <div class="modal" style="width:440px;overflow:visible">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+      <div class="modal-title" style="margin-bottom:0">Vincular factura con Orden de Compra</div>
+      <button class="close-x" onclick="document.getElementById('facOcLinkModal').classList.remove('open')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div id="facOcQuickCurrentWrap" style="display:none;margin-top:12px"></div>
     <div style="margin-top:14px;margin-bottom:18px;position:relative">
       <label class="form-label">Buscar OC por folio, cliente o concepto</label>
       <input type="text" class="form-input" id="facOcQuickSearch" placeholder="Ej. 4509900932, Bachoco…" oninput="filterOCForFacQuick(this.value)" onfocus="filterOCForFacQuick(this.value)" autocomplete="off">
@@ -4030,7 +4049,12 @@ textarea.item-inp.item-desc-ta{
 <!-- ══ PANEL DE RELACIÓN: Cotización ↔ OC ↔ Factura ══ -->
 <div class="modal-bg" id="relPanelModal">
   <div class="modal" style="width:560px">
-    <div class="modal-title" id="relPanelTitle">Relación del registro</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+      <div class="modal-title" id="relPanelTitle" style="margin-bottom:0">Relación del registro</div>
+      <button class="close-x" onclick="document.getElementById('relPanelModal').classList.remove('open')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
     <div id="relPanelBody" style="margin-top:16px;margin-bottom:18px;display:flex;flex-direction:column;gap:10px"></div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('relPanelModal').classList.remove('open')">Cerrar</button>
@@ -4040,8 +4064,14 @@ textarea.item-inp.item-desc-ta{
 
 <!-- ══ VINCULAR FACTURA EXISTENTE A UNA OC ESPECÍFICA (desde el panel de relación) ══ -->
 <div class="modal-bg" id="facLinkForOCModal">
-  <div class="modal" style="width:440px">
-    <div class="modal-title">Vincular factura existente</div>
+  <div class="modal" style="width:440px;overflow:visible">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+      <div class="modal-title" style="margin-bottom:0">Vincular factura existente</div>
+      <button class="close-x" onclick="document.getElementById('facLinkForOCModal').classList.remove('open')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div id="facLinkForOCCurrentWrap" style="display:none;margin-top:12px"></div>
     <div style="margin-top:14px;margin-bottom:18px;position:relative">
       <label class="form-label">Buscar factura por folio o cliente</label>
       <input type="text" class="form-input" id="facLinkForOCSearch" placeholder="Ej. CONE 760, Bachoco…" oninput="filterFacForOCLink(this.value)" onfocus="filterFacForOCLink(this.value)" autocomplete="off">
@@ -5587,7 +5617,10 @@ function renderTable() {
           <button class="btn-icon" title="Editar" onclick="openEdit('${esc(r.id)}',${r._row})">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l3.5 3.5-6.5 6.5H2.5V9.5L9 3z"/></svg>
           </button>
-          <button class="btn-icon" title="PDF" onclick="quickPDF('${esc(r.id)}')">
+          <button class="btn-icon" title="Ver cotización" onclick="verCotizacionPDF('${esc(r.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8z"/><circle cx="8" cy="8" r="2"/></svg>
+          </button>
+          <button class="btn-icon" title="Descargar PDF" onclick="quickPDF('${esc(r.id)}')">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 6h5M5 8.5h5M5 11h3"/><path d="M10 1.5v3H13"/></svg>
           </button>
           <button class="btn-icon" title="Duplicar" onclick="duplicateCot('${esc(r.id)}')">
@@ -7272,7 +7305,7 @@ function numberToWordsES(monto){
 }
 
 /* ─── PDF ─── */
-function generarPDF(id, itemsOverride) {
+function generarPDF(id, itemsOverride, mode) {
   if(!window.jspdf || !window.jspdf.jsPDF){
     toast('err','La librería de PDF no está cargada. Recarga la página.');
     return;
@@ -7554,8 +7587,17 @@ function generarPDF(id, itemsOverride) {
   const totalPg=doc.getNumberOfPages();
   for(let p=1;p<=totalPg;p++){doc.setPage(p); pageHeader(p,totalPg); pageFooter();}
 
-  doc.save(folio+'.pdf');
-  toast('ok','PDF generado: '+folio+'.pdf');
+  if(mode==='view'){
+    const blobUrl = doc.output('bloburl');
+    document.getElementById('pdfViewerTitle').textContent='Cotización '+folio;
+    document.getElementById('pdfViewerFrame').src=blobUrl;
+    const dl=document.getElementById('pdfDownloadLink');
+    dl.href=blobUrl; dl.download=folio+'.pdf'; dl.style.display='';
+    document.getElementById('pdfViewerModal').classList.add('open');
+  } else {
+    doc.save(folio+'.pdf');
+    toast('ok','PDF generado: '+folio+'.pdf');
+  }
 
   } catch(err){
     console.error('PDF error:',err);
@@ -7573,6 +7615,16 @@ function quickPDF(id){
   if(!r){ toast('err','No se encontró la cotización.'); return; }
   const savedItems=(r.items&&r.items.length)?r.items:[{desc:r.desc,cant:1,precio:r.sub,imp:r.sub,unidad:''}];
   generarPDF(id,savedItems);
+}
+
+/* Visualizar la cotización en pantalla (igual que "Ver PDF" de facturas/OC), sin descargarla */
+function verCotizacionPDF(id){
+  const formAbiertoParaEsteId = document.getElementById('formModal')?.classList.contains('open') && ST.editId===id;
+  if(formAbiertoParaEsteId){ generarPDF(id,null,'view'); return; }
+  const r=ST.cotizaciones.find(c=>c.id===id);
+  if(!r){ toast('err','No se encontró la cotización.'); return; }
+  const savedItems=(r.items&&r.items.length)?r.items:[{desc:r.desc,cant:1,precio:r.sub,imp:r.sub,unidad:''}];
+  generarPDF(id,savedItems,'view');
 }
 
 /* switchTab → defined below */
@@ -7825,9 +7877,28 @@ function openFacOCLinkInline(facId){
   facOcQuickTargetId=facId;
   document.getElementById('facOcQuickSearch').value='';
   document.getElementById('facOcQuickDropdown').style.display='none';
+  renderFacOcQuickCurrent();
   document.getElementById('facOcLinkModal').classList.add('open');
   setTimeout(()=>document.getElementById('facOcQuickSearch').focus(),80);
 
+}
+/* Muestra, dentro del modal de vínculo rápido, las OC ya ligadas a esta factura
+   con un botón para quitarlas — así ya no hace falta cerrar el modal para corregir un vínculo. */
+function renderFacOcQuickCurrent(){
+  const wrap=document.getElementById('facOcQuickCurrentWrap');
+  if(!wrap) return;
+  const fac=ST.facturas.find(f=>f.id===facOcQuickTargetId);
+  const ocIds=fac?(fac.ocIds||[]):[];
+  if(!ocIds.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='block';
+  wrap.innerHTML = `<label class="form-label" style="margin-bottom:6px;display:block">OC ya vinculada(s)</label>` +
+    ocIds.map(id=>{
+      const oc=ST.ocAll.find(o=>o.id===id);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:var(--r4);margin-bottom:6px;font-size:12px">
+        <span style="flex:1;font-family:var(--mono)">${esc(oc?oc.numero:id)}</span>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(229,62,62,.3)" onclick="confirmUnlinkFacFromOC('${esc(facOcQuickTargetId)}','${esc(id)}')">Quitar</button>
+      </div>`;
+    }).join('');
 }
 function filterOCForFacQuick(q){
   const drop=document.getElementById('facOcQuickDropdown');
@@ -7876,16 +7947,47 @@ async function confirmFacOCQuickLink(ocId){
     // así que dejamos seguir buscando y vinculando más sin tener que reabrir.
     document.getElementById('facOcQuickSearch').value='';
     filterOCForFacQuick('');
+    renderFacOcQuickCurrent();
     applyFacFilter();
     renderOCClienteTable();
     toast('ok',`Factura vinculada a OC ${oc.numero}. Puedes vincular otra OC o cerrar.`);
   }catch(e){ toast('err','Error al vincular: '+(e.result?.error?.message||e.message)); }
 }
 
+/* Quita el vínculo entre una factura y una OC (funciona desde cualquiera de los
+   3 lugares donde se puede ver/crear ese vínculo: el modal rápido, el panel de
+   relación, y el popover/tarjeta de "Facturas relacionadas"). */
+async function confirmUnlinkFacFromOC(facId, ocId){
+  if(!requireAuth()) return;
+  const fac=ST.facturas.find(f=>f.id===facId);
+  const oc=ST.ocAll.find(o=>o.id===ocId);
+  if(!fac) return;
+  if(!confirm(`¿Quitar el vínculo entre la factura ${fac.folio||fac.id} y la OC ${oc?oc.numero:ocId}? Esto no elimina la factura ni la OC, solo la relación entre ambas.`)) return;
+  try{
+    const newIds=(fac.ocIds||[]).filter(x=>x!==ocId);
+    await sheetsUpdate(`Facturas!J${fac._row}`,[[joinIds(newIds)]]);
+    fac.ocIds=newIds; fac.oc=newIds[0]||'';
+    // Si la OC se queda sin ninguna factura vinculada, la regresamos a Pendiente
+    // para que el estatus siga reflejando la realidad.
+    if(oc && oc.estatus==='Facturado' && !ST.facturas.some(f=>(f.ocIds||[]).includes(oc.id))){
+      oc.estatus='Pendiente';
+      await sheetsUpdate(`Oc_Client!G${oc._row}`,[['Pendiente']]);
+    }
+    renderFacOcQuickCurrent();
+    renderFacLinkForOCCurrent();
+    applyFacFilter();
+    renderOCClienteTable();
+    renderTable();
+    toast('ok','Vínculo eliminado.');
+    if(ST.relPanelOrigen) openRelacionPanel(ST.relPanelOrigen.tipo, ST.relPanelOrigen.id);
+  }catch(e){ toast('err','Error al quitar el vínculo: '+(e.result?.error?.message||e.message)); }
+}
+
 /* ════════════════ PANEL UNIVERSAL DE RELACIÓN ════════════════
    Muestra la cadena Cotización → OC → Factura desde cualquiera de las 3 vistas,
    con el estatus de cada eslabón y acciones para vincular lo que falte. */
 function openRelacionPanel(origenTipo, origenId){
+  ST.relPanelOrigen={tipo:origenTipo,id:origenId};
   const body=document.getElementById('relPanelBody');
   const title=document.getElementById('relPanelTitle');
 
@@ -7922,7 +8024,10 @@ function openRelacionPanel(origenTipo, origenId){
         </div>
         <div style="font-family:var(--mono);font-weight:600;color:var(--white);font-size:13px">${esc(cot.id)}</div>
         <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(cli.nombre||cot.id_cli)} · ${fmtMXN(cot.total)}</div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('relPanelModal').classList.remove('open');openEdit('${esc(cot.id)}',${cot._row})">Abrir cotización</button>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('relPanelModal').classList.remove('open');openEdit('${esc(cot.id)}',${cot._row})">Abrir cotización</button>
+          <button class="btn btn-ghost btn-sm" onclick="verCotizacionPDF('${esc(cot.id)}')">Ver PDF</button>
+        </div>
       </div>`;
     });
   } else {
@@ -7963,9 +8068,10 @@ function openRelacionPanel(origenTipo, origenId){
             </div>
             <div style="font-family:var(--mono);font-weight:600;color:var(--white);font-size:13px">${esc(fac.folio)}</div>
             <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${fmtMXN(fac.total)}</div>
-            <div style="display:flex;gap:6px;margin-top:8px">
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
               ${fac.pdfB64?`<button class="btn btn-ghost btn-sm" onclick="openFacPDF('${esc(fac.id)}')">Ver PDF</button>`:''}
               ${fac.xmlContent?`<button class="btn btn-ghost btn-sm" onclick="openFacXML('${esc(fac.id)}')">Ver XML</button>`:''}
+              <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(229,62,62,.3);margin-left:auto" onclick="confirmUnlinkFacFromOC('${esc(fac.id)}','${esc(oc.id)}')">Desvincular</button>
             </div>
           </div>`;
         });
@@ -8009,8 +8115,23 @@ function openFacLinkForOC(ocId){
   document.getElementById('relPanelModal').classList.remove('open');
   document.getElementById('facLinkForOCSearch').value='';
   document.getElementById('facLinkForOCDropdown').style.display='none';
+  renderFacLinkForOCCurrent();
   document.getElementById('facLinkForOCModal').classList.add('open');
   setTimeout(()=>document.getElementById('facLinkForOCSearch').focus(),80);
+}
+/* Muestra, dentro del modal, las facturas ya ligadas a esta OC con un botón
+   para quitarlas — resuelve el caso de "me equivoqué y no puedo desligarla". */
+function renderFacLinkForOCCurrent(){
+  const wrap=document.getElementById('facLinkForOCCurrentWrap');
+  if(!wrap) return;
+  const facs=ST.facturas.filter(f=>(f.ocIds||[]).includes(facLinkForOCTarget));
+  if(!facs.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='block';
+  wrap.innerHTML = `<label class="form-label" style="margin-bottom:6px;display:block">Factura(s) ya vinculada(s)</label>` +
+    facs.map(f=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:var(--r4);margin-bottom:6px;font-size:12px">
+      <span style="flex:1;font-family:var(--mono)">${esc(f.folio||f.id)}</span>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(229,62,62,.3)" onclick="confirmUnlinkFacFromOC('${esc(f.id)}','${esc(facLinkForOCTarget)}')">Quitar</button>
+    </div>`).join('');
 }
 function filterFacForOCLink(q){
   const drop=document.getElementById('facLinkForOCDropdown');
@@ -8062,6 +8183,7 @@ async function confirmFacLinkForOC(facId){
     // Dejamos el modal abierto: a veces una OC llega a facturarse en varias facturas distintas.
     document.getElementById('facLinkForOCSearch').value='';
     filterFacForOCLink('');
+    renderFacLinkForOCCurrent();
     applyFacFilter();
     renderOCClienteTable();
     renderTable();
@@ -13364,12 +13486,15 @@ function showFacRelPopoverOC(el, ocId){
   pop.innerHTML = facs.length
     ? facs.map(f=>{
         const stClass={Pagado:'pagado',Pendiente:'pendiente',Cancelado:'cancelado'}[f.estatus]||'pendiente';
-        return `<div style="padding:6px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''" onclick="openFacRelCard('${esc(f.id)}')">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-            <span style="font-family:var(--mono);font-weight:700;color:var(--white)">${esc(f.folio||f.id)}</span>
-            <span class="bal-badge ${stClass}" style="font-size:9.5px">${esc(f.estatus||'—')}</span>
+        return `<div style="display:flex;align-items:stretch;gap:2px;border-bottom:1px solid var(--border)">
+          <div style="flex:1;padding:6px 8px;border-radius:6px;cursor:pointer" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''" onclick="openFacRelCard('${esc(f.id)}','${esc(ocId)}')">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              <span style="font-family:var(--mono);font-weight:700;color:var(--white)">${esc(f.folio||f.id)}</span>
+              <span class="bal-badge ${stClass}" style="font-size:9.5px">${esc(f.estatus||'—')}</span>
+            </div>
+            <div style="color:var(--text3);margin-top:2px">${fmtMXN(f.total)} · ${esc(f.fecha||'—')}</div>
           </div>
-          <div style="color:var(--text3);margin-top:2px">${fmtMXN(f.total)} · ${esc(f.fecha||'—')}</div>
+          <button title="Quitar de esta OC" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:0 6px;font-size:13px" onclick="document.getElementById('facRelPopover')?.remove();confirmUnlinkFacFromOC('${esc(f.id)}','${esc(ocId)}')">✕</button>
         </div>`;
       }).join('')
     : '<div style="color:var(--text3);padding:4px">Sin facturas vinculadas</div>';
@@ -13387,7 +13512,7 @@ document.addEventListener('click',(e)=>{
 });
 
 /* ─── CARD: detalle de una factura relacionada (al hacer clic dentro del popover) ─── */
-function openFacRelCard(facId){
+function openFacRelCard(facId, ocId){
   document.getElementById('facRelPopover')?.remove();
   const f=ST.facturas.find(x=>x.id===facId); if(!f){ toast('err','No se encontró la factura.'); return; }
   const cli=ST.clientes[f.id_cli]?.nombre||f.id_cli||'—';
@@ -13401,6 +13526,14 @@ function openFacRelCard(facId){
   `;
   document.getElementById('facRelCardPdfBtn').style.display = f.pdfB64 ? '' : 'none';
   document.getElementById('facRelCardXmlBtn').style.display = f.xmlContent ? '' : 'none';
+  const unlinkBtn=document.getElementById('facRelCardUnlinkBtn');
+  if(ocId){
+    unlinkBtn.style.display='';
+    unlinkBtn.onclick=()=>{ document.getElementById('facRelCardModal').classList.remove('open'); confirmUnlinkFacFromOC(f.id, ocId); };
+  } else {
+    unlinkBtn.style.display='none';
+    unlinkBtn.onclick=null;
+  }
   ST._facRelCardId = f.id;
   document.getElementById('facRelCardModal').classList.add('open');
 }
@@ -16066,6 +16199,17 @@ function setOCFilter(f,el){
 
 function onOCSearch(q){ ocClientSearch=q.toLowerCase(); renderOCClienteTable(); }
 
+/* Preferencia: mostrar todas las facturas relacionadas expandidas en la tabla de OC
+   (en vez del chip escondido que solo aparece al pasar el mouse). Útil para revisar
+   todo de un vistazo o para mandarle la pantalla/export a tu contador. Se recuerda
+   entre sesiones igual que el tema claro/oscuro. */
+try{ ST.ocShowAllFacs = localStorage.getItem('ocShowAllFacs')==='1'; }catch(e){ ST.ocShowAllFacs=false; }
+function toggleOCShowAllFacs(checked){
+  ST.ocShowAllFacs=!!checked;
+  try{ localStorage.setItem('ocShowAllFacs', checked?'1':'0'); }catch(e){}
+  renderOCClienteTable();
+}
+
 function getOCClientes(){
   // Oc_Client real: A=Oc_id, B=OC_folio, C=Cliente(RFC), D=Concepto, E=Costo, F=Fecha_recib, G=Estatus_oc, H=Archivo
   return ST.ocAll.map(o=>({
@@ -16076,6 +16220,8 @@ function getOCClientes(){
 }
 
 function renderOCClienteTable(){
+  const chk=document.getElementById('ocShowAllFacsChk');
+  if(chk) chk.checked=!!ST.ocShowAllFacs;
   let rows=getOCClientes();
   if(ocClientFilter!=='all') rows=rows.filter(r=>r.estatus===ocClientFilter);
   if(ocClientSearch) rows=rows.filter(r=>
@@ -16154,10 +16300,21 @@ function renderOCClienteTable(){
       relHtml+=cotsLinked.map(cotLinked=>`<div style="font-size:10.5px;color:var(--blue);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" title="Cotización: ${esc(cotLinked.id)}">📄 ${esc(cotLinked.id)}</div>`).join('');
     }
     if(facsLinkedOC.length){
-      relHtml+=`<button type="button" class="fac-rel-chip" style="margin-top:2px" onmouseenter="showFacRelPopoverOC(this,'${esc(r.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopoverOC(this,'${esc(r.id)}')">
+      if(ST.ocShowAllFacs){
+        relHtml+=`<div style="display:flex;flex-direction:column;gap:3px;margin-top:2px;max-width:180px">` +
+          facsLinkedOC.map(f=>{
+            const stClass={Pagado:'pagado',Pendiente:'pendiente',Cancelado:'cancelado'}[f.estatus]||'pendiente';
+            return `<button type="button" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:10px;padding:1px 0" onclick="openFacRelCard('${esc(f.id)}','${esc(r.id)}')" title="Ver factura ${esc(f.folio||f.id)} — ${esc(f.estatus||'')}">
+              <span class="bal-badge ${stClass}" style="font-size:8px;padding:1px 4px;flex-shrink:0">${esc((f.estatus||'—').slice(0,3))}</span>
+              <span style="font-family:var(--mono);color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.folio||f.id)}</span>
+            </button>`;
+          }).join('') + `</div>`;
+      } else {
+        relHtml+=`<button type="button" class="fac-rel-chip" style="margin-top:2px" onmouseenter="showFacRelPopoverOC(this,'${esc(r.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopoverOC(this,'${esc(r.id)}')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h6l3 3v9H4V2z"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>
         Facturas relacionadas <span class="cnt">${facsLinkedOC.length}</span>
       </button>`;
+      }
     }
     if(!relHtml){
       relHtml=`<button type="button" class="btn-icon" title="Vincular con cotización" onclick="editOCCliente('${esc(r.id)}')" style="color:var(--text3)">
