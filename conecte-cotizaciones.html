@@ -1348,6 +1348,11 @@ textarea.item-inp.item-desc-ta{
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M8 3v10M3 8h10"/></svg>
             Nuevo Ingreso
           </button>
+          <span class="fsep"></span>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);cursor:pointer;user-select:none" title="Muestra los folios de todas las facturas relacionadas directamente en la tabla, sin tener que pasar el mouse. Útil para exportar o mandarle la vista a tu contador.">
+            <input type="checkbox" id="ingShowAllFacsChk" onchange="toggleIngShowAllFacs(this.checked)" style="width:14px;height:14px;cursor:pointer">
+            Ver todas las facturas relacionadas
+          </label>
         </div>
         <!-- Punto 10: filtros avanzados combinables (Mes / Año / Cliente / Método de pago) -->
         <div class="filter-bar" style="margin-top:-6px">
@@ -1499,6 +1504,21 @@ textarea.item-inp.item-desc-ta{
 
 
 
+    <!-- ══ MODAL: preguntar si la lista de empleados activos incluye salarios ══ -->
+    <div class="modal-bg" id="empPrintModal">
+      <div class="modal" style="width:380px">
+        <div class="modal-title">Imprimir lista de empleados activos</div>
+        <p class="modal-body" style="margin-bottom:14px">¿Quieres incluir la columna de sueldo en el PDF, o solo la lista de nombres y datos generales?</p>
+        <div class="modal-acts" style="justify-content:space-between">
+          <button class="btn btn-ghost btn-sm" onclick="closeEmpPrintModal()">Cancelar</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="closeEmpPrintModal();imprimirListaEmpleadosActivos(false)">Solo la lista</button>
+            <button class="btn btn-red btn-sm" onclick="closeEmpPrintModal();imprimirListaEmpleadosActivos(true)">Con salarios</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ MODAL: PARÁMETROS DE NÓMINA (hoja Parametros) ══ -->
     <div class="modal-bg" id="paramModal">
       <div class="modal">
@@ -1554,7 +1574,7 @@ textarea.item-inp.item-desc-ta{
         <div class="card-header">
           <span class="card-title">Personal — panel administrativo</span>
           <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="empCount">0</span>
-          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="imprimirListaEmpleadosActivos()">
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="openEmpPrintModal()">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M4 6V2h8v4M4 12h8v3H4v-3ZM2 6h12a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v-2H3v2H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
             Imprimir
           </button>
@@ -11186,10 +11206,19 @@ function renderRostros(){
   tbody.innerHTML = html;
 }
 
+function openEmpPrintModal(){
+  const activos=(ST.personalList||[]);
+  if(!activos.length){ toast('err','No hay empleados activos para imprimir.'); return; }
+  document.getElementById('empPrintModal').classList.add('open');
+}
+function closeEmpPrintModal(){ document.getElementById('empPrintModal').classList.remove('open'); }
+
 /* Genera un PDF simple e imprimible con la lista de empleados activos
    (ST.personalList ya contiene solo Estado = Activo) y lo abre en una pestaña
-   nueva, lista para imprimir o guardar. */
-function imprimirListaEmpleadosActivos(){
+   nueva, lista para imprimir o guardar.
+   incluirSalarios: true -> incluye la columna "Sueldo total"; false -> se omite
+   y su espacio se reparte entre las demás columnas. */
+function imprimirListaEmpleadosActivos(incluirSalarios){
   if(!window.jspdf || !window.jspdf.jsPDF){ toast('err','La librería de PDF no está cargada. Recarga la página.'); return; }
   const activos = (ST.personalList||[]).slice().sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   if(!activos.length){ toast('err','No hay empleados activos para imprimir.'); return; }
@@ -11201,20 +11230,30 @@ function imprimirListaEmpleadosActivos(){
   function setF(style,size,col){ doc.setFont('helvetica',style); doc.setFontSize(size); doc.setTextColor(...(col||C.ink)); }
   function hline(y,col,w){ doc.setDrawColor(...(col||C.line)); doc.setLineWidth(w||0.2); doc.line(ML,y,MR,y); }
 
-  // Columnas: Nombre | Puesto | Sueldo total | Vales | Fiscal | Tipo de pago | Fecha ingreso
+  // Columnas: Nombre | Puesto | (Sueldo total) | Vales | Fiscal | Tipo de pago | Fecha ingreso
+  // "Sueldo total" solo se incluye si incluirSalarios===true; cuando se omite,
+  // su ancho se reparte proporcionalmente entre las demás columnas para que la
+  // tabla siga ocupando todo el ancho de la página (nada de columnas angostas
+  // sueltas ni espacio en blanco a la derecha).
   // Sin fotografías: se probaron como thumbnail junto al nombre pero se veían mal
   // (baja resolución/recortadas) y encimaban el texto, así que se quitaron.
   // Vales y Fiscal se dibujan como una palomita vectorial (no depende de que la
   // fuente del PDF tenga el glifo ✓/✅), igual que se ven en pantalla.
-  const cols = [
+  let cols = [
     {label:'Nombre',        w:46, get:p=>p.nombre||'—'},
     {label:'Puesto',        w:34, get:p=>p.puesto||'—'},
-    {label:'Sueldo total',  w:24, get:p=>fmtMXN(p.sueldoTotalAcordado||0), align:'right'},
+    {label:'Sueldo total',  w:24, get:p=>fmtMXN(p.sueldoTotalAcordado||0), align:'right', soloSalarios:true},
     {label:'Vales',         w:16, type:'check', get:p=>!!p.recibeVales, align:'center'},
     {label:'Fiscal',        w:16, type:'check', get:p=>!!p.recibeFiscal, align:'center'},
     {label:'Tipo de pago',  w:24, get:p=>p.tipoPago||'—'},
     {label:'Fecha ingreso', w:22, get:p=>p.fechaIngreso||'—'},
   ];
+  if(!incluirSalarios){
+    cols = cols.filter(c=>!c.soloSalarios);
+    const wSum = cols.reduce((s,c)=>s+c.w,0);
+    const scale = CW/wSum;
+    cols.forEach(c=>{ c.w = c.w*scale; });
+  }
   const colX = []; let acc = ML;
   cols.forEach(c=>{ colX.push(acc); acc += c.w; });
 
@@ -11233,11 +11272,22 @@ function imprimirListaEmpleadosActivos(){
     }
   }
 
+  // Trunca el texto por ANCHO REAL (no por número fijo de caracteres) para que
+  // nunca se salga de su columna e invada la de al lado — eso era lo que se
+  // veía como "encimado". Deja 1.5mm de aire antes de la línea divisoria.
+  function fitText(val,maxW){
+    let s=String(val==null?'':val);
+    if(doc.getTextWidth(s)<=maxW) return s;
+    while(s.length>1 && doc.getTextWidth(s+'…')>maxW){ s=s.slice(0,-1); }
+    return s+'…';
+  }
+
   function pageHeader(pg,total){
     doc.setFillColor(...C.red); doc.rect(0,0,PW,2.2,'F');
     setF('bold',15); doc.text('Lista de Empleados Activos', ML, 16);
     setF('normal',8.5,C.sub);
-    doc.text('Constructora Conecte  ·  Generado el '+todayISO()+'  ·  '+activos.length+' empleado(s) activo(s)', ML, 22);
+    const subtitulo='Constructora Conecte  ·  Generado el '+todayISO()+'  ·  '+activos.length+' empleado(s) activo(s)'+(incluirSalarios?'':'  ·  Sin información de sueldos');
+    doc.text(subtitulo, ML, 22);
     doc.text(`Página ${pg} de ${total}`, MR, 22, {align:'right'});
     hline(26);
     // Encabezado de tabla
@@ -11248,6 +11298,10 @@ function imprimirListaEmpleadosActivos(){
       else if(c.align==='center') doc.text(c.label, colX[i]+c.w/2, 34, {align:'center'});
       else doc.text(c.label, colX[i]+1.5, 34);
     });
+    // Líneas divisorias VERTICALES del encabezado de tabla, más marcadas que
+    // antes para que se note claramente dónde empieza cada columna.
+    doc.setDrawColor(...C.ink); doc.setLineWidth(0.3);
+    for(let i=1;i<cols.length;i++){ doc.line(colX[i],29,colX[i],36); }
     hline(36);
     return 40;
   }
@@ -11263,10 +11317,15 @@ function imprimirListaEmpleadosActivos(){
         drawCheck(colX[ci]+c.w/2, y-1.3, c.get(p));
         return;
       }
-      const val = String(c.get(p));
+      const val = fitText(c.get(p), c.w-3);
       const x = c.align==='right' ? colX[ci]+c.w-2 : colX[ci]+1.5;
-      doc.text(val.length>34?val.slice(0,33)+'…':val, x, y, c.align==='right'?{align:'right'}:{});
+      doc.text(val, x, y, c.align==='right'?{align:'right'}:{});
     });
+    // Divisor VERTICAL de esta fila, dibujado sobre el sombreado de fondo (si
+    // lo hay) para que las columnas queden marcadas fila por fila y el texto
+    // largo nunca se "encime" visualmente con la columna vecina.
+    doc.setDrawColor(...C.line); doc.setLineWidth(0.2);
+    for(let i=1;i<cols.length;i++){ doc.line(colX[i],y-4.6,colX[i],y-4.6+rowH); }
     y += rowH;
     doc.setDrawColor(...C.line); doc.setLineWidth(0.15); doc.line(ML,y-4.8,MR,y-4.8);
   });
@@ -13393,19 +13452,41 @@ function updateIngStats(){
   document.getElementById('sIngVenc').textContent=vec.length;
   document.getElementById('sIngVencMonto').textContent=fmtMXN(s(vec));
 }
+/* Preferencia: mostrar todas las facturas relacionadas expandidas en la tabla de
+   Ingresos (mismo patrón que en OC). Se recuerda entre sesiones. */
+try{ ST.ingShowAllFacs = localStorage.getItem('ingShowAllFacs')==='1'; }catch(e){ ST.ingShowAllFacs=false; }
+function toggleIngShowAllFacs(checked){
+  ST.ingShowAllFacs=!!checked;
+  try{ localStorage.setItem('ingShowAllFacs', checked?'1':'0'); }catch(e){}
+  renderIngTable();
+}
 function renderIngTable(){
   const tbody=document.getElementById('ingTbody');
+  const chkAllFacs=document.getElementById('ingShowAllFacsChk');
+  if(chkAllFacs) chkAllFacs.checked=!!ST.ingShowAllFacs;
   const PAGE=20, start=(ST.ingPage-1)*PAGE, slice=ST.ingFiltered.slice(start,start+PAGE);
   if(!slice.length){ tbody.innerHTML=`<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin ingresos registrados</td></tr>`; renderIngPagi(); return; }
   tbody.innerHTML=slice.map(b=>{
     const cli=ST.clientes[b.cliente]?.nombre||b.cliente||'—';
     const facsLink=ST.facturas.filter(f=>f.id_ingreso===b.id);
-    const facCell = facsLink.length
-      ? `<button type="button" class="fac-rel-chip" onmouseenter="showFacRelPopover(this,'${esc(b.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopover(this,'${esc(b.id)}')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h6l3 3v9H4V2z"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>
-          Facturas relacionadas <span class="cnt">${facsLink.length}</span>
-        </button>`
-      : (b.idFactura ? `<span class="fac-rel-none">${esc(b.idFactura)}</span>` : '<span class="fac-rel-none">— Sin factura —</span>');
+    let facCell;
+    if(facsLink.length && ST.ingShowAllFacs){
+      facCell = `<div style="display:flex;flex-direction:column;gap:3px;max-width:180px">` +
+        facsLink.map(f=>{
+          const stClass={Pagado:'pagado',Pendiente:'pendiente',Cancelado:'cancelado'}[f.estatus]||'pendiente';
+          return `<button type="button" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:10px;padding:1px 0" onclick="openFacRelCard('${esc(f.id)}')" title="Ver factura ${esc(f.folio||f.id)} — ${esc(f.estatus||'')}">
+            <span class="bal-badge ${stClass}" style="font-size:8px;padding:1px 4px;flex-shrink:0">${esc((f.estatus||'—').slice(0,3))}</span>
+            <span style="font-family:var(--mono);color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.folio||f.id)}</span>
+          </button>`;
+        }).join('') + `</div>`;
+    } else {
+      facCell = facsLink.length
+        ? `<button type="button" class="fac-rel-chip" onmouseenter="showFacRelPopover(this,'${esc(b.id)}')" onmouseleave="scheduleHideFacRelPopover()" onclick="showFacRelPopover(this,'${esc(b.id)}')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h6l3 3v9H4V2z"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>
+            Facturas relacionadas <span class="cnt">${facsLink.length}</span>
+          </button>`
+        : (b.idFactura ? `<span class="fac-rel-none">${esc(b.idFactura)}</span>` : '<span class="fac-rel-none">— Sin factura —</span>');
+    }
     const evid = b.pdf||b.foto;
     return `<tr>
       <td style="font-size:11.5px;color:var(--text2);white-space:nowrap">${b.fecha||'—'}</td>
@@ -16297,7 +16378,7 @@ function renderOCClienteTable(){
     const facsLinkedOC = ST.facturas.filter(f=>(f.ocIds||[]).includes(r.id));
     let relHtml='';
     if(cotsLinked.length){
-      relHtml+=cotsLinked.map(cotLinked=>`<div style="font-size:10.5px;color:var(--blue);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" title="Cotización: ${esc(cotLinked.id)}">📄 ${esc(cotLinked.id)}</div>`).join('');
+      relHtml+=cotsLinked.map(cotLinked=>`<button type="button" style="all:unset;cursor:pointer;display:block;font-size:10.5px;color:var(--blue);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" onclick="verCotizacionPDF('${esc(cotLinked.id)}')" title="Ver PDF de la cotización ${esc(cotLinked.id)}">📄 ${esc(cotLinked.id)}</button>`).join('');
     }
     if(facsLinkedOC.length){
       if(ST.ocShowAllFacs){
