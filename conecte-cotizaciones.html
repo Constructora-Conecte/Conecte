@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -5069,11 +5069,17 @@ async function loadAll() {
       ST.objetivosError = objErr.result?.error?.message || objErr.message || String(objErr);
     }
 
-    /* Personal — hoja "Personal" (19 cols: A=ID_Usuarios … Q=Estado, R=Recibe_Vales, S=Recibe_Fiscal).
+    /* Personal — hoja "Personal" (21 cols, A:U): A=ID_Usuarios, B=Nombre, C=Correo,
+       D=Telefono, E=Fotografia, F=CURP, G=RFC, H=NSS, I=Cuenta_BBVA, J=Puesto,
+       K=Sueldo_Total_Acordado, L=Salario_Registrado_Fiscal, M=Compensacion_Efectivo,
+       N=Tipo_Pago, O=Fecha_Ingreso, P=Fecha_Baja, Q=Estado, R=Recibe_Vales,
+       S=Recibe_Fiscal, T=Domicilio, U=Estado_Civil.
+       (Comentario actualizado: la versión anterior de esta nota decía "19 cols,
+       hasta S" y ya no correspondía con el código de abajo, que desde hace tiempo
+       lee correctamente hasta la U — r[19]=Domicilio, r[20]=Estado_Civil. No había
+       ningún bug de índices aquí, solo un comentario desactualizado.)
        Se carga en try/catch propio para no romper el resto de la app si la hoja
        aún no existe o el nombre no coincide exactamente.
-       Se eliminó la columna Nivel: todo lo que estaba después se recorrió una
-       posición (antes llegaba hasta la T, ahora hasta la S).
        Recibe_Vales (TRUE/FALSE): si la celda está vacía se asume TRUE, para no
        afectar el comportamiento de empleados ya existentes.
        Recibe_Fiscal (TRUE/FALSE): si la celda está vacía se asume TRUE. Si es
@@ -9148,21 +9154,56 @@ function aplicarNomPdfExtract(ex){
   if(!match){
     match = (ST.personalList||[]).find(p => p.rfc && textoCompleto.includes(p.rfc.replace(/\s+/g,'').toUpperCase()));
   }
-  // 3) Nombre extraído por el regex vs. catálogo (exacto o parcial, tolerante a acentos)
+  // 3) Nombre extraído por el regex vs. catálogo (exacto, o por solapamiento de
+  //    palabras significativas — NUNCA por un simple .includes() de un lado u otro).
+  //    CORRECCIÓN (causa raíz del bug "siempre selecciona al mismo empleado"):
+  //    antes se usaba `norm(p.nombre).includes(objetivo) || objetivo.includes(norm(p.nombre))`.
+  //    Si el regex del PDF extraía un fragmento corto o mal cortado (ej. por un
+  //    formato de CFDI ligeramente distinto), CUALQUIER empleado cuyo nombre
+  //    contuviera esa cadena corta calificaba como "match", y como se usaba
+  //    Array.find (que se detiene en el PRIMER elemento que cumple), el sistema
+  //    terminaba asignando siempre el mismo empleado (el primero del catálogo que
+  //    accidentalmente cumplía la condición laxa) sin importar de quién fuera
+  //    realmente el PDF. Ahora se compara por PALABRAS completas (no substrings
+  //    parciales de letras sueltas) y se exige que la mayoría de las palabras del
+  //    nombre del empleado aparezcan como palabras completas en el nombre extraído,
+  //    eligiendo siempre el empleado con MEJOR coincidencia (no el primero laxo).
   if(!match && ex.empleado){
     const objetivo = norm(ex.empleado);
-    match = (ST.personalList||[]).find(p => norm(p.nombre)===objetivo)
-         || (ST.personalList||[]).find(p => norm(p.nombre).includes(objetivo) || objetivo.includes(norm(p.nombre)));
+    const exacto = (ST.personalList||[]).find(p => norm(p.nombre)===objetivo);
+    if(exacto){
+      match = exacto;
+    } else {
+      const wordsObjetivo = objetivo.split(/\s+/).filter(w=>w.length>=3);
+      let mejor = null, mejorScore = 0;
+      (ST.personalList||[]).forEach(p=>{
+        const wordsNombre = norm(p.nombre).split(/\s+/).filter(w=>w.length>=3);
+        if(!wordsNombre.length) return;
+        const coincidencias = wordsNombre.filter(w=>wordsObjetivo.includes(w)).length;
+        const score = coincidencias / wordsNombre.length; // % de palabras del empleado que aparecen en el texto extraído
+        // Se exige que coincida al menos el 75% de las palabras significativas del
+        // nombre del empleado (mínimo 2 palabras si el nombre las tiene), para evitar
+        // que un nombre corto o una sola palabra en común dispare un falso positivo.
+        if(wordsNombre.length>=2 && coincidencias>=2 && score>=0.75 && score>mejorScore){
+          mejor = p; mejorScore = score;
+        }
+      });
+      match = mejor;
+    }
   }
-  // 4) Último respaldo: busca el nombre completo de cada empleado del catálogo
-  //    directamente dentro del texto completo del PDF, por si el regex no logró
+  // 4) Último respaldo: busca el nombre COMPLETO (no fragmentos) de cada empleado
+  //    del catálogo dentro del texto completo del PDF, por si el regex no logró
   //    aislar ningún nombre (formato distinto, columnas desordenadas por el
-  //    extractor de texto, etc.).
+  //    extractor de texto, etc.). Si más de un empleado calificara, se prefiere
+  //    el nombre más largo (más específico), no el primero del catálogo.
   if(!match){
-    match = (ST.personalList||[]).find(p => {
+    const candidatos = (ST.personalList||[]).filter(p => {
       const n = norm(p.nombre);
-      return n && n.length>=5 && textoCompleto.includes(n);
+      return n && n.length>=8 && n.split(/\s+/).length>=2 && textoCompleto.includes(n);
     });
+    if(candidatos.length){
+      match = candidatos.reduce((a,b)=> norm(b.nombre).length>norm(a.nombre).length ? b : a);
+    }
   }
   if(match){
     document.getElementById('nEmpleado').value = match.id;
