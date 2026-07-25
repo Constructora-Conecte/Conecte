@@ -2658,11 +2658,18 @@ textarea.item-inp.item-desc-ta{
         </div>
         <div class="mlg-foot" style="flex-wrap:wrap;gap:8px">
           <span id="contratoPreviewStatus" style="font-size:11.5px;color:var(--text3);margin-right:auto"></span>
-          <button class="btn btn-ghost btn-sm" id="reglamentoDescargarWordBtn" onclick="descargarReglamentoWord()" style="display:none">⬇ Reglamento (Word)</button>
           <button class="btn btn-ghost btn-sm" id="reglamentoDescargarPDFBtn" onclick="descargarReglamentoPDF()" style="display:none">⬇ Reglamento (PDF)</button>
           <button class="btn btn-ghost btn-sm" onclick="cerrarPreviewContrato()">Cerrar</button>
-          <button class="btn btn-ghost btn-sm" id="contratoDescargarWordBtn" onclick="descargarContratoWord()">⬇ Descargar Word</button>
           <button class="btn btn-red btn-sm" id="contratoDescargarPDFBtn" onclick="descargarContratoPDF()">⬇ Descargar PDF</button>
+          <!-- Etapa 5: el .docx ya no es prioridad y se quitó de la interfaz visible al
+               usuario — el motor lo sigue generando internamente (fillContratoTemplate /
+               fillReglamentoTemplate) porque hoy es el mecanismo con el que se produce el
+               PDF final (conversión vía Google Drive). El usuario ahora solo ve y descarga
+               el PDF, que es el formato robusto y prioritario. Los botones de Word siguen
+               existiendo ocultos en el DOM (sin mostrarse) para no romper el código que
+               los referencia (descargarContratoWord/descargarReglamentoWord). -->
+          <button class="btn btn-ghost btn-sm" id="reglamentoDescargarWordBtn" onclick="descargarReglamentoWord()" style="display:none" hidden></button>
+          <button class="btn btn-ghost btn-sm" id="contratoDescargarWordBtn" onclick="descargarContratoWord()" style="display:none" hidden></button>
         </div>
       </div>
     </div>
@@ -17337,13 +17344,12 @@ function renderHistorialContratosHTML(idEmpleado){
         <td>${c.fechaVencimiento ? esc(fmtFechaDMY(c.fechaVencimiento)) : '—'}</td>
         <td>${vig}</td>
         <td style="white-space:nowrap">
-          ${c.archivoWordURL?`<a href="${esc(c.archivoWordURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px">Word</a>`:''}
-          ${c.archivoPDFURL?`<a href="${esc(c.archivoPDFURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px">PDF</a>`:''}
+          ${c.archivoPDFURL?`<a href="${esc(c.archivoPDFURL)}" target="_blank" rel="noopener" class="btn btn-red btn-sm" style="padding:2px 6px">PDF</a>`
+            : (c.archivoWordURL?`<a href="${esc(c.archivoWordURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px" title="El PDF no se generó para este contrato; se muestra el Word como respaldo">Word</a>`:'<span style="color:var(--text3)">—</span>')}
         </td>
         <td style="white-space:nowrap">
-          ${c.archivoReglamentoWordURL?`<a href="${esc(c.archivoReglamentoWordURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px">Word</a>`:''}
-          ${c.archivoReglamentoPDFURL?`<a href="${esc(c.archivoReglamentoPDFURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px">PDF</a>`:''}
-          ${(!c.archivoReglamentoWordURL && !c.archivoReglamentoPDFURL)?'<span style="color:var(--text3)">—</span>':''}
+          ${c.archivoReglamentoPDFURL?`<a href="${esc(c.archivoReglamentoPDFURL)}" target="_blank" rel="noopener" class="btn btn-red btn-sm" style="padding:2px 6px">PDF</a>`
+            : (c.archivoReglamentoWordURL?`<a href="${esc(c.archivoReglamentoWordURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px" title="El PDF no se generó para este reglamento; se muestra el Word como respaldo">Word</a>`:'<span style="color:var(--text3)">—</span>')}
         </td>
       </tr>`;
     }).join('')}</tbody>
