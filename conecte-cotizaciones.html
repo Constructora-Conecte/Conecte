@@ -14938,7 +14938,13 @@ function toggleFinSheetsWarning(){
 
 function finParseDate(s){
   if(!s) return null;
-  const d=new Date(s+'T00:00:00');
+  s = String(s).trim();
+  // Las fechas se guardan en la hoja como M/D/YYYY (ver sheetDate()), pero esta
+  // función asumía siempre formato ISO (YYYY-MM-DD) — por eso cotizaciones,
+  // deudas, etc. con fecha en formato M/D/YYYY no se podían parsear y los
+  // cálculos que dependían de ellas (p.ej. promedios de cotizaciones) daban "—".
+  if(s.includes('/')) s = isoDate(s);
+  const d=new Date(s+(s.includes('T')?'':'T00:00:00'));
   return isNaN(d.getTime()) ? null : d;
 }
 function finAddInterval(date, frecuencia){
