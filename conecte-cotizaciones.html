@@ -11897,7 +11897,7 @@ function renderEmpleados(){
     const avatar = p.fotografia
       ? `<div style="position:relative;width:30px;height:30px;cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">
            <div style="position:absolute;inset:0;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700">${inicial}</div>
-           <img src="${esc(normalizePhotoUrl(p.fotografia))}" style="position:absolute;inset:0;width:30px;height:30px;border-radius:50%;object-fit:cover" onerror="this.remove()">
+           <img src="${esc(normalizePhotoUrl(p.fotografia))}" style="position:absolute;inset:0;width:30px;height:30px;border-radius:50%;object-fit:cover;cursor:zoom-in" title="Ver foto en grande" onclick="event.stopPropagation();openFotoZoom('${esc(normalizePhotoUrl(p.fotografia))}','${esc(p.nombre||'empleado')}')" onerror="this.remove()">
          </div>`
       : `<div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-weight:700;cursor:pointer" onclick="openEmpCard('${p.id}')" title="Ver ficha completa">${inicial}</div>`;
     const estColor = esActivo ? 'var(--green,#38a169)' : 'var(--text3)';
@@ -11951,7 +11951,7 @@ function openEmpCard(idEmpleado){
   const avatarBig = p.fotografia
     ? `<div style="position:relative;width:76px;height:76px">
          <div style="position:absolute;inset:0;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:26px;font-weight:700">${inicialBig}</div>
-         <img src="${esc(normalizePhotoUrl(p.fotografia))}" style="position:absolute;inset:0;width:76px;height:76px;border-radius:50%;object-fit:cover" onerror="this.remove()">
+         <img src="${esc(normalizePhotoUrl(p.fotografia))}" style="position:absolute;inset:0;width:76px;height:76px;border-radius:50%;object-fit:cover;cursor:zoom-in" title="Ver foto en grande" onclick="openFotoZoom('${esc(normalizePhotoUrl(p.fotografia))}','${esc(p.nombre||'empleado')}')" onerror="this.remove()">
        </div>`
     : `<div style="width:76px;height:76px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:26px;font-weight:700">${inicialBig}</div>`;
   const faltantes = expedienteFaltantes(p);
@@ -12058,19 +12058,26 @@ function openEmpModal(idEmpleado){
 }
 function closeEmpModal(){ document.getElementById('empModal').classList.remove('open'); ST.empFotoFile = null; }
 
+function openFotoZoom(src, nombre){
+  if(!src) return;
+  const img = document.getElementById('empFotoLightboxImg');
+  img.src = src;
+  img.dataset.nombre = nombre || 'empleado';
+  document.getElementById('empFotoLightbox').classList.add('open');
+}
 function openEmpFotoLightbox(){
   const src = document.getElementById('empFotoPreview').src;
-  if(!src) return;
-  document.getElementById('empFotoLightboxImg').src = src;
-  document.getElementById('empFotoLightbox').classList.add('open');
+  const nombre = document.getElementById('eNombre')?.value || 'empleado';
+  openFotoZoom(src, nombre);
 }
 function closeEmpFotoLightbox(){
   document.getElementById('empFotoLightbox').classList.remove('open');
 }
 async function downloadEmpFotoLightbox(){
-  const src = document.getElementById('empFotoLightboxImg').src;
+  const img = document.getElementById('empFotoLightboxImg');
+  const src = img.src;
   if(!src) return;
-  const nombre = (document.getElementById('eNombre')?.value || 'empleado').trim().replace(/[^a-z0-9]+/gi,'_');
+  const nombre = (img.dataset.nombre || 'empleado').trim().replace(/[^a-z0-9]+/gi,'_');
   try{
     // Intenta traer el archivo real para forzar la descarga (funciona con data: URLs
     // y con imágenes que sí permiten CORS).
