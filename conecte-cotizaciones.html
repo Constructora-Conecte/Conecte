@@ -4565,6 +4565,13 @@ const ST = {
   objetivosError: null,
   alertasLeidas: [],       // hoja "Alertas_Leidas" (Fase 4 — notificaciones centralizadas descartadas)
   alertasLeidasIds: new Set(),
+  // Copia que SÍ sobrevive a loadAll() (a diferencia de alertasLeidasIds, que se
+  // reconstruye desde cero en cada carga). Evita que una notificación recién
+  // descartada "reaparezca" si el usuario dispara otra actualización (loadAll)
+  // antes de que el sheetsAppend a "Alertas_Leidas" termine de guardarse — sin
+  // esto, esa segunda carga sobreescribía alertasLeidasIds con datos del Sheet
+  // que todavía no incluían el ID recién marcado como leído.
+  alertasLeidasLocalIds: new Set(),
   alertasLeidasError: null,
   notifPanelOpen: false,
   objetivoEditId: null,
@@ -5121,6 +5128,10 @@ async function loadAll() {
       ST.alertasLeidasError = alErr.result?.error?.message || alErr.message || String(alErr);
     }
     ST.alertasLeidasIds = new Set(ST.alertasLeidas.map(a=>a.id));
+    // Ver nota en la definición de alertasLeidasLocalIds (arriba en ST): sin este
+    // merge, una notificación descartada hace un momento podía "revivir" si esta
+    // lectura del Sheet ocurría antes de que el guardado terminara de reflejarse.
+    ST.alertasLeidasLocalIds.forEach(id=>ST.alertasLeidasIds.add(id));
 
     /* Registros de asistencia — se carga aparte (try/catch propio) para que, si la hoja
        "Registros" no existe o el nombre no coincide, NO se rompa la carga del resto de la app
@@ -16016,6 +16027,7 @@ function renderNotifBell(){
    con instrucciones exactas para crearla, en vez de fallar en silencio. */
 async function marcarAlertaLeida(id){
   ST.alertasLeidasIds.add(id); // optimista: desaparece ya de la campanita
+  ST.alertasLeidasLocalIds.add(id); // sobrevive aunque otro loadAll() se dispare antes de que termine el append de abajo
   renderNotifBell();
   try{
     await sheetsAppend('Alertas_Leidas!A2:C', [[id, todayISO(), ST.usuario?.email||ST.usuario?.nombre||'']]);
@@ -16027,7 +16039,7 @@ async function marcarAlertaLeida(id){
 async function marcarTodasAlertasLeidas(){
   const visibles = ST._alertasVisiblesActuales||[];
   if(!visibles.length) return;
-  visibles.forEach(a=>ST.alertasLeidasIds.add(a.id));
+  visibles.forEach(a=>{ ST.alertasLeidasIds.add(a.id); ST.alertasLeidasLocalIds.add(a.id); });
   renderNotifBell();
   try{
     const filas = visibles.map(a=>[a.id, todayISO(), ST.usuario?.email||ST.usuario?.nombre||'']);
@@ -17521,7 +17533,6 @@ function expedienteFaltantes(p){
   if(!String(p.nss||'').trim()) faltan.push('NSS');
   // NOTA: Fecha de baja, Vales de despensa, Pago fiscal, Cuenta BBVA y
   // Fotografía pueden quedar vacíos sin afectar el estado de "completo".
-  // pueden quedar vacíos sin afectar el estado de "completo".
   return faltan;
 }
 
