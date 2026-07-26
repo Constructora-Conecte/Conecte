@@ -17450,12 +17450,20 @@ function calcularVencimiento(fechaInicioISO, tipo, cantidad, unidad){
 function expedienteFaltantes(p){
   if(!p) return ['Empleado no encontrado'];
   const faltan=[];
+  if(!String(p.nombre||'').trim()) faltan.push('Nombre');
+  if(!String(p.puesto||'').trim()) faltan.push('Puesto');
+  if(!String(p.estado||'').trim()) faltan.push('Estado');
+  if(!String(p.fechaIngreso||'').trim()) faltan.push('Fecha de ingreso (Fecha de Alta)');
+  if(!String(p.correo||'').trim()) faltan.push('Correo');
+  if(!String(p.telefono||'').trim()) faltan.push('Teléfono');
+  if(!String(p.direccion||'').trim()) faltan.push('Domicilio');
+  if(!String(p.estadoCivil||'').trim()) faltan.push('Estado civil');
   if(!String(p.curp||'').trim()) faltan.push('CURP');
   if(!String(p.rfc||'').trim()) faltan.push('RFC');
   if(!String(p.nss||'').trim()) faltan.push('NSS');
-  if(!String(p.telefono||'').trim()) faltan.push('Teléfono');
-  if(!String(p.direccion||'').trim()) faltan.push('Domicilio');
-  if(!String(p.fechaIngreso||'').trim()) faltan.push('Fecha de ingreso (Fecha de Alta)');
+  // NOTA: Fecha de baja, Vales de despensa, Pago fiscal, Cuenta BBVA y
+  // Fotografía pueden quedar vacíos sin afectar el estado de "completo".
+  // pueden quedar vacíos sin afectar el estado de "completo".
   return faltan;
 }
 
