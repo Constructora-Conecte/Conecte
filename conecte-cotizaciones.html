@@ -9209,31 +9209,61 @@ function parseNomPdfText(raw){
   const str = (re)=>{ const m = t.match(re); return m ? m[1].trim() : null; };
 
   const out = { raw:t };
-  // Empleado + RFC: se intentan JUNTOS primero con el bloque "NNN - NOMBRE ... RFC: XXXX",
+  // Empleado + RFC + CURP: se intentan JUNTOS primero con el bloque "NNN - NOMBRE ... RFC: XXXX",
   // que es el punto más confiable del CFDI (evita confundir el RFC del empleado con el
   // RFC del emisor, que aparece antes en el documento). Pero este recibo es de DOS
   // COLUMNAS (nombre/RFC/CURP a la izquierda, Ejercicio/Periodo/Fecha Pago a la
   // derecha), y pdf.js a veces intercala el texto de ambas columnas al extraerlo —
   // por eso entre el nombre y "RFC:" puede haber más texto de la columna derecha del
   // que el patrón estricto de abajo tolera (solo contemplaba "Ejercicio: NNNN").
-  // Si ese patrón estricto no encuentra nada, se extrae el nombre por separado con el
-  // mismo formato "NNN - NOMBRE" (sin exigir que el RFC venga justo después) y el RFC
-  // se busca de forma independiente en todo el texto.
-  const bloqueEmp = t.match(/\d{1,4}\s*-\s*([A-ZÁÉÍÓÚÑ.'\s]{5,60}?)\s*(?:Ejercicio\s*:?\s*\d{2,4}\s*)?RFC\s*[:\-]?\s*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
-  if(bloqueEmp){
-    out.empleado = bloqueEmp[1].trim();
-    out.rfc = bloqueEmp[2].trim().toUpperCase();
+  //
+  // BUG CORREGIDO: cuando ese patrón estricto no encontraba nada, el respaldo anterior
+  // buscaba "RFC[:\s]*..." en TODO el texto (t) desde el inicio. Como el RFC del EMISOR
+  // (la empresa, ej. "RFC: CCO220311K99") siempre aparece en el encabezado, ANTES del
+  // bloque del empleado, ese respaldo terminaba capturando el RFC de la empresa en vez
+  // del RFC del trabajador — y ese RFC equivocado se usaba después para "encontrar" al
+  // empleado en el catálogo, produciendo selecciones incorrectas o aleatorias.
+  // Corrección: primero se localiza la posición del bloque "NNN - NOMBRE" y todo lo que
+  // se busque después (RFC, CURP) se busca SOLO a partir de esa posición en adelante,
+  // nunca antes — así es imposible confundirlo con el RFC/datos del emisor.
+  const bloqueEmpMatch = t.match(/\d{1,4}\s*-\s*([A-ZÁÉÍÓÚÑ.'\s]{5,60}?)\s*(?:Ejercicio\s*:?\s*\d{2,4}\s*)?RFC\s*[:\-]?\s*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
+  let empleadoIdx = -1;
+  if(bloqueEmpMatch){
+    out.empleado = bloqueEmpMatch[1].trim();
+    out.rfc = bloqueEmpMatch[2].trim().toUpperCase();
+    empleadoIdx = bloqueEmpMatch.index;
   } else {
     // Mismo patrón "NNN - NOMBRE", pero cortando en cualquier etiqueta conocida de la
     // columna derecha o izquierda (no solo "RFC"), para no depender de que el RFC
     // quede pegado al nombre en el texto extraído.
-    out.empleado = str(/\d{1,4}\s*-\s*([A-ZÁÉÍÓÚÑ.'\s]{5,60}?)(?:\s{2,}|\s+(?:RFC|CURP|Ejercicio|Periodo|Jornada|Fecha|NSS)\b|$)/i);
-    if(!out.empleado){
+    const nombreMatch = t.match(/\d{1,4}\s*-\s*([A-ZÁÉÍÓÚÑ.'\s]{5,60}?)(?:\s{2,}|\s+(?:RFC|CURP|Ejercicio|Periodo|Jornada|Fecha|NSS)\b|$)/i);
+    if(nombreMatch){
+      out.empleado = nombreMatch[1].trim();
+      empleadoIdx = nombreMatch.index;
+    } else {
       // Respaldo final para formatos de CFDI que no traigan el patrón "NNN - Nombre".
-      out.empleado = str(/(?:Nombre(?:\s+del\s+trabajador)?|Empleado)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ\s]{5,60}?)(?:\s{2,}|RFC|$)/i);
+      const nombreAlt = t.match(/(?:Nombre(?:\s+del\s+trabajador)?|Empleado)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ\s]{5,60}?)(?:\s{2,}|RFC|$)/i);
+      if(nombreAlt){ out.empleado = nombreAlt[1].trim(); empleadoIdx = nombreAlt.index; }
     }
-    out.rfc = str(/RFC[:\s]*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
+    // Ventana de búsqueda para RFC/CURP: SOLO el texto a partir de donde se encontró el
+    // nombre del empleado (nunca antes), y acotada a ~250 caracteres para no cruzar por
+    // error hacia otra sección lejana del documento (sellos digitales, etc.).
+    const ventana = empleadoIdx>=0 ? t.slice(empleadoIdx, empleadoIdx+250) : t;
+    (function(){
+      const m = ventana.match(/RFC\s*[:\-]?\s*([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/i);
+      out.rfc = m ? m[1].trim().toUpperCase() : null;
+    })();
   }
+  // CURP del empleado: igual que el RFC, se busca SOLO dentro de la ventana del bloque
+  // del empleado (nunca en todo el documento), para que sirva como una segunda clave de
+  // coincidencia contra el catálogo de Personal — más específica que el RFC porque el
+  // CURP es único por persona y tiene más caracteres, reduciendo aún más el riesgo de
+  // que se seleccione al empleado equivocado.
+  (function(){
+    const ventanaCurp = empleadoIdx>=0 ? t.slice(empleadoIdx, empleadoIdx+300) : t;
+    const m = ventanaCurp.match(/CURP\s*[:\-]?\s*([A-Z]{4}\d{6}[A-Z]{6}[A-Z0-9]{2})/i);
+    out.curp = m ? m[1].trim().toUpperCase() : null;
+  })();
   out.periodo    = str(/Periodo(?:\s+de\s+pago)?\s*[:\-]?\s*([\d\/\-\wA-Za-zÁÉÍÓÚñÑ\s]{4,30}?)(?:\s{2,}|$)/i);
   out.fecha      = str(/(\d{4}-\d{2}-\d{2})/) || (()=>{ const m=t.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : null; })();
   // "Días de Pago" (fiscal) — se muestra solo como referencia; NUNCA se usa para
@@ -9288,6 +9318,14 @@ function aplicarNomPdfExtract(ex){
   if(ex.rfc){
     const rfcObjetivo = ex.rfc.replace(/\s+/g,'').toUpperCase();
     match = (ST.personalList||[]).find(p => (p.rfc||'').replace(/\s+/g,'').toUpperCase()===rfcObjetivo);
+  }
+  // 1.5) CURP extraído por el regex vs. catálogo. El CURP es más específico que el RFC
+  //    (18 caracteres, único por persona) y se extrajo SOLO del bloque del empleado en
+  //    el PDF (nunca del encabezado de la empresa), así que es una segunda clave de
+  //    coincidencia muy confiable si el catálogo de Personal guarda el CURP (columna F).
+  if(!match && ex.curp){
+    const curpObjetivo = ex.curp.replace(/\s+/g,'').toUpperCase();
+    match = (ST.personalList||[]).find(p => (p.curp||'').replace(/\s+/g,'').toUpperCase()===curpObjetivo);
   }
   // 2) Si no hubo match por RFC extraído, busca el RFC de CADA empleado del catálogo
   //    directamente dentro del texto completo del PDF (no depende de que el regex
