@@ -1107,6 +1107,10 @@ textarea.item-inp.item-desc-ta{
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
           Personal
         </button>
+        <button class="bal-tab" id="empContratosBtn" onclick="switchEmpSubTab('contratos')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h6l3 3v10h-9z"/><path d="M10 1.5v3h3"/><path d="M5.8 9.3l1.4 1.4L10.4 7.5"/></svg>
+          Contratos
+        </button>
         <button class="bal-tab" id="empNomBtn" onclick="switchEmpSubTab('nom')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M11 8.5c1.8.3 3 1.8 3 3.3"/></svg>
           Nóminas
@@ -1730,6 +1734,59 @@ textarea.item-inp.item-desc-ta{
         </div>
       </div>
       </div><!-- /empSubPersonal -->
+
+      <!-- Sub-vista: CONTRATOS — listado global de todos los contratos generados
+           (todos los empleados), ligado a la hoja "Contratos". Reutiliza los mismos
+           datos y helpers que el Historial de Contratos dentro de la ficha del
+           empleado (ST.contratos, badgeEstadoContrato, estadoVigenciaContrato). -->
+      <div id="empSubContratos" class="emp-subpane">
+        <div class="stats stats-4" style="margin-bottom:16px">
+          <div class="stat cy"><div class="stat-lbl">Total de contratos</div><div class="stat-val" id="ctrTotal">—</div><div class="stat-delta">Todos los registros</div></div>
+          <div class="stat cg"><div class="stat-lbl">Vigentes</div><div class="stat-val" id="ctrVigentes">—</div><div class="stat-delta">Incluye indefinidos</div></div>
+          <div class="stat" style="border-color:#d69e2e"><div class="stat-lbl" style="color:#d69e2e">Próximos a vencer</div><div class="stat-val" id="ctrProximos">—</div><div class="stat-delta">30 días o menos</div></div>
+          <div class="stat cr"><div class="stat-lbl">Vencidos</div><div class="stat-val" id="ctrVencidos">—</div><div class="stat-delta">Requieren renovación</div></div>
+        </div>
+
+        <div class="filter-bar" style="margin-bottom:12px">
+          <button class="fchip on" onclick="setContratosFilter('all',this)">Todos</button>
+          <button class="fchip" onclick="setContratosFilter('Vigente',this)">Vigentes</button>
+          <button class="fchip" onclick="setContratosFilter('Proximo',this)">Próximos a vencer</button>
+          <button class="fchip" onclick="setContratosFilter('Vencido',this)">Vencidos</button>
+          <button class="fchip" onclick="setContratosFilter('Indefinido',this)">Indefinidos</button>
+          <button class="fchip" onclick="setContratosFilter('Renovado',this)">Renovados</button>
+          <button class="fchip" onclick="setContratosFilter('Cancelado',this)">Cancelados</button>
+          <span class="fsep"></span>
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:220px;" placeholder="🔍  Buscar por empleado o puesto…" oninput="onContratosSearch(this.value)">
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Contratos — historial completo</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="ctrCount">0</span>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Puesto</th>
+                  <th>Generado</th>
+                  <th>Inicio</th>
+                  <th>Duración</th>
+                  <th>Vencimiento</th>
+                  <th>Estado</th>
+                  <th>Contrato</th>
+                  <th>Reglamento</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="ctrTbody">
+                <tr class="loading-row"><td colspan="10"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando contratos…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /empSubContratos -->
 
       <!-- Sub-vista: NÓMINAS — historial semanal de nómina, ligado a la hoja "Nominas" -->
       <div id="empSubNom" class="emp-subpane">
@@ -10485,13 +10542,14 @@ function normalizePhotoUrl(url){
    filtros y lógica (renderNominas / renderAsistencia / openNomModal, etc. no cambiaron). */
 function switchEmpSubTab(sub){
   ST.empSubTab = sub;
-  ['empSubPersonal','empSubNom','empSubAsis','empSubRostros','empSubDoc'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['empPersonalBtn','empNomBtn','empAsisBtn','empRostrosBtn','empDocBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {personal:'empSubPersonal', nom:'empSubNom', asis:'empSubAsis', rostros:'empSubRostros', doc:'empSubDoc'}[sub] || 'empSubPersonal';
-  const btnId  = {personal:'empPersonalBtn', nom:'empNomBtn', asis:'empAsisBtn', rostros:'empRostrosBtn', doc:'empDocBtn'}[sub] || 'empPersonalBtn';
+  ['empSubPersonal','empSubContratos','empSubNom','empSubAsis','empSubRostros','empSubDoc'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['empPersonalBtn','empContratosBtn','empNomBtn','empAsisBtn','empRostrosBtn','empDocBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {personal:'empSubPersonal', contratos:'empSubContratos', nom:'empSubNom', asis:'empSubAsis', rostros:'empSubRostros', doc:'empSubDoc'}[sub] || 'empSubPersonal';
+  const btnId  = {personal:'empPersonalBtn', contratos:'empContratosBtn', nom:'empNomBtn', asis:'empAsisBtn', rostros:'empRostrosBtn', doc:'empDocBtn'}[sub] || 'empPersonalBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
   if(sub==='personal') renderEmpleados();
+  if(sub==='contratos') renderContratosTab();
   if(sub==='nom') renderNominas();
   if(sub==='asis') renderAsistencia();
   if(sub==='rostros') renderRostros();
@@ -17594,6 +17652,82 @@ function renderHistorialContratosHTML(idEmpleado){
       </tr>`;
     }).join('')}</tbody>
   </table>`;
+}
+
+/* ── Sub-vista CONTRATOS (dentro de Empleados): listado global de TODOS los
+   contratos generados, de todos los empleados, con filtro por estado de
+   vigencia y buscador. Reutiliza los mismos datos y helpers que ya usa el
+   Historial de Contratos dentro de la ficha del empleado (ST.contratos,
+   badgeEstadoContrato, estadoVigenciaContrato). No duplica lógica de
+   generación/renovación: para eso sigue usándose la ficha del empleado
+   (openEmpCard → abrirModalContrato), aquí solo se muestra y se navega ahí. */
+function contratoFilterKeyOf(c){
+  if(c.estadoRegistro==='Cancelado') return 'Cancelado';
+  if(c.estadoRegistro!=='Activo') return 'Renovado';
+  return estadoVigenciaContrato(c); // Vigente / Proximo / Vencido / Indefinido
+}
+function setContratosFilter(val, btn){
+  ST.ctrFilterEstado = val;
+  document.querySelectorAll('#empSubContratos .fchip').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderContratosTab();
+}
+function onContratosSearch(v){ ST.ctrSearch = v; renderContratosTab(); }
+function renderContratosTab(){
+  const tbody = document.getElementById('ctrTbody');
+  if(!tbody) return;
+
+  const todos = Object.values(ST.contratos||{});
+  todos.sort((a,b)=>(b.fechaGeneracion||'').localeCompare(a.fechaGeneracion||''));
+
+  document.getElementById('ctrTotal').textContent = todos.length;
+  document.getElementById('ctrVigentes').textContent = todos.filter(c=>['Vigente','Indefinido'].includes(contratoFilterKeyOf(c))).length;
+  document.getElementById('ctrProximos').textContent = todos.filter(c=>contratoFilterKeyOf(c)==='Proximo').length;
+  document.getElementById('ctrVencidos').textContent = todos.filter(c=>contratoFilterKeyOf(c)==='Vencido').length;
+
+  let list = todos;
+  const filtro = ST.ctrFilterEstado||'all';
+  if(filtro!=='all') list = list.filter(c=>contratoFilterKeyOf(c)===filtro);
+
+  const q = (ST.ctrSearch||'').toLowerCase().trim();
+  if(q) list = list.filter(c=>
+    (c.nombreEmpleado||'').toLowerCase().includes(q) ||
+    (ST.personal?.[c.idEmpleado]?.puesto||'').toLowerCase().includes(q)
+  );
+
+  document.getElementById('ctrCount').textContent = list.length;
+
+  if(!list.length){
+    tbody.innerHTML = `<tr><td colspan="10" style="padding:24px;text-align:center;color:var(--text3)">${ST.contratosError ? esc(ST.contratosError) : (q||filtro!=='all' ? 'Sin resultados para este filtro.' : 'Sin contratos generados todavía.')}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(c=>{
+    const p = ST.personal?.[c.idEmpleado];
+    const vig = c.estadoRegistro==='Activo'
+      ? badgeEstadoContrato(c)
+      : `<span style="color:var(--text3);font-size:11px">${esc(c.estadoRegistro)}</span>`;
+    return `<tr>
+      <td style="font-weight:500;font-size:12.5px;cursor:pointer" onclick="openEmpCard('${esc(c.idEmpleado)}')" title="Ver ficha del empleado">${esc(c.nombreEmpleado||'—')}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(p?.puesto||'—')}</td>
+      <td>${esc(fmtFechaDMY(c.fechaGeneracion)||'—')}</td>
+      <td>${esc(fmtFechaDMY(c.fechaInicio)||'—')}</td>
+      <td>${esc(c.duracionLabel||'—')}</td>
+      <td>${c.fechaVencimiento ? esc(fmtFechaDMY(c.fechaVencimiento)) : '—'}</td>
+      <td>${vig}</td>
+      <td style="white-space:nowrap">
+        ${c.archivoPDFURL?`<a href="${esc(c.archivoPDFURL)}" target="_blank" rel="noopener" class="btn btn-red btn-sm" style="padding:2px 6px">PDF</a>`
+          : (c.archivoWordURL?`<a href="${esc(c.archivoWordURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px" title="El PDF no se generó para este contrato; se muestra el Word como respaldo">Word</a>`:'<span style="color:var(--text3)">—</span>')}
+      </td>
+      <td style="white-space:nowrap">
+        ${c.archivoReglamentoPDFURL?`<a href="${esc(c.archivoReglamentoPDFURL)}" target="_blank" rel="noopener" class="btn btn-red btn-sm" style="padding:2px 6px">PDF</a>`
+          : (c.archivoReglamentoWordURL?`<a href="${esc(c.archivoReglamentoWordURL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="padding:2px 6px" title="El PDF no se generó para este reglamento; se muestra el Word como respaldo">Word</a>`:'<span style="color:var(--text3)">—</span>')}
+      </td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" style="padding:2px 6px" onclick="openEmpCard('${esc(c.idEmpleado)}')">Ver ficha</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 /* ── Conversión de números a letras (para el salario, siempre el salario
