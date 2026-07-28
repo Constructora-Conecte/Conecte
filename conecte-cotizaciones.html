@@ -1,5 +1,4 @@
  <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -482,6 +481,15 @@ textarea.item-inp.item-desc-ta{
 .pill-rech{background:var(--red-p);color:var(--red)}
 .pill-seg{background:var(--orange-p);color:var(--orange)}
 .pill-canceladmin{background:var(--purple-p);color:var(--purple)}
+.auto-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.auto-card{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r8);overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
+.auto-card:hover{border-color:var(--red);transform:translateY(-2px)}
+.auto-card-photo{width:100%;aspect-ratio:4/3;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.auto-card-photo img{width:100%;height:100%;object-fit:cover}
+.auto-card-body{padding:10px 12px}
+.auto-card-title{font-weight:600;font-size:13px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.auto-card-sub{font-size:11.5px;color:var(--text3);margin:2px 0 8px;font-family:var(--mono)}
+@media(max-width:640px){.auto-cards-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}}
 
 /* Editable status <select> that keeps the same pill colors as the read-only
    pill (used in Comercial/Cotizaciones and Facturas so status can be changed
@@ -1159,6 +1167,10 @@ textarea.item-inp.item-desc-ta{
         <button class="bal-tab" id="sisReportesBtn" onclick="switchSistemasSubTab('reportes')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1.2"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg>
           Reportes
+        </button>
+        <button class="bal-tab" id="sisAutosBtn" onclick="switchSistemasSubTab('autos')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 10.5l1.2-4.2a1.5 1.5 0 0 1 1.44-1.1h5.72a1.5 1.5 0 0 1 1.44 1.1l1.2 4.2"/><rect x="1.8" y="10.5" width="12.4" height="3" rx="1"/><circle cx="4.3" cy="13.3" r="1.1"/><circle cx="11.7" cy="13.3" r="1.1"/></svg>
+          Autos
         </button>
       </nav>
 
@@ -2115,6 +2127,37 @@ textarea.item-inp.item-desc-ta{
           </div>
         </div>
       </div><!-- /sisSubReportes -->
+
+      <!-- Sub-vista: AUTOS (Fase 3) — nuevo módulo administrativo. Vista en Cards, no en tabla. -->
+      <div id="sisSubAutos" class="emp-subpane">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por marca, modelo o placas…" oninput="onSisAutosSearch(this.value)">
+          <span class="fsep"></span>
+          <select class="fsort" id="sisAutosEstadoSel" onchange="onSisAutosEstadoChange(this.value)">
+            <option value="">Todos los estados</option>
+            <option value="Activo">Activo</option>
+            <option value="Vendido">Vendido</option>
+            <option value="Inactivo">Inactivo</option>
+            <option value="Mantenimiento">Mantenimiento</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Autos</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisAutosCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openNewAuto()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Auto
+            </button>
+          </div>
+          <div style="padding:16px">
+            <div class="auto-cards-grid" id="sisAutosGrid">
+              <div class="loading-row" style="padding:24px;text-align:center;grid-column:1/-1"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /sisSubAutos -->
 
     </div><!-- /tabSistemas -->
 
@@ -4353,6 +4396,152 @@ textarea.item-inp.item-desc-ta{
   </div>
 </div>
 
+<!-- ══ AUTOS (Fase 3) — Nuevo / Editar ══ -->
+<div class="modal-bg" id="autoModal">
+  <div class="modal" style="width:620px">
+    <div class="modal-title" id="autoModalTitle">Nuevo Auto</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;max-height:66vh;overflow-y:auto;padding-right:4px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Marca *</label>
+          <input type="text" class="form-input" id="aMarca" placeholder="Ej. Ford">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modelo *</label>
+          <input type="text" class="form-input" id="aModelo" placeholder="Ej. F-150">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Versión</label>
+          <input type="text" class="form-input" id="aVersion" placeholder="Ej. XLT">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Año</label>
+          <input type="text" class="form-input" id="aAnio" placeholder="Ej. 2023" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Color</label>
+          <input type="text" class="form-input" id="aColor" placeholder="Ej. Blanco">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Placas</label>
+          <input type="text" class="form-input" id="aPlacas" placeholder="Ej. ABC-123-A" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Número económico</label>
+          <input type="text" class="form-input" id="aNumEconomico" placeholder="Ej. UNI-04">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">VIN</label>
+          <input type="text" class="form-input" id="aVin" placeholder="Número de identificación vehicular" style="text-transform:uppercase;font-family:var(--mono)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Número de serie</label>
+          <input type="text" class="form-input" id="aNumSerie" placeholder="Si aplica, distinto al VIN">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Kilometraje</label>
+          <input type="number" class="form-input" id="aKm" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de combustible</label>
+          <select class="form-select" id="aCombustible">
+            <option value="">— Seleccionar —</option>
+            <option value="Gasolina">Gasolina</option>
+            <option value="Diésel">Diésel</option>
+            <option value="Híbrido">Híbrido</option>
+            <option value="Eléctrico">Eléctrico</option>
+            <option value="Gas LP">Gas LP</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Transmisión</label>
+          <select class="form-select" id="aTransmision">
+            <option value="">— Seleccionar —</option>
+            <option value="Manual">Manual</option>
+            <option value="Automática">Automática</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Fecha de compra</label>
+          <input type="date" class="form-input" id="aFechaCompra">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de venta</label>
+          <input type="date" class="form-input" id="aFechaVenta">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Costo de compra</label>
+          <input type="number" class="form-input" id="aCostoCompra" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Costo de venta</label>
+          <input type="number" class="form-input" id="aCostoVenta" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-select" id="aEstado">
+          <option value="Activo">Activo</option>
+          <option value="Vendido">Vendido</option>
+          <option value="Inactivo">Inactivo</option>
+          <option value="Mantenimiento">Mantenimiento</option>
+          <option value="Baja">Baja</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-input" id="aObs" rows="2" placeholder="Notas adicionales sobre el vehículo…" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fotografías</label>
+        <!-- Los recuadros de foto se generan dinámicamente a partir de AUTO_FOTO_TIPOS
+             (ver JS): agregar más tipos de foto en el futuro es solo agregar una entrada
+             a ese arreglo, sin tocar el resto del módulo. -->
+        <div id="autoFotosWrap" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+      </div>
+      <input type="hidden" id="aEditId">
+      <input type="hidden" id="aEditRow">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeAutoModal()">Cancelar</button>
+      <button class="btn btn-red" id="saveAutoBtn" onclick="guardarAuto()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg>
+        Guardar Auto
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AUTOS (Fase 3) — Detalle de la tarjeta ══ -->
+<div class="modal-bg" id="autoDetailModal">
+  <div class="modal" style="width:600px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:2px">
+      <div class="modal-title" id="autoDetailTitle" style="margin-bottom:0">Auto</div>
+      <button class="close-x" onclick="closeAutoDetail()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div id="autoDetailBody" style="max-height:66vh;overflow-y:auto;padding-right:4px;margin-top:12px;margin-bottom:16px"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeAutoDetail()">Cerrar</button>
+      <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(229,62,62,.3)" onclick="autoDetailDelete()">Eliminar</button>
+      <button class="btn btn-red" onclick="autoDetailEdit()">Editar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PDF VIEWER MODAL ══ -->
 <div class="modal-bg" id="pdfViewerModal">
   <div class="modal" style="width:900px;max-width:97vw;padding:0;background:var(--bg2);border-radius:var(--r12);overflow:hidden;display:flex;flex-direction:column;max-height:92vh">
@@ -4425,6 +4614,27 @@ textarea.item-inp.item-desc-ta{
     </div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('facLinkForOCModal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VINCULAR OC EXISTENTE A UNA COTIZACIÓN ESPECÍFICA (desde el panel de relación) ══ -->
+<div class="modal-bg" id="ocLinkForCotModal">
+  <div class="modal" style="width:440px;overflow:visible">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+      <div class="modal-title" style="margin-bottom:0">Vincular Orden de Compra existente</div>
+      <button class="close-x" onclick="document.getElementById('ocLinkForCotModal').classList.remove('open')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div id="ocLinkForCotCurrentWrap" style="display:none;margin-top:12px"></div>
+    <div style="margin-top:14px;margin-bottom:18px;position:relative">
+      <label class="form-label">Buscar OC por número o cliente</label>
+      <input type="text" class="form-input" id="ocLinkForCotSearch" placeholder="Ej. OC-1024, Bachoco…" oninput="filterOCForCotLink(this.value)" onfocus="filterOCForCotLink(this.value)" autocomplete="off">
+      <div id="ocLinkForCotDropdown" class="art-dropdown" style="display:none;top:62px"></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('ocLinkForCotModal').classList.remove('open')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -4999,6 +5209,7 @@ async function loadAll() {
       {k:'par', sheet:'Parametros', range:'Parametros!A1:B50'},
       {k:'usr', sheet:'Usuarios', range:'Usuarios!A2:H'},
       {k:'obr', sheet:'Obras', range:'Obras!A2:Q'},
+      {k:'auto', sheet:'Autos', range:'Autos!A2:T'}, // Fase 3: nuevo módulo Sistema > Autos
       {k:'alertLeidas', sheet:'Alertas_Leidas', range:'Alertas_Leidas!A2:C'}, // Fase 4: notificaciones centralizadas descartadas
     ];
     const presentes = ALL_RANGES.filter(x => sheetMap[x.sheet]!==undefined);
@@ -5069,6 +5280,48 @@ async function loadAll() {
       ST.usuariosSistemaError = usrErr.result?.error?.message || usrErr.message || String(usrErr);
     }
     renderSisUsuarios();
+
+    /* Autos (Fase 3) — nuevo módulo administrativo Sistema > Autos — hoja "Autos":
+       A=ID, B=VIN, C=Marca, D=Modelo, E=Version, F=Anio, G=Color, H=Placas,
+       I=NumSerie, J=Kilometraje, K=Combustible, L=Transmision, M=NumEconomico,
+       N=FechaCompra, O=FechaVenta, P=CostoCompra, Q=CostoVenta, R=Observaciones,
+       S=Estado, T=FotosJSON (arreglo [{tipo,url}] — así se pueden agregar más
+       tipos de fotografía en el futuro sin tener que modificar la base del módulo).
+       Se carga en try/catch propio, igual que Usuarios/Contraseñas/Obras, para
+       que si la hoja aún no existe no rompa el resto de la carga; la vista de
+       Autos muestra un aviso explicando cómo crearla. */
+    ST.autosError = null;
+    try{
+      if(faltaHoja('auto')) throw new Error('No se encontró la hoja "Autos".');
+      const autoR = BR.auto;
+      ST.autos = (autoR||[]).map((r,i)=>({
+        _row: i+2,
+        id: r[0]||('AUTO'+(i+2)),
+        vin: r[1]||'',
+        marca: r[2]||'',
+        modelo: r[3]||'',
+        version: r[4]||'',
+        anio: r[5]||'',
+        color: r[6]||'',
+        placas: r[7]||'',
+        numSerie: r[8]||'',
+        kilometraje: r[9]||'',
+        combustible: r[10]||'',
+        transmision: r[11]||'',
+        numEconomico: r[12]||'',
+        fechaCompra: r[13]||'',
+        fechaVenta: r[14]||'',
+        costoCompra: parseFloat((r[15]||'').toString().replace(/[$,]/g,''))||0,
+        costoVenta: parseFloat((r[16]||'').toString().replace(/[$,]/g,''))||0,
+        observaciones: r[17]||'',
+        estado: r[18]||'Activo',
+        fotos: parseAutoFotos(r[19]),
+      })).filter(a=>a.id);
+    }catch(autoErr){
+      ST.autos = [];
+      ST.autosError = autoErr.result?.error?.message || autoErr.message || String(autoErr);
+    }
+    renderAutos();
 
     /* Obras / Proyectos (Fase 3) — hoja "Obras":
        A=ID, B=Nombre, C=ID_Cliente, D=Direccion, E=Responsable, F=Presupuesto,
@@ -5829,6 +6082,47 @@ function sheetsUpdateRaw(range, values) {
 }
 function sheetsClear(range) {
   return withGoogleAuth(gapi.client.sheets.spreadsheets.values.clear({ spreadsheetId:SHEET_ID, range }));
+}
+
+/* ─── FASE 1: CONFIABILIDAD DEL GUARDADO (PDF/XML de Facturas) ───
+   withRetry() reintenta una operación asíncrona varias veces con una pequeña
+   espera creciente entre intentos, para tolerar errores transitorios de red
+   o de la API de Google. Esto es justamente lo que antes provocaba que, en
+   ocasiones, un PDF o un XML de una factura "no se guardara" sin ningún
+   aviso claro: una de varias llamadas sueltas a Sheets fallaba una sola vez
+   y ahí quedaba, sin reintentar y sin avisar con precisión qué faltó. */
+async function withRetry(fn, attempts, baseDelayMs){
+  attempts = attempts || 3;
+  baseDelayMs = baseDelayMs || 600;
+  let lastErr;
+  for(let i=0; i<attempts; i++){
+    try{ return await fn(); }
+    catch(e){
+      lastErr = e;
+      const status = e?.status || e?.result?.error?.code;
+      if(status===401) throw e; // sesión expirada: no tiene sentido reintentar
+      if(i < attempts-1) await new Promise(r=>setTimeout(r, baseDelayMs*(i+1)));
+    }
+  }
+  throw lastErr;
+}
+
+/* Actualiza VARIOS rangos de una hoja en UNA SOLA petición HTTP a Sheets
+   (spreadsheets.values.batchUpdate). Antes, cada campo de una factura se
+   guardaba con una llamada sheetsUpdate() separada; si una de esas llamadas
+   fallaba a medio camino, las anteriores ya habían quedado guardadas y las
+   siguientes no, dejando el registro "a medias". Agrupar los rangos
+   relacionados en una sola petición reduce esa ventana de riesgo: o se
+   guarda todo junto en esa petición, o falla toda junta (y se puede
+   reintentar con withRetry sin duplicar escrituras a medias). */
+function sheetsBatchUpdateValues(dataRanges, valueInputOption){
+  return withGoogleAuth(gapi.client.sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: SHEET_ID,
+    resource: {
+      valueInputOption: valueInputOption || 'USER_ENTERED',
+      data: dataRanges.map(d => ({ range: d.range, majorDimension:'ROWS', values: d.values }))
+    }
+  }));
 }
 
 /* ─── ELIMINAR FILAS DE VERDAD (no solo vaciar su contenido) ───
@@ -7701,6 +7995,11 @@ async function confirmDel(){
       shiftRowsAfterDelete(ST.obras, ST.delRow);
       renderObras();
       populateObraSelects();
+    } else if(kind==='auto'){
+      await sheetsDeleteRow('Autos', ST.delRow);
+      ST.autos = (ST.autos||[]).filter(a=>a._row!==ST.delRow);
+      shiftRowsAfterDelete(ST.autos, ST.delRow);
+      renderAutos();
     } else {
       await sheetsDeleteRow('Cotizaciones', ST.delRow);
       ST.cotizaciones=ST.cotizaciones.filter(c=>c.id!==ST.delId);
@@ -8536,7 +8835,10 @@ function openRelacionPanel(origenTipo, origenId){
   } else {
     html+=`<div style="border:1px dashed var(--border2);border-radius:var(--r8);padding:12px;text-align:center;color:var(--text3);font-size:12px">
       Sin Orden de Compra vinculada todavía.
-      ${cots.length?`<div style="margin-top:8px"><button class="btn btn-red btn-sm" onclick="document.getElementById('relPanelModal').classList.remove('open');openAddOCForCot('${esc(cots[0].id)}')">Buscar / crear OC</button></div>`:''}
+      ${cots.length?`<div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openOCLinkForCot('${esc(cots[0].id)}')">🔍 Buscar existente</button>
+        <button class="btn btn-red btn-sm" onclick="document.getElementById('relPanelModal').classList.remove('open');openAddOCForCot('${esc(cots[0].id)}')">➕ Crear nuevo</button>
+      </div>`:''}
     </div>`;
   }
 
@@ -8634,6 +8936,111 @@ async function confirmFacLinkForOC(facId){
     renderTable();
     toast('ok',`Factura ${fac.folio} vinculada a OC ${oc.numero}. Puedes vincular otra factura o cerrar.`);
   }catch(e){ toast('err','Error al vincular: '+(e.result?.error?.message||e.message)); }
+}
+
+/* ─── VINCULAR OC EXISTENTE A UNA COTIZACIÓN (Fase 2: separar "Buscar" de "Crear") ───
+   Antes, el único botón disponible cuando una cotización no tenía OC vinculada
+   ("Buscar / crear OC") en realidad solo abría el formulario de creación de OC
+   (openAddOC / openAddOCForCot), sin ofrecer una forma real de buscar una OC ya
+   existente y enlazarla. Este bloque agrega esa acción de búsqueda como algo
+   completamente independiente, sin tocar la lógica de creación existente. */
+let ocLinkForCotTarget=null;
+function openOCLinkForCot(cotId){
+  if(!requireAuth()) return;
+  ocLinkForCotTarget=cotId;
+  document.getElementById('relPanelModal').classList.remove('open');
+  document.getElementById('ocLinkForCotSearch').value='';
+  document.getElementById('ocLinkForCotDropdown').style.display='none';
+  renderOCLinkForCotCurrent();
+  document.getElementById('ocLinkForCotModal').classList.add('open');
+  setTimeout(()=>document.getElementById('ocLinkForCotSearch').focus(),80);
+}
+/* Muestra, dentro del modal, las OC ya ligadas a esta cotización con un botón
+   para quitarlas — mismo criterio que renderFacLinkForOCCurrent. */
+function renderOCLinkForCotCurrent(){
+  const wrap=document.getElementById('ocLinkForCotCurrentWrap');
+  if(!wrap) return;
+  const ocs=ST.ocAll.filter(o=>(o.cotIds||[]).includes(ocLinkForCotTarget));
+  if(!ocs.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='block';
+  wrap.innerHTML = `<label class="form-label" style="margin-bottom:6px;display:block">OC ya vinculada(s)</label>` +
+    ocs.map(o=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:var(--r4);margin-bottom:6px;font-size:12px">
+      <span style="flex:1;font-family:var(--mono)">${esc(o.numero||o.id)}</span>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(229,62,62,.3)" onclick="confirmUnlinkOCFromCot('${esc(o.id)}','${esc(ocLinkForCotTarget)}')">Quitar</button>
+    </div>`).join('');
+}
+function filterOCForCotLink(q){
+  const drop=document.getElementById('ocLinkForCotDropdown');
+  const query=(q||'').toLowerCase().trim();
+  let list=ST.ocAll.filter(o=>!(o.cotIds||[]).includes(ocLinkForCotTarget)); // excluir las ya vinculadas a esta misma cotización
+  if(query){
+    list=list.filter(o=>{
+      const cli=ST.clientes[o.id_cli]||{};
+      return (o.numero||'').toLowerCase().includes(query) ||
+        (cli.nombre||'').toLowerCase().includes(query) ||
+        (o.id_cli||'').toLowerCase().includes(query) ||
+        (o.concepto||'').toLowerCase().includes(query);
+    });
+  }
+  list=list.slice(0,30); // limitar resultados visibles
+  if(!list.length){
+    drop.innerHTML='<div class="art-no-results">Sin órdenes de compra disponibles que coincidan</div>';
+  } else {
+    drop.innerHTML=list.map(o=>{
+      const cli=ST.clientes[o.id_cli]||{};
+      return `<div class="art-option" onclick="confirmOCLinkForCot('${esc(o.id)}')">
+        <div>
+          <div class="art-opt-name">${esc(o.numero||o.id)}</div>
+          <div class="art-opt-meta">${esc(cli.nombre||o.id_cli)} · ${esc((o.concepto||'').slice(0,40))}</div>
+        </div>
+        <span class="art-opt-price">${o.monto?fmtMXN(o.monto):'—'}</span>
+      </div>`;
+    }).join('');
+  }
+  drop.style.display='block';
+}
+document.addEventListener('click', e=>{
+  const drop=document.getElementById('ocLinkForCotDropdown');
+  const inp=document.getElementById('ocLinkForCotSearch');
+  if(drop && inp && !inp.contains(e.target) && !drop.contains(e.target)) drop.style.display='none';
+});
+async function confirmOCLinkForCot(ocId){
+  if(!requireAuth()) return;
+  const oc=ST.ocAll.find(o=>o.id===ocId);
+  const cot=ST.cotizaciones.find(c=>c.id===ocLinkForCotTarget);
+  if(!oc||!cot) return;
+  try{
+    const newIds=Array.from(new Set([...(oc.cotIds||[]), cot.id]));
+    await sheetsUpdate(`Oc_Client!I${oc._row}`,[[joinIds(newIds)]]);
+    oc.cotIds=newIds; oc.id_cot=newIds[0]||'';
+    // No cerramos el modal: una cotización puede llegar a tener más de una OC.
+    document.getElementById('ocLinkForCotSearch').value='';
+    filterOCForCotLink('');
+    renderOCLinkForCotCurrent();
+    if(ST.editId===cot.id){ ST.ocList=ST.ocAll.filter(o=>o.cotIds.includes(ST.editId)); renderOCSection(true); }
+    renderOCClienteTable();
+    renderTable();
+    toast('ok',`OC ${oc.numero} vinculada a ${cot.id}. Puedes vincular otra OC o cerrar.`);
+  }catch(e){ toast('err','Error al vincular: '+(e.result?.error?.message||e.message)); }
+}
+/* Quita el vínculo entre una OC y una cotización sin eliminar ninguna de las dos. */
+async function confirmUnlinkOCFromCot(ocId, cotId){
+  if(!requireAuth()) return;
+  const oc=ST.ocAll.find(o=>o.id===ocId);
+  const cot=ST.cotizaciones.find(c=>c.id===cotId);
+  if(!oc) return;
+  if(!confirm(`¿Quitar el vínculo entre la OC ${oc.numero||oc.id} y la cotización ${cot?cot.id:cotId}? Esto no elimina la OC ni la cotización, solo la relación entre ambas.`)) return;
+  try{
+    const newIds=(oc.cotIds||[]).filter(x=>x!==cotId);
+    await sheetsUpdate(`Oc_Client!I${oc._row}`,[[joinIds(newIds)]]);
+    oc.cotIds=newIds; oc.id_cot=newIds[0]||'';
+    renderOCLinkForCotCurrent();
+    if(ST.editId===cotId){ ST.ocList=ST.ocAll.filter(o=>o.cotIds.includes(ST.editId)); renderOCSection(true); }
+    renderOCClienteTable();
+    renderTable();
+    toast('ok','Vínculo eliminado.');
+    if(ST.relPanelOrigen) openRelacionPanel(ST.relPanelOrigen.tipo, ST.relPanelOrigen.id);
+  }catch(e){ toast('err','Error al quitar el vínculo: '+(e.result?.error?.message||e.message)); }
 }
 
 function onFacXmlSelected(input){
@@ -8788,18 +9195,24 @@ async function procesarFacturaUpload(){
   const ocIds = ST.facOcLinks.map(l=>l.id);
   const ocId  = joinIds(ocIds);
   const btn=document.getElementById('saveFacUploadBtn');
+  const resetBtn=()=>{ btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Procesar y Guardar'; };
   btn.disabled=true; btn.textContent='Procesando…';
+  let newRow=null; // se usa para poder revertir (borrar la fila) si algo queda a medias
   try{
     const ex = ST.facExtract;
     const xmlText = await xmlFile.text();
+    if(!xmlText){ throw new Error('El archivo XML seleccionado está vacío o no se pudo leer.'); }
     if(xmlText.length > 45000){
       toast('err','Aviso: este XML es muy grande ('+xmlText.length+' caracteres) y podría acercarse al límite de una celda de Sheets. Se intentará guardar completo, pero verifica el archivo después de guardar.');
     }
     // El PDF se sube a Drive (ConecteApp/Facturas) y solo se guarda el link en la hoja;
     // antes se guardaba el PDF completo en base64 directo en la celda (rompía el límite
     // de 50,000 caracteres de Sheets con cualquier archivo de tamaño normal).
+    // FASE 1: se agrega reintento automático por si la subida falla por un
+    // hipo de red transitorio.
     btn.textContent='Subiendo archivo…';
-    const pdfB64 = await driveUploadFile(pdfFile, 'Facturas', `FAC_${ex.folio||Date.now()}`);
+    const pdfB64 = await withRetry(()=>driveUploadFile(pdfFile, 'Facturas', `FAC_${ex.folio||Date.now()}`));
+    if(!pdfB64){ throw new Error('La subida del PDF no devolvió un enlace válido.'); }
     btn.textContent='Procesando…';
     const id = 'FAC'+Date.now().toString(36).toUpperCase();
     // Facturas cols reales: A=ID,B=Folio,C=Cliente(RFC),D=Fecha,E=Concepto,F=Monto,
@@ -8809,12 +9222,54 @@ async function procesarFacturaUpload(){
       ex.total, '', 'Pendiente', '', ocId, '', '', sheetDate(todayISO()),
       pdfB64, ex.folio||'', ''
     ];
-    await sheetsAppend('Facturas!A2:P', [row]);
-    const newRow = ST.facturas.length+2;
+    await withRetry(()=>sheetsAppend('Facturas!A2:P', [row]));
+    newRow = ST.facturas.length+2;
+
     // El XML se escribe en una llamada aparte con valueInputOption:'RAW' para
     // garantizar que Sheets lo guarde EXACTAMENTE tal cual, sin intentar
     // reinterpretarlo como fórmula, fecha o número (ver sheetsUpdateRaw).
-    if(xmlText) await sheetsUpdateRaw(`Facturas!P${newRow}`, [[xmlText]]);
+    // FASE 1: si esto falla incluso después de reintentar, en vez de dejar
+    // una factura nueva sin XML (silenciosamente), se elimina la fila recién
+    // creada y se avisa con claridad, para no dejar registros a medias.
+    if(xmlText){
+      try{
+        await withRetry(()=>sheetsUpdateRaw(`Facturas!P${newRow}`, [[xmlText]]));
+      }catch(e){
+        try{
+          await sheetsDeleteRow('Facturas', newRow);
+        }catch(rollbackErr){
+          console.warn('No se pudo revertir la fila de factura tras fallar el XML:', rollbackErr);
+          toast('err','El PDF se subió y la factura se creó, pero el XML no se pudo guardar después de varios intentos, y tampoco se pudo revertir automáticamente. Entra a "Editar factura" en "'+(row[1])+'" y vuelve a subir el XML.');
+          resetBtn();
+          return;
+        }
+        toast('err','No se pudo guardar el XML después de varios intentos. Se revirtió la factura para no dejarla incompleta; vuelve a intentarlo.');
+        resetBtn();
+        return;
+      }
+    }
+
+    // Verificación final: se relee de Sheets lo que realmente quedó
+    // almacenado antes de mostrar "agregada correctamente", para nunca dar
+    // ese mensaje si en realidad el PDF o el XML no se guardaron.
+    try{
+      const [checkRows] = await sheetsBatchGet([`Facturas!N${newRow}:P${newRow}`]);
+      const checkRow = (checkRows && checkRows[0]) || [];
+      const pdfOk = !!(checkRow[0]);
+      const xmlOk = !xmlText || !!(checkRow[2]);
+      if(!pdfOk || !xmlOk){
+        const faltante=[!pdfOk?'PDF':null, !xmlOk?'XML':null].filter(Boolean).join(' y ');
+        toast('err','La factura se creó, pero no se pudo confirmar que el '+faltante+' haya quedado almacenado. Entra a "Editar factura" en "'+(row[1])+'" y vuelve a subirlo.');
+        resetBtn();
+        return;
+      }
+    }catch(e){
+      console.warn('No se pudo verificar el guardado de la factura nueva:', e);
+      toast('err','La factura se envió, pero no se pudo verificar que quedó guardada (falló la relectura). Revisa la factura "'+(row[1])+'" en unos momentos.');
+      resetBtn();
+      return;
+    }
+
     const newFac={
       _row: newRow, id, folio: row[1], id_cli: row[2], fecha: sheetDate(ex.fecha),
       concepto: ex.concepto, total: ex.total, metodo:'', estatus:'Pendiente', notas:'',
@@ -8839,9 +9294,9 @@ async function procesarFacturaUpload(){
 
     toast('ok','Factura "'+(row[1])+'" agregada correctamente.'+(ocId?' OC vinculada y marcada como Facturado.':''));
   }catch(e){
-    toast('err','Error al procesar la factura: '+(e.message||e));
+    toast('err','Error al procesar la factura: '+(e.result?.error?.message||e.message||e));
   }
-  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Procesar y Guardar';
+  resetBtn();
 }
 
 /* ─── EDITAR FACTURA / VOLVER A SUBIR PDF + XML (para documentos antiguos cargados desde AppSheet) ─── */
@@ -8932,33 +9387,109 @@ async function saveFacEdit(){
     return;
   }
   const btn=document.getElementById('saveFacEditBtn');
+  const resetBtn=()=>{ btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios'; };
   btn.disabled=true; btn.textContent='Guardando…';
   try{
     let pdfLink=f.pdfB64;
     let xmlText=f.xmlContent;
     const pdfFile=document.getElementById('fePdfFile').files[0];
     const xmlFile=document.getElementById('feXmlFile').files[0];
+    // FASE 1: solo se toca cada columna (PDF / XML) si realmente hay un
+    // archivo nuevo seleccionado. Antes se reescribían ambas en cada guardado
+    // aunque no hubieran cambiado, lo cual multiplicaba sin necesidad las
+    // oportunidades de que una de esas escrituras fallara a medio camino.
+    const pdfChanged = !!pdfFile;
+    const xmlChanged = !!xmlFile;
+
     if(pdfFile){
       btn.textContent='Subiendo PDF…';
-      pdfLink=await driveUploadFile(pdfFile,'Facturas',`FAC_${folio||f.id}`);
+      pdfLink = await withRetry(()=>driveUploadFile(pdfFile,'Facturas',`FAC_${folio||f.id}`));
+      if(!pdfLink){ throw new Error('La subida del PDF no devolvió un enlace válido.'); }
     }
     if(xmlFile){
       btn.textContent='Leyendo XML…';
       xmlText = ST.facEditExtract?.xmlText || await xmlFile.text();
+      if(!xmlText){ throw new Error('El archivo XML seleccionado está vacío o no se pudo leer.'); }
       if(xmlText.length > 45000){
         toast('err','Aviso: este XML es muy grande ('+xmlText.length+' caracteres) y podría acercarse al límite de una celda de Sheets.');
       }
     }
+
+    // El XML se guarda PRIMERO y de forma aislada (valueInputOption 'RAW' es
+    // incompatible con el resto de campos, que usan 'USER_ENTERED', así que
+    // no se puede meter en el mismo batchUpdate). Si esta escritura falla
+    // incluso después de reintentar, se aborta AQUÍ, antes de tocar
+    // cualquier otro dato: así nunca queda un XML nuevo guardado junto con
+    // datos viejos a medias, ni al revés.
+    if(xmlChanged){
+      btn.textContent='Guardando XML…';
+      try{
+        await withRetry(()=>sheetsUpdateRaw(`Facturas!P${f._row}`,[[xmlText||'']]));
+      }catch(e){
+        toast('err','No se pudo guardar el XML después de varios intentos. No se guardó ningún cambio; vuelve a intentarlo. ('+(e.result?.error?.message||e.message)+')');
+        resetBtn();
+        return;
+      }
+    }
+
+    // El resto de los campos (datos generales + link del PDF + folio en O)
+    // se guardan juntos, en UNA sola petición a Sheets (ver
+    // sheetsBatchUpdateValues), en vez de 3 llamadas sueltas como antes.
     btn.textContent='Guardando…';
     const sheetFecha=sheetDate(fecha);
-    await sheetsUpdate(`Facturas!B${f._row}:F${f._row}`,[[folio, id_cli, sheetFecha, concepto, monto]]);
-    await sheetsUpdate(`Facturas!N${f._row}`,[[pdfLink||'']]);
-    await sheetsUpdate(`Facturas!O${f._row}`,[[folio]]);
-    // valueInputOption:'RAW' — se guarda el XML exactamente tal cual, sin que Sheets
-    // intente reinterpretarlo (ver sheetsUpdateRaw).
-    await sheetsUpdateRaw(`Facturas!P${f._row}`,[[xmlText||'']]);
+    const dataRanges=[
+      { range:`Facturas!B${f._row}:F${f._row}`, values:[[folio, id_cli, sheetFecha, concepto, monto]] },
+      { range:`Facturas!O${f._row}`, values:[[folio]] },
+    ];
+    if(pdfChanged){
+      dataRanges.push({ range:`Facturas!N${f._row}`, values:[[pdfLink||'']] });
+    }
+    try{
+      await withRetry(()=>sheetsBatchUpdateValues(dataRanges,'USER_ENTERED'));
+    }catch(e){
+      // El XML (si se cambió) SÍ quedó guardado en el paso anterior — se
+      // refleja localmente para no perder ese avance — pero el resto de los
+      // datos no se pudo confirmar, así que se avisa explícitamente y NO se
+      // cierra el modal, para que se pueda reintentar sin perder el XML ya
+      // guardado ni tener que volver a seleccionarlo.
+      if(xmlChanged) f.xmlContent=xmlText;
+      toast('err','El XML se guardó, pero no se pudieron guardar los demás datos (folio/cliente/fecha/monto/PDF) después de varios intentos. Vuelve a dar clic en "Guardar cambios". ('+(e.result?.error?.message||e.message)+')');
+      resetBtn();
+      return;
+    }
+
+    // Verificación final: se relee de Sheets lo que realmente quedó
+    // almacenado antes de mostrar "Guardado correctamente", para nunca dar
+    // ese mensaje si en realidad algo no se guardó.
+    try{
+      const [checkRows] = await sheetsBatchGet([`Facturas!N${f._row}:P${f._row}`]);
+      const checkRow = (checkRows && checkRows[0]) || [];
+      const pdfOk = !pdfChanged || !!(checkRow[0]);
+      const xmlOk = !xmlChanged || !!(checkRow[2]);
+      if(!pdfOk || !xmlOk){
+        const faltante=[!pdfOk?'PDF':null, !xmlOk?'XML':null].filter(Boolean).join(' y ');
+        toast('err','Los datos generales se guardaron, pero no se pudo confirmar que el '+faltante+' haya quedado almacenado. Vuelve a subirlo e intenta guardar de nuevo.');
+        resetBtn();
+        return;
+      }
+    }catch(e){
+      // Si la verificación misma falla (p. ej. problema de red al releer),
+      // no se puede confirmar con certeza, así que se avisa con un mensaje
+      // más cauto en vez de "Guardado correctamente".
+      f.folio=folio; f.id_cli=id_cli; f.fecha=sheetFecha; f.concepto=concepto; f.total=monto;
+      if(pdfChanged) f.pdfB64=pdfLink;
+      if(xmlChanged) f.xmlContent=xmlText;
+      if(id_cli && !ST.clientes[id_cli]) ST.clientes[id_cli]={id:id_cli,nombre:id_cli};
+      applyFacFilter(); updateFacStats(); populateFacFilters();
+      document.getElementById('facEditModal').classList.remove('open');
+      toast('err','Los cambios se enviaron, pero no se pudo verificar que quedaron guardados (falló la relectura). Revisa la factura "'+folio+'" en unos momentos.');
+      resetBtn();
+      return;
+    }
+
     f.folio=folio; f.id_cli=id_cli; f.fecha=sheetFecha; f.concepto=concepto; f.total=monto;
-    f.pdfB64=pdfLink; f.xmlContent=xmlText;
+    if(pdfChanged) f.pdfB64=pdfLink;
+    if(xmlChanged) f.xmlContent=xmlText;
     if(id_cli && !ST.clientes[id_cli]) ST.clientes[id_cli]={id:id_cli,nombre:id_cli};
     applyFacFilter(); updateFacStats(); populateFacFilters();
     document.getElementById('facEditModal').classList.remove('open');
@@ -8966,7 +9497,7 @@ async function saveFacEdit(){
   }catch(e){
     toast('err','Error al actualizar la factura: '+(e.result?.error?.message||e.message));
   }
-  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+  resetBtn();
 }
 
 /* ─── RELACIONAR FACTURA ↔ INGRESO (buscar existente, vincular o crear uno nuevo) ─── */
@@ -10574,10 +11105,10 @@ function switchEmpSubTab(sub){
    formulario de Cotización, que solo permite agregar). */
 function switchSistemasSubTab(sub){
   ST.sisSubTab = sub;
-  ['sisSubClientes','sisSubArticulos','sisSubProveedores','sisSubContactos','sisSubContrasenas','sisSubUsuarios','sisSubReportes'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['sisClientesBtn','sisArticulosBtn','sisProveedoresBtn','sisContactosBtn','sisContrasenasBtn','sisUsuariosBtn','sisReportesBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', proveedores:'sisSubProveedores', contactos:'sisSubContactos', contrasenas:'sisSubContrasenas', usuarios:'sisSubUsuarios', reportes:'sisSubReportes'}[sub] || 'sisSubClientes';
-  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', proveedores:'sisProveedoresBtn', contactos:'sisContactosBtn', contrasenas:'sisContrasenasBtn', usuarios:'sisUsuariosBtn', reportes:'sisReportesBtn'}[sub] || 'sisClientesBtn';
+  ['sisSubClientes','sisSubArticulos','sisSubProveedores','sisSubContactos','sisSubContrasenas','sisSubUsuarios','sisSubReportes','sisSubAutos'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['sisClientesBtn','sisArticulosBtn','sisProveedoresBtn','sisContactosBtn','sisContrasenasBtn','sisUsuariosBtn','sisReportesBtn','sisAutosBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {clientes:'sisSubClientes', articulos:'sisSubArticulos', proveedores:'sisSubProveedores', contactos:'sisSubContactos', contrasenas:'sisSubContrasenas', usuarios:'sisSubUsuarios', reportes:'sisSubReportes', autos:'sisSubAutos'}[sub] || 'sisSubClientes';
+  const btnId  = {clientes:'sisClientesBtn', articulos:'sisArticulosBtn', proveedores:'sisProveedoresBtn', contactos:'sisContactosBtn', contrasenas:'sisContrasenasBtn', usuarios:'sisUsuariosBtn', reportes:'sisReportesBtn', autos:'sisAutosBtn'}[sub] || 'sisClientesBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
   if(sub==='clientes') renderSisClientes();
@@ -10587,6 +11118,7 @@ function switchSistemasSubTab(sub){
   if(sub==='contrasenas') renderSisContrasenas();
   if(sub==='usuarios') renderSisUsuarios();
   if(sub==='reportes') renderReportePreview();
+  if(sub==='autos') renderAutos();
   saveLastView();
 }
 
@@ -11652,6 +12184,262 @@ async function saveContrasena(){
     renderSisContrasenas();
   }catch(e){ toast('err','Error al guardar: '+(e.result?.error?.message||e.message)); }
   btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar';
+}
+
+/* ════════════════ MÓDULO: AUTOS (Fase 3) ════════════════
+   Inventario de vehículos, dentro de Sistema > Autos. Vista en Cards (no tabla).
+   La lista de tipos de fotografía vive en este único arreglo: agregar una foto
+   nueva en el futuro (p.ej. "Interior") es agregar una línea aquí — el resto
+   del módulo (formulario, guardado, detalle) la toma automáticamente sin que
+   haya que tocar ninguna otra parte del código. */
+const AUTO_FOTO_TIPOS = [
+  {key:'frente', label:'Frente'},
+  {key:'trasera', label:'Trasera'},
+  {key:'lado_derecho', label:'Lado derecho'},
+  {key:'lado_izquierdo', label:'Lado izquierdo'},
+];
+function genAutoId(){ return 'AUTO'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function parseAutoFotos(json){
+  try{ const arr=JSON.parse(json||'[]'); return Array.isArray(arr)?arr:[]; }catch(e){ return []; }
+}
+function autoFotoUrl(auto, key){ const f=(auto.fotos||[]).find(x=>x.tipo===key); return f?(f.url||''):''; }
+function autoEstadoPillClass(estado){
+  return {Activo:'pill-acep', Vendido:'pill-env', Inactivo:'pill-pend', Mantenimiento:'pill-seg', Baja:'pill-rech'}[estado]||'pill-pend';
+}
+function autoPrincipalFoto(auto){
+  // La primera foto disponible según el orden de AUTO_FOTO_TIPOS sirve de portada de la Card.
+  for(const t of AUTO_FOTO_TIPOS){ const u=autoFotoUrl(auto,t.key); if(u) return u; }
+  return '';
+}
+
+/* ── Vista principal: Cards ── */
+function onSisAutosSearch(v){ ST.sisAutosQuery=(v||'').toLowerCase().trim(); renderAutos(); }
+function onSisAutosEstadoChange(v){ ST.sisAutosEstado=v||''; renderAutos(); }
+function renderAutos(){
+  const grid=document.getElementById('sisAutosGrid');
+  if(!grid) return;
+  if(ST.autosError){
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text3)">
+      ⚠️ No se pudo leer la hoja <strong>Autos</strong> todavía (${esc(ST.autosError)}).<br>
+      Crea una hoja llamada exactamente <strong>Autos</strong> con columnas: A=ID, B=VIN, C=Marca, D=Modelo, E=Version,
+      F=Anio, G=Color, H=Placas, I=NumSerie, J=Kilometraje, K=Combustible, L=Transmision, M=NumEconomico,
+      N=FechaCompra, O=FechaVenta, P=CostoCompra, Q=CostoVenta, R=Observaciones, S=Estado, T=FotosJSON.<br>
+      En cuanto exista podrás agregar y editar autos desde aquí.
+    </div>`;
+    document.getElementById('sisAutosCount').textContent='0';
+    return;
+  }
+  const q = ST.sisAutosQuery||'';
+  const estF = ST.sisAutosEstado||'';
+  let list = (ST.autos||[]).slice();
+  if(q) list = list.filter(a=>(a.marca||'').toLowerCase().includes(q)||(a.modelo||'').toLowerCase().includes(q)||(a.placas||'').toLowerCase().includes(q)||(a.numEconomico||'').toLowerCase().includes(q));
+  if(estF) list = list.filter(a=>a.estado===estF);
+  list.sort((a,b)=>(a.marca+a.modelo).localeCompare(b.marca+b.modelo));
+  document.getElementById('sisAutosCount').textContent = list.length;
+  if(!list.length){
+    grid.innerHTML=`<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text3)">${(q||estF)?'Sin resultados para tu búsqueda.':'Sin autos registrados todavía. Usa "Nuevo Auto" para agregar el primero.'}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(a=>{
+    const foto=autoPrincipalFoto(a);
+    const fotoHtml = foto
+      ? `<img src="${esc(foto)}" alt="${esc(a.marca)} ${esc(a.modelo)}" loading="lazy">`
+      : `<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.3"><path d="M3 15l1.8-6.2A2 2 0 0 1 6.7 7.4h10.6a2 2 0 0 1 1.9 1.4L21 15"/><rect x="2.3" y="15" width="19.4" height="4.4" rx="1.3"/><circle cx="6.3" cy="19.8" r="1.5"/><circle cx="17.7" cy="19.8" r="1.5"/></svg>`;
+    return `<div class="auto-card" onclick="openAutoDetail('${esc(a.id)}')">
+      <div class="auto-card-photo">${fotoHtml}</div>
+      <div class="auto-card-body">
+        <div class="auto-card-title">${esc(a.marca||'—')} ${esc(a.modelo||'')}</div>
+        <div class="auto-card-sub">${esc(a.anio||'—')} · ${esc(a.placas||'Sin placas')}</div>
+        <span class="pill ${autoEstadoPillClass(a.estado)}">${esc(a.estado||'Activo')}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Formulario de fotos, generado dinámicamente a partir de AUTO_FOTO_TIPOS ── */
+function renderAutoFotoInputs(existingFotos){
+  const wrap=document.getElementById('autoFotosWrap');
+  ST.autoFotoFiles = {}; // tipo -> File nuevo seleccionado (pendiente de subir al guardar)
+  ST.autoFotoUrlsActuales = {}; // tipo -> URL ya guardada (para conservarla si no se cambia)
+  (existingFotos||[]).forEach(f=>{ ST.autoFotoUrlsActuales[f.tipo]=f.url||''; });
+  wrap.innerHTML = AUTO_FOTO_TIPOS.map(t=>{
+    const url=ST.autoFotoUrlsActuales[t.key]||'';
+    return `<div style="text-align:center">
+      <div id="autoFotoPrev_${t.key}" style="width:100%;aspect-ratio:1/1;border:1px dashed var(--border2);border-radius:var(--r4);background:var(--bg2) center/cover no-repeat;${url?`background-image:url('${esc(url)}')`:''};display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden" onclick="document.getElementById('autoFotoInput_${t.key}').click()">
+        ${url?'':'<span style="font-size:10px;color:var(--text3)">Subir</span>'}
+      </div>
+      <input type="file" accept="image/*" id="autoFotoInput_${t.key}" style="display:none" onchange="onAutoFotoSelected(this.files[0],'${t.key}')">
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">${esc(t.label)}</div>
+    </div>`;
+  }).join('');
+}
+function onAutoFotoSelected(file, tipoKey){
+  if(!file) return;
+  ST.autoFotoFiles[tipoKey]=file;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const prev=document.getElementById(`autoFotoPrev_${tipoKey}`);
+    if(prev){ prev.style.backgroundImage=`url('${reader.result}')`; prev.innerHTML=''; }
+  };
+  reader.readAsDataURL(file);
+}
+
+function openNewAuto(){
+  if(!requireAuth()) return;
+  document.getElementById('autoModalTitle').textContent='Nuevo Auto';
+  ['aVin','aMarca','aModelo','aVersion','aAnio','aColor','aPlacas','aNumSerie','aKm','aNumEconomico','aFechaCompra','aFechaVenta','aCostoCompra','aCostoVenta','aObs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('aCombustible').value='';
+  document.getElementById('aTransmision').value='';
+  document.getElementById('aEstado').value='Activo';
+  document.getElementById('aEditId').value='';
+  document.getElementById('aEditRow').value='';
+  renderAutoFotoInputs([]);
+  document.getElementById('saveAutoBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Auto';
+  document.getElementById('autoModal').classList.add('open');
+}
+function openEditAuto(id){
+  if(!requireAuth()) return;
+  const a=ST.autos.find(x=>x.id===id); if(!a) return;
+  document.getElementById('autoModalTitle').textContent='Editar Auto';
+  document.getElementById('aVin').value=a.vin||'';
+  document.getElementById('aMarca').value=a.marca||'';
+  document.getElementById('aModelo').value=a.modelo||'';
+  document.getElementById('aVersion').value=a.version||'';
+  document.getElementById('aAnio').value=a.anio||'';
+  document.getElementById('aColor').value=a.color||'';
+  document.getElementById('aPlacas').value=a.placas||'';
+  document.getElementById('aNumSerie').value=a.numSerie||'';
+  document.getElementById('aKm').value=a.kilometraje||'';
+  document.getElementById('aCombustible').value=a.combustible||'';
+  document.getElementById('aTransmision').value=a.transmision||'';
+  document.getElementById('aNumEconomico').value=a.numEconomico||'';
+  document.getElementById('aFechaCompra').value=a.fechaCompra||'';
+  document.getElementById('aFechaVenta').value=a.fechaVenta||'';
+  document.getElementById('aCostoCompra').value=a.costoCompra||'';
+  document.getElementById('aCostoVenta').value=a.costoVenta||'';
+  document.getElementById('aObs').value=a.observaciones||'';
+  document.getElementById('aEstado').value=a.estado||'Activo';
+  document.getElementById('aEditId').value=a.id;
+  document.getElementById('aEditRow').value=a._row;
+  renderAutoFotoInputs(a.fotos||[]);
+  document.getElementById('saveAutoBtn').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar cambios';
+  document.getElementById('autoModal').classList.add('open');
+}
+function closeAutoModal(){ document.getElementById('autoModal').classList.remove('open'); ST.autoFotoFiles={}; }
+
+async function guardarAuto(){
+  if(!requireAuth()) return;
+  const marca = document.getElementById('aMarca').value.trim();
+  const modelo = document.getElementById('aModelo').value.trim();
+  if(!marca||!modelo){ toast('err','Marca y modelo son obligatorios.'); return; }
+  const editId = document.getElementById('aEditId').value;
+  const editRow = document.getElementById('aEditRow').value;
+  const btn=document.getElementById('saveAutoBtn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    // Subir (o conservar) cada foto de AUTO_FOTO_TIPOS. Solo se sube a Drive la
+    // que el usuario haya seleccionado de nuevo; el resto conserva su URL actual.
+    const id = editId || genAutoId();
+    const fotos = [];
+    for(const t of AUTO_FOTO_TIPOS){
+      let url = ST.autoFotoUrlsActuales?.[t.key] || '';
+      const file = ST.autoFotoFiles?.[t.key];
+      if(file){
+        btn.textContent='Subiendo fotos…';
+        url = await driveUpsertFile(url, file, `Autos/${id}`, `AUTO_${id}_${t.key}`);
+      }
+      if(url) fotos.push({tipo:t.key, url});
+    }
+    btn.textContent='Guardando…';
+    const row = [
+      id,
+      document.getElementById('aVin').value.trim().toUpperCase(),
+      marca,
+      modelo,
+      document.getElementById('aVersion').value.trim(),
+      document.getElementById('aAnio').value.trim(),
+      document.getElementById('aColor').value.trim(),
+      document.getElementById('aPlacas').value.trim().toUpperCase(),
+      document.getElementById('aNumSerie').value.trim(),
+      document.getElementById('aKm').value.trim(),
+      document.getElementById('aCombustible').value,
+      document.getElementById('aTransmision').value,
+      document.getElementById('aNumEconomico').value.trim(),
+      document.getElementById('aFechaCompra').value,
+      document.getElementById('aFechaVenta').value,
+      parseFloat(document.getElementById('aCostoCompra').value)||0,
+      parseFloat(document.getElementById('aCostoVenta').value)||0,
+      document.getElementById('aObs').value.trim(),
+      document.getElementById('aEstado').value,
+      JSON.stringify(fotos),
+    ];
+    if(editRow){
+      await sheetsUpdate(`Autos!A${editRow}:T${editRow}`,[row]);
+      const idx=ST.autos.findIndex(a=>a.id===editId);
+      const nuevo={_row:Number(editRow), id, vin:row[1], marca, modelo, version:row[4], anio:row[5], color:row[6], placas:row[7], numSerie:row[8], kilometraje:row[9], combustible:row[10], transmision:row[11], numEconomico:row[12], fechaCompra:row[13], fechaVenta:row[14], costoCompra:row[15], costoVenta:row[16], observaciones:row[17], estado:row[18], fotos};
+      if(idx>=0) ST.autos[idx]=nuevo;
+      toast('ok','Auto actualizado.');
+    } else {
+      const newRow = await sheetsWriteNewRow('Autos', ST.autos.length, 'T', row);
+      ST.autos.push({_row:newRow, id, vin:row[1], marca, modelo, version:row[4], anio:row[5], color:row[6], placas:row[7], numSerie:row[8], kilometraje:row[9], combustible:row[10], transmision:row[11], numEconomico:row[12], fechaCompra:row[13], fechaVenta:row[14], costoCompra:row[15], costoVenta:row[16], observaciones:row[17], estado:row[18], fotos});
+      toast('ok','Auto guardado.');
+    }
+    closeAutoModal();
+    renderAutos();
+  }catch(e){ toast('err','Error al guardar: '+(e.result?.error?.message||e.message)); }
+  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 8l3.5 3.5L13 5"/></svg> Guardar Auto';
+}
+
+/* ── Detalle de la Card: toda la información + Editar / Eliminar ── */
+let autoDetailCurrentId=null;
+function openAutoDetail(id){
+  const a=ST.autos.find(x=>x.id===id); if(!a) return;
+  autoDetailCurrentId=id;
+  document.getElementById('autoDetailTitle').textContent = `${a.marca||''} ${a.modelo||''}`.trim()||a.id;
+  const campo=(label,val)=>`<div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-bottom:2px">${esc(label)}</div><div style="font-size:12.5px;color:var(--text2)">${val?esc(val):'—'}</div></div>`;
+  const fotosHtml = AUTO_FOTO_TIPOS.map(t=>{
+    const url=autoFotoUrl(a,t.key);
+    return `<div style="text-align:center">
+      <div style="width:100%;aspect-ratio:1/1;border:1px solid var(--border2);border-radius:var(--r4);background:var(--bg2) center/cover no-repeat;${url?`background-image:url('${esc(url)}');cursor:pointer`:''}" ${url?`onclick="openFotoZoom('${esc(url)}','${esc(a.marca)}_${esc(t.key)}')"`:''}></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">${esc(t.label)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('autoDetailBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span class="pill ${autoEstadoPillClass(a.estado)}">${esc(a.estado||'Activo')}</span>
+      <span style="font-family:var(--mono);font-size:11.5px;color:var(--text3)">${esc(a.id)}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">${fotosHtml}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 16px">
+      ${campo('VIN',a.vin)}
+      ${campo('Número de serie',a.numSerie)}
+      ${campo('Versión',a.version)}
+      ${campo('Año',a.anio)}
+      ${campo('Color',a.color)}
+      ${campo('Placas',a.placas)}
+      ${campo('Número económico',a.numEconomico)}
+      ${campo('Kilometraje',a.kilometraje?`${a.kilometraje} km`:'')}
+      ${campo('Combustible',a.combustible)}
+      ${campo('Transmisión',a.transmision)}
+      ${campo('Fecha de compra',a.fechaCompra)}
+      ${campo('Fecha de venta',a.fechaVenta)}
+      ${campo('Costo de compra',a.costoCompra?fmtMXN(a.costoCompra):'')}
+      ${campo('Costo de venta',a.costoVenta?fmtMXN(a.costoVenta):'')}
+    </div>
+    ${a.observaciones?`<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-bottom:2px">Observaciones</div><div style="font-size:12.5px;color:var(--text2);white-space:pre-wrap">${esc(a.observaciones)}</div></div>`:''}
+  `;
+  document.getElementById('autoDetailModal').classList.add('open');
+}
+function closeAutoDetail(){ document.getElementById('autoDetailModal').classList.remove('open'); autoDetailCurrentId=null; }
+function autoDetailEdit(){
+  const id=autoDetailCurrentId;
+  closeAutoDetail();
+  openEditAuto(id);
+}
+function autoDetailDelete(){
+  const a=ST.autos.find(x=>x.id===autoDetailCurrentId); if(!a) return;
+  closeAutoDetail();
+  openDel(a.id, a._row, 'auto');
 }
 
 
