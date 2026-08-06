@@ -941,33 +941,46 @@ textarea.item-inp.item-desc-ta{
 
 /* ── BALANCE SUB-TABS (también usado por Comercial: misma apariencia, fijo arriba, alineado a la izquierda) ── */
 .bal-nav{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);background:transparent;padding:10px 20px;flex-shrink:0}
-.bal-tab{padding:8px 16px;height:auto;border:none;background:transparent;font-family:var(--font);
+.bal-tab{padding:8px 16px;height:auto;border:1px solid transparent;background:transparent;font-family:var(--font);
   border-radius:999px;
   font-size:12.5px;font-weight:600;color:var(--text3);cursor:pointer;position:relative;
-  display:flex;align-items:center;gap:6px;transition:color .15s;white-space:nowrap}
-.bal-tab:hover{color:var(--text)}
-.bal-tab.active{color:var(--white)}
+  display:flex;align-items:center;gap:6px;white-space:nowrap;
+  transition:color .2s cubic-bezier(.16,1,.3,1),border-color .2s cubic-bezier(.16,1,.3,1),
+             background .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1),
+             backdrop-filter .2s cubic-bezier(.16,1,.3,1),transform .12s cubic-bezier(.16,1,.3,1)}
+.bal-tab:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.bal-tab:active{transform:scale(.97)}
+/* ── Efecto "glass" para la pestaña activa del submenú: fondo translúcido +
+   blur + borde y resplandor sutil en el color de acento, en vez del relleno
+   sólido gris que tenía antes. ── */
+.bal-tab.active{
+  color:var(--white);
+  background:rgba(255,255,255,.06);
+  border-color:var(--border2);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 4px rgba(0,0,0,.18);
+}
 .bal-tab svg{width:13px;height:13px;flex-shrink:0;stroke-width:1.7}
 /* ── Colores distintivos para el submenú de Comercial (Cotizaciones=azul,
    OC Clientes=naranja, Facturas=verde), reflejando el flujo Cotización → OC
-   → Factura. Sin fondo detrás de los botones: solo cambia el color de
-   ícono/texto activo. ── */
+   → Factura. La activa toma un fondo/borde/resplandor "glass" tintado con su
+   color de acento, en vez del relleno sólido gris que tenía antes. ── */
 .bal-tab.tab-accent-blue svg{color:var(--blue)}
 .bal-tab.tab-accent-orange svg{color:#f0a94e}
 .bal-tab.tab-accent-green svg{color:var(--green)}
-.bal-tab.tab-accent-blue.active{color:var(--blue)}
-.bal-tab.tab-accent-orange.active{color:#f0a94e}
-.bal-tab.tab-accent-green.active{color:var(--green)}
+.bal-tab.tab-accent-blue.active{color:var(--blue);background:rgba(99,179,237,.1);border-color:rgba(99,179,237,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(99,179,237,.15)}
+.bal-tab.tab-accent-orange.active{color:#f0a94e;background:rgba(240,169,78,.1);border-color:rgba(240,169,78,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(240,169,78,.15)}
+.bal-tab.tab-accent-green.active{color:var(--green);background:rgba(72,187,120,.1);border-color:rgba(72,187,120,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(72,187,120,.15)}
 .bal-tab.tab-accent-purple svg{color:var(--purple)}
-.bal-tab.tab-accent-purple.active{color:var(--purple)}
+.bal-tab.tab-accent-purple.active{color:var(--purple);background:rgba(159,122,234,.1);border-color:rgba(159,122,234,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(159,122,234,.15)}
 .bal-tab.tab-accent-yellow svg{color:var(--yellow)}
-.bal-tab.tab-accent-yellow.active{color:var(--yellow)}
+.bal-tab.tab-accent-yellow.active{color:var(--yellow);background:rgba(236,201,75,.1);border-color:rgba(236,201,75,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(236,201,75,.15)}
 .bal-tab.tab-accent-red svg{color:var(--red)}
-.bal-tab.tab-accent-red.active{color:var(--red)}
+.bal-tab.tab-accent-red.active{color:var(--red);background:rgba(229,62,62,.1);border-color:rgba(229,62,62,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(229,62,62,.15)}
 .bal-tab.tab-accent-teal svg{color:var(--teal)}
-.bal-tab.tab-accent-teal.active{color:var(--teal)}
+.bal-tab.tab-accent-teal.active{color:var(--teal);background:rgba(56,178,172,.1);border-color:rgba(56,178,172,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(56,178,172,.15)}
 .bal-tab.tab-accent-pink svg{color:var(--pink)}
-.bal-tab.tab-accent-pink.active{color:var(--pink)}
+.bal-tab.tab-accent-pink.active{color:var(--pink);background:rgba(237,100,166,.1);border-color:rgba(237,100,166,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 12px rgba(237,100,166,.15)}
 /* Insignia numérica de "pendientes" sobre cada pestaña del submenú de Comercial */
 .bal-tab-badge{
   display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;
