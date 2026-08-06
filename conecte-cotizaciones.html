@@ -940,33 +940,34 @@ textarea.item-inp.item-desc-ta{
 .main-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
 
 /* ── BALANCE SUB-TABS (también usado por Comercial: misma apariencia, fijo arriba, alineado a la izquierda) ── */
-.bal-nav{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);background:var(--bg2);padding:10px 20px;flex-shrink:0}
+.bal-nav{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);background:transparent;padding:10px 20px;flex-shrink:0}
 .bal-tab{padding:8px 16px;height:auto;border:none;background:transparent;font-family:var(--font);
   border-radius:999px;
   font-size:12.5px;font-weight:600;color:var(--text3);cursor:pointer;position:relative;
-  display:flex;align-items:center;gap:6px;transition:background .15s,color .15s;white-space:nowrap}
-.bal-tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
-.bal-tab.active{color:var(--white);background:var(--bg3);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  display:flex;align-items:center;gap:6px;transition:color .15s;white-space:nowrap}
+.bal-tab:hover{color:var(--text)}
+.bal-tab.active{color:var(--white)}
 .bal-tab svg{width:13px;height:13px;flex-shrink:0;stroke-width:1.7}
 /* ── Colores distintivos para el submenú de Comercial (Cotizaciones=azul,
    OC Clientes=naranja, Facturas=verde), reflejando el flujo Cotización → OC
-   → Factura. Solo cambia color de ícono/texto activo y el fondo de la píldora. ── */
+   → Factura. Sin fondo detrás de los botones: solo cambia el color de
+   ícono/texto activo. ── */
 .bal-tab.tab-accent-blue svg{color:var(--blue)}
 .bal-tab.tab-accent-orange svg{color:#f0a94e}
 .bal-tab.tab-accent-green svg{color:var(--green)}
-.bal-tab.tab-accent-blue.active{color:var(--blue);background:var(--blue-p)}
-.bal-tab.tab-accent-orange.active{color:#f0a94e;background:var(--orange-p)}
-.bal-tab.tab-accent-green.active{color:var(--green);background:var(--green-p)}
+.bal-tab.tab-accent-blue.active{color:var(--blue)}
+.bal-tab.tab-accent-orange.active{color:#f0a94e}
+.bal-tab.tab-accent-green.active{color:var(--green)}
 .bal-tab.tab-accent-purple svg{color:var(--purple)}
-.bal-tab.tab-accent-purple.active{color:var(--purple);background:var(--purple-p)}
+.bal-tab.tab-accent-purple.active{color:var(--purple)}
 .bal-tab.tab-accent-yellow svg{color:var(--yellow)}
-.bal-tab.tab-accent-yellow.active{color:var(--yellow);background:var(--yellow-p)}
+.bal-tab.tab-accent-yellow.active{color:var(--yellow)}
 .bal-tab.tab-accent-red svg{color:var(--red)}
-.bal-tab.tab-accent-red.active{color:var(--red);background:var(--red-p)}
+.bal-tab.tab-accent-red.active{color:var(--red)}
 .bal-tab.tab-accent-teal svg{color:var(--teal)}
-.bal-tab.tab-accent-teal.active{color:var(--teal);background:var(--teal-p)}
+.bal-tab.tab-accent-teal.active{color:var(--teal)}
 .bal-tab.tab-accent-pink svg{color:var(--pink)}
-.bal-tab.tab-accent-pink.active{color:var(--pink);background:var(--pink-p)}
+.bal-tab.tab-accent-pink.active{color:var(--pink)}
 /* Insignia numérica de "pendientes" sobre cada pestaña del submenú de Comercial */
 .bal-tab-badge{
   display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;
