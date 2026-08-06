@@ -161,13 +161,22 @@ body.light .toast.inf{ background:rgba(99,179,237,.12);color:#1d4ed8; }
 .theme-toggle:active{transform:scale(.94)}
 .theme-toggle svg{width:14px;height:14px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* Reset global de <button>: sin este reset, algunos navegadores (sobre todo
+   con temas de SO oscuros) pintan un rectángulo gris nativo detrás de los
+   botones "de texto" (tabs del submenú, items del sidebar, filtros, etc.)
+   aunque el CSS de la clase ya diga background:transparent — el navegador
+   aplica su propio "chrome" de botón por encima si no se anula appearance. */
+button{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  background:none;background-color:transparent;border:none;
+  font:inherit;color:inherit;cursor:pointer;outline:none;
+}
 html,body{height:100%;overflow-x:hidden;max-width:100%}
 body{
   font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;
   line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   text-rendering:optimizeLegibility;
 }
-#appScreen{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 /* Fase 1: scrollbar más fino y discreto (look premium), no afecta ninguna
    lógica ni el contenido — solo el estilo de la barra del navegador */
 ::-webkit-scrollbar{width:10px;height:10px}
@@ -211,40 +220,54 @@ body{
    markup, el oninput/onfocus ni la lógica de búsqueda ── */
 #globalSearchInput{transition:background .15s,border-color .15s,box-shadow .15s}
 #globalSearchInput:focus{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.38)!important;box-shadow:0 0 0 3px rgba(255,255,255,.08)}
-#globalSearchPanel{box-shadow:var(--shadow-lg)!important}
-#notifPanel{box-shadow:var(--shadow-lg)!important}
+#globalSearchPanel{box-shadow:var(--shadow-lg)!important;animation:ddIn .18s cubic-bezier(.16,1,.3,1) both}
+#notifPanel{box-shadow:var(--shadow-lg)!important;animation:ddIn .18s cubic-bezier(.16,1,.3,1) both}
 
 /* CONTENT AREA */
 .content{padding:24px 26px 64px;width:100%;max-width:2200px;margin:0 auto}
 
-/* ── BUTTONS ── */
+/* ── BUTTONS (Fase 5: modernización visual — colores, bordes, hover,
+   iconografía y tamaños. No se modificó ningún onclick/evento ni el HTML
+   que usa estas clases; los botones existentes conservan su comportamiento
+   exacto en todo el sistema) ── */
 .btn{
-  display:inline-flex;align-items:center;gap:6px;padding:0 13px;height:31px;
-  border-radius:var(--r4);font-family:var(--font);font-size:12.5px;font-weight:500;
-  cursor:pointer;border:none;transition:all .15s;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;padding:0 14px;height:31px;
+  border-radius:var(--r4);font-family:var(--font);font-size:12.5px;font-weight:600;
+  letter-spacing:-.005em;cursor:pointer;border:none;white-space:nowrap;
+  transition:background .15s cubic-bezier(.16,1,.3,1),border-color .15s cubic-bezier(.16,1,.3,1),
+             color .15s cubic-bezier(.16,1,.3,1),box-shadow .15s cubic-bezier(.16,1,.3,1),
+             transform .1s cubic-bezier(.16,1,.3,1);
 }
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .btn svg{width:12px;height:12px;flex-shrink:0}
-.btn-red{background:var(--red);color:#fff}
-.btn-red:hover{background:var(--red-d)}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 1px 2px rgba(229,62,62,.25),0 4px 10px rgba(229,62,62,.16)}
+.btn-red:hover{background:var(--red-d);box-shadow:0 2px 4px rgba(229,62,62,.3),0 6px 16px rgba(229,62,62,.22);transform:translateY(-1px)}
+.btn-red:active{background:var(--red-d);box-shadow:0 1px 2px rgba(229,62,62,.25);transform:translateY(0)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
-.btn-ghost:hover{background:var(--bg3);color:var(--text)}
-.btn-sm{height:26px;padding:0 10px;font-size:12px}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:rgba(255,255,255,.22)}
+.btn-ghost:active{background:var(--bg4)}
+.btn-sm{height:26px;padding:0 11px;font-size:12px}
 /* Modo IA — botón de alto contraste para accesibilidad (usuarios con baja visión) */
 .btn-ia-highvis{
   background:var(--ia-glow);color:#141414;border:1px solid var(--ia-glow-d);
-  font-weight:700;box-shadow:0 0 0 2px rgba(242,234,2,.18);
+  font-weight:700;box-shadow:0 0 0 2px rgba(242,234,2,.18),0 2px 10px rgba(242,234,2,.16);
 }
-.btn-ia-highvis:hover{background:var(--ia-glow-d);color:#141414}
+.btn-ia-highvis:hover{background:var(--ia-glow-d);color:#141414;transform:translateY(-1px)}
+.btn-ia-highvis:active{transform:translateY(0)}
 .btn-ia-highvis svg{stroke:#141414}
 body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 .btn-icon{
   width:28px;height:28px;border:1px solid var(--border);background:transparent;
   border-radius:var(--r4);cursor:pointer;display:flex;align-items:center;justify-content:center;
-  color:var(--text3);transition:all .15s;
+  color:var(--text3);
+  transition:background .15s cubic-bezier(.16,1,.3,1),border-color .15s cubic-bezier(.16,1,.3,1),
+             color .15s cubic-bezier(.16,1,.3,1),transform .1s cubic-bezier(.16,1,.3,1);
 }
-.btn-icon:hover{background:var(--bg3);color:var(--text)}
+.btn-icon:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.btn-icon:active{transform:scale(.92)}
 .btn-icon svg{width:12px;height:12px}
-.btn-icon.del:hover{background:var(--red-p);color:var(--red)}
+.btn-icon.del:hover{background:var(--red-p);color:var(--red);border-color:rgba(229,62,62,.3)}
 
 /* ── SECTION CARD ── */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);overflow:hidden;margin-bottom:18px;box-shadow:var(--shadow-sm)}
@@ -299,19 +322,21 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 .emp-toggle-chip{
   display:flex;align-items:center;gap:7px;flex:1;min-width:180px;
   padding:6px 10px;border:1px solid var(--border);border-radius:var(--r8);
-  background:var(--bg3);cursor:pointer;transition:border-color .15s,background .15s;
+  background:var(--bg3);cursor:pointer;
+  transition:border-color .15s cubic-bezier(.16,1,.3,1),background .15s cubic-bezier(.16,1,.3,1);
 }
-.emp-toggle-chip:hover{border-color:var(--border2)}
+.emp-toggle-chip:hover{border-color:var(--border2);background:var(--bg4)}
 .emp-toggle-chip input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
 .emp-toggle-chip .ttrack{
   position:relative;flex:0 0 28px;width:28px;height:16px;border-radius:20px;
-  background:var(--bg4);transition:background .15s;
+  background:var(--bg4);transition:background .18s cubic-bezier(.16,1,.3,1),box-shadow .18s cubic-bezier(.16,1,.3,1);
 }
 .emp-toggle-chip .tthumb{
   position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;
-  background:var(--text3);transition:left .15s,background .15s;
+  background:var(--text3);box-shadow:0 1px 2px rgba(0,0,0,.25);
+  transition:left .18s cubic-bezier(.16,1,.3,1),background .18s cubic-bezier(.16,1,.3,1);
 }
-.emp-toggle-chip input:checked + .ttrack{background:var(--green)}
+.emp-toggle-chip input:checked + .ttrack{background:var(--green);box-shadow:0 0 0 2px rgba(72,187,120,.18)}
 .emp-toggle-chip input:checked + .ttrack .tthumb{left:14px;background:#fff}
 .emp-toggle-chip .ttext{font-size:11.5px;font-weight:600;color:var(--text2);line-height:1.25}
 .emp-toggle-chip .tinfo{
@@ -327,7 +352,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
   position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);
   z-index:600;display:none;align-items:center;justify-content:center;padding:30px;
 }
-.emp-photo-lightbox.open{display:flex}
+.emp-photo-lightbox.open{display:flex;animation:paneIn .18s ease both}
 .emp-photo-lightbox img{
   max-width:min(90vw,560px);max-height:80vh;border-radius:var(--r8);
   box-shadow:0 24px 80px rgba(0,0,0,.6);object-fit:contain;
@@ -364,7 +389,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 .fh:hover,.fh:focus{background:#2563eb;color:#fff;outline:none}
 #fhTooltip{
   position:fixed;max-width:260px;background:#2563eb;color:#fff;font-size:11.5px;font-weight:400;
-  line-height:1.55;text-transform:none;letter-spacing:normal;padding:10px 12px;border-radius:10px;
+  line-height:1.55;text-transform:none;letter-spacing:normal;padding:10px 12px;border-radius:var(--r8);
   box-shadow:0 14px 32px rgba(0,0,0,.45);opacity:0;pointer-events:none;
   transition:opacity .12s ease;z-index:9999;white-space:normal;word-wrap:break-word;
 }
@@ -386,7 +411,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 
 /* Vista previa del recibo (columna derecha) — imita visualmente el PDF generado
    y se actualiza en tiempo real con cada cambio del formulario. */
-.nom-receipt{background:#fff;color:#1a1a1a;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.4);overflow:hidden;font-size:10.5px}
+.nom-receipt{background:#fff;color:#1a1a1a;border-radius:var(--r8);box-shadow:0 8px 26px rgba(0,0,0,.4);overflow:hidden;font-size:10.5px}
 .nom-receipt-head{background:#af0d12;color:#fff;padding:8px 11px}
 .nom-receipt-co{font-weight:700;font-size:11px;letter-spacing:.02em}
 .nom-receipt-sub{font-size:8.5px;opacity:.85;margin-top:2px}
@@ -402,7 +427,7 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
 .nom-receipt-hero{margin-top:6px;padding-top:8px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;font-weight:800;gap:6px}
 .nom-receipt-hero span:first-child{font-size:10px}
 .nom-receipt-hero span:last-child{color:#af0d12;font-size:15px;white-space:nowrap}
-.nom-receipt-warn{margin:0 12px 10px;padding:5px 7px;background:#fdecea;color:#af0d12;border-radius:6px;font-size:9.5px;font-weight:600}
+.nom-receipt-warn{margin:0 12px 10px;padding:5px 7px;background:#fdecea;color:#af0d12;border-radius:var(--r4);font-size:9.5px;font-weight:600}
 
 /* Importar recibo PDF */
 .nom-import-box{border:1px dashed var(--border2);border-radius:var(--r8);padding:11px 13px;background:var(--bg3)}
@@ -417,18 +442,29 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
   .nom-layout{grid-template-columns:1fr!important}
   .nom-col-right,.nom-col-preview{position:static!important}
 }
+/* ── FORM CONTROLS (Fase 7: modernización visual de inputs, selects,
+   textareas, checkboxes/radios y switches. No se agregó ni quitó ningún
+   campo, name, id o atributo de validación; solo cambia su apariencia) ── */
 .form-input,.form-select,.form-textarea{
   background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r4);
   padding:8px 10px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;
-  transition:border-color .15s;
+  transition:border-color .15s cubic-bezier(.16,1,.3,1),box-shadow .15s cubic-bezier(.16,1,.3,1),
+             background .15s cubic-bezier(.16,1,.3,1);
   width:100%;min-width:0;max-width:100%;box-sizing:border-box;
 }
-.form-input::placeholder{color:var(--text3)}
+.form-input:hover,.form-select:hover,.form-textarea:hover{border-color:rgba(255,255,255,.22)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
 .form-input:focus,.form-select:focus,.form-textarea:focus{
-  border-color:var(--red);box-shadow:0 0 0 2px rgba(229,62,62,.1);
+  border-color:var(--red);box-shadow:0 0 0 3px rgba(229,62,62,.14);
 }
+.form-input:disabled,.form-select:disabled,.form-textarea:disabled{opacity:.55;cursor:not-allowed}
 .form-select{cursor:pointer}
 .form-textarea{resize:vertical;min-height:64px;line-height:1.5}
+
+/* Checkboxes y radios nativos: color de marca en vez del azul del navegador,
+   igual en ambos temas; no se tocó ningún atributo del <input> */
+input[type="checkbox"],input[type="radio"]{accent-color:var(--red);cursor:pointer}
+input[type="checkbox"]:focus-visible,input[type="radio"]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 
 /* ── ARTÍCULOS SEARCH ── */
 .art-search-wrap{
@@ -449,7 +485,9 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
   position:absolute;top:38px;left:0;right:0;z-index:200;
   background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r8);
   box-shadow:0 12px 40px rgba(0,0,0,.4);max-height:280px;overflow-y:auto;display:none;
+  animation:ddIn .18s cubic-bezier(.16,1,.3,1) both;
 }
+@keyframes ddIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .art-option{
   padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;
   border-bottom:1px solid var(--border);transition:background .1s;
@@ -548,12 +586,12 @@ textarea.item-inp.item-desc-ta{
    pill (used in Comercial/Cotizaciones and Facturas so status can be changed
    right from the list, without losing the color coding). */
 .status-select{
-  border:none;border-radius:4px;padding:3px 7px;height:23px;
-  font-family:var(--font);font-size:11px;font-weight:500;
+  border:none;border-radius:var(--r4);padding:4px 8px;height:24px;
+  font-family:var(--font);font-size:11px;font-weight:600;
   cursor:pointer;outline:none;
-  transition:filter .15s;
+  transition:filter .15s cubic-bezier(.16,1,.3,1),box-shadow .15s cubic-bezier(.16,1,.3,1);
 }
-.status-select:hover{filter:brightness(1.15)}
+.status-select:hover{filter:brightness(1.15);box-shadow:0 1px 5px rgba(0,0,0,.22)}
 .status-select option{background:var(--bg3);color:var(--text)}
 
 /* Botón de ayuda ("?") y tarjeta informativa azul, usados junto a secciones
@@ -587,7 +625,7 @@ textarea.item-inp.item-desc-ta{
 .group-row .g-sum{ font-weight:500; opacity:.75; margin-left:8px; font-size:10.5px; }
 
 /* Password category badge + category group headers (Sistemas > Contraseñas) */
-.pwd-cat{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text2);white-space:nowrap;display:inline-block}
+.pwd-cat{font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--r8);background:var(--bg3);color:var(--text2);white-space:nowrap;display:inline-block}
 .pwd-group-row td{padding:6px 12px!important;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);background:var(--bg3);border-top:1px solid var(--border);border-bottom:none!important}
 .pwd-link{color:var(--blue);text-decoration:none;font-size:11.5px}
 .pwd-link:hover{text-decoration:underline}
@@ -638,17 +676,21 @@ textarea.item-inp.item-desc-ta{
 /* ── FILTERS ── */
 .filter-bar{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
 .fchip{
-  padding:4px 10px;border-radius:3px;font-size:12px;font-weight:500;cursor:pointer;
+  padding:5px 12px;border-radius:var(--r4);font-size:12px;font-weight:500;cursor:pointer;
   border:1px solid var(--border);background:transparent;color:var(--text3);
-  transition:all .15s;font-family:var(--font);
+  transition:all .15s cubic-bezier(.16,1,.3,1);font-family:var(--font);
 }
-.fchip:hover{border-color:var(--border2);color:var(--text2)}
-.fchip.on{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.fchip:hover{border-color:var(--border2);color:var(--text2);background:var(--bg3)}
+.fchip.on{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 1px 2px rgba(229,62,62,.25)}
+.fchip.on:hover{background:var(--red-d);border-color:var(--red-d)}
 .fsep{flex:1}
 .fsort{
   height:28px;border:1px solid var(--border);border-radius:var(--r4);padding:0 8px;
   font-family:var(--font);font-size:12px;color:var(--text2);background:var(--bg3);outline:none;cursor:pointer;
+  transition:border-color .15s cubic-bezier(.16,1,.3,1),color .15s cubic-bezier(.16,1,.3,1);
 }
+.fsort:hover{border-color:var(--border2);color:var(--text)}
+.fsort:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(229,62,62,.14)}
 
 /* ── STATS ── */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
@@ -667,7 +709,7 @@ textarea.item-inp.item-desc-ta{
    superior, sombra más discreta) ── */
 .stat{
   position:relative;background:linear-gradient(180deg,var(--bg2),var(--bg2));border:1px solid var(--border);
-  border-radius:10px;padding:9px 11px 9px 13px;box-shadow:0 1px 2px rgba(0,0,0,.18);
+  border-radius:var(--r8);padding:9px 11px 9px 13px;box-shadow:0 1px 2px rgba(0,0,0,.18);
   transition:box-shadow .15s,border-color .15s,transform .1s;overflow:hidden;
 }
 /* Fase 3 (rediseño): franja de acento lateral izquierda, sutil, en vez de
@@ -688,19 +730,23 @@ textarea.item-inp.item-desc-ta{
 .stat.cy .stat-lbl{color:var(--yellow)}
 .stat.cb .stat-lbl{color:var(--blue)}
 
-/* ── MODAL ── */
+/* ── MODAL (Fase 6: modernización visual de ventanas, overlays, botones e
+   inputs propios del modal. No se tocó ninguna función de apertura/cierre
+   (openXxx/closeXxx), ningún data-attribute ni el HTML de los formularios;
+   esos siguen igual, solo cambia cómo se ven) ── */
 .modal-bg{
-  position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
+  position:fixed;inset:0;background:rgba(0,0,0,.76);backdrop-filter:blur(5px);
   z-index:500;display:none;align-items:center;justify-content:center;
 }
 .modal-bg.open{display:flex}
 .modal{
   background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r12);
-  box-shadow:0 24px 80px rgba(0,0,0,.6);animation:mIn .22s ease both;
+  box-shadow:0 28px 90px rgba(0,0,0,.55),0 4px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.03);
+  animation:mIn .24s cubic-bezier(.16,1,.3,1) both;
   width:460px;max-width:96vw;padding:24px;
   max-height:90vh;overflow-y:auto;
 }
-@keyframes mIn{from{opacity:0;transform:scale(.93) translateY(-8px)}to{opacity:1;transform:scale(1)}}
+@keyframes mIn{from{opacity:0;transform:scale(.94) translateY(-10px)}to{opacity:1;transform:scale(1)}}
 .modal-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:6px}
 .modal-body{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:20px}
 .modal-body strong{color:var(--text)}
@@ -709,13 +755,15 @@ textarea.item-inp.item-desc-ta{
 /* ── LARGE FORM MODAL ── */
 .modal-lg{
   background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r12);
-  box-shadow:0 24px 80px rgba(0,0,0,.6);animation:mIn .22s ease both;
+  box-shadow:0 28px 90px rgba(0,0,0,.55),0 4px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.03);
+  animation:mIn .24s cubic-bezier(.16,1,.3,1) both;
   width:720px;max-width:97vw;max-height:94vh;display:flex;flex-direction:column;
   overflow:hidden;
 }
 .mlg-head{
   padding:16px 22px;border-bottom:1px solid var(--border);
   display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;
+  background:linear-gradient(var(--bg2),var(--bg2));box-shadow:0 1px 0 rgba(255,255,255,.02);
 }
 .mlg-title{font-size:14px;font-weight:600;color:var(--white)}
 .mlg-sub{font-size:11.5px;color:var(--text3);margin-top:2px}
@@ -723,24 +771,50 @@ textarea.item-inp.item-desc-ta{
 .mlg-foot{
   padding:13px 22px;border-top:1px solid var(--border);
   display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;
+  box-shadow:0 -1px 0 rgba(255,255,255,.02);
 }
 .close-x{
   width:28px;height:28px;border:none;background:transparent;border-radius:var(--r4);
-  color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;
+  color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s cubic-bezier(.16,1,.3,1),color .15s cubic-bezier(.16,1,.3,1),transform .12s cubic-bezier(.16,1,.3,1);
 }
-.close-x:hover{background:var(--bg3);color:var(--text)}
+.close-x:hover{background:var(--red-p);color:var(--red);transform:rotate(90deg)}
+.close-x:active{transform:rotate(90deg) scale(.9)}
 .close-x svg{width:13px;height:13px}
+
+/* ── Botón mini de Google dentro de modales (Fase extra: reconectar sin
+   perder el formulario abierto). Refleja el mismo estado que el botón del
+   topbar (#googleAuthBtn) — ambos se actualizan juntos desde setGoogleUI().
+   Verde+✓ conectado, rojo+✗ desconectado (aviso claro de que hay que
+   reconectar antes de poder guardar). ── */
+.btn-google-mini{
+  display:flex;align-items:center;justify-content:center;gap:2px;flex-shrink:0;
+  height:26px;min-width:38px;padding:0 8px;border-radius:var(--r4);
+  border:1px solid rgba(229,62,62,.35);background:var(--red-p);color:var(--red);
+  font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:-.01em;cursor:pointer;
+  transition:background .15s cubic-bezier(.16,1,.3,1),border-color .15s cubic-bezier(.16,1,.3,1),
+             color .15s cubic-bezier(.16,1,.3,1),transform .1s cubic-bezier(.16,1,.3,1);
+}
+.btn-google-mini:hover{transform:translateY(-1px)}
+.btn-google-mini:active{transform:translateY(0)}
+.btn-google-mini.connected{
+  border-color:rgba(72,187,120,.35);background:var(--green-p);color:var(--green);
+}
+.btn-google-mini:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.mlg-head-acts{display:flex;align-items:center;gap:8px;flex-shrink:0}
 
 /* ── MODO IA (cotización por voz) ── */
 .modal-ia{
   background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r12);
-  box-shadow:0 24px 80px rgba(0,0,0,.6);animation:mIn .22s ease both;
+  box-shadow:0 28px 90px rgba(0,0,0,.55),0 4px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.03);
+  animation:mIn .24s cubic-bezier(.16,1,.3,1) both;
   width:540px;max-width:96vw;height:min(680px,88vh);display:flex;flex-direction:column;overflow:hidden;
 }
 .ia-chatbox{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:0}
-.ia-bubble{max-width:82%;padding:9px 13px;border-radius:14px;font-size:12.5px;line-height:1.55;white-space:pre-wrap}
+.ia-bubble{max-width:82%;padding:9px 13px;border-radius:var(--r12);font-size:12.5px;line-height:1.55;white-space:pre-wrap;animation:bubbleIn .18s cubic-bezier(.16,1,.3,1) both}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .ia-bubble.assistant{align-self:flex-start;background:var(--bg3);color:var(--text);border-bottom-left-radius:4px}
-.ia-bubble.user{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:4px}
+.ia-bubble.user{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(229,62,62,.2)}
 .ia-resumen{padding:14px 18px;border-top:1px solid var(--border);background:var(--bg3);flex-shrink:0}
 .ia-resumen-row{font-size:12px;color:var(--text2);margin-bottom:3px}
 .ia-resumen-row strong{color:var(--text);font-weight:600}
@@ -750,9 +824,11 @@ textarea.item-inp.item-desc-ta{
 .ia-mic-btn{
   width:42px;height:42px;border-radius:50%;border:none;flex-shrink:0;cursor:pointer;
   background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;
-  transition:transform .15s, box-shadow .15s;
+  box-shadow:0 2px 8px rgba(229,62,62,.3);
+  transition:transform .15s cubic-bezier(.16,1,.3,1), box-shadow .15s cubic-bezier(.16,1,.3,1), background .15s;
 }
-.ia-mic-btn:hover{transform:scale(1.05)}
+.ia-mic-btn:hover{transform:scale(1.06);background:var(--red-d);box-shadow:0 4px 14px rgba(229,62,62,.38)}
+.ia-mic-btn:active{transform:scale(.96)}
 .ia-mic-btn.listening{animation:iaPulse 1.1s ease-in-out infinite}
 @keyframes iaPulse{
   0%{box-shadow:0 0 0 0 rgba(229,62,62,.55)}
@@ -762,7 +838,9 @@ textarea.item-inp.item-desc-ta{
 .ia-text-input{
   flex:1;height:38px;padding:0 12px;background:var(--bg3);border:1px solid var(--border);
   border-radius:var(--r8);font-family:var(--font);font-size:12.5px;color:var(--text);outline:none;
+  transition:border-color .15s cubic-bezier(.16,1,.3,1),box-shadow .15s cubic-bezier(.16,1,.3,1);
 }
+.ia-text-input:focus{border-color:rgba(255,255,255,.3);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
 
 /* ── TOAST ── */
 .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px}
@@ -799,20 +877,25 @@ textarea.item-inp.item-desc-ta{
 
 
 /* ── TABS NAV ── */
-.tabs-nav{display:flex;gap:2px;padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.tabs-nav{
+  display:flex;gap:2px;padding:0 22px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.tabs-nav::-webkit-scrollbar{display:none;height:0}
 .tab-btn{
   padding:0 18px;height:42px;border:none;background:transparent;font-family:var(--font);
   font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;position:relative;
-  display:flex;align-items:center;gap:7px;transition:color .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:7px;transition:color .15s;white-space:nowrap;flex-shrink:0;
 }
 .tab-btn:hover{color:var(--text)}
 .tab-btn.active{color:var(--white)}
 .tab-btn.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);border-radius:2px 2px 0 0}
 .tab-btn svg{width:13px;height:13px;flex-shrink:0}
 .tab-pane{display:none}
-.tab-pane.active{display:block}
+.tab-pane.active{display:block;animation:paneIn .2s ease both}
 .emp-subpane{display:none}
-.emp-subpane.active{display:block}
+.emp-subpane.active{display:block;animation:paneIn .2s ease both}
+@keyframes paneIn{from{opacity:0}to{opacity:1}}
 
 /* ── APP SHELL (menú superior + columna principal) ──
    Rediseño: el menú principal (antes sidebar lateral retráctil) ahora vive
@@ -822,14 +905,15 @@ textarea.item-inp.item-desc-ta{
    toggleSidebar, toggleMobileSidebar), solo cambia su disposición visual. */
 .app-shell{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .sidebar{
-  width:100%;flex-shrink:0;background:var(--bg2);border-right:none;border-bottom:none;
+  width:100%;flex-shrink:0;background:transparent;border-right:none;border-bottom:none;
   display:flex;flex-direction:row;align-items:stretch;transition:none;overflow:hidden;
-  box-shadow:var(--shadow-sm);margin-bottom:10px;
+  margin-bottom:10px;
 }
 .sidebar.collapsed{width:100%}
 .sidebar-nav{
-  flex:1;display:flex;flex-direction:row;align-items:center;gap:4px;padding:6px 14px;
+  flex:0 1 auto;display:flex;flex-direction:row;align-items:center;gap:4px;padding:6px 14px;
   overflow-x:auto;overflow-y:hidden;
+  background:var(--bg2);border-radius:var(--r8);box-shadow:var(--shadow-sm);
 }
 .sidebar-nav::-webkit-scrollbar{height:0}
 .sidebar-item{
@@ -962,6 +1046,12 @@ textarea.item-inp.item-desc-ta{
 .dash-card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:16px}
 .dash-chart-wrap{position:relative;height:220px}
 .dash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+/* ── LAPTOP (≈1024-1300px): antes de apilar todo en tablet, se reacomoda
+   con auto-fit para que las tarjetas del dashboard no queden demasiado
+   angostas en pantallas de laptop pequeñas ── */
+@media(max-width:1300px){
+  .dash-grid-3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+}
 @media(max-width:900px){.dash-grid,.dash-grid-3{grid-template-columns:1fr}.dash-kpi-grid{grid-template-columns:1fr 1fr}}
 
 /* ── Centro de Estrategia Financiera: timeline ── */
@@ -1000,12 +1090,13 @@ textarea.item-inp.item-desc-ta{
   .content{padding:14px 14px 50px}
   .hamburger-btn{display:none}
   .sidebar{
-    position:relative!important;width:100%!important;transform:none!important;box-shadow:var(--shadow-sm);
+    position:relative!important;width:100%!important;transform:none!important;
   }
   .sidebar-nav{padding:6px 10px}
   .sidebar-item{justify-content:flex-start;padding:8px 12px;font-size:12px}
   .bal-nav{padding:8px 8px;overflow-x:auto}
   .bal-tab{padding:0 10px}
+  .card-header{flex-wrap:wrap;row-gap:8px}
 }
 @media(max-width:700px){
   .stats.stats-5{grid-template-columns:1fr 1fr}
@@ -1022,8 +1113,6 @@ textarea.item-inp.item-desc-ta{
   .topbar{padding:0 10px;gap:6px}
   .topbar-brand{font-size:12px}
   .topbar-page{display:none}
-  #googleBtnTxt{display:none}
-  .btn-google{padding:0 8px}
   .content{padding:10px 8px 40px}
   .modal,.modal-lg{width:94vw!important;max-width:94vw!important;padding:16px!important}
   .mlg-head{padding:14px 16px}
@@ -1058,7 +1147,7 @@ textarea.item-inp.item-desc-ta{
 .asis-mov-row{ display:grid; grid-template-columns:110px 60px 1fr 50px; align-items:center; gap:8px; width:100%; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--r4); cursor:pointer; font-family:var(--font); text-align:left; }
 .asis-mov-row:hover{ border-color:var(--border2); }
 .asis-mov-row.active{ border-color:var(--red); background:var(--red-p); }
-.asis-mov-badge{ font-size:10.5px; font-weight:600; color:var(--text); background:var(--bg4); padding:2px 6px; border-radius:10px; text-align:center; }
+.asis-mov-badge{ font-size:10.5px; font-weight:600; color:var(--text); background:var(--bg4); padding:2px 6px; border-radius:var(--r8); text-align:center; }
 .asis-mov-hora{ font-size:11px; color:var(--text2); font-family:var(--mono); }
 .asis-mov-ubi{ font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .asis-mov-geo{ font-size:10.5px; font-weight:600; text-align:right; }
@@ -1099,10 +1188,10 @@ textarea.item-inp.item-desc-ta{
       </div>
     </div>
     <div class="topbar-right">
-      <!-- Google Connect Button -->
-      <button class="btn-google" id="googleAuthBtn" onclick="handleAuthClick()">
-        <svg viewBox="0 0 18 18"><path fill="#EA4335" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#4285F4" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#34A853" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-        <span id="googleBtnTxt">Conectar Google</span>
+      <!-- Google Connect Button (versión compacta "G ✗ / G ✓", igual que el
+           mini-botón del formulario, en vez del logo + texto "Conectar Google") -->
+      <button class="btn-google-mini" id="googleAuthBtn" onclick="handleAuthClick()" title="Conectar con Google">
+        <span id="googleBtnTxt">G ✗</span>
       </button>
       <!-- ── CAMPANITA DE NOTIFICACIONES CENTRALIZADAS (Fase 4) ── -->
       <div id="notifWrap" style="position:relative">
@@ -2580,6 +2669,32 @@ textarea.item-inp.item-desc-ta{
           <div class="stat-lbl">Obras Activas</div><div class="stat-val" id="dgKpiObrasPend">—</div><div class="stat-delta">Planeadas + en proceso + pausadas</div>
         </div>
       </div>
+      <!-- Resumen de Balance (3 KPIs clave, con acceso directo al detalle en Balance) -->
+      <div class="dash-card-title" style="margin:4px 0 8px">Resumen de Balance <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">· año actual</span></div>
+      <div class="dash-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px" id="dgKpisBalanceResumen">
+        <div class="stat cg" style="cursor:pointer" onclick="ST.currentBalTab='dash';switchTab('bal')" title="Ir al Dashboard de Balance">
+          <div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dgKpiIngResumen">—</div><div class="stat-delta">Pagados, año actual</div>
+        </div>
+        <div class="stat cr" style="cursor:pointer" onclick="ST.currentBalTab='dash';switchTab('bal')" title="Ir al Dashboard de Balance">
+          <div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dgKpiGasResumen">—</div><div class="stat-delta">Pagados, año actual</div>
+        </div>
+        <div class="stat cb" style="cursor:pointer" onclick="ST.currentBalTab='dash';switchTab('bal')" title="Ir al Dashboard de Balance">
+          <div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dgKpiBalResumen">—</div><div class="stat-delta">Ingresos − Gastos</div>
+        </div>
+      </div>
+      <!-- Resumen de Centro Financiero (3 KPIs clave, con acceso directo al detalle) -->
+      <div class="dash-card-title" style="margin:4px 0 8px">Resumen de Centro Financiero</div>
+      <div class="dash-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px" id="dgKpisFinResumen">
+        <div class="stat cr" style="cursor:pointer" onclick="ST.finSubTab='dash';switchTab('fin')" title="Ir al Dashboard de Centro Financiero">
+          <div class="stat-lbl">Deuda Total</div><div class="stat-val" id="dgKpiDeudaTotalResumen">—</div><div class="stat-delta">Saldo actual</div>
+        </div>
+        <div class="stat cy" style="cursor:pointer" onclick="ST.finSubTab='dash';switchTab('fin')" title="Ir al Dashboard de Centro Financiero">
+          <div class="stat-lbl">Pago comprometido del mes</div><div class="stat-val" id="dgKpiPagoMesResumen">—</div><div class="stat-delta">Este mes</div>
+        </div>
+        <div class="stat cg" style="cursor:pointer" onclick="ST.finSubTab='dash';switchTab('fin')" title="Ir al Dashboard de Centro Financiero">
+          <div class="stat-lbl">Flujo libre</div><div class="stat-val" id="dgKpiFlujoLibreResumen">—</div><div class="stat-delta">Ingresos − compromisos</div>
+        </div>
+      </div>
       <!-- Filtro año -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <span style="font-size:11.5px;color:var(--text3)">Año:</span>
@@ -3269,9 +3384,14 @@ textarea.item-inp.item-desc-ta{
         <div class="mlg-title" id="fmTitle">Nueva Cotización</div>
         <div class="mlg-sub" id="fmSub">Completa los datos y agrega las partidas</div>
       </div>
-      <button class="close-x" onclick="closeForm()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
-      </button>
+      <div class="mlg-head-acts">
+        <button type="button" class="btn-google-mini" id="googleAuthBtnForm" onclick="handleAuthClick()" title="Conectar con Google">
+          <span id="googleBtnFormTxt">G ✗</span>
+        </button>
+        <button class="close-x" onclick="closeForm()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+        </button>
+      </div>
     </div>
     <div class="mlg-body">
       <!-- Datos generales: dividido en 2 secciones — izquierda datos cortos (cliente,
@@ -5107,8 +5227,12 @@ function handleAuthClick() {
   }
 
   const btn = document.getElementById('googleAuthBtn');
-  document.getElementById('googleBtnTxt').textContent = 'Conectando…';
+  document.getElementById('googleBtnTxt').textContent = '…';
   btn.disabled = true;
+  const btnMini = document.getElementById('googleAuthBtnForm');
+  const txtMini = document.getElementById('googleBtnFormTxt');
+  if (btnMini) { btnMini.disabled = true; }
+  if (txtMini) { txtMini.textContent = '…'; }
   document.getElementById('currentOrigin').textContent = window.location.origin;
 
   tokenClient = google.accounts.oauth2.initTokenClient({
@@ -5116,8 +5240,10 @@ function handleAuthClick() {
     scope: "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive",
     callback: async (resp) => {
       btn.disabled = false;
+      if (btnMini) { btnMini.disabled = false; }
       if (resp.error) {
-        document.getElementById('googleBtnTxt').textContent = '✗ Error — reintentar';
+        document.getElementById('googleBtnTxt').textContent = 'G ✗';
+        if (txtMini) { txtMini.textContent = 'G ✗'; }
         if(resp.error === 'invalid_client' || resp.error === 'access_denied') {
           document.getElementById('oauthHint').style.display = 'block';
         }
@@ -5263,11 +5389,29 @@ function setGoogleUI(connected) {
   const txt = document.getElementById('googleBtnTxt');
   if (connected) {
     btn.classList.add('connected');
-    txt.textContent = (ST.nombre||'').split(' ')[0] + ' ✓';
+    txt.textContent = 'G ✓';
+    btn.title = 'Conectado con Google' + (ST.nombre ? ' (' + ST.nombre + ')' : '');
   } else {
     btn.classList.remove('connected');
     btn.style.color = ''; btn.style.borderColor = '';
-    txt.textContent = 'Conectar Google';
+    txt.textContent = 'G ✗';
+    btn.title = 'Conectar con Google';
+  }
+  // Botón mini de Google dentro del formulario de cotización (mismo estado,
+  // para poder reconectar sin cerrar el formulario si Google se desconecta
+  // mientras se está llenando)
+  const btnMini = document.getElementById('googleAuthBtnForm');
+  const txtMini = document.getElementById('googleBtnFormTxt');
+  if (btnMini && txtMini) {
+    if (connected) {
+      btnMini.classList.add('connected');
+      txtMini.textContent = 'G ✓';
+      btnMini.title = 'Conectado con Google' + (ST.nombre ? ' (' + ST.nombre + ')' : '');
+    } else {
+      btnMini.classList.remove('connected');
+      txtMini.textContent = 'G ✗';
+      btnMini.title = 'Google desconectado — clic para reconectar y poder guardar';
+    }
   }
 }
 
@@ -12126,6 +12270,32 @@ function renderDashboardGeneral(){
   const netEl=document.getElementById('dgKpiBal');
   netEl.textContent=fmtMXN(net);
   netEl.style.color=net>=0?'var(--green)':'var(--red)';
+  // Resumen corto de Balance (tarjetas visibles del Dashboard General): mismos
+  // valores de arriba, solo se muestran también en las tarjetas con acceso directo.
+  document.getElementById('dgKpiIngResumen').textContent=fmtMXN(ingPag);
+  document.getElementById('dgKpiGasResumen').textContent=fmtMXN(gasPag);
+  const netResumenEl=document.getElementById('dgKpiBalResumen');
+  netResumenEl.textContent=fmtMXN(net);
+  netResumenEl.style.color=net>=0?'var(--green)':'var(--red)';
+
+  /* ── Resumen corto de Centro Financiero (mismo criterio que renderFinDashboard,
+     solo las 3 métricas clave: Deuda Total / Pago comprometido del mes / Flujo libre) ── */
+  const deudasActivasResumen=(ST.deudas||[]).filter(d=>d.estado==='Activa'||d.estado==='Vencida');
+  const deudaTotalResumen=(ST.deudas||[]).reduce((s,d)=>s+d.saldoActual,0);
+  const todayFinResumen=new Date(new Date().toDateString());
+  let mesComprometidoResumen=0;
+  deudasActivasResumen.forEach(d=>{
+    const next=finNextPago(d, todayFinResumen);
+    if(next){ const diff=(next-todayFinResumen)/86400000; if(diff>=0 && diff<=30) mesComprometidoResumen += d.pagoProgramado; }
+  });
+  const ymResumen=todayFinResumen.toISOString().slice(0,7);
+  const ingresosMesResumen=(ST.ingresos||[]).filter(b=>b.fechaPago && b.fechaPago.startsWith(ymResumen) && b.estado==='Pagado').reduce((s,b)=>s+b.monto,0);
+  const flujoLibreResumen=ingresosMesResumen - mesComprometidoResumen;
+  document.getElementById('dgKpiDeudaTotalResumen').textContent=fmtMXN(deudaTotalResumen);
+  document.getElementById('dgKpiPagoMesResumen').textContent=fmtMXN(mesComprometidoResumen);
+  const flujoResumenEl=document.getElementById('dgKpiFlujoLibreResumen');
+  flujoResumenEl.textContent=fmtMXN(flujoLibreResumen);
+  flujoResumenEl.style.color=flujoLibreResumen>=0?'var(--green)':'var(--red)';
 
   /* ── Comercial: cotizaciones activas ── */
   const cotActivas = (ST.cotizaciones||[]).filter(c=>c.estatus==='Pendiente'||c.estatus==='Enviado').length;
