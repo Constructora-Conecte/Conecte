@@ -645,36 +645,38 @@ textarea.item-inp.item-desc-ta{
 }
 
 /* ── STATS ── */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
 .stats.stats-5{grid-template-columns:repeat(5,1fr)}
 .stats.stats-6{grid-template-columns:repeat(6,1fr)}
 .stats.stats-3{grid-template-columns:repeat(3,1fr)}
 @media(max-width:1100px){.stats.stats-5{grid-template-columns:repeat(3,1fr)}.stats.stats-6{grid-template-columns:repeat(3,1fr)}}
 /* Mini-stat: variante compacta para meter 2 métricas (semana/mes) en la misma
    tarjeta sin agregar más alto al dashboard que ya existe. */
-.stat-mini-row{display:flex;gap:10px;align-items:baseline}
+.stat-mini-row{display:flex;gap:8px;align-items:baseline}
 .stat-mini{flex:1;min-width:0}
-.stat-mini b{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--white);display:block}
-.stat-mini span{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.stat-mini b{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--white);display:block}
+.stat-mini span{font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+/* ── Tarjetas de estadísticas: versión compacta y estilizada (más pequeñas,
+   esquinas más suaves, acento de color como franja lateral en vez de barra
+   superior, sombra más discreta) ── */
 .stat{
-  position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);
-  padding:14px 16px;box-shadow:var(--shadow-sm);transition:box-shadow .15s,border-color .15s,transform .1s;
-  overflow:hidden;
+  position:relative;background:linear-gradient(180deg,var(--bg2),var(--bg2));border:1px solid var(--border);
+  border-radius:10px;padding:9px 11px 9px 13px;box-shadow:0 1px 2px rgba(0,0,0,.18);
+  transition:box-shadow .15s,border-color .15s,transform .1s;overflow:hidden;
 }
-/* Fase 3: barra de acento superior sutil, mismo color que ya usa la etiqueta
-   (--red/--green/--yellow/--blue) — puramente decorativo, no cambia ningún
-   valor ni cálculo, solo refuerza visualmente la categoría de la tarjeta */
-.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:transparent}
+/* Fase 3 (rediseño): franja de acento lateral izquierda, sutil, en vez de
+   barra superior — más discreta y permite reducir el alto de la tarjeta */
+.stat::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--border2);border-radius:0}
 .stat.cr::before{background:var(--red)}
 .stat.cg::before{background:var(--green)}
 .stat.cy::before{background:var(--yellow)}
 .stat.cb::before{background:var(--blue)}
 .stat-click{cursor:pointer}
-.stat-click:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.stat-click:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.28)}
 .stat-click:active{transform:translateY(0);box-shadow:var(--shadow-sm)}
-.stat-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:8px}
-.stat-val{font-family:var(--mono);font-size:21px;font-weight:600;color:var(--white);margin-bottom:2px;letter-spacing:-.01em}
-.stat-delta{font-size:11px;color:var(--text3)}
+.stat-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px}
+.stat-val{font-family:var(--mono);font-size:16.5px;font-weight:700;color:var(--white);margin-bottom:1px;letter-spacing:-.01em;line-height:1.15}
+.stat-delta{font-size:9.5px;color:var(--text3)}
 .stat.cr .stat-lbl{color:var(--red)}
 .stat.cg .stat-lbl{color:var(--green)}
 .stat.cy .stat-lbl{color:var(--yellow)}
@@ -806,38 +808,44 @@ textarea.item-inp.item-desc-ta{
 .emp-subpane{display:none}
 .emp-subpane.active{display:block}
 
-/* ── APP SHELL (sidebar + main column) ── */
-.app-shell{display:flex;flex:1;min-height:0;overflow:hidden}
+/* ── APP SHELL (menú superior + columna principal) ──
+   Rediseño: el menú principal (antes sidebar lateral retráctil) ahora vive
+   como una barra horizontal fija arriba, debajo del topbar, igual que en
+   el mockup de referencia. Se conserva el nombre de las clases (.sidebar,
+   .sidebar-nav, .sidebar-item...) para no romper el JS existente (switchSection,
+   toggleSidebar, toggleMobileSidebar), solo cambia su disposición visual. */
+.app-shell{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .sidebar{
-  width:188px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;transition:width .16s ease;overflow:hidden;
+  width:100%;flex-shrink:0;background:var(--bg2);border-right:none;border-bottom:1px solid var(--border);
+  display:flex;flex-direction:row;align-items:stretch;transition:none;overflow:hidden;
   box-shadow:var(--shadow-sm);
 }
-.sidebar.collapsed{width:58px}
-.sidebar-nav{flex:1;display:flex;flex-direction:column;gap:3px;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
+.sidebar.collapsed{width:100%}
+.sidebar-nav{
+  flex:1;display:flex;flex-direction:row;align-items:center;gap:4px;padding:6px 14px;
+  overflow-x:auto;overflow-y:hidden;
+}
+.sidebar-nav::-webkit-scrollbar{height:0}
 .sidebar-item{
-  display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--r8);
+  display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;
   cursor:pointer;color:var(--text2);font-size:12.5px;font-weight:600;white-space:nowrap;
-  border:none;background:transparent;width:100%;text-align:left;font-family:var(--font);
-  transition:background .12s,color .12s;
+  border:none;background:transparent;width:auto;text-align:left;font-family:var(--font);
+  transition:background .12s,color .12s;flex-shrink:0;
 }
 .sidebar-item:hover{background:var(--bg3);color:var(--text)}
-.sidebar-item.active{background:var(--red);color:#fff}
-.sidebar-item svg{width:17px;height:17px;flex-shrink:0}
+.sidebar-item.active{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(214,42,42,.35)}
+.sidebar-item svg{width:16px;height:16px;flex-shrink:0}
 .sidebar-item span{overflow:hidden;text-overflow:ellipsis}
-.sidebar.collapsed .sidebar-item{justify-content:center;padding:10px 0}
-.sidebar.collapsed .sidebar-item span{display:none}
-.sidebar-foot{padding:8px;border-top:1px solid var(--border);flex-shrink:0}
+.sidebar.collapsed .sidebar-item{justify-content:center;padding:9px 14px}
+.sidebar.collapsed .sidebar-item span{display:inline}
+/* El pie/"contraer" del menú lateral ya no aplica en un menú horizontal */
+.sidebar-foot{display:none}
 .sidebar-toggle{
   display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border-radius:var(--r8);
   border:none;background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font);
   font-size:11.5px;font-weight:500;transition:background .12s,color .12s;
 }
-.sidebar-toggle:hover{background:var(--bg3);color:var(--text)}
 .sidebar-toggle svg{width:15px;height:15px;flex-shrink:0;transition:transform .16s}
-.sidebar.collapsed .sidebar-toggle{justify-content:center;padding:9px 0}
-.sidebar.collapsed .sidebar-toggle span{display:none}
-.sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg)}
 .main-col{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .main-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
 
@@ -850,6 +858,24 @@ textarea.item-inp.item-desc-ta{
 .bal-tab.active{color:var(--white)}
 .bal-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);border-radius:2px 2px 0 0}
 .bal-tab svg{width:12px;height:12px;flex-shrink:0}
+/* ── Colores distintivos para el submenú de Comercial (Cotizaciones=azul,
+   OC Clientes=naranja, Facturas=verde), reflejando el flujo Cotización → OC
+   → Factura. Solo cambia color de ícono/texto activo y el subrayado. ── */
+.bal-tab.tab-accent-blue svg{color:var(--blue)}
+.bal-tab.tab-accent-orange svg{color:#f0a94e}
+.bal-tab.tab-accent-green svg{color:var(--green)}
+.bal-tab.tab-accent-blue.active{color:var(--blue)}
+.bal-tab.tab-accent-orange.active{color:#f0a94e}
+.bal-tab.tab-accent-green.active{color:var(--green)}
+.bal-tab.tab-accent-blue.active::after{background:var(--blue)}
+.bal-tab.tab-accent-orange.active::after{background:#f0a94e}
+.bal-tab.tab-accent-green.active::after{background:var(--green)}
+/* Insignia numérica de "pendientes" sobre cada pestaña del submenú de Comercial */
+.bal-tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;
+  padding:0 4px;border-radius:999px;background:var(--red);color:#fff;font-family:var(--mono);
+  font-size:10px;font-weight:700;line-height:1;margin-left:2px;flex-shrink:0;
+}
 .bal-pane{display:none}
 .bal-pane.active{display:block}
 
@@ -950,22 +976,21 @@ textarea.item-inp.item-desc-ta{
 }
 .hamburger-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.35)}
 .hamburger-btn svg{width:16px;height:16px}
-.sidebar-backdrop{display:none;position:fixed;top:50px;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:140}
-.sidebar-backdrop.show{display:block}
+/* El menú ahora es una barra horizontal siempre visible, así que el
+   backdrop de drawer móvil ya no es necesario (se deja oculto por si el
+   JS aún lo referencia). */
+.sidebar-backdrop{display:none!important}
 
 @media(max-width:900px){
   .stats{grid-template-columns:1fr 1fr}
   .stats.stats-5{grid-template-columns:repeat(3,1fr)}
   .content{padding:14px 14px 50px}
-  .hamburger-btn{display:flex}
+  .hamburger-btn{display:none}
   .sidebar{
-    position:fixed!important;top:50px;left:0;bottom:0;z-index:150;width:230px!important;
-    transform:translateX(-100%);transition:transform .18s ease;box-shadow:4px 0 28px rgba(0,0,0,.45);
+    position:relative!important;width:100%!important;transform:none!important;box-shadow:var(--shadow-sm);
   }
-  .sidebar.mobile-open{transform:translateX(0)}
-  .sidebar .sidebar-item span,.sidebar .sidebar-toggle span{display:inline}
-  .sidebar-item{justify-content:flex-start;padding:10px 11px}
-  .sidebar-foot{display:none}
+  .sidebar-nav{padding:6px 10px}
+  .sidebar-item{justify-content:flex-start;padding:8px 12px;font-size:12px}
   .bal-nav{padding:0 8px;overflow-x:auto}
   .bal-tab{padding:0 10px}
 }
@@ -1142,19 +1167,25 @@ textarea.item-inp.item-desc-ta{
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar(false)"></div>
 
     <div class="main-col">
-      <!-- SUB-TABS DE COMERCIAL: Cotizaciones, OC, Facturas (fijo arriba, no se mueve al cambiar de vista) -->
+      <!-- SUB-TABS DE COMERCIAL: Cotizaciones, OC, Facturas (fijo arriba, no se mueve al cambiar de vista).
+           Cada pestaña tiene su color distintivo (azul/naranja/verde, igual que el
+           flujo Cotización → OC → Factura) y una insignia numérica con la cantidad
+           de elementos PENDIENTES de ese tipo (se actualiza sola, ver updateComercialSubNavBadges). -->
       <nav class="bal-nav" id="comercialSubNav">
-        <button class="bal-tab active" id="tabCotBtn" onclick="switchTab('cot')">
+        <button class="bal-tab active tab-accent-blue" id="tabCotBtn" onclick="switchTab('cot')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
           Cotizaciones
+          <span class="bal-tab-badge" id="tabCotBadge" style="display:none">0</span>
         </button>
-        <button class="bal-tab" id="tabOCBtn" onclick="switchTab('oc')">
+        <button class="bal-tab tab-accent-orange" id="tabOCBtn" onclick="switchTab('oc')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>
           OC Clientes
+          <span class="bal-tab-badge" id="tabOCBadge" style="display:none">0</span>
         </button>
-        <button class="bal-tab" id="tabFacBtn" onclick="switchTab('fac')">
+        <button class="bal-tab tab-accent-green" id="tabFacBtn" onclick="switchTab('fac')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="10" height="13" rx="1.5"/><path d="M5 5.5h5M5 8h5M5 10.5h3"/><path d="M10 1.5v3H13"/></svg>
           Facturas
+          <span class="bal-tab-badge" id="tabFacBadge" style="display:none">0</span>
         </button>
       </nav>
 
@@ -15089,6 +15120,43 @@ function toggleSidebar(force){
   let collapsed=false;
   try{ collapsed = localStorage.getItem('conecte_sidebar_collapsed')==='1'; }catch(e){}
   if(collapsed) document.addEventListener('DOMContentLoaded', ()=>toggleSidebar(true));
+})();
+
+/* ─── INSIGNIAS DE PENDIENTES EN EL SUBMENÚ DE COMERCIAL ───
+   Cotizaciones / OC Clientes / Facturas ya calculan internamente cuántos
+   registros están en estatus "Pendiente" (tarjetas #sPend, #ocsPend, #fsPendF).
+   En vez de duplicar esa lógica, observamos esos nodos y reflejamos el mismo
+   número como insignia sobre la pestaña correspondiente del submenú. */
+(function initComercialSubNavBadges(){
+  const MAP=[
+    {srcId:'sPend',   badgeId:'tabCotBadge'},
+    {srcId:'ocsPend', badgeId:'tabOCBadge'},
+    {srcId:'fsPendF', badgeId:'tabFacBadge'},
+  ];
+  function syncOne(srcId,badgeId){
+    const src=document.getElementById(srcId), badge=document.getElementById(badgeId);
+    if(!src||!badge) return;
+    const raw=(src.textContent||'').replace(/[^\d]/g,'');
+    const n=raw?parseInt(raw,10):0;
+    if(n>0){ badge.textContent = n>99?'99+':String(n); badge.style.display='inline-flex'; }
+    else{ badge.style.display='none'; }
+  }
+  function syncAll(){ MAP.forEach(m=>syncOne(m.srcId,m.badgeId)); }
+  function attachObservers(){
+    MAP.forEach(m=>{
+      const src=document.getElementById(m.srcId);
+      if(!src||src._pendBadgeObserved) return;
+      src._pendBadgeObserved=true;
+      new MutationObserver(()=>syncOne(m.srcId,m.badgeId)).observe(src,{childList:true,characterData:true,subtree:true});
+    });
+    syncAll();
+  }
+  document.addEventListener('DOMContentLoaded', attachObservers);
+  // Reintenta unos segundos por si las tarjetas se renderizan después de
+  // cargar datos remotos (Google Sheets), ya que el observer solo puede
+  // engancharse una vez que el nodo #sPend/#ocsPend/#fsPendF exista.
+  let tries=0;
+  const retry=setInterval(()=>{ attachObservers(); if(++tries>20) clearInterval(retry); },1000);
 })();
 
 /* ─── BALANCE SUB-TAB SWITCH (orden: Dashboard, Ingresos, Salidas) ─── */
