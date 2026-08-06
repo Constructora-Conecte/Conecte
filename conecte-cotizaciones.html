@@ -59,10 +59,10 @@ const CONTRATO_PLANTILLA_B64 = "UEsDBBQAAAAIAGqV+Vyffx2JrwEAAPwHAAATAAAAW0NvbnRl
    TOKENS
 ══════════════════════════════════ */
 :root{
-  --bg:      #141414;
-  --bg2:     #1c1c1c;
-  --bg3:     #252525;
-  --bg4:     #2e2e2e;
+  --bg:      #0a0a0a;
+  --bg2:     #131313;
+  --bg3:     #1e1e1e;
+  --bg4:     #272727;
   --border:  rgba(255,255,255,0.07);
   --border2: rgba(255,255,255,0.13);
   --text:    #e4e4e4;
@@ -82,6 +82,10 @@ const CONTRATO_PLANTILLA_B64 = "UEsDBBQAAAAIAGqV+Vyffx2JrwEAAPwHAAATAAAAW0NvbnRl
   --orange-p:rgba(237,137,54,.15);
   --purple:  #9f7aea;
   --purple-p:rgba(159,122,234,.15);
+  --teal:    #38b2ac;
+  --teal-p:  rgba(56,178,172,.15);
+  --pink:    #ed64a6;
+  --pink-p:  rgba(237,100,166,.15);
   --ia-glow: #f2ea02;
   --ia-glow-d: #cfc900;
   --font:'Inter',sans-serif;
@@ -113,6 +117,8 @@ body.light{
   --yellow-p:rgba(236,201,75,.12);
   --blue-p:  rgba(99,179,237,.12);
   --orange-p:rgba(237,137,54,.12);
+  --teal-p:  rgba(56,178,172,.12);
+  --pink-p:  rgba(237,100,166,.12);
   --shadow-sm: 0 1px 2px rgba(0,0,0,.05), 0 1px 1px rgba(0,0,0,.03);
   --shadow-md: 0 6px 20px rgba(0,0,0,.08), 0 1.5px 4px rgba(0,0,0,.05);
   --shadow-lg: 0 18px 48px rgba(0,0,0,.14), 0 4px 12px rgba(0,0,0,.07);
@@ -209,7 +215,7 @@ body{
 #notifPanel{box-shadow:var(--shadow-lg)!important}
 
 /* CONTENT AREA */
-.content{padding:24px 26px 64px;max-width:1520px}
+.content{padding:24px 26px 64px;width:100%;max-width:2200px;margin:0 auto}
 
 /* ── BUTTONS ── */
 .btn{
@@ -816,9 +822,9 @@ textarea.item-inp.item-desc-ta{
    toggleSidebar, toggleMobileSidebar), solo cambia su disposición visual. */
 .app-shell{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .sidebar{
-  width:100%;flex-shrink:0;background:var(--bg2);border-right:none;border-bottom:1px solid var(--border);
+  width:100%;flex-shrink:0;background:var(--bg2);border-right:none;border-bottom:none;
   display:flex;flex-direction:row;align-items:stretch;transition:none;overflow:hidden;
-  box-shadow:var(--shadow-sm);
+  box-shadow:var(--shadow-sm);margin-bottom:10px;
 }
 .sidebar.collapsed{width:100%}
 .sidebar-nav{
@@ -850,26 +856,33 @@ textarea.item-inp.item-desc-ta{
 .main-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
 
 /* ── BALANCE SUB-TABS (también usado por Comercial: misma apariencia, fijo arriba, alineado a la izquierda) ── */
-.bal-nav{display:flex;gap:2px;border-bottom:1px solid var(--border);background:var(--bg2);padding:0 20px;flex-shrink:0}
-.bal-tab{padding:0 16px;height:42px;border:none;background:transparent;font-family:var(--font);
-  font-size:12.5px;font-weight:500;color:var(--text3);cursor:pointer;position:relative;
-  display:flex;align-items:center;gap:6px;transition:color .15s;white-space:nowrap}
-.bal-tab:hover{color:var(--text)}
-.bal-tab.active{color:var(--white)}
-.bal-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);border-radius:2px 2px 0 0}
-.bal-tab svg{width:12px;height:12px;flex-shrink:0}
+.bal-nav{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);background:var(--bg2);padding:10px 20px;flex-shrink:0}
+.bal-tab{padding:8px 16px;height:auto;border:none;background:transparent;font-family:var(--font);
+  border-radius:999px;
+  font-size:12.5px;font-weight:600;color:var(--text3);cursor:pointer;position:relative;
+  display:flex;align-items:center;gap:6px;transition:background .15s,color .15s;white-space:nowrap}
+.bal-tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.bal-tab.active{color:var(--white);background:var(--bg3);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.bal-tab svg{width:13px;height:13px;flex-shrink:0;stroke-width:1.7}
 /* ── Colores distintivos para el submenú de Comercial (Cotizaciones=azul,
    OC Clientes=naranja, Facturas=verde), reflejando el flujo Cotización → OC
-   → Factura. Solo cambia color de ícono/texto activo y el subrayado. ── */
+   → Factura. Solo cambia color de ícono/texto activo y el fondo de la píldora. ── */
 .bal-tab.tab-accent-blue svg{color:var(--blue)}
 .bal-tab.tab-accent-orange svg{color:#f0a94e}
 .bal-tab.tab-accent-green svg{color:var(--green)}
-.bal-tab.tab-accent-blue.active{color:var(--blue)}
-.bal-tab.tab-accent-orange.active{color:#f0a94e}
-.bal-tab.tab-accent-green.active{color:var(--green)}
-.bal-tab.tab-accent-blue.active::after{background:var(--blue)}
-.bal-tab.tab-accent-orange.active::after{background:#f0a94e}
-.bal-tab.tab-accent-green.active::after{background:var(--green)}
+.bal-tab.tab-accent-blue.active{color:var(--blue);background:var(--blue-p)}
+.bal-tab.tab-accent-orange.active{color:#f0a94e;background:var(--orange-p)}
+.bal-tab.tab-accent-green.active{color:var(--green);background:var(--green-p)}
+.bal-tab.tab-accent-purple svg{color:var(--purple)}
+.bal-tab.tab-accent-purple.active{color:var(--purple);background:var(--purple-p)}
+.bal-tab.tab-accent-yellow svg{color:var(--yellow)}
+.bal-tab.tab-accent-yellow.active{color:var(--yellow);background:var(--yellow-p)}
+.bal-tab.tab-accent-red svg{color:var(--red)}
+.bal-tab.tab-accent-red.active{color:var(--red);background:var(--red-p)}
+.bal-tab.tab-accent-teal svg{color:var(--teal)}
+.bal-tab.tab-accent-teal.active{color:var(--teal);background:var(--teal-p)}
+.bal-tab.tab-accent-pink svg{color:var(--pink)}
+.bal-tab.tab-accent-pink.active{color:var(--pink);background:var(--pink-p)}
 /* Insignia numérica de "pendientes" sobre cada pestaña del submenú de Comercial */
 .bal-tab-badge{
   display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;
@@ -991,7 +1004,7 @@ textarea.item-inp.item-desc-ta{
   }
   .sidebar-nav{padding:6px 10px}
   .sidebar-item{justify-content:flex-start;padding:8px 12px;font-size:12px}
-  .bal-nav{padding:0 8px;overflow-x:auto}
+  .bal-nav{padding:8px 8px;overflow-x:auto}
   .bal-tab{padding:0 10px}
 }
 @media(max-width:700px){
@@ -1191,15 +1204,15 @@ textarea.item-inp.item-desc-ta{
 
       <!-- SUB-TABS DE BALANCE: Dashboard, Ingresos, Salidas (mismo diseño, fijo arriba) -->
       <nav class="bal-nav" id="balanceSubNav" style="display:none">
-        <button class="bal-tab active" id="balDashBtn" onclick="switchBalTab('dash')">
+        <button class="bal-tab active tab-accent-blue" id="balDashBtn" onclick="switchBalTab('dash')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
           Dashboard
         </button>
-        <button class="bal-tab" id="balIngBtn" onclick="switchBalTab('ing')">
+        <button class="bal-tab tab-accent-green" id="balIngBtn" onclick="switchBalTab('ing')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 13V3M4 7l4-4 4 4"/></svg>
           Ingresos
         </button>
-        <button class="bal-tab" id="balGasBtn" onclick="switchBalTab('gas')">
+        <button class="bal-tab tab-accent-red" id="balGasBtn" onclick="switchBalTab('gas')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M4 9l4 4 4-4"/></svg>
           Salidas
         </button>
@@ -1207,27 +1220,27 @@ textarea.item-inp.item-desc-ta{
 
       <!-- SUB-TABS DE EMPLEADOS: Personal, Nóminas, Asistencia, Rostros, Documentación (mismo diseño, fijo arriba) -->
       <nav class="bal-nav" id="empleadosSubNav" style="display:none">
-        <button class="bal-tab active" id="empPersonalBtn" onclick="switchEmpSubTab('personal')">
+        <button class="bal-tab active tab-accent-blue" id="empPersonalBtn" onclick="switchEmpSubTab('personal')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
           Personal
         </button>
-        <button class="bal-tab" id="empContratosBtn" onclick="switchEmpSubTab('contratos')">
+        <button class="bal-tab tab-accent-orange" id="empContratosBtn" onclick="switchEmpSubTab('contratos')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h6l3 3v10h-9z"/><path d="M10 1.5v3h3"/><path d="M5.8 9.3l1.4 1.4L10.4 7.5"/></svg>
           Contratos
         </button>
-        <button class="bal-tab" id="empNomBtn" onclick="switchEmpSubTab('nom')">
+        <button class="bal-tab tab-accent-green" id="empNomBtn" onclick="switchEmpSubTab('nom')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M11 8.5c1.8.3 3 1.8 3 3.3"/></svg>
           Nóminas
         </button>
-        <button class="bal-tab" id="empAsisBtn" onclick="switchEmpSubTab('asis')">
+        <button class="bal-tab tab-accent-purple" id="empAsisBtn" onclick="switchEmpSubTab('asis')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>
           Asistencia
         </button>
-        <button class="bal-tab" id="empRostrosBtn" onclick="switchEmpSubTab('rostros')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2.5"/><circle cx="8" cy="7" r="2"/><path d="M4.5 12.5c.7-1.8 2-2.7 3.5-2.7s2.8.9 3.5 2.7"/></svg>
+        <button class="bal-tab tab-accent-pink" id="empRostrosBtn" onclick="switchEmpSubTab('rostros')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="3"/><circle cx="6" cy="7" r="1"/><circle cx="10" cy="7" r="1"/><path d="M5.5 10.5c.7.8 1.6 1.2 2.5 1.2s1.8-.4 2.5-1.2"/></svg>
           Rostros
         </button>
-        <button class="bal-tab" id="empDocBtn" onclick="switchEmpSubTab('doc')">
+        <button class="bal-tab tab-accent-teal" id="empDocBtn" onclick="switchEmpSubTab('doc')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h6l3 3v10h-9z"/><path d="M10 1.5v3h3M5.5 8h5M5.5 10.5h5"/></svg>
           Documentación
         </button>
@@ -1235,79 +1248,79 @@ textarea.item-inp.item-desc-ta{
 
       <!-- SUB-TABS DE SISTEMAS: Clientes, Artículos, Contraseñas (mismo diseño, fijo arriba) -->
       <nav class="bal-nav" id="sistemasSubNav" style="display:none">
-        <button class="bal-tab active" id="sisClientesBtn" onclick="switchSistemasSubTab('clientes')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
+        <button class="bal-tab active tab-accent-blue" id="sisClientesBtn" onclick="switchSistemasSubTab('clientes')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 6h11v7a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z"/><path d="M6 6V4.3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6"/></svg>
           Clientes
         </button>
-        <button class="bal-tab" id="sisArticulosBtn" onclick="switchSistemasSubTab('articulos')">
+        <button class="bal-tab tab-accent-orange" id="sisArticulosBtn" onclick="switchSistemasSubTab('articulos')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
           Artículos
         </button>
-        <button class="bal-tab" id="sisProveedoresBtn" onclick="switchSistemasSubTab('proveedores')">
+        <button class="bal-tab tab-accent-green" id="sisProveedoresBtn" onclick="switchSistemasSubTab('proveedores')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6.5l1.5-3h9l1.5 3M2 6.5v6h12v-6M2 6.5h12M5.5 9.5h1.5M5.5 12h5"/></svg>
           Proveedores
         </button>
-        <button class="bal-tab" id="sisContactosBtn" onclick="switchSistemasSubTab('contactos')">
+        <button class="bal-tab tab-accent-purple" id="sisContactosBtn" onclick="switchSistemasSubTab('contactos')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="2.4"/><path d="M4 13.5c0-2.5 1.8-4.2 4-4.2s4 1.7 4 4.2"/></svg>
           Contactos
         </button>
-        <button class="bal-tab" id="sisContrasenasBtn" onclick="switchSistemasSubTab('contrasenas')">
+        <button class="bal-tab tab-accent-red" id="sisContrasenasBtn" onclick="switchSistemasSubTab('contrasenas')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
           Contraseñas
         </button>
-        <button class="bal-tab" id="sisUsuariosBtn" onclick="switchSistemasSubTab('usuarios')">
+        <button class="bal-tab tab-accent-pink" id="sisUsuariosBtn" onclick="switchSistemasSubTab('usuarios')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.2"/><path d="M2 13c0-2.3 1.8-4 4-4s4 1.7 4 4"/><circle cx="12.2" cy="5.5" r="1.7"/><path d="M10.7 9.3c1.7.2 3 1.6 3 3.7"/></svg>
           Usuarios
         </button>
-        <button class="bal-tab" id="sisReportesBtn" onclick="switchSistemasSubTab('reportes')">
+        <button class="bal-tab tab-accent-teal" id="sisReportesBtn" onclick="switchSistemasSubTab('reportes')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1.2"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg>
           Reportes
         </button>
-        <button class="bal-tab" id="sisAutosBtn" onclick="switchSistemasSubTab('autos')">
+        <button class="bal-tab tab-accent-yellow" id="sisAutosBtn" onclick="switchSistemasSubTab('autos')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 10.5l1.2-4.2a1.5 1.5 0 0 1 1.44-1.1h5.72a1.5 1.5 0 0 1 1.44 1.1l1.2 4.2"/><rect x="1.8" y="10.5" width="12.4" height="3" rx="1"/><circle cx="4.3" cy="13.3" r="1.1"/><circle cx="11.7" cy="13.3" r="1.1"/></svg>
           Autos
         </button>
-        <button class="bal-tab" id="sisPlantillasBtn" onclick="switchSistemasSubTab('plantillas')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1.2"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h2.5"/></svg>
+        <button class="bal-tab tab-accent-blue" id="sisPlantillasBtn" onclick="switchSistemasSubTab('plantillas')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
           Plantillas
         </button>
       </nav>
 
       <!-- SUB-TABS DE CENTRO FINANCIERO: Dashboard, Acreedores, Cronograma, Timeline, Historial -->
       <nav class="bal-nav" id="finSubNav" style="display:none">
-        <button class="bal-tab active" id="finDashBtn" onclick="switchFinSubTab('dash')">
+        <button class="bal-tab active tab-accent-blue" id="finDashBtn" onclick="switchFinSubTab('dash')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
           Dashboard
         </button>
-        <button class="bal-tab" id="finAcreedoresBtn" onclick="switchFinSubTab('acreedores')">
+        <button class="bal-tab tab-accent-orange" id="finAcreedoresBtn" onclick="switchFinSubTab('acreedores')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.3"/><path d="M1.8 13c0-2.4 1.6-4 3.7-4s3.7 1.6 3.7 4"/><circle cx="11.5" cy="6" r="1.8"/><path d="M9.7 9.3c1.7.2 3 1.5 3.3 3.2"/></svg>
           Acreedores
         </button>
-        <button class="bal-tab" id="finSimBtn" onclick="switchFinSubTab('sim')">
+        <button class="bal-tab tab-accent-purple" id="finSimBtn" onclick="switchFinSubTab('sim')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13V9M8 13V5M13 13v-6"/><path d="M2 4l4 3 3-2 5 3"/></svg>
           Simulador
         </button>
-        <button class="bal-tab" id="finAlertasBtn" onclick="switchFinSubTab('alertas')">
+        <button class="bal-tab tab-accent-yellow" id="finAlertasBtn" onclick="switchFinSubTab('alertas')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L1.5 13.5h13z"/><path d="M8 6.5v3.2M8 11.5v.1"/></svg>
           Alertas
         </button>
-        <button class="bal-tab" id="finObjBtn" onclick="switchFinSubTab('objetivos')">
+        <button class="bal-tab tab-accent-green" id="finObjBtn" onclick="switchFinSubTab('objetivos')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.6"/></svg>
           Objetivos
         </button>
-        <button class="bal-tab" id="finProyBtn" onclick="switchFinSubTab('proy')">
+        <button class="bal-tab tab-accent-teal" id="finProyBtn" onclick="switchFinSubTab('proy')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13.5L6 8l3 2.5L14 4"/><path d="M10.5 4H14v3.5"/></svg>
           Proyecciones
         </button>
-        <button class="bal-tab" id="finCronoBtn" onclick="switchFinSubTab('crono')">
+        <button class="bal-tab tab-accent-pink" id="finCronoBtn" onclick="switchFinSubTab('crono')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
           Cronograma
         </button>
-        <button class="bal-tab" id="finTimelineBtn" onclick="switchFinSubTab('timeline')">
+        <button class="bal-tab tab-accent-red" id="finTimelineBtn" onclick="switchFinSubTab('timeline')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h7M2 8h10M2 12h4"/></svg>
           Timeline
         </button>
-        <button class="bal-tab" id="finHistBtn" onclick="switchFinSubTab('hist')">
+        <button class="bal-tab tab-accent-blue" id="finHistBtn" onclick="switchFinSubTab('hist')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>
           Historial
         </button>
