@@ -1813,6 +1813,7 @@ textarea.item-inp.item-desc-ta{
           <div class="card-header">
             <span class="card-title">Contratos — historial completo</span>
             <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="ctrCount">0</span>
+            <button class="btn btn-red btn-sm" style="margin-left:auto" onclick="abrirSelectorEmpleadoContrato()">📄 Generar Contrato</button>
           </div>
           <div class="cot-table-wrap">
             <table class="fac-table">
@@ -2816,6 +2817,34 @@ textarea.item-inp.item-desc-ta{
   </div>
 </div>
 
+    <!-- ══ MODAL: SELECCIONAR EMPLEADO (botón "Generar Contrato" de la subvista Contratos) ══
+         Solo aplica cuando se entra al flujo desde el listado global (sin empleado en contexto).
+         Al continuar, delega en abrirModalContrato(idEmpleado), el mismo paso 1 que usa el
+         botón de la ficha del empleado. -->
+    <div class="modal-bg" id="contratoElegirEmpleadoModal">
+      <div class="modal-lg" style="width:420px">
+        <div class="mlg-head">
+          <div>
+            <div class="mlg-title">Generar Contrato</div>
+            <div class="mlg-sub">Selecciona el empleado</div>
+          </div>
+          <button class="close-x" onclick="cerrarSelectorEmpleadoContrato()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+        <div class="mlg-body" style="padding:18px 22px">
+          <div class="form-group full">
+            <label class="form-label">Empleado *</label>
+            <select class="form-select" id="ctrEmpleadoSelect"></select>
+          </div>
+        </div>
+        <div class="mlg-foot">
+          <button class="btn btn-ghost btn-sm" onclick="cerrarSelectorEmpleadoContrato()">Cancelar</button>
+          <button class="btn btn-red btn-sm" onclick="continuarContratoDesdeSelector()">Continuar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ MODAL: DURACIÓN DEL CONTRATO (Módulo Contratos, paso 1) ══ -->
     <div class="modal-bg" id="contratoDuracionModal">
       <div class="modal-lg" style="width:460px">
@@ -2829,15 +2858,13 @@ textarea.item-inp.item-desc-ta{
           </button>
         </div>
         <div class="mlg-body" style="padding:18px 22px">
-          <div style="font-size:12px;color:var(--text3);margin-bottom:12px">
-            Fecha de inicio del nuevo contrato: <strong id="contratoFechaInicioLabel">—</strong>
+          <div class="form-group full" style="margin-bottom:12px">
+            <label class="form-label">Fecha de inicio del contrato *</label>
+            <input type="date" class="form-input" id="cFechaInicio" onchange="actualizarResumenDuracion()">
+            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="cFechaInicioHint"></div>
           </div>
-          <div class="form-group full" id="cInicioEleccionWrap" style="display:none;margin-bottom:12px">
-            <label class="form-label">El contrato anterior sigue vigente. ¿Cuándo debe iniciar el nuevo contrato?</label>
-            <select class="form-select" id="cInicioModo" onchange="actualizarResumenDuracion()">
-              <option value="hoy">Iniciar hoy</option>
-              <option value="siguiente">Iniciar al día siguiente del vencimiento del contrato vigente</option>
-            </select>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px">
+            Fecha de inicio confirmada: <strong id="contratoFechaInicioLabel">—</strong>
           </div>
           <div class="form-grid" style="margin-bottom:4px">
             <div class="form-group full">
@@ -12349,7 +12376,9 @@ const PLANTILLA_VARS = {
     {tag:'Nombre', label:'Nombre'},
     {tag:'EstadoCivil', label:'Estado civil'},
     {tag:'Direccion', label:'Dirección'},
+    {tag:'Puesto', label:'Puesto'},
     {tag:'DuracionContrato', label:'Duración'},
+    {tag:'FechaInicioContrato', label:'Fecha de inicio'},
     {tag:'DiaContrato', label:'Día'},
     {tag:'MesContrato', label:'Mes'},
     {tag:'AnioContrato', label:'Año'},
@@ -12371,7 +12400,7 @@ const PLANTILLA_VARS = {
    guarde algo, ese valor guardado tiene prioridad (ver renderPlantillasView y
    openPlantillaModal más abajo, que ya hacen ese fallback). */
 const PLANTILLA_DEFAULT_TEXTO = {
-  contrato: "CONTRATO INDIVIDUAL DE TRABAJO POR {{DuracionContrato}}\n\nEn la ciudad de M\u00e9rida Yucat\u00e1n al d\u00eda {{DiaContrato}} del mes de {{MesContrato}} del a\u00f1o {{AnioContrato}}. Los que suscribimos el presente a saber en calidad de persona moral denominada CONSTRUCTORA CONECTE bajo el r\u00e9gimen de sociedad de responsabilidad limitada de capital variable, representada por los ciudadanos JOSUE BERNABE FLORES VALENCIA  y BERNABE FLORES PUCH, quienes en el curso del presente contrato se manifiestan y denominan PATRONES, y por la otra parte el ciudadano: {{Nombre}}, por su propio derecho y con plena capacidad de sus facultades se denomina TRABAJADOR, se hace constar y se manifiesta que de acuerdo al valor legal del presente ocurso se ha convenido celebrar un contrato individual de trabajo por tiempo indeterminado al tenor de las siguientes:\nCLAUSULAS\nPRIMERA: Para efectos de los preceptos legales aplicables de la LEY FEDERAL DEL TRABAJO los ciudadanos JOSUE BERNABE FLORES VALENCIA y BERNABE FLORES PUCH declaran que su representada es una sociedad mexicana dedicada a la construcci\u00f3n industrial, trabajos de electricidad, trabajos de limpieza en general, trabajos de alba\u00f1iler\u00eda, trabajo de herrer\u00eda, servicio y mantenimiento de aires acondicionados, entre otros diversos trabajos relacionados. El trabajador declara llamarse {{Nombre}}, de estado civil {{EstadoCivil}} y con domicilio {{Direccion}}.\nSEGUNDA: El trabajador se obliga a prestar sus servicios personales a los patrones JOSUE BERNABE FLORES VALENCIA y BERNABE FLORES PUCH, por ende, se entiende que tambi\u00e9n estar\u00e1 obligado a prestar sus servicios personales a la empresa CONSTRUCTORA CONECTE. El trabajador desempe\u00f1ar\u00e1 sus funciones laborales con esmero, eficiencia, responsabilidad, \u00e9tica, diciplina, respeto y efectividad. Es importante se\u00f1alar que el desempe\u00f1o de las funciones del trabajador acatar\u00e1 las normas y disposiciones del reglamento interno de la empresa CONSTRUCTORA CONECTE, TODAS LAS ORDENES, CIRCULARES,  DISPOCICIONES QUE DICTE EL PATRON Y TODOS LAS DISPOCICIONES LEGALES APLICABLES.\nTERCERA: El trabajador deber\u00e1 ejecutar su trabajo en las oficinas, talleres y en cualquier lugar de la ciudad donde el patr\u00f3n desempe\u00f1e sus actividades laborales.\nCUARTA: Este contrato se celebra por {{DuracionContrato}} \nQUINTA: El trabajador percibir\u00e1, por la prestaci\u00f3n a los servicios que refiere este contrato. Un salario por la cantidad de {{SalarioTexto}} el cual ser\u00e1 pagado al trabajador mediante dep\u00f3sito de transferencia bancaria o mediante el pago otorgado en efectivo, el salario se le cubrir\u00e1 los d\u00edas viernes de cada semana laboral o lo cual el trabajador deber\u00e1 firmar en conformidad el recibo de n\u00f3mina y aparte un recibo externo en el cual indique que no hay adeudo alguno ni de ning\u00fan tipo por parte del patr\u00f3n.  El pago se realizar\u00e1 en las oficinas del patr\u00f3n, en el taller, o en donde el patr\u00f3n realice sus actividades laborales.\nSEXTA: La duraci\u00f3n de la jornada laboral ser\u00e1 establecida por la empresa, la cual ser\u00e1 determinada mediante la exigencia, carga de trabajo y las necesidades operativas. Este horario podr\u00e1 ser modificado por la empresa previa notificaci\u00f3n al trabajador GARANTIZANDO EN TODO MOMENTO EL CUMPLIMIENTO MAXIMO DE LA JORNADA LABORAL ESTABLECIDA EN LA LEY FEDERAL DEL TRABAJO. \nSEPTIMA: Cuando por circunstancias extraordinarias se exceda la jornada de trabajo, los servicios prestados durante el tiempo excedente se considerar\u00e1n como extraordinarios y se pagar\u00e1n en raz\u00f3n de un porcentaje externo al salario base establecido por la empresa. Siguiendo el mismo ordenamiento de ideas, el trabajador no estar\u00e1 autorizado a trabajar horas extras a excepci\u00f3n de que sea por orden, mandamiento o necesidad del patr\u00f3n. De igual manera se menciona que en dada circunstancia de haber bonos, estos se pagaran los d\u00edas s\u00e1bados de cada semana en efectivo.  \nOCTAVA: El d\u00eda de pago del salario queda sujeto a modificaciones UNICAMENTE POR EL MOTIVO de razones operativas y administrativas, es decir, en caso de retraso o cambio, la empresa se compromete a realizar el pago del salario correspondiente dentro de la misma semana laboral sin exceder el tiempo del periodo establecido \nNOVENA: Por cada semana laboral el trabajador tendr\u00e1 derecho a un d\u00eda de descanso, el cual ser\u00e1 asignado por la Empresa con base a las necesidades de esta. Este d\u00eda podr\u00e1 ser modificado notificando previamente al trabajador.\nDECIMA: El trabajador despu\u00e9s de un a\u00f1o de servicios continuos disfrutar\u00e1 de un periodo anual de vacaciones pagadas. En dado caso de que el trabajador se ausente a ejecutar sus funciones laborales, este deber\u00e1 informar oportunamente o en circunstancias mayores de enfermedad o incapacidad deber\u00e1 informar lo antes posible.\nDECIMA PRIMERA: El trabajador percibir\u00e1 un aguinaldo anual que deber\u00e1 pagarse antes del 20 de diciembre\nDECIMA SEGUNDA: El trabajador compromete a someterse a todos los ex\u00e1menes o reconocimientos m\u00e9dicos que peri\u00f3dicamente ordene el patr\u00f3n \nDECIMA TERCERA: El trabajador recibir\u00e1 la adecuada capacitaci\u00f3n y adiestramiento, as\u00ed como todos los materiales, herramientas y equipo de seguridad que sean necesarias para que ejecute de manera efectiva su trabajo.\nDECIMA CUARTA: Las partes convienen en que se regir\u00e1n tanto obligaciones como derechos todo aquello establecido en este contrato.\nLEIDO QUE FUE EL PRESENTE CONTRATO POR LAS PARTES, E IMPUESTAS POR SU CONTENIDO Y FIRMEZA LEGAL, LO FIRMARON, QUEDANDO UN TANTO EN PODER DE CADA UNA DE LAS MISMAS  ",
+  contrato: "CONTRATO INDIVIDUAL DE TRABAJO POR {{DuracionContrato}}\n\nContrato individual de trabajo que celebran, por una parte, Constructora Conecte, S. de R.L. de C.V., y por la otra, el señor {{Nombre}}, quienes en lo sucesivo y para efectos de brevedad se denominarán \"la empresa\" y \"el trabajador\", respectivamente, al tenor de las siguientes:\n\nDECLARACIONES\n\nI. La empresa declara ser una sociedad constituida conforme a las leyes mexicanas, tener su domicilio en calle 109-B número 610, por 66 y 66-A, colonia Obrera, Mérida, Yucatán, código postal 97260, y pertenecer a la rama industrial de la construcción.\n\nII. Por su parte, el trabajador declara llamarse {{Nombre}}, ser de nacionalidad mexicana, de estado civil {{EstadoCivil}}, tener su domicilio en {{Direccion}}, y contar con las capacidades necesarias requeridas por la empresa para desempeñar el puesto que se le ha asignado.\n\nCLÁUSULAS\n\nPRIMERA. Lugar de prestación de servicios.\nEl trabajador se obliga a prestar sus servicios personales a la empresa en el domicilio señalado en la declaración I del presente contrato, o en el lugar que al efecto se le indique, en el entendido de que, por la naturaleza de las actividades de la empresa, el trabajador se obliga a prestar sus servicios en los locales y ubicaciones de los diversos clientes de la empresa que se requieran, quedando convenido que la empresa avisará al trabajador con un día de anticipación, cuando menos, de cualquier cambio de ubicación para la prestación de sus servicios.\n\nSEGUNDA. Puesto.\nPor este contrato, el trabajador prestará sus servicios personales subordinados, desempeñando el puesto de {{Puesto}}, con eficiencia y responsabilidad, desarrollando las actividades propias que le correspondan bajo la dirección y vigilancia de los representantes legítimos de la empresa, a quienes queda subordinado; asimismo, se compromete a prestar sus servicios en cualquier otra labor del mismo género de las que forman el objeto de la empresa, cuando las necesidades de su buen funcionamiento así lo requieran.\n\nTERCERA. Capacidad y obligaciones del trabajador.\nEl trabajador declara tener las capacidades, aptitudes, facultades y habilidades necesarias para desempeñar eficientemente el trabajo que se le encomienda, y se obliga a cumplir con todas y cada una de las obligaciones propias de su puesto de trabajo, así como las que sean conexas o se deriven de estas, y con las órdenes que reciba de la empresa respecto de unas y otras. Asimismo, se obliga a cumplir con las obligaciones que se le imponen en este contrato, en el Reglamento Interior de Trabajo vigente en la empresa, del cual ha recibido un ejemplar, y en las disposiciones legales que le sean aplicables, así como con las normas de orden técnico y administrativo que dicte la empresa para mejorar el desempeño de las labores.\n\nCUARTA. Lugar de trabajo.\nEl trabajador prestará sus servicios en el establecimiento de la empresa ubicado en el domicilio señalado en la declaración I de este contrato, así como en cualesquiera otros establecimientos que en el futuro tuviere la empresa en el estado de Yucatán, o en los locales de los clientes de la empresa, dada la naturaleza de los servicios que presta, conviniendo desde ahora en acatar las órdenes de la empresa respecto a los cambios de establecimiento las veces que le sean indicadas, cuando la naturaleza del trabajo contratado lo requiera, en los demás lugares que le sean señalados en cada caso por la empresa.\n\nQUINTA. Duración.\nLa relación laboral que establece este contrato inicia a partir del {{FechaInicioContrato}}, y es por tiempo indeterminado.\n\nSEXTA. Jornada de trabajo.\nLa jornada ordinaria de trabajo se computará semanalmente y tendrá una duración de 48 horas en jornada diurna, 45 horas en jornada mixta y 42 horas en jornada nocturna, distribuidas en seis días de trabajo. Las partes convienen, en términos del artículo 59 de la Ley Federal del Trabajo, en que, atendiendo a las necesidades y posibilidades operativas de la empresa y de sus clientes, esta queda autorizada para distribuir la jornada de trabajo entre los días de la semana, sin que pueda exceder de seis días laborales, así como para fijar los turnos de trabajo y las horas de entrada y salida correspondientes, pudiendo modificar dichas distribuciones, turnos y horarios en cualquier momento mediante simple aviso al trabajador, con una anticipación mínima de 24 horas, para lo cual el trabajador otorga desde ahora su consentimiento. Los turnos de trabajo podrán ser fijos, alternados o rotatorios, así como continuos o divididos en dos o más periodos, conforme a las necesidades del servicio.\n\nSÉPTIMA. Distribución de la jornada semanal.\nCuando la empresa lo estime necesario o conveniente, podrá distribuir la jornada semanal en un número menor de días laborales, a fin de permitir al trabajador disfrutar de más de un día completo de descanso, sin que ello implique en momento alguno la renuncia a los derechos que le corresponden conforme a la distribución en seis días, cuando así lo decida la empresa, para lo cual el trabajador otorga desde ahora su consentimiento.\n\nOCTAVA. Día de descanso.\nPor cada seis días laborales, el trabajador tendrá derecho a un día de descanso con goce de salario íntegro. Si en la semana laboral el trabajador trabaja menos de seis días, el pago del día de descanso se hará de forma proporcional a los días laborados. En caso de haberse establecido una jornada semanal distribuida de manera que el descanso sea de más de un día, la inasistencia en un día laborable se computará como falta el día de que se trate, así como en la proporción correspondiente del día de descanso que le siga.\n\nNOVENA. Registro de asistencia.\nEs obligación del trabajador registrar diariamente sus entradas y salidas de la empresa. En caso de que olvide hacerlo, deberá notificarlo de inmediato a su supervisor, para evitar que se le compute como falta; de no hacerlo, se le tendrá por falta automática, conviniendo en que la lista de asistencia hará prueba de sus faltas para efectos del descuento correspondiente en su salario. Asimismo, deberá presentarse a laborar de acuerdo con los horarios señalados; en caso de retardo, la empresa podrá negarle la entrada al trabajo, y si decide admitirlo, únicamente le cubrirá el tiempo efectivamente laborado, a juicio de la empresa, sin que ello constituya costumbre u obligación para esta. En los casos en que sea posible, el trabajador podrá recuperar, al final de su jornada, el tiempo en que se hubiere presentado con retardo a sus labores. El trabajador se obliga a suscribir el reporte semanal de sus entradas y salidas registradas.\n\nDÉCIMA. Salario.\nLa empresa retribuirá los servicios del trabajador con un salario de {{SalarioTexto}}, que se pagará en moneda nacional en el centro de trabajo, en los días que la propia empresa señale, sin que el plazo para el pago pueda exceder de una semana.\n\nDÉCIMA PRIMERA. Vacaciones.\nEl trabajador tendrá derecho a un período de vacaciones conforme a lo dispuesto por el artículo 76 y demás relativos de la Ley Federal del Trabajo, así como a la prima vacacional correspondiente en términos del artículo 80 de dicho ordenamiento.\n\nDÉCIMA SEGUNDA. Días de descanso obligatorio.\nEl trabajador disfrutará de los días de descanso obligatorio señalados en el artículo 74 de la Ley Federal del Trabajo. Si por necesidades de la empresa se requieren los servicios del trabajador en día de descanso obligatorio o en tiempo extraordinario, la empresa cubrirá el salario correspondiente en los términos previstos por los artículos 67, 68 y 73 de la Ley Federal del Trabajo. En cualquiera de los casos, el trabajador no podrá laborar en días de descanso obligatorio ni en tiempo extraordinario, sino mediante orden de la empresa.\n\nDÉCIMA TERCERA. Capacitación y adiestramiento.\nLa empresa proporcionará al trabajador capacitación y adiestramiento conforme a los planes y programas que, en términos de la ley, estuvieren vigentes en la propia empresa, obligándose el trabajador a asistir a los eventos que para tal fin se le señalen. Cuando por cualquier causa la capacitación y el adiestramiento deban proporcionarse fuera de las horas de labor, la asistencia del trabajador a dichos eventos no implicará obligación alguna para la empresa de pago de salario o compensación.\n\nDÉCIMA CUARTA. Aguinaldo.\nEl trabajador tendrá derecho a un aguinaldo anual, que deberá pagarse antes del día 20 de diciembre, equivalente a siete días de salario. Al trabajador que no haya cumplido el año de servicio se le pagará en proporción al tiempo laborado.\n\nDÉCIMA QUINTA. Causas de rescisión.\nSon causas de rescisión de la relación laboral derivada del presente contrato, sin responsabilidad para la empresa, las señaladas en el artículo 47 de la Ley Federal del Trabajo y, en particular, las siguientes: cuando la conducta del trabajador sea grave o escandalosa, tanto dentro como fuera de las instalaciones de la empresa; cuando el trabajador denigre a la empresa o dañe su imagen o reputación; por incumplimiento injustificado, por parte del trabajador, del Reglamento Interior de Trabajo de la empresa; por no respetar el horario de trabajo; por no cumplir con las responsabilidades que le sean asignadas; y cuando el trabajador se presente en estado de ebriedad o bajo el influjo de sustancias, dentro o fuera de las instalaciones de la empresa.\n\nDÉCIMA SEXTA. Legislación aplicable.\nEn todo lo no previsto expresamente en este contrato, se estará a lo dispuesto por el Reglamento Interior de Trabajo vigente en la empresa, por la Ley Federal del Trabajo y demás ordenamientos legales aplicables.\n\nLeído que fue el presente contrato, e impuestas las partes de su contenido y fuerza legal, lo firman por triplicado en la ciudad de Mérida, Yucatán, a los {{DiaContrato}} días del mes de {{MesContrato}} de {{AnioContrato}}.",
   reglamento: "REGLAMENTO INTERNO DE TRABAJO\nCONSTRUCTORA CONECTE\nCap\u00edtulo I. Disposiciones generales\nArt\u00edculo 1. Objetivo\nEl presente reglamento tiene como objetivo establecer las normas de conducta, disciplina, seguridad y operaci\u00f3n que deber\u00e1n observar todos los colaboradores de Constructora Conecte, con el fin de garantizar un ambiente de trabajo seguro, ordenado, productivo y respetuoso.\nArt\u00edculo 2. Alcance\nEste reglamento es aplicable a todo el personal, sin distinci\u00f3n de puesto, antig\u00fcedad o tipo de contrataci\u00f3n.\nCap\u00edtulo II. Horarios y asistencia\nArt\u00edculo 3\nTodo el personal deber\u00e1 presentarse puntualmente en el lugar y horario asignados.\nArt\u00edculo 4\nToda ausencia o retardo deber\u00e1 ser notificado al supervisor o al \u00e1rea administrativa a la brevedad posible.\nArt\u00edculo 5\nTres retardos injustificados en un per\u00edodo de treinta d\u00edas podr\u00e1n dar lugar a una amonestaci\u00f3n escrita.\nCap\u00edtulo III. Respeto y conducta\nArt\u00edculo 6\nTodo el personal deber\u00e1 mantener un trato respetuoso hacia compa\u00f1eros, clientes, proveedores y superiores.\nArt\u00edculo 7\nLas comunicaciones deber\u00e1n realizarse con lenguaje profesional y cort\u00e9s.\nArt\u00edculo 8\nQueda prohibido cualquier acto de violencia, acoso, discriminaci\u00f3n, insultos, amenazas o conductas que afecten el ambiente laboral.\nCap\u00edtulo IV. Uniforme y equipo de protecci\u00f3n personal\nArt\u00edculo 9\nEs obligatorio el uso del uniforme y del equipo de protecci\u00f3n personal (EPP) proporcionado por la empresa, de acuerdo con la actividad a realizar.\nArt\u00edculo 10\nEl personal es responsable del cuidado, conservaci\u00f3n y devoluci\u00f3n del equipo, herramientas y uniformes que le sean asignados.\nCap\u00edtulo V. Herramientas, equipos y veh\u00edculos\nArt\u00edculo 11\nLas herramientas, maquinaria, veh\u00edculos y equipos son propiedad de la empresa y deber\u00e1n utilizarse \u00fanicamente para actividades laborales autorizadas.\nArt\u00edculo 12\nTodo da\u00f1o, p\u00e9rdida o falla deber\u00e1 reportarse inmediatamente al supervisor de obra o al \u00e1rea administrativa.\nCap\u00edtulo VI. Seguridad e higiene\nArt\u00edculo 13\nNing\u00fan colaborador podr\u00e1 realizar actividades de riesgo sin el equipo de protecci\u00f3n personal correspondiente.\nArt\u00edculo 14\nTodo accidente, incidente o condici\u00f3n insegura deber\u00e1 reportarse inmediatamente al supervisor.\nCap\u00edtulo VII. Uso de tel\u00e9fonos celulares\nArt\u00edculo 15\nEl uso de tel\u00e9fonos celulares durante la jornada laboral deber\u00e1 limitarse a asuntos de trabajo o emergencias.\nArt\u00edculo 16\nQueda prohibido utilizar el tel\u00e9fono celular mientras se opere maquinaria, herramientas, equipos o veh\u00edculos de la empresa.\nCap\u00edtulo VIII. Adelantos de n\u00f3mina\nArt\u00edculo 17\nLos adelantos de n\u00f3mina deber\u00e1n solicitarse al \u00e1rea administrativa para su revisi\u00f3n.\nArt\u00edculo 18\nEl monto m\u00e1ximo de adelanto ser\u00e1 de $400.00 por semana, salvo autorizaci\u00f3n expresa de la Direcci\u00f3n General.\nArt\u00edculo 19\nLa autorizaci\u00f3n de los adelantos estar\u00e1 sujeta a la disponibilidad financiera de la empresa y al cumplimiento de sus pol\u00edticas internas.\nCap\u00edtulo IX. Alcohol, tabaco y otras sustancias\nArt\u00edculo 20\nQueda estrictamente prohibido introducir, consumir o presentarse a laborar bajo los efectos de bebidas alcoh\u00f3licas, drogas o cualquier otra sustancia que altere las capacidades f\u00edsicas o mentales del colaborador.\nArt\u00edculo 21\nQueda estrictamente prohibido fumar o utilizar cigarrillos electr\u00f3nicos, vapeadores o dispositivos similares dentro de las oficinas, almacenes, talleres, veh\u00edculos, \u00e1reas de trabajo o cualquier otra instalaci\u00f3n de la empresa, salvo en las \u00e1reas expresamente autorizadas.\nArt\u00edculo 22\nEl incumplimiento de las disposiciones de este cap\u00edtulo ser\u00e1 considerado una falta grave y podr\u00e1 dar lugar a las medidas disciplinarias correspondientes.\nCap\u00edtulo X. Confidencialidad\nArt\u00edculo 23\nToda la informaci\u00f3n t\u00e9cnica, administrativa, financiera, comercial y de los clientes es confidencial y no podr\u00e1 divulgarse sin autorizaci\u00f3n de la Direcci\u00f3n General.\nCap\u00edtulo XI. Permanencia en las instalaciones\nArt\u00edculo 24\nUna vez concluida la jornada laboral, todo el personal deber\u00e1 retirarse de las instalaciones, salvo que cuente con autorizaci\u00f3n previa de la Direcci\u00f3n General o del responsable designado.\nArt\u00edculo 25\nPor razones de seguridad y control, no se permitir\u00e1 que el personal operativo permanezca en las oficinas despu\u00e9s de que el \u00faltimo colaborador del \u00e1rea administrativa haya concluido su jornada y abandonado las instalaciones.\nArt\u00edculo 26\nNing\u00fan colaborador podr\u00e1 utilizar las oficinas, \u00e1reas comunes, herramientas o equipos fuera del horario laboral sin la autorizaci\u00f3n correspondiente.\nCap\u00edtulo XII. Medidas disciplinarias\nArt\u00edculo 27\nEl incumplimiento de este reglamento podr\u00e1 dar lugar a:\n1. Llamado de atenci\u00f3n verbal.\n2. Amonestaci\u00f3n escrita.\n3. Suspensi\u00f3n, cuando proceda conforme a la legislaci\u00f3n aplicable.\n4. Terminaci\u00f3n de la relaci\u00f3n laboral en los casos previstos por la Ley Federal del Trabajo.\nCap\u00edtulo XIII. Disposiciones finales\nArt\u00edculo 28\nTodo el personal deber\u00e1 conocer y cumplir el presente reglamento.\nArt\u00edculo 29\nEl desconocimiento de este reglamento no exime a ning\u00fan colaborador de su cumplimiento.\nArt\u00edculo 30\nLos casos no previstos en este reglamento ser\u00e1n resueltos por la Direcci\u00f3n General, en apego a la Ley Federal del Trabajo y dem\u00e1s disposiciones aplicables.\nCarta de enterado\nYo, {{Nombre}}, manifiesto haber recibido, le\u00eddo y comprendido el presente Reglamento Interno de Trabajo de Constructora Conecte, comprometi\u00e9ndome a cumplirlo durante el desempe\u00f1o de mis funciones.",
 };
 
@@ -18632,45 +18661,32 @@ function estadoVigenciaContrato(contrato){
   if(dias<=30) return 'Proximo';
   return 'Vigente';
 }
-/* ── Fecha de inicio del NUEVO contrato a generar (corrección de renovaciones) ──
-   Reglas:
+/* ── Fecha de inicio del NUEVO contrato a generar ──
+   Reglas (ajuste solicitado):
    - Cada contrato nuevo es un registro independiente; el anterior nunca se
      modifica (solo se marca como "Renovado" en su columna de estado, sin
      tocar sus fechas ni su duración).
-   - Si es el primer contrato del empleado: la fecha de inicio es la fecha
-     de ingreso/alta del empleado (comportamiento original, sin cambios).
-   - Si ya existe un contrato "Activo" (renovación):
-       · Si ese contrato anterior ya VENCIÓ: la nueva fecha de inicio es la
-         fecha actual (fecha en que se genera la renovación).
-       · Si ese contrato anterior SIGUE VIGENTE (o es indefinido / próximo a
-         vencer): el usuario debe elegir si el nuevo contrato inicia hoy o
-         al día siguiente de la fecha de fin del contrato vigente.
-   En ningún caso se copia la Fecha de Inicio ni la duración del contrato
-   anterior: la fecha de inicio se recalcula aquí y la duración siempre se
-   vuelve a pedir en el modal (selector de Duración). */
+   - Si el empleado NO tiene contratos previos registrados: no se sugiere
+     ninguna fecha; el campo se muestra vacío para captura manual.
+   - Si el empleado YA tiene uno o más contratos registrados (se toma el más
+     reciente por fecha de generación, ignorando los Cancelados): se sugiere
+     como fecha de inicio el día siguiente a la fecha de vencimiento de ese
+     último contrato. Si ese último contrato es indefinido (sin fecha de
+     vencimiento), tampoco hay una fecha natural que sugerir y el campo
+     queda vacío.
+   - En TODOS los casos la fecha sugerida (o vacía) es solo un punto de
+     partida: el campo de fecha siempre queda editable y la fecha que se
+     use para generar el contrato es la que quede capturada en el input al
+     confirmar, sin importar si coincide o no con la sugerencia. */
 function contratoFechaInicioInfo(idEmpleado){
-  const p = ST.personal[idEmpleado];
-  const anterior = contratoVigenteDe(idEmpleado);
-  if(!anterior){
-    return { anterior:null, requiereEleccion:false, fechaISO: p?.fechaIngreso||todayISO() };
+  const list = ST.contratosPorEmpleado?.[idEmpleado]||[]; // ya viene ordenada desc por fechaGeneracion
+  const anterior = list.find(c=>c.estadoRegistro!=='Cancelado') || null;
+  if(!anterior || !anterior.fechaVencimiento){
+    return { anterior, fechaSugeridaISO:'' };
   }
-  const estado = estadoVigenciaContrato(anterior); // 'Vencido' | 'Vigente' | 'Proximo' | 'Indefinido'
-  if(estado==='Vencido'){
-    return { anterior, requiereEleccion:false, fechaISO: todayISO() };
-  }
-  // Vigente / Próximo a vencer / Indefinido: el usuario debe elegir cómo iniciar.
-  return { anterior, requiereEleccion:true, estado, fechaISO: todayISO() };
-}
-/* Resuelve la fecha de inicio definitiva según la elección del usuario
-   (solo aplica cuando contratoFechaInicioInfo().requiereEleccion === true). */
-function contratoFechaInicioSegunEleccion(idEmpleado, modo){
-  const info = contratoFechaInicioInfo(idEmpleado);
-  if(!info.requiereEleccion) return info.fechaISO;
-  if(modo==='siguiente' && info.anterior?.fechaVencimiento){
-    const venceD = parseISODateLocal(info.anterior.fechaVencimiento);
-    if(venceD) return dateToISO(new Date(venceD.getTime()+864e5));
-  }
-  return todayISO();
+  const venceD = parseISODateLocal(anterior.fechaVencimiento);
+  if(!venceD) return { anterior, fechaSugeridaISO:'' };
+  return { anterior, fechaSugeridaISO: dateToISO(new Date(venceD.getTime()+864e5)) };
 }
 
 function badgeEstadoContrato(contrato){
@@ -18975,6 +18991,27 @@ function saveBlobAs(blob, filename){
   setTimeout(()=>URL.revokeObjectURL(url), 4000);
 }
 
+/* ── Selector de empleado (botón "Generar Contrato" de la subvista Contratos) ──
+   Punto de entrada cuando no hay un empleado en contexto (listado global). Una
+   vez elegido el empleado, delega en abrirModalContrato(idEmpleado). */
+function abrirSelectorEmpleadoContrato(){
+  if(!requireAuth()) return;
+  const sel = document.getElementById('ctrEmpleadoSelect');
+  sel.innerHTML = '<option value="">Selecciona un empleado…</option>' +
+    (ST.personalList||[]).map(p=>`<option value="${p.id}">${esc(p.nombre)} — ${esc(p.puesto||'—')}</option>`).join('');
+  sel.value = '';
+  document.getElementById('contratoElegirEmpleadoModal').classList.add('open');
+}
+function cerrarSelectorEmpleadoContrato(){
+  document.getElementById('contratoElegirEmpleadoModal').classList.remove('open');
+}
+function continuarContratoDesdeSelector(){
+  const idEmpleado = document.getElementById('ctrEmpleadoSelect').value;
+  if(!idEmpleado){ toast('err','Selecciona un empleado.'); return; }
+  cerrarSelectorEmpleadoContrato();
+  abrirModalContrato(idEmpleado);
+}
+
 /* ── Paso 1: modal de duración (punto 1) ── */
 function abrirModalContrato(idEmpleado){
   if(!requireAuth()) return;
@@ -18992,19 +19029,21 @@ function abrirModalContrato(idEmpleado){
     ? `Renovando el contrato de ${p.nombre}`
     : `Generando el primer contrato de ${p.nombre}`;
 
-  const eleccionWrap = document.getElementById('cInicioEleccionWrap');
-  const eleccionSelect = document.getElementById('cInicioModo');
-  if(info.requiereEleccion){
-    eleccionWrap.style.display = '';
-    eleccionSelect.value = 'hoy';
+  const fechaInput = document.getElementById('cFechaInicio');
+  fechaInput.value = info.fechaSugeridaISO || '';
+  const hint = document.getElementById('cFechaInicioHint');
+  if(info.fechaSugeridaISO){
+    hint.textContent = `Sugerida: día siguiente al vencimiento del último contrato (${fmtFechaDMY(info.anterior.fechaVencimiento)}). Puedes cambiarla si lo necesitas.`;
+  }else if(esRenovacion){
+    hint.textContent = 'El último contrato registrado es indefinido o no tiene fecha de vencimiento; captura la fecha manualmente.';
   }else{
-    eleccionWrap.style.display = 'none';
+    hint.textContent = 'Este empleado no tiene contratos previos; captura la fecha de inicio manualmente.';
   }
 
   document.getElementById('cDuracionTipo').value = '3M';
   document.getElementById('cDuracionOtroCantidad').value = 1;
   document.getElementById('cDuracionOtroUnidad').value = 'meses';
-  onCDuracionTipoChange(); // recalcula fecha de inicio + vencimiento con actualizarResumenDuracion()
+  onCDuracionTipoChange(); // recalcula fecha de vencimiento con actualizarResumenDuracion()
   document.getElementById('contratoDuracionModal').classList.add('open');
 }
 function cerrarModalContrato(){
@@ -19022,16 +19061,16 @@ function actualizarResumenDuracion(){
   if(!draft) return;
   const p = ST.personal[draft.idEmpleado];
   if(!p) return;
-  const info = contratoFechaInicioInfo(draft.idEmpleado);
-  const modo = document.getElementById('cInicioModo')?.value || 'hoy';
-  const fechaInicioISO = info.requiereEleccion
-    ? contratoFechaInicioSegunEleccion(draft.idEmpleado, modo)
-    : info.fechaISO;
-  document.getElementById('contratoFechaInicioLabel').textContent = fmtFechaDMY(fechaInicioISO);
+  const fechaInicioISO = document.getElementById('cFechaInicio').value;
+  document.getElementById('contratoFechaInicioLabel').textContent = fechaInicioISO ? fmtFechaDMY(fechaInicioISO) : '—';
 
   const tipo = document.getElementById('cDuracionTipo').value;
   const cantidad = document.getElementById('cDuracionOtroCantidad').value;
   const unidad = document.getElementById('cDuracionOtroUnidad').value;
+  if(!fechaInicioISO){
+    document.getElementById('contratoFechaVenceLabel').textContent = '—';
+    return;
+  }
   const calc = calcularVencimiento(fechaInicioISO, tipo, cantidad, unidad);
   document.getElementById('contratoFechaVenceLabel').textContent =
     calc.fechaVenceISO ? fmtFechaDMY(calc.fechaVenceISO) : 'No aplica (contrato indefinido)';
@@ -19046,11 +19085,8 @@ async function generarContratoConfirmado(){
   const faltantes = expedienteFaltantes(p);
   if(faltantes.length){ toast('err','Expediente incompleto: '+faltantes.join(', ')); return; }
 
-  const info = contratoFechaInicioInfo(draft.idEmpleado);
-  const modoInicio = document.getElementById('cInicioModo')?.value || 'hoy';
-  const fechaInicioISO = info.requiereEleccion
-    ? contratoFechaInicioSegunEleccion(draft.idEmpleado, modoInicio)
-    : info.fechaISO;
+  const fechaInicioISO = document.getElementById('cFechaInicio').value;
+  if(!fechaInicioISO){ toast('err','Captura la fecha de inicio del contrato.'); return; }
 
   const tipo = document.getElementById('cDuracionTipo').value;
   const cantidad = document.getElementById('cDuracionOtroCantidad').value;
@@ -19067,7 +19103,9 @@ async function generarContratoConfirmado(){
       Nombre: p.nombre||'',
       EstadoCivil: p.estadoCivil||'—',
       Direccion: p.direccion||'',
+      Puesto: p.puesto||'—',
       DuracionContrato: calc.label,
+      FechaInicioContrato: fmtFechaDMY(fechaInicioISO),
       DiaContrato: String(hoy.getDate()),
       MesContrato: MESES_ES[hoy.getMonth()],
       AnioContrato: String(hoy.getFullYear()),
