@@ -1305,13 +1305,10 @@ textarea.item-inp.item-desc-ta{
         </button>
       </nav>
 
-      <!-- SUB-TABS DE BALANCE: Dashboard, Ingresos, Salidas (mismo diseño, fijo arriba) -->
+      <!-- SUB-TABS DE BALANCE: Ingresos, Salidas (mismo diseño, fijo arriba; el Dashboard
+           de Balance se movió al Dashboard General) -->
       <nav class="bal-nav" id="balanceSubNav" style="display:none">
-        <button class="bal-tab active tab-accent-blue" id="balDashBtn" onclick="switchBalTab('dash')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
-          Dashboard
-        </button>
-        <button class="bal-tab tab-accent-green" id="balIngBtn" onclick="switchBalTab('ing')">
+        <button class="bal-tab active tab-accent-green" id="balIngBtn" onclick="switchBalTab('ing')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 13V3M4 7l4-4 4 4"/></svg>
           Ingresos
         </button>
@@ -1351,25 +1348,29 @@ textarea.item-inp.item-desc-ta{
 
       <!-- SUB-TABS DE SISTEMAS: Clientes, Artículos, Contraseñas (mismo diseño, fijo arriba) -->
       <nav class="bal-nav" id="sistemasSubNav" style="display:none">
-        <button class="bal-tab active tab-accent-blue" id="sisClientesBtn" onclick="switchSistemasSubTab('clientes')">
+        <button class="bal-tab active tab-accent-yellow" id="sisAutosBtn" onclick="switchSistemasSubTab('autos')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 10.5l1.2-4.2a1.5 1.5 0 0 1 1.44-1.1h5.72a1.5 1.5 0 0 1 1.44 1.1l1.2 4.2"/><rect x="1.8" y="10.5" width="12.4" height="3" rx="1"/><circle cx="4.3" cy="13.3" r="1.1"/><circle cx="11.7" cy="13.3" r="1.1"/></svg>
+          Autos
+        </button>
+        <button class="bal-tab tab-accent-red" id="sisContrasenasBtn" onclick="switchSistemasSubTab('contrasenas')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
+          Contraseñas
+        </button>
+        <button class="bal-tab tab-accent-blue" id="sisClientesBtn" onclick="switchSistemasSubTab('clientes')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 6h11v7a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z"/><path d="M6 6V4.3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6"/></svg>
           Clientes
-        </button>
-        <button class="bal-tab tab-accent-orange" id="sisArticulosBtn" onclick="switchSistemasSubTab('articulos')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
-          Artículos
-        </button>
-        <button class="bal-tab tab-accent-green" id="sisProveedoresBtn" onclick="switchSistemasSubTab('proveedores')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6.5l1.5-3h9l1.5 3M2 6.5v6h12v-6M2 6.5h12M5.5 9.5h1.5M5.5 12h5"/></svg>
-          Proveedores
         </button>
         <button class="bal-tab tab-accent-purple" id="sisContactosBtn" onclick="switchSistemasSubTab('contactos')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="2.4"/><path d="M4 13.5c0-2.5 1.8-4.2 4-4.2s4 1.7 4 4.2"/></svg>
           Contactos
         </button>
-        <button class="bal-tab tab-accent-red" id="sisContrasenasBtn" onclick="switchSistemasSubTab('contrasenas')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"/></svg>
-          Contraseñas
+        <button class="bal-tab tab-accent-green" id="sisProveedoresBtn" onclick="switchSistemasSubTab('proveedores')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6.5l1.5-3h9l1.5 3M2 6.5v6h12v-6M2 6.5h12M5.5 9.5h1.5M5.5 12h5"/></svg>
+          Proveedores
+        </button>
+        <button class="bal-tab tab-accent-orange" id="sisArticulosBtn" onclick="switchSistemasSubTab('articulos')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>
+          Artículos
         </button>
         <button class="bal-tab tab-accent-pink" id="sisUsuariosBtn" onclick="switchSistemasSubTab('usuarios')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.2"/><path d="M2 13c0-2.3 1.8-4 4-4s4 1.7 4 4"/><circle cx="12.2" cy="5.5" r="1.7"/><path d="M10.7 9.3c1.7.2 3 1.6 3 3.7"/></svg>
@@ -1379,23 +1380,17 @@ textarea.item-inp.item-desc-ta{
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1.2"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/></svg>
           Reportes
         </button>
-        <button class="bal-tab tab-accent-yellow" id="sisAutosBtn" onclick="switchSistemasSubTab('autos')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 10.5l1.2-4.2a1.5 1.5 0 0 1 1.44-1.1h5.72a1.5 1.5 0 0 1 1.44 1.1l1.2 4.2"/><rect x="1.8" y="10.5" width="12.4" height="3" rx="1"/><circle cx="4.3" cy="13.3" r="1.1"/><circle cx="11.7" cy="13.3" r="1.1"/></svg>
-          Autos
-        </button>
         <button class="bal-tab tab-accent-blue" id="sisPlantillasBtn" onclick="switchSistemasSubTab('plantillas')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
           Plantillas
         </button>
       </nav>
 
-      <!-- SUB-TABS DE CENTRO FINANCIERO: Dashboard, Acreedores, Cronograma, Timeline, Historial -->
+      <!-- SUB-TABS DE CENTRO FINANCIERO: Acreedores, Simulador, Alertas, Objetivos,
+           Proyecciones, Cronograma, Timeline, Historial (el Dashboard de Centro
+           Financiero se movió al Dashboard General) -->
       <nav class="bal-nav" id="finSubNav" style="display:none">
-        <button class="bal-tab active tab-accent-blue" id="finDashBtn" onclick="switchFinSubTab('dash')">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="10" width="3" height="4"/><rect x="6.5" y="6" width="3" height="8"/><rect x="11" y="8" width="3" height="6"/><path d="M2 6l4-3 4 2 4-3"/></svg>
-          Dashboard
-        </button>
-        <button class="bal-tab tab-accent-orange" id="finAcreedoresBtn" onclick="switchFinSubTab('acreedores')">
+        <button class="bal-tab active tab-accent-orange" id="finAcreedoresBtn" onclick="switchFinSubTab('acreedores')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.3"/><path d="M1.8 13c0-2.4 1.6-4 3.7-4s3.7 1.6 3.7 4"/><circle cx="11.5" cy="6" r="1.8"/><path d="M9.7 9.3c1.7.2 3 1.5 3.3 3.2"/></svg>
           Acreedores
         </button>
@@ -1686,7 +1681,7 @@ textarea.item-inp.item-desc-ta{
     <div id="tabBal" class="tab-pane">
 
       <!-- ── SUB-PANE: INGRESOS ── -->
-      <div class="bal-pane" id="balIng">
+      <div class="bal-pane active" id="balIng">
         <div class="stats" id="ingStats">
           <div class="stat cg"><div class="stat-lbl">Total Ingresos</div><div class="stat-val" id="sIngTotal">—</div><div class="stat-delta">Todos los registros</div></div>
           <div class="stat cg"><div class="stat-lbl">Pagados</div><div class="stat-val" id="sIngPag">—</div><div class="stat-delta" id="sIngPagMonto">—</div></div>
@@ -1811,48 +1806,6 @@ textarea.item-inp.item-desc-ta{
             </table>
           </div>
           <div class="pagi"><span class="pagi-info" id="gasPagiInfo">—</span><div class="pagi-btns" id="gasPagiBtns"></div></div>
-        </div>
-      </div>
-
-      <!-- ── SUB-PANE: DASHBOARD ── -->
-      <div class="bal-pane active" id="balDash">
-        <!-- KPIs -->
-        <div class="dash-kpi-grid" id="dashKpis">
-          <div class="stat cg"><div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dKpiIng">—</div><div class="stat-delta">Pagados</div></div>
-          <div class="stat cr"><div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dKpiGas">—</div><div class="stat-delta">Pagados</div></div>
-          <div class="stat cb"><div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dKpiBal">—</div><div class="stat-delta">Ingresos − Gastos</div></div>
-          <div class="stat cy"><div class="stat-lbl">Por Cobrar</div><div class="stat-val" id="dKpiPend">—</div><div class="stat-delta">Ingresos pendientes</div></div>
-        </div>
-        <!-- Filtro año -->
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <span style="font-size:11.5px;color:var(--text3)">Año:</span>
-          <select id="dashYear" onchange="renderDashboard()" style="height:28px;padding:0 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text2);outline:none;"></select>
-        </div>
-        <!-- Charts row 1 -->
-        <div class="dash-grid" style="margin-bottom:14px">
-          <div class="dash-card">
-            <div class="dash-card-title">Ingresos vs Gastos por Mes</div>
-            <div class="dash-chart-wrap"><canvas id="chartBarMes"></canvas></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-title">Balance Acumulado</div>
-            <div class="dash-chart-wrap"><canvas id="chartLineBal"></canvas></div>
-          </div>
-        </div>
-        <!-- Charts row 2 -->
-        <div class="dash-grid-3">
-          <div class="dash-card">
-            <div class="dash-card-title">Entradas vs Salidas (Total del año)</div>
-            <div class="dash-chart-wrap"><canvas id="chartPieComp"></canvas></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-title">Estado de Ingresos</div>
-            <div class="dash-chart-wrap"><canvas id="chartDonutIng"></canvas></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-title">Estado de Gastos</div>
-            <div class="dash-chart-wrap"><canvas id="chartDonutGas"></canvas></div>
-          </div>
         </div>
       </div>
 
@@ -2162,8 +2115,69 @@ textarea.item-inp.item-desc-ta{
     <!-- ══ TAB: SISTEMAS (Clientes / Artículos / Contraseñas — catálogos maestros) ══ -->
     <div id="tabSistemas" class="tab-pane">
 
+      <!-- Sub-vista: AUTOS (Fase 3) — nuevo módulo administrativo. Vista en Cards, no en tabla. -->
+      <div id="sisSubAutos" class="emp-subpane active">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por línea, modelo o placas…" oninput="onSisAutosSearch(this.value)">
+          <span class="fsep"></span>
+          <select class="fsort" id="sisAutosEstadoSel" onchange="onSisAutosEstadoChange(this.value)">
+            <option value="">Todos los estados</option>
+            <option value="Activo">Activo</option>
+            <option value="Vendido">Vendido</option>
+            <option value="Inactivo">Inactivo</option>
+            <option value="Mantenimiento">Mantenimiento</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Autos</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisAutosCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openNewAuto()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Auto
+            </button>
+          </div>
+          <div style="padding:16px">
+            <div class="auto-cards-grid" id="sisAutosGrid">
+              <div class="loading-row" style="padding:24px;text-align:center;grid-column:1/-1"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /sisSubAutos -->
+
+      <!-- Sub-vista: CONTRASEÑAS -->
+      <div id="sisSubContrasenas" class="emp-subpane">
+        <div class="info-card" style="margin-bottom:12px">
+          <div>🔒 Estas contraseñas se guardan tal cual en la hoja "Contraseñas" de tu Google Sheet, igual que el resto de tus datos (A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Enlace, F=Categoría). Solo quienes tengan acceso a esa hoja pueden verlas. Se agrupan por categoría y el enlace es clicable.</div>
+        </div>
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por sitio, usuario o categoría…" oninput="onSisContrasenasSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Contraseñas</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisContrasenasCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddContrasena()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nueva Contraseña
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th>Sitio / Servicio</th><th>Usuario</th><th>Contraseña</th><th>Enlace</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="sisContrasenasTbody">
+                <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubContrasenas -->
+
       <!-- Sub-vista: CLIENTES -->
-      <div id="sisSubClientes" class="emp-subpane active">
+      <div id="sisSubClientes" class="emp-subpane">
         <div class="filter-bar" style="margin-bottom:12px">
           <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre o RFC/ID…" oninput="onSisClientesSearch(this.value)">
         </div>
@@ -2188,6 +2202,43 @@ textarea.item-inp.item-desc-ta{
           </div>
         </div>
       </div><!-- /sisSubClientes -->
+
+      <!-- Sub-vista: CONTACTOS (agrupados por cliente) -->
+      <div id="sisSubContactos" class="emp-subpane">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre de contacto o cliente…" oninput="onSisContactosSearch(this.value)">
+        </div>
+        <div id="sisContactosWrap">
+          <div class="loading-row" style="padding:24px;text-align:center"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</div>
+        </div>
+      </div><!-- /sisSubContactos -->
+
+      <!-- Sub-vista: PROVEEDORES -->
+      <div id="sisSubProveedores" class="emp-subpane">
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre o ID…" oninput="onSisProveedoresSearch(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Proveedores</span>
+            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisProveedoresCount">0</span>
+            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddProveedor()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
+              Nuevo Proveedor
+            </button>
+          </div>
+          <div class="cot-table-wrap">
+            <table class="fac-table">
+              <thead>
+                <tr><th>Nombre</th><th>ID</th><th>Dirección</th><th>Contacto</th><th>Correo</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="sisProveedoresTbody">
+                <tr class="loading-row"><td colspan="6"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /sisSubProveedores -->
 
       <!-- Sub-vista: ARTÍCULOS -->
       <div id="sisSubArticulos" class="emp-subpane">
@@ -2220,73 +2271,6 @@ textarea.item-inp.item-desc-ta{
           </div>
         </div>
       </div><!-- /sisSubArticulos -->
-
-      <!-- Sub-vista: PROVEEDORES -->
-      <div id="sisSubProveedores" class="emp-subpane">
-        <div class="filter-bar" style="margin-bottom:12px">
-          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre o ID…" oninput="onSisProveedoresSearch(this.value)">
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Proveedores</span>
-            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisProveedoresCount">0</span>
-            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddProveedor()">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
-              Nuevo Proveedor
-            </button>
-          </div>
-          <div class="cot-table-wrap">
-            <table class="fac-table">
-              <thead>
-                <tr><th>Nombre</th><th>ID</th><th>Dirección</th><th>Contacto</th><th>Correo</th><th>Acciones</th></tr>
-              </thead>
-              <tbody id="sisProveedoresTbody">
-                <tr class="loading-row"><td colspan="6"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div><!-- /sisSubProveedores -->
-
-      <!-- Sub-vista: CONTACTOS (agrupados por cliente) -->
-      <div id="sisSubContactos" class="emp-subpane">
-        <div class="filter-bar" style="margin-bottom:12px">
-          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por nombre de contacto o cliente…" oninput="onSisContactosSearch(this.value)">
-        </div>
-        <div id="sisContactosWrap">
-          <div class="loading-row" style="padding:24px;text-align:center"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</div>
-        </div>
-      </div><!-- /sisSubContactos -->
-
-      <!-- Sub-vista: CONTRASEÑAS -->
-      <div id="sisSubContrasenas" class="emp-subpane">
-        <div class="info-card" style="margin-bottom:12px">
-          <div>🔒 Estas contraseñas se guardan tal cual en la hoja "Contraseñas" de tu Google Sheet, igual que el resto de tus datos (A=ID, B=Sitio, C=Usuario, D=Contraseña, E=Enlace, F=Categoría). Solo quienes tengan acceso a esa hoja pueden verlas. Se agrupan por categoría y el enlace es clicable.</div>
-        </div>
-        <div class="filter-bar" style="margin-bottom:12px">
-          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por sitio, usuario o categoría…" oninput="onSisContrasenasSearch(this.value)">
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Contraseñas</span>
-            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisContrasenasCount">0</span>
-            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openAddContrasena()">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
-              Nueva Contraseña
-            </button>
-          </div>
-          <div class="cot-table-wrap">
-            <table class="fac-table">
-              <thead>
-                <tr><th>Sitio / Servicio</th><th>Usuario</th><th>Contraseña</th><th>Enlace</th><th>Acciones</th></tr>
-              </thead>
-              <tbody id="sisContrasenasTbody">
-                <tr class="loading-row"><td colspan="5"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div><!-- /sisSubContrasenas -->
 
       <!-- Sub-vista: USUARIOS -->
       <div id="sisSubUsuarios" class="emp-subpane">
@@ -2361,37 +2345,6 @@ textarea.item-inp.item-desc-ta{
         </div>
       </div><!-- /sisSubReportes -->
 
-      <!-- Sub-vista: AUTOS (Fase 3) — nuevo módulo administrativo. Vista en Cards, no en tabla. -->
-      <div id="sisSubAutos" class="emp-subpane">
-        <div class="filter-bar" style="margin-bottom:12px">
-          <input type="text" style="height:28px;padding:0 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:260px;" placeholder="🔍  Buscar por línea, modelo o placas…" oninput="onSisAutosSearch(this.value)">
-          <span class="fsep"></span>
-          <select class="fsort" id="sisAutosEstadoSel" onchange="onSisAutosEstadoChange(this.value)">
-            <option value="">Todos los estados</option>
-            <option value="Activo">Activo</option>
-            <option value="Vendido">Vendido</option>
-            <option value="Inactivo">Inactivo</option>
-            <option value="Mantenimiento">Mantenimiento</option>
-            <option value="Baja">Baja</option>
-          </select>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Autos</span>
-            <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="sisAutosCount">0</span>
-            <button type="button" class="btn btn-red btn-sm" style="margin-left:auto" onclick="openNewAuto()">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 3v10M3 8h10"/></svg>
-              Nuevo Auto
-            </button>
-          </div>
-          <div style="padding:16px">
-            <div class="auto-cards-grid" id="sisAutosGrid">
-              <div class="loading-row" style="padding:24px;text-align:center;grid-column:1/-1"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando…</div>
-            </div>
-          </div>
-        </div>
-      </div><!-- /sisSubAutos -->
-
       <!-- Sub-vista: PLANTILLAS (Fase 4) — editor de texto de Contrato y Reglamento Interno.
            El diseño/formato del .docx no se toca aquí; solo el contenido de texto libre,
            que se guarda en la hoja "Plantillas" (A=Clave, B=Contenido). -->
@@ -2430,49 +2383,8 @@ textarea.item-inp.item-desc-ta{
         <div>⚠️ No se pudieron cargar las hojas del Centro Financiero: <span id="finSheetsWarningMsg"></span>. Verifica que existan las pestañas <strong>Deudas</strong>, <strong>Deudas_Pagos</strong> y <strong>Deudas_Historial</strong> en tu spreadsheet, con los encabezados correctos.</div>
       </div>
 
-      <!-- Sub-vista: DASHBOARD -->
-      <div id="finSubDash" class="emp-subpane active">
-        <div class="dash-kpi-grid" id="finKpis">
-          <div class="stat cr"><div class="stat-lbl">Deuda Total</div><div class="stat-val" id="finKDeudaTotal">—</div><div class="stat-delta">Saldo actual</div></div>
-          <div class="stat cy"><div class="stat-lbl">Pago comprometido del mes</div><div class="stat-val" id="finKPagoMes">—</div><div class="stat-delta">Este mes</div></div>
-          <div class="stat cb"><div class="stat-lbl">Intereses del mes</div><div class="stat-val" id="finKInteresMes">—</div><div class="stat-delta">Estimado</div></div>
-          <div class="stat cg"><div class="stat-lbl">Capital amortizado</div><div class="stat-val" id="finKCapitalMes">—</div><div class="stat-delta">Este mes</div></div>
-          <div class="stat cg"><div class="stat-lbl">Flujo libre</div><div class="stat-val" id="finKFlujoLibre">—</div><div class="stat-delta">Ingresos − compromisos</div></div>
-          <div class="stat cr"><div class="stat-lbl">Deuda vencida</div><div class="stat-val" id="finKVencida">—</div><div class="stat-delta" id="finKVencidaN">—</div></div>
-          <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Deudas activas</div><div class="stat-val" id="finKActivas">—</div><div class="stat-delta">Acreedores</div></div>
-          <div class="stat" style="border-color:var(--blue)"><div class="stat-lbl" style="color:var(--blue)">Compromisos futuros</div><div class="stat-val" id="finKFuturos">—</div><div class="stat-delta">Saldo restante total</div></div>
-          <div class="stat cy"><div class="stat-lbl">Pagos esta semana</div><div class="stat-val" id="finKSemana">—</div><div class="stat-delta">Programados</div></div>
-          <div class="stat cy"><div class="stat-lbl">Pagos este mes</div><div class="stat-val" id="finKMes">—</div><div class="stat-delta">Programados</div></div>
-          <div class="stat cb"><div class="stat-lbl">Pagos este año</div><div class="stat-val" id="finKAnio">—</div><div class="stat-delta">Programados</div></div>
-        </div>
-        <div class="dash-grid" style="margin-bottom:14px">
-          <div class="dash-card">
-            <div class="dash-card-title">Deuda por Acreedor</div>
-            <div class="dash-chart-wrap"><canvas id="finChartAcreedor"></canvas></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-title">Intereses vs Capital (pagos registrados)</div>
-            <div class="dash-chart-wrap"><canvas id="finChartIntCap"></canvas></div>
-          </div>
-        </div>
-        <div class="dash-grid-3">
-          <div class="dash-card">
-            <div class="dash-card-title">Distribución de Pasivos por Tipo</div>
-            <div class="dash-chart-wrap"><canvas id="finChartTipo"></canvas></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-title">Deudas por Estado</div>
-            <div class="dash-chart-wrap"><canvas id="finChartEstado"></canvas></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-title">Pagos por Mes (histórico)</div>
-            <div class="dash-chart-wrap"><canvas id="finChartPagosMes"></canvas></div>
-          </div>
-        </div>
-      </div><!-- /finSubDash -->
-
       <!-- Sub-vista: ACREEDORES -->
-      <div id="finSubAcreedores" class="emp-subpane">
+      <div id="finSubAcreedores" class="emp-subpane active">
         <div class="stats" id="finAcreStats">
           <div class="stat cr"><div class="stat-lbl">Saldo total</div><div class="stat-val" id="finAcreSaldo">—</div><div class="stat-delta">Todos los acreedores</div></div>
           <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Activas</div><div class="stat-val" id="finAcreActivas">—</div><div class="stat-delta">En curso</div></div>
@@ -2683,29 +2595,29 @@ textarea.item-inp.item-desc-ta{
           <div class="stat-lbl">Obras Activas</div><div class="stat-val" id="dgKpiObrasPend">—</div><div class="stat-delta">Planeadas + en proceso + pausadas</div>
         </div>
       </div>
-      <!-- Resumen de Balance (3 KPIs clave, con acceso directo al detalle en Balance) -->
+      <!-- Resumen de Balance (3 KPIs clave, con acceso directo al detalle más abajo) -->
       <div class="dash-card-title" style="margin:4px 0 8px">Resumen de Balance <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">· año actual</span></div>
       <div class="dash-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px" id="dgKpisBalanceResumen">
-        <div class="stat cg" style="cursor:pointer" onclick="ST.currentBalTab='dash';switchTab('bal')" title="Ir al Dashboard de Balance">
+        <div class="stat cg" style="cursor:pointer" onclick="document.getElementById('dgBalanceDashboard')?.scrollIntoView({behavior:'smooth',block:'start'})" title="Ver Dashboard de Balance">
           <div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dgKpiIngResumen">—</div><div class="stat-delta">Pagados, año actual</div>
         </div>
-        <div class="stat cr" style="cursor:pointer" onclick="ST.currentBalTab='dash';switchTab('bal')" title="Ir al Dashboard de Balance">
+        <div class="stat cr" style="cursor:pointer" onclick="document.getElementById('dgBalanceDashboard')?.scrollIntoView({behavior:'smooth',block:'start'})" title="Ver Dashboard de Balance">
           <div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dgKpiGasResumen">—</div><div class="stat-delta">Pagados, año actual</div>
         </div>
-        <div class="stat cb" style="cursor:pointer" onclick="ST.currentBalTab='dash';switchTab('bal')" title="Ir al Dashboard de Balance">
+        <div class="stat cb" style="cursor:pointer" onclick="document.getElementById('dgBalanceDashboard')?.scrollIntoView({behavior:'smooth',block:'start'})" title="Ver Dashboard de Balance">
           <div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dgKpiBalResumen">—</div><div class="stat-delta">Ingresos − Gastos</div>
         </div>
       </div>
-      <!-- Resumen de Centro Financiero (3 KPIs clave, con acceso directo al detalle) -->
+      <!-- Resumen de Centro Financiero (3 KPIs clave, con acceso directo al detalle más abajo) -->
       <div class="dash-card-title" style="margin:4px 0 8px">Resumen de Centro Financiero</div>
       <div class="dash-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px" id="dgKpisFinResumen">
-        <div class="stat cr" style="cursor:pointer" onclick="ST.finSubTab='dash';switchTab('fin')" title="Ir al Dashboard de Centro Financiero">
+        <div class="stat cr" style="cursor:pointer" onclick="document.getElementById('dgFinDashboard')?.scrollIntoView({behavior:'smooth',block:'start'})" title="Ver Dashboard de Centro Financiero">
           <div class="stat-lbl">Deuda Total</div><div class="stat-val" id="dgKpiDeudaTotalResumen">—</div><div class="stat-delta">Saldo actual</div>
         </div>
-        <div class="stat cy" style="cursor:pointer" onclick="ST.finSubTab='dash';switchTab('fin')" title="Ir al Dashboard de Centro Financiero">
+        <div class="stat cy" style="cursor:pointer" onclick="document.getElementById('dgFinDashboard')?.scrollIntoView({behavior:'smooth',block:'start'})" title="Ver Dashboard de Centro Financiero">
           <div class="stat-lbl">Pago comprometido del mes</div><div class="stat-val" id="dgKpiPagoMesResumen">—</div><div class="stat-delta">Este mes</div>
         </div>
-        <div class="stat cg" style="cursor:pointer" onclick="ST.finSubTab='dash';switchTab('fin')" title="Ir al Dashboard de Centro Financiero">
+        <div class="stat cg" style="cursor:pointer" onclick="document.getElementById('dgFinDashboard')?.scrollIntoView({behavior:'smooth',block:'start'})" title="Ver Dashboard de Centro Financiero">
           <div class="stat-lbl">Flujo libre</div><div class="stat-val" id="dgKpiFlujoLibreResumen">—</div><div class="stat-delta">Ingresos − compromisos</div>
         </div>
       </div>
@@ -2729,6 +2641,92 @@ textarea.item-inp.item-desc-ta{
         <div class="dash-card-title">Obras con menor avance</div>
         <div id="dgObrasBajoAvance" style="padding:4px 2px;font-size:12px;color:var(--text2)">—</div>
       </div>
+
+      <!-- ══ DASHBOARD DE BALANCE (movido aquí desde la sección Balance) ══ -->
+      <div id="dgBalanceDashboard" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
+        <div class="dash-card-title" style="margin:0 0 12px;font-size:14px">📊 Dashboard de Balance</div>
+        <!-- KPIs -->
+        <div class="dash-kpi-grid" id="dashKpis">
+          <div class="stat cg"><div class="stat-lbl">Ingresos Cobrados</div><div class="stat-val" id="dKpiIng">—</div><div class="stat-delta">Pagados</div></div>
+          <div class="stat cr"><div class="stat-lbl">Gastos Pagados</div><div class="stat-val" id="dKpiGas">—</div><div class="stat-delta">Pagados</div></div>
+          <div class="stat cb"><div class="stat-lbl">Balance Neto</div><div class="stat-val" id="dKpiBal">—</div><div class="stat-delta">Ingresos − Gastos</div></div>
+          <div class="stat cy"><div class="stat-lbl">Por Cobrar</div><div class="stat-val" id="dKpiPend">—</div><div class="stat-delta">Ingresos pendientes</div></div>
+        </div>
+        <!-- Filtro año -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:11.5px;color:var(--text3)">Año:</span>
+          <select id="dashYear" onchange="renderDashboard()" style="height:28px;padding:0 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);font-family:var(--font);font-size:12px;color:var(--text2);outline:none;"></select>
+        </div>
+        <!-- Charts row 1 -->
+        <div class="dash-grid" style="margin-bottom:14px">
+          <div class="dash-card">
+            <div class="dash-card-title">Ingresos vs Gastos por Mes</div>
+            <div class="dash-chart-wrap"><canvas id="chartBarMes"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Balance Acumulado</div>
+            <div class="dash-chart-wrap"><canvas id="chartLineBal"></canvas></div>
+          </div>
+        </div>
+        <!-- Charts row 2 -->
+        <div class="dash-grid-3">
+          <div class="dash-card">
+            <div class="dash-card-title">Entradas vs Salidas (Total del año)</div>
+            <div class="dash-chart-wrap"><canvas id="chartPieComp"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Estado de Ingresos</div>
+            <div class="dash-chart-wrap"><canvas id="chartDonutIng"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Estado de Gastos</div>
+            <div class="dash-chart-wrap"><canvas id="chartDonutGas"></canvas></div>
+          </div>
+        </div>
+      </div><!-- /dgBalanceDashboard -->
+
+      <!-- ══ DASHBOARD DE CENTRO FINANCIERO (movido aquí desde la sección Centro Financiero) ══ -->
+      <div id="dgFinDashboard" style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
+        <div class="dash-card-title" style="margin:0 0 12px;font-size:14px">📊 Dashboard de Centro Financiero</div>
+        <div class="dash-kpi-grid" id="finKpis">
+          <div class="stat cr"><div class="stat-lbl">Deuda Total</div><div class="stat-val" id="finKDeudaTotal">—</div><div class="stat-delta">Saldo actual</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pago comprometido del mes</div><div class="stat-val" id="finKPagoMes">—</div><div class="stat-delta">Este mes</div></div>
+          <div class="stat cb"><div class="stat-lbl">Intereses del mes</div><div class="stat-val" id="finKInteresMes">—</div><div class="stat-delta">Estimado</div></div>
+          <div class="stat cg"><div class="stat-lbl">Capital amortizado</div><div class="stat-val" id="finKCapitalMes">—</div><div class="stat-delta">Este mes</div></div>
+          <div class="stat cg"><div class="stat-lbl">Flujo libre</div><div class="stat-val" id="finKFlujoLibre">—</div><div class="stat-delta">Ingresos − compromisos</div></div>
+          <div class="stat cr"><div class="stat-lbl">Deuda vencida</div><div class="stat-val" id="finKVencida">—</div><div class="stat-delta" id="finKVencidaN">—</div></div>
+          <div class="stat" style="border-color:var(--border)"><div class="stat-lbl" style="color:var(--text3)">Deudas activas</div><div class="stat-val" id="finKActivas">—</div><div class="stat-delta">Acreedores</div></div>
+          <div class="stat" style="border-color:var(--blue)"><div class="stat-lbl" style="color:var(--blue)">Compromisos futuros</div><div class="stat-val" id="finKFuturos">—</div><div class="stat-delta">Saldo restante total</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pagos esta semana</div><div class="stat-val" id="finKSemana">—</div><div class="stat-delta">Programados</div></div>
+          <div class="stat cy"><div class="stat-lbl">Pagos este mes</div><div class="stat-val" id="finKMes">—</div><div class="stat-delta">Programados</div></div>
+          <div class="stat cb"><div class="stat-lbl">Pagos este año</div><div class="stat-val" id="finKAnio">—</div><div class="stat-delta">Programados</div></div>
+        </div>
+        <div class="dash-grid" style="margin-bottom:14px">
+          <div class="dash-card">
+            <div class="dash-card-title">Deuda por Acreedor</div>
+            <div class="dash-chart-wrap"><canvas id="finChartAcreedor"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Intereses vs Capital (pagos registrados)</div>
+            <div class="dash-chart-wrap"><canvas id="finChartIntCap"></canvas></div>
+          </div>
+        </div>
+        <div class="dash-grid-3">
+          <div class="dash-card">
+            <div class="dash-card-title">Distribución de Pasivos por Tipo</div>
+            <div class="dash-chart-wrap"><canvas id="finChartTipo"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Deudas por Estado</div>
+            <div class="dash-chart-wrap"><canvas id="finChartEstado"></canvas></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-title">Pagos por Mes (histórico)</div>
+            <div class="dash-chart-wrap"><canvas id="finChartPagosMes"></canvas></div>
+          </div>
+        </div>
+      </div><!-- /dgFinDashboard -->
+
     </div><!-- /tabDashboard -->
 
     <!-- SUB-VISTA: OBRAS / PROYECTOS (Fase 3) -->
@@ -5094,7 +5092,7 @@ const ST = {
   alertasLeidasError: null,
   notifPanelOpen: false,
   objetivoEditId: null,
-  finSubTab: 'dash',
+  finSubTab: 'acreedores',
   deudaEditId: null,
   deudaFilter: 'all',
   deudaSearch: '',
@@ -6358,6 +6356,9 @@ async function loadAll() {
   // FASE 4 — Dashboard General: se re-renderiza en cada carga (la función misma
   // se sale de inmediato si esa pestaña no está activa, igual que renderDashboard).
   renderDashboardGeneral();
+  // El Dashboard de Centro Financiero vive ahora dentro del Dashboard General,
+  // así que se recalcula en cada carga igual que renderDashboard() (Balance).
+  renderFinDashboard();
   // FASE 2 — control de acceso real: se reaplica en cada carga (incluido el
   // auto-refresh) para reaccionar si un Admin cambió el rol/módulos de este
   // usuario mientras seguía conectado. Sin sesión de Google no hace nada.
@@ -11499,14 +11500,14 @@ function switchSistemasSubTab(sub){
 
 /* ─── SUB-VISTAS DE CENTRO FINANCIERO: Dashboard / Acreedores / Cronograma / Timeline / Historial ─── */
 function switchFinSubTab(sub){
+  if(sub==='dash') sub='acreedores'; // el Dashboard de Centro Financiero se movió al Dashboard General
   ST.finSubTab = sub;
-  ['finSubDash','finSubAcreedores','finSubSim','finSubAlertas','finSubObjetivos','finSubProy','finSubCrono','finSubTimeline','finSubHist'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  ['finDashBtn','finAcreedoresBtn','finSimBtn','finAlertasBtn','finObjBtn','finProyBtn','finCronoBtn','finTimelineBtn','finHistBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const paneId = {dash:'finSubDash', acreedores:'finSubAcreedores', sim:'finSubSim', alertas:'finSubAlertas', objetivos:'finSubObjetivos', proy:'finSubProy', crono:'finSubCrono', timeline:'finSubTimeline', hist:'finSubHist'}[sub] || 'finSubDash';
-  const btnId  = {dash:'finDashBtn', acreedores:'finAcreedoresBtn', sim:'finSimBtn', alertas:'finAlertasBtn', objetivos:'finObjBtn', proy:'finProyBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finDashBtn';
+  ['finSubAcreedores','finSubSim','finSubAlertas','finSubObjetivos','finSubProy','finSubCrono','finSubTimeline','finSubHist'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  ['finAcreedoresBtn','finSimBtn','finAlertasBtn','finObjBtn','finProyBtn','finCronoBtn','finTimelineBtn','finHistBtn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const paneId = {acreedores:'finSubAcreedores', sim:'finSubSim', alertas:'finSubAlertas', objetivos:'finSubObjetivos', proy:'finSubProy', crono:'finSubCrono', timeline:'finSubTimeline', hist:'finSubHist'}[sub] || 'finSubAcreedores';
+  const btnId  = {acreedores:'finAcreedoresBtn', sim:'finSimBtn', alertas:'finAlertasBtn', objetivos:'finObjBtn', proy:'finProyBtn', crono:'finCronoBtn', timeline:'finTimelineBtn', hist:'finHistBtn'}[sub] || 'finAcreedoresBtn';
   document.getElementById(paneId)?.classList.add('active');
   document.getElementById(btnId)?.classList.add('active');
-  if(sub==='dash') renderFinDashboard();
   if(sub==='acreedores') renderAcreedores();
   if(sub==='sim') renderSimulador();
   if(sub==='alertas') renderFinAlertas();
@@ -13343,6 +13344,20 @@ function imprimirNoAdeudo(semKey){
   window.open(blobUrl,'_blank');
 }
 
+// Orden de los grupos de "puesto" dentro de los empleados Activos.
+// Ayudantes en general va arriba de todo, luego Patrones, Administrativos,
+// Electromecánicos, Soldador y por último cualquier otro puesto (Otros).
+const ORDEN_PUESTOS_ACTIVOS = ['Ayudantes en general','Patrones','Administrativos','Electromecánicos','Soldador','Otros'];
+function categoriaPuesto(puesto){
+  const p = (puesto||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(p.includes('ayudante')) return 'Ayudantes en general';
+  if(p.includes('patron')) return 'Patrones';
+  if(p.includes('administrat')) return 'Administrativos';
+  if(p.includes('electromecanic')) return 'Electromecánicos';
+  if(p.includes('soldador')) return 'Soldador';
+  return 'Otros';
+}
+
 function renderEmpleados(){
   const tbody = document.getElementById('empTbody');
   if(!tbody) return; // la vista aún no está montada en el DOM
@@ -13372,12 +13387,19 @@ function renderEmpleados(){
     const q = ST.empSearch.toLowerCase();
     list = list.filter(p=> (p.nombre||'').toLowerCase().includes(q) || (p.puesto||'').toLowerCase().includes(q) || (p.correo||'').toLowerCase().includes(q));
   }
-  // Activos primero, Inactivos después — nunca mezclados. Dentro de cada
-  // grupo, orden alfabético por nombre (igual que antes).
+  // Activos primero, Inactivos después — nunca mezclados. Dentro de los
+  // Activos, agrupados por puesto según ORDEN_PUESTOS_ACTIVOS (Ayudantes en
+  // general arriba, luego Patrones, Administrativos, Electromecánicos,
+  // Soldador y Otros al final). Dentro de cada grupo, orden alfabético.
   list.sort((a,b)=>{
     const aActivo=(a.estado||'').toLowerCase()==='activo' ? 0 : 1;
     const bActivo=(b.estado||'').toLowerCase()==='activo' ? 0 : 1;
     if(aActivo!==bActivo) return aActivo-bActivo;
+    if(aActivo===0){
+      const ca = ORDEN_PUESTOS_ACTIVOS.indexOf(categoriaPuesto(a.puesto));
+      const cb = ORDEN_PUESTOS_ACTIVOS.indexOf(categoriaPuesto(b.puesto));
+      if(ca!==cb) return ca-cb;
+    }
     return (a.nombre||'').localeCompare(b.nombre||'');
   });
 
@@ -13390,6 +13412,7 @@ function renderEmpleados(){
 
   let htmlOut = '';
   let inactivosHeaderShown = false;
+  let lastCategoriaActiva = null;
   const hayActivos = list.some(p=>(p.estado||'').toLowerCase()==='activo');
   const hayInactivos = list.some(p=>(p.estado||'').toLowerCase()!=='activo');
 
@@ -13399,6 +13422,14 @@ function renderEmpleados(){
     if(!esActivo && !inactivosHeaderShown && hayActivos && hayInactivos){
       inactivosHeaderShown = true;
       htmlOut += `<tr><td colspan="10" style="padding:8px 10px;background:var(--bg3);color:var(--text3);font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Inactivos</td></tr>`;
+    }
+    // Separadores por puesto, solo dentro del grupo de Activos.
+    if(esActivo){
+      const cat = categoriaPuesto(p.puesto);
+      if(cat !== lastCategoriaActiva){
+        lastCategoriaActiva = cat;
+        htmlOut += `<tr><td colspan="10" style="padding:8px 10px;background:var(--bg3);color:var(--text3);font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">${esc(cat)}</td></tr>`;
+      }
     }
     const inicial = esc((p.nombre||'?').charAt(0).toUpperCase());
     const avatar = p.fotografia
@@ -14938,7 +14969,7 @@ function toggleTheme(){
 function resetFloatingUIState(){
   // Limpieza de elementos flotantes / transitorios: segura de llamar en
   // CUALQUIER cambio de vista, incluyendo cambios de sub-pestaña dentro de
-  // un mismo módulo (ej. Balance → Dashboard/Ingresos/Salidas), porque no
+  // un mismo módulo (ej. Balance → Ingresos/Salidas), porque no
   // toca el estado de qué tab-pane principal está activo.
   clearTimeout(ST._facRelHideTimer);
   document.getElementById('facRelPopover')?.remove();
@@ -14976,10 +15007,10 @@ function saveLastView(){
     localStorage.setItem('conecte_last_view', JSON.stringify({
       section: ST.currentSection||'comercial',
       comercialTab: ST.currentComercialTab||'cot',
-      balTab: ST.currentBalTab||'dash',
+      balTab: ST.currentBalTab||'ing',
       empSubTab: ST.empSubTab||'personal',
       sisSubTab: ST.sisSubTab||'clientes',
-      finSubTab: ST.finSubTab||'dash'
+      finSubTab: ST.finSubTab||'acreedores'
     }));
   }catch(e){}
 }
@@ -14988,9 +15019,9 @@ function restoreLastView(){
   try{ v=JSON.parse(localStorage.getItem('conecte_last_view')||'null'); }catch(e){}
   if(!v) return; // nada guardado todavía: se queda con la vista inicial (Comercial > Cotizaciones)
   ST.currentComercialTab = v.comercialTab||'cot';
-  ST.currentBalTab = v.balTab||'dash';
+  ST.currentBalTab = v.balTab||'ing';
   ST.sisSubTab = v.sisSubTab||'clientes';
-  ST.finSubTab = v.finSubTab||'dash';
+  ST.finSubTab = v.finSubTab||'acreedores';
   // Migración: en versiones anteriores "Nóminas" y "Asistencia" eran secciones
   // principales propias; ahora son sub-pestañas de "Empleados". Si el navegador
   // del usuario todavía tiene guardada una de esas secciones, lo mandamos a
@@ -15057,7 +15088,7 @@ function switchTab(tab){
     if(finSubNav) finSubNav.style.display = tab==='fin' ? 'flex' : 'none';
     if(tab==='emp') switchEmpSubTab(ST.empSubTab||'personal');
     if(tab==='sistemas') switchSistemasSubTab(ST.sisSubTab||'clientes');
-    if(tab==='fin') switchFinSubTab(ST.finSubTab||'dash');
+    if(tab==='fin') switchFinSubTab(ST.finSubTab||'acreedores');
     if(tab==='dashboard') renderDashboardGeneral();
     saveLastView();
     return;
@@ -15093,7 +15124,7 @@ function switchTab(tab){
 
   if(tab==='oc') renderOCClienteTable();
   if(tab==='fac') renderFacTableFull();
-  if(tab==='bal'){ switchBalTab(ST.currentBalTab||'dash'); applyIngFilter(); applyGasFilter(); }
+  if(tab==='bal'){ switchBalTab(ST.currentBalTab||'ing'); applyIngFilter(); applyGasFilter(); }
 
   // Mantener sincronizada la sección superior (Comercial / Balance) sin importar
   // desde dónde se llamó a switchTab (búsqueda global, panel de relación, etc.)
@@ -15138,15 +15169,16 @@ function mainAdd(){
 
 /* ─── SECCIÓN: COMERCIAL ↔ BALANCE ───
    "Comercial" agrupa Cotizaciones, Facturas y OC Clientes.
-   "Balance" es su propia sección con Dashboard, Ingresos y Salidas. */
+   "Balance" es su propia sección con Ingresos y Salidas (su Dashboard vive
+   ahora en el Dashboard General). */
 function switchSection(section){
   // En móvil, cerrar el menú hamburguesa al elegir una sección
   toggleMobileSidebar(false);
   // Al entrar a un módulo principal desde el menú lateral, siempre se abre
-  // su vista por defecto (Comercial → Cotizaciones, Balance → Dashboard),
+  // su vista por defecto (Comercial → Cotizaciones, Balance → Ingresos),
   // sin importar en qué sub-pestaña se haya quedado la última vez.
   if(section==='comercial'){ ST.currentComercialTab='cot'; switchTab('cot'); }
-  else if(section==='balance'){ ST.currentBalTab='dash'; switchTab('bal'); }
+  else if(section==='balance'){ ST.currentBalTab='ing'; switchTab('bal'); }
   else switchTab(section); // 'emp' | 'sistemas' | 'fin'
 }
 
@@ -15358,10 +15390,12 @@ function toggleSidebar(force){
   const retry=setInterval(()=>{ attachObservers(); if(++tries>20) clearInterval(retry); },1000);
 })();
 
-/* ─── BALANCE SUB-TAB SWITCH (orden: Dashboard, Ingresos, Salidas) ─── */
+/* ─── BALANCE SUB-TAB SWITCH (orden: Ingresos, Salidas; el Dashboard de Balance
+   se movió al Dashboard General) ─── */
 function switchBalTab(sub){
+  if(sub==='dash') sub='ing'; // el Dashboard de Balance se movió al Dashboard General
   resetFloatingUIState();
-  ['ing','gas','dash'].forEach(s=>{
+  ['ing','gas'].forEach(s=>{
     document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1))?.classList.remove('active');
     document.getElementById('bal'+s.charAt(0).toUpperCase()+s.slice(1)+'Btn')?.classList.remove('active');
   });
@@ -15369,8 +15403,7 @@ function switchBalTab(sub){
   document.getElementById('bal'+sub.charAt(0).toUpperCase()+sub.slice(1)+'Btn')?.classList.add('active');
   ST.currentBalTab = sub;
   const bcPage=document.getElementById('bcPage');
-  if(bcPage) bcPage.textContent = {dash:'Dashboard', ing:'Ingresos', gas:'Salidas'}[sub] || 'Balance';
-  if(sub==='dash') setTimeout(renderDashboard,80);
+  if(bcPage) bcPage.textContent = {ing:'Ingresos', gas:'Salidas'}[sub] || 'Balance';
   saveLastView();
 }
 
@@ -16362,7 +16395,7 @@ ST._charts={};
 function destroyChart(id){ if(ST._charts[id]){ ST._charts[id].destroy(); delete ST._charts[id]; } }
 
 function renderDashboard(){
-  if(document.getElementById('balDash')?.classList.contains('active')===false) return;
+  if(document.getElementById('dgBalanceDashboard')===null) return; // aún no está montado en el DOM
   // Populate / refrescar el selector de año (por si llegan años nuevos tras cargar datos)
   // El Dashboard se basa en la FECHA DE PAGO (no en la fecha de registro/emisión):
   // un ingreso o gasto sin fecha de pago todavía no se puede considerar dentro del
@@ -16783,7 +16816,7 @@ async function guardarPago(){
     closePagoModal();
     await loadAll();
     renderAcreedores();
-    if(document.getElementById('finSubDash')?.classList.contains('active')) renderFinDashboard();
+    renderFinDashboard();
   }catch(e){
     console.error(e);
     toast('err','Error al registrar el pago: '+(e.result?.error?.message||e.message||e));
@@ -16880,6 +16913,7 @@ function renderFinHistorial(){
 
 /* ── DASHBOARD GENERAL ── */
 function renderFinDashboard(){
+  if(document.getElementById('dgFinDashboard')===null) return; // aún no está montado en el DOM
   toggleFinSheetsWarning();
   const activas=ST.deudas.filter(d=>d.estado==='Activa'||d.estado==='Vencida');
   const deudaTotal=ST.deudas.reduce((s,d)=>s+d.saldoActual,0);
