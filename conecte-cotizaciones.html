@@ -173,8 +173,8 @@ button{
 }
 html,body{height:100%;overflow-x:hidden;max-width:100%}
 body{
-  font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;
-  line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  font-family:var(--font);background:var(--bg);color:var(--text);font-size:12.5px;
+  line-height:1.45;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   text-rendering:optimizeLegibility;
 }
 /* Fase 1: scrollbar más fino y discreto (look premium), no afecta ninguna
@@ -200,8 +200,8 @@ body{
 
 /* TOPBAR */
 .topbar{
-  height:54px;background:var(--bg2);border-bottom:1px solid var(--border);
-  padding:0 22px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;flex-shrink:0;
+  height:48px;background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:0 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;flex-shrink:0;
   box-shadow:var(--shadow-sm);
 }
 .topbar-brand{font-size:14px;font-weight:700;color:var(--white);letter-spacing:-.01em}
@@ -224,15 +224,15 @@ body{
 #notifPanel{box-shadow:var(--shadow-lg)!important;animation:ddIn .18s cubic-bezier(.16,1,.3,1) both}
 
 /* CONTENT AREA */
-.content{padding:24px 26px 64px;width:100%;max-width:2200px;margin:0 auto}
+.content{padding:18px 20px 44px;width:100%;max-width:2200px;margin:0 auto}
 
 /* ── BUTTONS (Fase 5: modernización visual — colores, bordes, hover,
    iconografía y tamaños. No se modificó ningún onclick/evento ni el HTML
    que usa estas clases; los botones existentes conservan su comportamiento
    exacto en todo el sistema) ── */
 .btn{
-  display:inline-flex;align-items:center;gap:6px;padding:0 14px;height:31px;
-  border-radius:var(--r4);font-family:var(--font);font-size:12.5px;font-weight:600;
+  display:inline-flex;align-items:center;gap:6px;padding:0 12px;height:29px;
+  border-radius:var(--r4);font-family:var(--font);font-size:12px;font-weight:600;
   letter-spacing:-.005em;cursor:pointer;border:none;white-space:nowrap;
   transition:background .15s cubic-bezier(.16,1,.3,1),border-color .15s cubic-bezier(.16,1,.3,1),
              color .15s cubic-bezier(.16,1,.3,1),box-shadow .15s cubic-bezier(.16,1,.3,1),
@@ -247,7 +247,7 @@ body{
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:rgba(255,255,255,.22)}
 .btn-ghost:active{background:var(--bg4)}
-.btn-sm{height:26px;padding:0 11px;font-size:12px}
+.btn-sm{height:24px;padding:0 10px;font-size:11.5px}
 /* Modo IA — botón de alto contraste para accesibilidad (usuarios con baja visión) */
 .btn-ia-highvis{
   background:var(--ia-glow);color:#141414;border:1px solid var(--ia-glow-d);
@@ -586,9 +586,9 @@ textarea.item-inp.item-desc-ta{
    pill (used in Comercial/Cotizaciones and Facturas so status can be changed
    right from the list, without losing the color coding). */
 .status-select{
-  border:none;border-radius:var(--r4);padding:4px 8px;height:24px;
-  font-family:var(--font);font-size:11px;font-weight:600;
-  cursor:pointer;outline:none;
+  border:none;border-radius:var(--r4);padding:3px 6px;height:22px;
+  font-family:var(--font);font-size:10.5px;font-weight:600;
+  cursor:pointer;outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   transition:filter .15s cubic-bezier(.16,1,.3,1),box-shadow .15s cubic-bezier(.16,1,.3,1);
 }
 .status-select:hover{filter:brightness(1.15);box-shadow:0 1px 5px rgba(0,0,0,.22)}
@@ -597,8 +597,9 @@ textarea.item-inp.item-desc-ta{
    estatus de una fila) deben verse EXACTAMENTE igual que el botón desplegable
    "Agrupado por estatus" (.fsort) — mismo alto, borde, fondo y tipografía. */
 .status-select.status-select-filter{
-  border:1px solid var(--border);border-radius:var(--r4);height:28px;padding:0 8px;
-  font-size:12px;font-weight:400;background:var(--bg3);color:var(--text2);min-width:150px;
+  border:1px solid var(--border);border-radius:var(--r4);height:26px;padding:0 7px;
+  font-size:11.5px;font-weight:400;background:var(--bg3);color:var(--text2);min-width:140px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .status-select.status-select-filter:hover{border-color:var(--border2);color:var(--text);filter:none;box-shadow:none}
 .status-select.status-select-filter:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(229,62,62,.14)}
@@ -663,17 +664,17 @@ textarea.item-inp.item-desc-ta{
 #nomTablesWrap .fac-table td:first-child{white-space:nowrap}
 .cot-table{width:100%;border-collapse:collapse}
 .cot-table th{
-  padding:9px 12px;font-size:10px;font-weight:600;text-transform:uppercase;
-  letter-spacing:.7px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);
+  padding:7px 10px;font-size:9.5px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);
   white-space:nowrap;cursor:pointer;user-select:none;background:var(--bg2);transition:color .15s;
 }
 .cot-table th:hover{color:var(--text2)}
-.cot-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.045);vertical-align:middle;transition:background .1s}
+.cot-table td{padding:8px 10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.045);vertical-align:middle;transition:background .1s}
 .cot-table tr:last-child td{border-bottom:none}
 .cot-table tr:hover td{background:rgba(255,255,255,.025)}
 .folio{
-  font-family:var(--mono);font-size:11px;font-weight:500;color:var(--red);
-  background:var(--red-p);padding:3px 8px;border-radius:4px;cursor:pointer;
+  font-family:var(--mono);font-size:10.5px;font-weight:500;color:var(--red);
+  background:var(--red-p);padding:2px 7px;border-radius:4px;cursor:pointer;
   white-space:nowrap;border:none;max-width:130px;overflow:hidden;text-overflow:ellipsis;
   transition:background .15s;
 }
@@ -683,7 +684,7 @@ textarea.item-inp.item-desc-ta{
 .cot-table tr:hover .row-acts{opacity:1}
 
 /* ── FILTERS ── */
-.filter-bar{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.filter-bar{display:flex;align-items:center;gap:5px;margin-bottom:11px;flex-wrap:wrap}
 .fchip{
   padding:5px 12px;border-radius:var(--r4);font-size:12px;font-weight:500;cursor:pointer;
   border:1px solid var(--border);background:transparent;color:var(--text3);
@@ -697,8 +698,8 @@ textarea.item-inp.item-desc-ta{
 .fchip-hidden-group{display:none}
 .fsep{flex:1}
 .fsort{
-  height:28px;border:1px solid var(--border);border-radius:var(--r4);padding:0 8px;
-  font-family:var(--font);font-size:12px;color:var(--text2);background:var(--bg3);outline:none;cursor:pointer;
+  height:26px;border:1px solid var(--border);border-radius:var(--r4);padding:0 7px;
+  font-family:var(--font);font-size:11.5px;color:var(--text2);background:var(--bg3);outline:none;cursor:pointer;
   transition:border-color .15s cubic-bezier(.16,1,.3,1),color .15s cubic-bezier(.16,1,.3,1);
 }
 .fsort:hover{border-color:var(--border2);color:var(--text)}
@@ -719,27 +720,29 @@ textarea.item-inp.item-desc-ta{
 .stats::-webkit-scrollbar-thumb,.stats.stats-3::-webkit-scrollbar-thumb,.stats.stats-5::-webkit-scrollbar-thumb,.stats.stats-6::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 .stats::-webkit-scrollbar-track,.stats.stats-3::-webkit-scrollbar-track,.stats.stats-5::-webkit-scrollbar-track,.stats.stats-6::-webkit-scrollbar-track{background:transparent}
 /* Tarjeta compacta y simétrica: en la vista apilada cada .stat se vuelve una
-   fila (etiqueta a la izquierda, valor y delta a la derecha) de altura fija,
-   en vez de una tarjeta alta de bloque — así el dashboard no crece infinito. */
+   columna (etiqueta arriba, valor y delta debajo) con más alto y menos
+   ancho, en vez de una fila comprimida — así se lee mejor en la columna
+   angosta. El contenedor conserva su alto máximo con scroll propio, así
+   que si no caben todas las tarjetas, aparece el desplazador vertical. */
 .stats>.stat,.stats.stats-3>.stat,.stats.stats-5>.stat,.stats.stats-6>.stat{
-  flex:0 0 auto;width:100%;display:flex;align-items:center;gap:10px;
-  padding:7px 12px;min-height:38px;scroll-snap-align:none;
+  flex:0 0 auto;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  padding:11px 13px;min-height:68px;scroll-snap-align:none;
 }
 .stats>.stat::before,.stats.stats-3>.stat::before,.stats.stats-5>.stat::before,.stats.stats-6>.stat::before{width:3px}
 .stats>.stat .stat-lbl,.stats.stats-3>.stat .stat-lbl,.stats.stats-5>.stat .stat-lbl,.stats.stats-6>.stat .stat-lbl{
-  margin-bottom:0;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:0;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .stats>.stat .stat-val,.stats.stats-3>.stat .stat-val,.stats.stats-5>.stat .stat-val,.stats.stats-6>.stat .stat-val{
-  margin-bottom:0;flex:0 0 auto;text-align:right;
+  margin-bottom:0;text-align:left;font-size:17px;
 }
 .stats>.stat .stat-delta,.stats.stats-3>.stat .stat-delta,.stats.stats-5>.stat .stat-delta,.stats.stats-6>.stat .stat-delta{
-  flex:0 0 auto;text-align:right;min-width:70px;
+  text-align:left;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .stats>.stat .stat-mini-row,.stats.stats-3>.stat .stat-mini-row,.stats.stats-5>.stat .stat-mini-row,.stats.stats-6>.stat .stat-mini-row{
-  flex:0 0 auto;gap:14px;
+  flex:0 0 auto;width:100%;gap:14px;
 }
 /* ── Filtro de estatus compacto: mismo estilo que el select "Agrupado por estatus" ── */
-.status-select{min-width:150px}
+.status-select{min-width:112px;max-width:170px}
 /* Mini-stat: variante compacta para meter 2 métricas (semana/mes) en la misma
    tarjeta sin agregar más alto al dashboard que ya existe. */
 .stat-mini-row{display:flex;gap:8px;align-items:baseline}
@@ -751,7 +754,7 @@ textarea.item-inp.item-desc-ta{
    superior, sombra más discreta) ── */
 .stat{
   position:relative;background:linear-gradient(180deg,var(--bg2),var(--bg2));border:1px solid var(--border);
-  border-radius:var(--r8);padding:9px 11px 9px 13px;box-shadow:0 1px 2px rgba(0,0,0,.18);
+  border-radius:var(--r8);padding:7px 9px 7px 11px;box-shadow:0 1px 2px rgba(0,0,0,.18);
   transition:box-shadow .15s,border-color .15s,transform .1s;overflow:hidden;
 }
 /* Fase 3 (rediseño): franja de acento lateral izquierda, sutil, en vez de
@@ -764,9 +767,9 @@ textarea.item-inp.item-desc-ta{
 .stat-click{cursor:pointer}
 .stat-click:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.28)}
 .stat-click:active{transform:translateY(0);box-shadow:var(--shadow-sm)}
-.stat-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px}
-.stat-val{font-family:var(--mono);font-size:16.5px;font-weight:700;color:var(--white);margin-bottom:1px;letter-spacing:-.01em;line-height:1.15}
-.stat-delta{font-size:9.5px;color:var(--text3)}
+.stat-lbl{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--white);margin-bottom:1px;letter-spacing:-.01em;line-height:1.15}
+.stat-delta{font-size:8.5px;color:var(--text3)}
 .stat.cr .stat-lbl{color:var(--red)}
 .stat.cg .stat-lbl{color:var(--green)}
 .stat.cy .stat-lbl{color:var(--yellow)}
@@ -781,21 +784,43 @@ textarea.item-inp.item-desc-ta{
    Facturas, OC Clientes, Ingresos, Gastos, Empleados (Personal,
    Contratos, Nóminas, Rostros) y Centro Financiero (Acreedores,
    Alertas). No se tocó ninguna otra subvista sin dashboard. */
-.dash-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start;min-width:0}
+.dash-layout{display:grid;grid-template-columns:172px minmax(0,1fr);gap:14px;align-items:start;min-width:0}
 .dash-layout-side{min-width:0}
 .dash-layout-main{min-width:0}
-/* Dentro de esta columna angosta el dashboard ya no compite por ancho con
-   la tabla, así que puede usar un poco más de alto (sigue siendo
-   compacto y con scroll propio, nunca crece sin límite). */
-.dash-layout .stats{max-height:440px;margin-bottom:0}
+/* Columna angosta: al reducir el ancho se le da más alto máximo para que
+   quepan más tarjetas antes de necesitar scroll propio (nunca crece sin
+   límite). */
+.dash-layout .stats{max-height:600px;margin-bottom:0}
+/* [FASE 1] El selector de filtro/vista principal de cada subvista (antes
+   arriba de la tabla, junto al buscador) ahora se mueve por JS
+   (moveDashFiltersToSidebar) a la parte superior de esta columna angosta,
+   justo encima de las tarjetas de KPIs. Aquí solo se define su estilo:
+   ancho completo de la columna y separación con el dashboard de abajo. */
+.dash-layout-side>select.dash-side-filter{
+  display:block;width:100%;margin:0 0 9px;height:26px;
+}
+/* [Ajuste] El buscador LOCAL de cada tabla (el <input> "Folio, cliente,
+   contacto…", "Buscar OC…", "Buscar ingreso…", etc. — NO el buscador
+   global del topbar, que se queda donde estaba) también se mueve por JS
+   (moveDashFiltersToSidebar) al tope de esta columna, arriba del
+   selector de estatus. Su comportamiento de búsqueda no cambia, solo
+   su posición y su ancho (se adapta al ancho completo de la columna
+   angosta en vez del ancho fijo en px que tenía en la barra de filtros).
+*/
+.dash-layout-side>input.dash-side-search{
+  display:block!important;width:100%!important;margin:0 0 9px;height:26px;
+  font-size:11.5px!important;
+}
 @media(max-width:1100px){
-  .dash-layout{grid-template-columns:210px minmax(0,1fr)}
+  .dash-layout{grid-template-columns:154px minmax(0,1fr)}
 }
 @media(max-width:900px){
-  /* Tablet/celular: vuelve al apilado vertical de siempre (dashboard
-     arriba, tabla abajo), reutilizando el límite de alto que ya existe
-     para .stats en este breakpoint. */
+  /* Tablet/celular: vuelve al apilado vertical de siempre (buscador,
+     selector de filtro, dashboard, tabla), reutilizando el límite de
+     alto que ya existe para .stats en este breakpoint. */
   .dash-layout{grid-template-columns:1fr;gap:0}
+  .dash-layout-side>select.dash-side-filter{margin-bottom:8px}
+  .dash-layout-side>input.dash-side-search{margin-bottom:8px}
 }
 
 /* ── [PROMPT MAESTRO] Fase 2B — Tabla de Cotizaciones: layout auto para
@@ -985,14 +1010,14 @@ textarea.item-inp.item-desc-ta{
 }
 .sidebar.collapsed{width:100%}
 .sidebar-nav{
-  flex:0 1 auto;display:flex;flex-direction:row;align-items:center;gap:4px;padding:6px 14px;
+  flex:0 1 auto;display:flex;flex-direction:row;align-items:center;gap:3px;padding:5px 12px;
   overflow-x:auto;overflow-y:hidden;
   background:var(--bg2);border-radius:var(--r8);box-shadow:var(--shadow-sm);
 }
 .sidebar-nav::-webkit-scrollbar{height:0}
 .sidebar-item{
-  display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;
-  cursor:pointer;color:var(--text2);font-size:12.5px;font-weight:600;white-space:nowrap;
+  display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;
+  cursor:pointer;color:var(--text2);font-size:12px;font-weight:600;white-space:nowrap;
   border:none;background:transparent;width:auto;text-align:left;font-family:var(--font);
   transition:background .12s,color .12s;flex-shrink:0;
 }
@@ -1066,15 +1091,15 @@ textarea.item-inp.item-desc-ta{
 
 /* ── FACTURAS TABLE ── */
 .fac-table{width:100%;border-collapse:collapse}
-.fac-table th{padding:9px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2)}
-.fac-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.045);vertical-align:middle;transition:background .1s}
+.fac-table th{padding:7px 10px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2)}
+.fac-table td{padding:8px 10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.045);vertical-align:middle;transition:background .1s}
 .fac-table tr:last-child td{border-bottom:none}
 .fac-table tr:hover td{background:rgba(255,255,255,.025)}
 
 /* ── BALANCE TABLE ── */
 .bal-table{width:100%;border-collapse:collapse}
-.bal-table th{padding:9px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2)}
-.bal-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.045);vertical-align:middle;font-size:12.5px;transition:background .1s}
+.bal-table th{padding:7px 10px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2)}
+.bal-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.045);vertical-align:middle;font-size:12px;transition:background .1s}
 .bal-table tr:last-child td{border-bottom:none}
 .bal-table tr:hover td{background:rgba(255,255,255,.025)}
 .bal-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:600;white-space:nowrap}
@@ -20533,6 +20558,57 @@ function fchipGroupsToDropdown(){
   });
 }
 document.addEventListener('DOMContentLoaded', fchipGroupsToDropdown);
+
+/* ─── [PROMPT MAESTRO] FASE 1 — Reorganización del layout: mover, para
+   cada subvista con dashboard (.dash-layout), los dos controles de
+   filtrado que viven arriba de su tabla hacia la parte SUPERIOR de la
+   columna angosta de la izquierda (.dash-layout-side), encima de las
+   tarjetas de KPIs:
+     1) El buscador LOCAL de esa tabla — el <input type="text"> con
+        placeholder "Folio, cliente, contacto…", "Buscar OC…", "Buscar
+        ingreso…", etc. (NO el buscador global del topbar, que se queda
+        donde estaba: busca en toda la app, no solo en la tabla activa).
+     2) El selector de estatus — el <select class="status-select-filter">
+        nativo de Cotizaciones/Facturas/OC Clientes, o el <select
+        class="fchip-dropdown"> que fchipGroupsToDropdown() genera para
+        Ingresos/Gastos/Empleados/Contratos.
+   Es una única función genérica que recorre TODOS los bloques
+   .dash-layout del documento, así el reacomodo queda aplicado de forma
+   uniforme en cada subvista sin tener que tocar el HTML de cada una por
+   separado (Cotizaciones, Facturas, OC Clientes, Ingresos, Gastos,
+   Empleados, Contratos, Nóminas, Acreedores…). No cambia ningún
+   id/oninput/onchange/lógica de búsqueda o filtro: solo la posición en
+   el DOM. Se corre una sola vez (el resto de las subvistas ya existen
+   ocultas en el DOM, no se crean de nuevo al cambiar de pestaña),
+   después de que fchipGroupsToDropdown() ya haya convertido los grupos
+   de botones en <select>, para que también se puedan mover. ─── */
+function moveDashFiltersToSidebar(){
+  document.querySelectorAll('.dash-layout').forEach(layout=>{
+    const side = layout.querySelector(':scope > .dash-layout-side');
+    const main = layout.querySelector(':scope > .dash-layout-main');
+    if(!side || !main || side.dataset.filterMoved) return;
+    const bar = main.querySelector('.filter-bar');
+    if(!bar) return;
+    const sel = bar.querySelector('select.status-select-filter, select.fchip-dropdown');
+    const search = bar.querySelector('input[type="text"]');
+    if(!sel && !search) return;
+    // Orden final en el sidebar (de arriba a abajo): buscador, selector
+    // de estatus, tarjetas de KPIs. Se inserta el selector primero y
+    // luego el buscador antes que él, así el buscador queda arriba.
+    if(sel){ sel.classList.add('dash-side-filter'); side.insertBefore(sel, side.firstChild); }
+    if(search){ search.classList.add('dash-side-search'); side.insertBefore(search, side.firstChild); }
+    side.dataset.filterMoved = '1';
+  });
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Se asegura primero de que los grupos .fchip ya se hayan convertido a
+  // <select> (la llamada es idempotente: si ya corrió, no hace nada) para
+  // que también existan como <select> movible en subvistas como
+  // Ingresos/Gastos/Empleados/Contratos.
+  fchipGroupsToDropdown();
+  moveDashFiltersToSidebar();
+});
+
 </script>
 </body>
 </html>
