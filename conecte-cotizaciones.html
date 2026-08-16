@@ -98,6 +98,15 @@ const CONTRATO_PLANTILLA_B64 = "UEsDBAoAAAAAAIKzBl0AAAAAAAAAAAAAAAAFABwAd29yZC9V
   --shadow-sm: 0 1px 2px rgba(0,0,0,.16), 0 1px 1px rgba(0,0,0,.10);
   --shadow-md: 0 6px 20px rgba(0,0,0,.28), 0 1.5px 4px rgba(0,0,0,.18);
   --shadow-lg: 0 18px 48px rgba(0,0,0,.38), 0 4px 12px rgba(0,0,0,.22);
+  /* [FASE ANIM] Sombras de acento (glow) para dar vida a estados activos/hover
+     sin tocar ningún color funcional — se usan solo como box-shadow extra,
+     nunca reemplazan --shadow-sm/md/lg. */
+  --shadow-glow-red:   0 4px 18px rgba(229,62,62,.35), 0 0 0 1px rgba(229,62,62,.18) inset;
+  --shadow-glow-blue:  0 4px 18px rgba(99,179,237,.30), 0 0 0 1px rgba(99,179,237,.16) inset;
+  --shadow-glow-green: 0 4px 18px rgba(72,187,120,.30), 0 0 0 1px rgba(72,187,120,.16) inset;
+  --shadow-glow-purple:0 4px 18px rgba(159,122,234,.30), 0 0 0 1px rgba(159,122,234,.16) inset;
+  --ease-spring: cubic-bezier(.22,1.4,.36,1);
+  --ease-smooth: cubic-bezier(.16,1,.3,1);
 }
 
 /* ── LIGHT MODE ── */
@@ -122,6 +131,10 @@ body.light{
   --shadow-sm: 0 1px 2px rgba(0,0,0,.05), 0 1px 1px rgba(0,0,0,.03);
   --shadow-md: 0 6px 20px rgba(0,0,0,.08), 0 1.5px 4px rgba(0,0,0,.05);
   --shadow-lg: 0 18px 48px rgba(0,0,0,.14), 0 4px 12px rgba(0,0,0,.07);
+  --shadow-glow-red:   0 4px 16px rgba(229,62,62,.20), 0 0 0 1px rgba(229,62,62,.12) inset;
+  --shadow-glow-blue:  0 4px 16px rgba(99,179,237,.18), 0 0 0 1px rgba(99,179,237,.10) inset;
+  --shadow-glow-green: 0 4px 16px rgba(72,187,120,.18), 0 0 0 1px rgba(72,187,120,.10) inset;
+  --shadow-glow-purple:0 4px 16px rgba(159,122,234,.18), 0 0 0 1px rgba(159,122,234,.10) inset;
 }
 body.light .topbar{ background:#b91c1c; border-color:#991b1b; }
 body.light .topbar-brand{ color:#fff !important; }
@@ -245,8 +258,8 @@ body{
 .btn-red:hover{background:var(--red-d);box-shadow:0 2px 4px rgba(229,62,62,.3),0 6px 16px rgba(229,62,62,.22);transform:translateY(-1px)}
 .btn-red:active{background:var(--red-d);box-shadow:0 1px 2px rgba(229,62,62,.25);transform:translateY(0)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
-.btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:rgba(255,255,255,.22)}
-.btn-ghost:active{background:var(--bg4)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:rgba(255,255,255,.22);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.btn-ghost:active{background:var(--bg4);transform:translateY(0);box-shadow:none}
 .btn-sm{height:24px;padding:0 10px;font-size:11.5px}
 /* Modo IA — botón de alto contraste para accesibilidad (usuarios con baja visión) */
 .btn-ia-highvis{
@@ -434,7 +447,13 @@ body.light .btn-ia-highvis{color:#141414;border-color:var(--ia-glow-d)}
   position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);
   z-index:600;display:none;align-items:center;justify-content:center;padding:30px;
 }
-.emp-photo-lightbox.open{display:flex;animation:paneIn .18s ease both}
+/* [FIX] Ya NO reutiliza @keyframes paneIn: ese keyframe ahora incluye
+   "transform" (ver Fase Anim más arriba) y este elemento usa
+   animation-fill-mode:both, lo cual SÍ dejaría el transform pegado al
+   terminar la animación — exactamente el problema que la nota de
+   paneIn advierte evitar. Se usa un fundido propio, solo opacidad. */
+.emp-photo-lightbox.open{display:flex;animation:lightboxIn .18s ease both}
+@keyframes lightboxIn{from{opacity:0}to{opacity:1}}
 .emp-photo-lightbox img{
   max-width:min(90vw,560px);max-height:80vh;border-radius:var(--r8);
   box-shadow:0 24px 80px rgba(0,0,0,.6);object-fit:contain;
@@ -1120,29 +1139,35 @@ textarea.item-inp.item-desc-ta{
 .tab-btn.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);border-radius:2px 2px 0 0}
 .tab-btn svg{width:13px;height:13px;flex-shrink:0}
 .tab-pane{display:none}
-.tab-pane.active{display:block;animation:paneIn .28s cubic-bezier(.16,1,.3,1)}
+.tab-pane.active{display:block;animation:paneIn .38s var(--ease-smooth)}
 .emp-subpane{display:none}
-.emp-subpane.active{display:block;animation:paneIn .28s cubic-bezier(.16,1,.3,1)}
+.emp-subpane.active{display:block;animation:paneIn .34s var(--ease-smooth)}
 /* [FIX] Transición entre vistas (menú principal y subvistas: Cotizaciones/
    OC/Facturas, Ingresos/Gastos, Personal/Contratos/..., etc.): un fundido
    con una curva de aceleración suave (misma cubic-bezier ya usada en
    modales y paneles de este archivo), igual en escritorio, tablet y
    celular ya que .tab-pane/.emp-subpane no tienen reglas distintas por
    breakpoint.
-   [IMPORTANTE] Esta animación NO debe animar "transform" (ej. un
-   translateY): con animation-fill-mode:both/forwards, el navegador deja
-   ese transform "pegado" en el elemento aun después de terminar la
-   animación, y eso convierte a la vista activa en el contenedor de
-   referencia de TODO lo que tenga position:fixed dentro (paneles de
-   filtros, tooltips, modales…), rompiendo su posicionamiento respecto a
-   la pantalla completa (se quedan pegados/cortados en un borde en vez de
-   cubrir o esconderse fuera de toda la ventana). Por eso se quitó
-   deliberadamente "both" y cualquier transform de este keyframe; si se
-   quiere reintroducir movimiento, debe hacerse con
-   animation-fill-mode:none (el valor por defecto, para que "transform"
-   vuelva a "none" en cuanto termina la animación) y nunca combinarlo con
-   "forwards"/"both". */
-@keyframes paneIn{from{opacity:0}to{opacity:1}}
+   [IMPORTANTE] Esta animación NO debe usar animation-fill-mode:both/forwards:
+   eso dejaría "transform" pegado en el elemento aun después de terminar la
+   animación, y convertiría la vista activa en el contenedor de referencia
+   de TODO lo que tenga position:fixed dentro (paneles de filtros, tooltips,
+   modales…), rompiendo su posicionamiento respecto a la pantalla completa.
+   Por eso el transform de este keyframe SOLO se anima con
+   animation-fill-mode:none (el valor por defecto — así "transform" vuelve a
+   "none" en cuanto termina la animación, sin dejar rastro). Nunca combinar
+   con "forwards"/"both". */
+@keyframes paneIn{
+  from{opacity:0;transform:translateY(10px) scale(.985)}
+  60%{opacity:1}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+/* [FASE ANIM] Reduce/anula el movimiento para quienes prefieren menos
+   animación en el sistema, sin quitar el fundido (opacidad) que ayuda a
+   percibir el cambio de contenido. */
+@media (prefers-reduced-motion: reduce){
+  .tab-pane.active,.emp-subpane.active,.bal-pane.active{animation-duration:.01ms!important}
+}
 
 
 /* ── APP SHELL (menú superior + columna principal) ──
@@ -1178,7 +1203,7 @@ textarea.item-inp.item-desc-ta{
 }
 .sidebar-item:hover{background:var(--bg3);color:var(--text)}
 .sidebar-item:active{transform:scale(.96)}
-.sidebar-item.active{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(214,42,42,.35)}
+.sidebar-item.active{background:var(--red);color:#fff;box-shadow:var(--shadow-glow-red)}
 .sidebar-item svg{width:16px;height:16px;flex-shrink:0}
 .sidebar-item span{overflow:hidden;text-overflow:ellipsis}
 .sidebar.collapsed .sidebar-item{justify-content:center;padding:9px 14px}
@@ -1243,7 +1268,7 @@ textarea.item-inp.item-desc-ta{
   font-size:10px;font-weight:700;line-height:1;margin-left:2px;flex-shrink:0;
 }
 .bal-pane{display:none}
-.bal-pane.active{display:block}
+.bal-pane.active{display:block;animation:paneIn .34s var(--ease-smooth)}
 
 /* ── FACTURAS TABLE ── */
 .fac-table{width:100%;border-collapse:collapse}
@@ -1631,7 +1656,7 @@ button,.btn,.btn-icon,.tab-btn,.sidebar-item,.fchip,.bal-tab,.close-x,
   .mnav-item svg{width:19px;height:19px;flex-shrink:0;transition:transform .16s cubic-bezier(.16,1,.3,1)}
   .mnav-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   .mnav-item:active{transform:scale(.93)}
-  .mnav-item.active{color:var(--red);background:var(--red-p)}
+  .mnav-item.active{color:var(--red);background:var(--red-p);box-shadow:var(--shadow-glow-red)}
   .mnav-item.active svg{transform:translateY(-1px) scale(1.06)}
 
   /* Espacio para que el menú inferior no tape el contenido */
@@ -2360,8 +2385,6 @@ button,.btn,.btn-icon,.tab-btn,.sidebar-item,.fchip,.bal-tab,.close-x,
           <div class="card">
             <div class="card-header">
               <span class="card-title">Listado de Cotizaciones</span>
-              <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="cotCount">0</span>
-              <span class="card-sub" id="lastUpd"></span>
               <div style="display:flex;margin-left:auto;flex-wrap:wrap;align-items:center">
                 <!-- [PROMPT MAESTRO] Botón de embudo al lado IZQUIERDO de "Modo IA",
                      agrupados con un gap chico (6px) para que se vean como un solo
@@ -2533,8 +2556,6 @@ button,.btn,.btn-icon,.tab-btn,.sidebar-item,.fchip,.bal-tab,.close-x,
       <div class="card">
         <div class="card-header">
           <span class="card-title">Listado de Facturas</span>
-          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="facCount">0</span>
-          <span class="card-sub" id="facLastUpd"></span>
           <div style="display:flex;margin-left:auto;align-items:center">
             <!-- [PROMPT MAESTRO] Botón de embudo agrupado a la izquierda; "Agregar"
                  queda separado con un gap mayor. -->
@@ -2546,10 +2567,6 @@ button,.btn,.btn-icon,.tab-btn,.sidebar-item,.fchip,.bal-tab,.close-x,
               Agregar
             </button>
           </div>
-        </div>
-        <div class="pagi">
-          <span class="pagi-info" id="facPagiInfoTop">—</span>
-          <div class="pagi-btns" id="facPagiBtnsTop"></div>
         </div>
         <div class="cot-table-wrap">
           <table class="fac-table">
@@ -2648,7 +2665,6 @@ button,.btn,.btn-icon,.tab-btn,.sidebar-item,.fchip,.bal-tab,.close-x,
       <div class="card">
         <div class="card-header">
           <span class="card-title">Órdenes de Compra de Clientes</span>
-          <span style="font-size:11px;background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:var(--mono);color:var(--text3);" id="ocCount2">0</span>
           <div style="display:flex;gap:6px;margin-left:auto;align-items:center">
             <!-- [PROMPT MAESTRO] Embudo agrupado con el botón de "ver todas las
                  facturas"; "Agregar" queda separado con un gap mayor. -->
@@ -6331,7 +6347,9 @@ const ST = {
   sort: 'agrupado',
   search: '',
   page: 1,
-  PAGE: 15,
+  /* Unificado a 10 registros por página en todas las tablas paginadas
+     (Cotizaciones, OC Clientes, Facturas). */
+  PAGE: 10,
   editId: null,
   editRow: null,
   delRow: null,
@@ -6348,6 +6366,7 @@ const ST = {
   facMonth: '',
   facCliente: '',
   facPage: 1,
+  ocPage: 1,
   facEditId: null,
   facEditExtract: null,
   facIngLinkTargetId: null,
@@ -7654,8 +7673,6 @@ async function loadAll() {
     // cargados todos los datos que las alimentan (deudas, cotizaciones, ingresos,
     // salidas, obras, alertas leídas).
     renderNotifBell();
-    document.getElementById('lastUpd').textContent = 'Act. ' +
-      new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
 
   } catch(e) {
     console.error(e);
@@ -8280,7 +8297,7 @@ function renderPagi() {
   const cotPagiText=`Pág ${ST.page}/${pages} · ${total} registros`;
   setPagiUI('pagiInfo','pagiBtns',cotPagiText,h);
   const cotCountEl=document.getElementById('cotCount');
-  if(cotCountEl) cotCountEl.textContent=cotPagiText;
+  if(cotCountEl) cotCountEl.textContent=total;
 }
 function goPage(p){ const pages=Math.ceil(ST.filtered.length/ST.PAGE)||1; if(p<1||p>pages)return; ST.page=p; renderTable(); }
 
@@ -14869,6 +14886,12 @@ function renderEmpleados(){
   let list = todos.slice();
   if(ST.empFilterEstado==='Activo') list = list.filter(p=>(p.estado||'').toLowerCase()==='activo');
   else if(ST.empFilterEstado==='baja') list = list.filter(p=>(p.estado||'').toLowerCase()!=='activo');
+  else if(!ST.empSearch){
+    // Por defecto (sin filtro de estado explícito ni búsqueda) los inactivos
+    // ya no se muestran debajo de los Patrones; solo aparecen si se buscan
+    // por medio del buscador o se filtra explícitamente por "Baja".
+    list = list.filter(p=>(p.estado||'').toLowerCase()==='activo');
+  }
   if(ST.empSearch){
     const q = ST.empSearch.toLowerCase();
     list = list.filter(p=> (p.nombre||'').toLowerCase().includes(q) || (p.puesto||'').toLowerCase().includes(q) || (p.correo||'').toLowerCase().includes(q));
@@ -20263,12 +20286,13 @@ let ocClientFilter='all', ocClientSearch='';
 
 function setOCFilter(f,el){
   ocClientFilter=f;
+  ST.ocPage=1;
   document.querySelectorAll('#tabOC .fchip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
   renderOCClienteTable();
 }
 
-function onOCSearch(q){ ocClientSearch=q.toLowerCase(); renderOCClienteTable(); }
+function onOCSearch(q){ ocClientSearch=q.toLowerCase(); ST.ocPage=1; renderOCClienteTable(); }
 
 /* ─── PANEL DE FILTROS (icono embudo) — OC Clientes ─── */
 function openOCFilterPanel(){
@@ -20359,13 +20383,23 @@ function renderOCClienteTable(){
   document.getElementById('ocsMontoTotal').textContent=fmtMXN(totalMonto);
   const pct=totalMonto>0?Math.round((factMonto/totalMonto)*100):0;
   document.getElementById('ocsBalanceBar').textContent=pct+'% facturado del total';
-  document.getElementById('ocCount2').textContent=rows.length+' registros';
+  const ocCount2El=document.getElementById('ocCount2'); if(ocCount2El) ocCount2El.textContent=rows.length+' registros';
 
   const tbody=document.getElementById('ocClientTbody');
   if(!rows.length){
     tbody.innerHTML='<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3)">Sin OC registradas</td></tr>';
+    renderOCPagi(0);
     return;
   }
+
+  // Paginación: 10 registros por página (ST.PAGE)
+  const ocTotal=rows.length;
+  const ocPages=Math.ceil(ocTotal/ST.PAGE)||1;
+  if(ST.ocPage>ocPages) ST.ocPage=ocPages;
+  if(ST.ocPage<1) ST.ocPage=1;
+  const ocStart=(ST.ocPage-1)*ST.PAGE;
+  const pageRows=rows.slice(ocStart, ocStart+ST.PAGE);
+  renderOCPagi(ocTotal);
 
   const ocGroupMeta={
     Pendiente:{label:'PENDIENTE',cls:'g-pend'},
@@ -20374,7 +20408,7 @@ function renderOCClienteTable(){
   };
   let lastOcGroup=null;
   const hoy=new Date();
-  tbody.innerHTML=rows.map(r=>{
+  tbody.innerHTML=pageRows.map(r=>{
     let groupHeader='';
     if(r.estatus!==lastOcGroup){
       lastOcGroup=r.estatus;
@@ -20457,6 +20491,36 @@ function renderOCClienteTable(){
       </td>
     </tr>`;
   }).join('');
+}
+function renderOCPagi(total){
+  if(!document.getElementById('ocPagiBtns')) return;
+  const pages=Math.ceil((total||0)/ST.PAGE)||1;
+  let h=`<button class="pbtn" onclick="goOCPage(${ST.ocPage-1})" ${ST.ocPage===1?'disabled':''}>‹</button>`;
+  for(let i=1;i<=pages;i++){
+    if(pages>7&&Math.abs(i-ST.ocPage)>2&&i!==1&&i!==pages){
+      if(i===2||i===pages-1) h+=`<button class="pbtn" disabled>…</button>`;
+      continue;
+    }
+    h+=`<button class="pbtn ${i===ST.ocPage?'on':''}" onclick="goOCPage(${i})">${i}</button>`;
+  }
+  h+=`<button class="pbtn" onclick="goOCPage(${ST.ocPage+1})" ${ST.ocPage===pages?'disabled':''}>›</button>`;
+  setPagiUI('ocPagiInfo','ocPagiBtns',`Pág ${ST.ocPage}/${pages} · ${total||0} registros`,h);
+}
+function goOCPage(p){
+  const total=getOCClientes().filter(r=>{
+    if(ocClientFilter!=='all'&&r.estatus!==ocClientFilter) return false;
+    if(ocClientSearch&&!(
+      r.numero.toLowerCase().includes(ocClientSearch)||
+      (ST.clientes[r.id_cli]?.nombre||'').toLowerCase().includes(ocClientSearch)||
+      r.concepto.toLowerCase().includes(ocClientSearch)||
+      r.cotIds.join(',').toLowerCase().includes(ocClientSearch)
+    )) return false;
+    return true;
+  }).length;
+  const pages=Math.ceil(total/ST.PAGE)||1;
+  if(p<1||p>pages) return;
+  ST.ocPage=p;
+  renderOCClienteTable();
 }
 function ocPillClass(s){
   return {Pendiente:'pill-pend',Facturado:'pill-acep',Cancelado:'pill-rech'}[s]||'pill-pend';
@@ -20655,7 +20719,7 @@ function openRelDetail_nomina(idNomina){ closeRelList(); openNomResumenCard(idNo
 function renderFacTableFull(){
   const tbody=document.getElementById('facTbody');
   if(!tbody) return;
-  document.getElementById('facCount').textContent=(ST.facFiltered||[]).length+' registros';
+  const facCountEl=document.getElementById('facCount'); if(facCountEl) facCountEl.textContent=(ST.facFiltered||[]).length+' registros';
   if(!ST.facFiltered||!ST.facFiltered.length){
     tbody.innerHTML='<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3)">Sin facturas registradas</td></tr>';
     renderFacPagi(); return;
@@ -21942,6 +22006,32 @@ function syncDashSideHeights(){
     // layout todavía se está acomodando).
     stats.style.setProperty('--stats-avail-h', Math.max(avail, 140)+'px');
   });
+  /* [FIX] Buscador + dashboard "brincan"/se mueven justo al llegar al
+     final de la tabla ──
+     Con position:sticky, la columna angosta (.dash-layout-side) solo
+     puede quedar fija mientras su fila del grid tenga, por debajo, al
+     menos su propia altura de espacio libre; en la práctica eso hace que
+     se "despegue" y empiece a moverse en los últimos pixeles de scroll de
+     cada tabla (justo cuando se ve peor, porque el usuario está mirando
+     las últimas filas). La solución: darle a la columna de la tabla
+     (.dash-layout-main) un padding-bottom igual a la altura real de la
+     columna angosta, así el grid le da a esta última "cancha" de sobra
+     para seguir fija durante TODO el recorrido real de la tabla — el
+     leve espacio en blanco que queda después de la paginación es
+     preferible al salto visual. */
+  document.querySelectorAll('.dash-layout').forEach(layout=>{
+    const side = layout.querySelector(':scope > .dash-layout-side');
+    const main = layout.querySelector(':scope > .dash-layout-main');
+    if(!side || !main) return;
+    if(side.offsetParent===null){ main.style.paddingBottom=''; return; }
+    // Este ajuste solo aplica al layout de 2 columnas (desktop/tablet
+    // ancho); en el apilado de 1 columna (móvil, ver breakpoint 900px)
+    // el dashboard ya no es sticky de la misma forma y no hace falta.
+    const twoCol = getComputedStyle(layout).gridTemplateColumns.trim().split(/\s+/).length >= 2;
+    if(!twoCol){ main.style.paddingBottom=''; return; }
+    const sideH = Math.ceil(side.getBoundingClientRect().height);
+    main.style.paddingBottom = sideH+'px';
+  });
 }
 window.addEventListener('load', syncDashSideHeights);
 window.addEventListener('resize', syncDashSideHeights);
@@ -22002,7 +22092,7 @@ function initResponsiveCardHeaders(root){
         if(btn.textContent.trim() !== 'Agregar') return;
         var carriers = Array.prototype.slice.call(btn.childNodes).filter(function(n){
           if(n.nodeType===3) return n.textContent.trim()!=='';
-          return n.nodeType===1 && n.tagName!=='SVG';
+          return n.nodeType===1 && n.tagName.toLowerCase()!=='svg';
         });
         if(!carriers.length) return;
         var span = document.createElement('span');
